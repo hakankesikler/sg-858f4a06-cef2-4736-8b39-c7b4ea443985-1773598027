@@ -87,11 +87,11 @@ export function Services() {
   return (
     <section id="hizmetler" className="py-20 bg-secondary/30">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-12">
+        <div className="text-center max-w-2xl mx-auto mb-12 bg-white p-8 rounded-2xl shadow-xl border border-border/50">
           <h2 className="font-heading font-bold text-4xl text-navy mb-4">
             Hizmetlerimiz
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-foreground text-lg leading-relaxed">
             REX Lojistik olarak geniş hizmet yelpazemizle tüm lojistik ihtiyaçlarınıza profesyonel çözümler sunuyoruz
           </p>
         </div>
