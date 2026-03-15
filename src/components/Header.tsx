@@ -26,22 +26,22 @@ export function Header() {
           : "bg-white/95 backdrop-blur-sm border-b border-border"
       }`}
     >
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center transition-transform hover:scale-105">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex items-center justify-between gap-8">
+          <Link href="/" className="flex items-center transition-transform hover:scale-105 flex-shrink-0">
             <Image 
               src="/rex-lojistik-logo-new.png" 
               alt="REX Lojistik Logo" 
-              width={80} 
-              height={80}
+              width={120} 
+              height={120}
               className={`transition-all duration-300 ${
-                isScrolled ? "w-16 h-16" : "w-20 h-20"
+                isScrolled ? "w-24 h-24" : "w-[120px] h-[120px]"
               }`}
               priority
             />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">
             <Link href="#hizmetler" className="text-sm font-medium text-slate-text hover:text-navy transition-colors">
               Hizmetlerimiz
             </Link>
@@ -56,7 +56,7 @@ export function Header() {
             </Link>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-shrink-0">
             <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 border-slate-text/20 text-navy hover:border-navy">
               <Phone className="w-4 h-4" />
               <span>+90 543 401 07 55</span>
