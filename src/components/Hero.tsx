@@ -18,7 +18,7 @@ export function Hero() {
             </div>
             
             <h1 className="font-heading font-bold text-5xl lg:text-6xl leading-tight">
-              Uluslararası Lojistikte
+              Lojistikte
               <span className="block gradient-text text-transparent bg-clip-text bg-gradient-to-r from-accent to-yellow-300">
                 Güvenilir Çözüm Ortağınız
               </span>
