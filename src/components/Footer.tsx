@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export function Footer() {
   return (
-    <footer className="bg-navy text-white">
+    <footer id="iletisim" className="bg-navy text-white">
       <div className="container mx-auto px-4 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div>
@@ -53,12 +53,11 @@ export function Footer() {
           <div>
             <h3 className="font-heading font-semibold text-lg mb-4">Kurumsal</h3>
             <ul className="space-y-2 text-sm text-blue-200">
-              <li><Link href="#hakkimizda" className="hover:text-accent transition-colors">Hakkımızda</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Kalite Politikamız</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Vizyonumuz</Link></li>
+              <li><Link href="#hizmetler" className="hover:text-accent transition-colors">Hizmetlerimiz</Link></li>
+              <li><Link href="#ozellikler" className="hover:text-accent transition-colors">Neden Biz?</Link></li>
               <li><Link href="#referanslar" className="hover:text-accent transition-colors">Referanslarımız</Link></li>
+              <li><Link href="#teklif" className="hover:text-accent transition-colors">Teklif Al</Link></li>
               <li><Link href="#iletisim" className="hover:text-accent transition-colors">İletişim</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Kariyer</Link></li>
             </ul>
           </div>
 
