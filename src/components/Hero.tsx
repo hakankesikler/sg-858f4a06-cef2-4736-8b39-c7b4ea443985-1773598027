@@ -17,6 +17,11 @@ export function Hero() {
               <span>Güvenilir ve Hızlı Teslimat</span>
             </div>
             
+            <div className="inline-flex items-center gap-2 bg-accent/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm ml-2">
+              <MapPin className="w-4 h-4" />
+              <span>81 İle ve İlçelerine 1 Paletten Başlayan Teslimat</span>
+            </div>
+            
             <h1 className="font-heading font-bold text-5xl lg:text-6xl leading-tight">
               Lojistikte
               <span className="block gradient-text text-transparent bg-clip-text bg-gradient-to-r from-accent to-yellow-300">

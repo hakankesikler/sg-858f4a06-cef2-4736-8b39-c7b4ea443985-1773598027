@@ -1,4 +1,4 @@
-import { Plane, Ship, Truck, Warehouse, Globe, Box } from "lucide-react";
+import { Plane, Ship, Truck, Warehouse, Globe, Box, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const services = [
@@ -6,6 +6,12 @@ const services = [
     icon: Truck,
     title: "Kara Yolu Taşımacılığı",
     description: "Türkiye ve Avrupa genelinde kapıdan kapıya kara yolu taşımacılığı hizmetleri.",
+  },
+  {
+    icon: MapPin,
+    title: "Türkiye Geneli Dağıtım",
+    description: "81 ile ve tüm ilçelere 1 palet minimum miktar ile esnek ve hızlı teslimat hizmeti.",
+    featured: true,
   },
   {
     icon: Plane,
@@ -26,7 +32,6 @@ const services = [
     icon: Warehouse,
     title: "Depolama Hizmetleri",
     description: "Türkiye'nin 81 ilinde gümrüksüz depolama ve stok yönetimi hizmetleri.",
-    featured: true,
   },
   {
     icon: Box,

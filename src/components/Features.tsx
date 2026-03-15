@@ -13,6 +13,11 @@ const features = [
   },
   {
     icon: MapPin,
+    title: "1 Paletten Başlayan Teslimat",
+    description: "Türkiye'nin 81 ili ve tüm ilçelerine minimum 1 palet ile esnek teslimat imkanı.",
+  },
+  {
+    icon: MapPin,
     title: "81 İlde Depolama",
     description: "Türkiye'nin her ilinde gümrüksüz depolama ve stok yönetimi hizmetleri.",
   },
