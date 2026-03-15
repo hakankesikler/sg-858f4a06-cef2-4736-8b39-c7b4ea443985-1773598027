@@ -1,43 +1,33 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ArrowRight, Mail } from "lucide-react";
+import { QuoteForm } from "@/components/QuoteForm";
 
 export function CTA() {
   return (
     <section className="py-20 bg-gradient-hero">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto text-center text-white">
-          <h2 className="font-heading font-bold text-4xl mb-4">
-            Lojistik Çözümleriniz İçin Hemen İletişime Geçin
-          </h2>
-          <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
-            REX Lojistik ile güvenli, hızlı ve ekonomik taşımacılık hizmetinden yararlanın. Uzman ekibimiz size özel çözümler sunmaya hazır.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto mb-8">
-            <div className="relative flex-1 w-full">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="email"
-                placeholder="E-posta adresiniz"
-                className="pl-10 h-12 bg-white/95 border-0"
-              />
-            </div>
-            <Button size="lg" className="bg-accent hover:bg-accent/90 text-white h-12 px-8">
-              Teklif Al <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center text-white mb-12">
+            <h2 className="font-heading font-bold text-4xl mb-4">
+              Lojistik Çözümleriniz İçin Hemen İletişime Geçin
+            </h2>
+            <p className="text-lg text-blue-100 max-w-2xl mx-auto">
+              REX Lojistik ile güvenli, hızlı ve ekonomik taşımacılık hizmetinden yararlanın. Detaylı teklif formumuzu doldurun, size özel fiyat teklifi alalım.
+            </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-8 pt-8 border-t border-white/20">
-            <div className="text-center">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
+            <QuoteForm />
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-8 pt-12 mt-12 border-t border-white/20">
+            <div className="text-center text-white">
               <div className="text-3xl font-heading font-bold mb-1">7/24</div>
               <div className="text-sm text-blue-200">Müşteri Desteği</div>
             </div>
-            <div className="text-center">
+            <div className="text-center text-white">
               <div className="text-3xl font-heading font-bold mb-1">20+</div>
               <div className="text-sm text-blue-200">Yıllık Tecrübe</div>
             </div>
-            <div className="text-center">
+            <div className="text-center text-white">
               <div className="text-3xl font-heading font-bold mb-1">100%</div>
               <div className="text-sm text-blue-200">Müşteri Memnuniyeti</div>
             </div>
