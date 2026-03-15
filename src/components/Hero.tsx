@@ -30,11 +30,9 @@ export function Hero() {
               </span>
             </h1>
             
-            <div className="bg-white p-5 rounded-xl shadow-2xl border border-border/50">
-              <p className="text-lg text-blue-100 max-w-xl">
-                20+ yıllık sektör tecrübesiyle 2022'den bu yana Türkiye ve dünya genelinde profesyonel lojistik hizmetleri sunuyoruz. Yüklerinizi güvenle, zamanında ve eksiksiz teslim ediyoruz.
-              </p>
-            </div>
+            <p className="text-lg text-blue-100 max-w-xl">
+              20+ yıllık sektör tecrübesiyle 2022'den bu yana Türkiye ve dünya genelinde profesyonel lojistik hizmetleri sunuyoruz. Yüklerinizi güvenle, zamanında ve eksiksiz teslim ediyoruz.
+            </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
               <Link href="#teklif">
