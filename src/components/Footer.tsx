@@ -9,13 +9,15 @@ export function Footer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div>
             <Link href="/" className="inline-block mb-4">
-              <Image 
-                src="/rex-logo.svg" 
-                alt="REX Lojistik Logo" 
-                width={180} 
-                height={50}
-                className="h-12 w-auto brightness-0 invert"
-              />
+              <div className="bg-white rounded-full p-2 inline-block">
+                <Image 
+                  src="/rex-logo-original.png" 
+                  alt="REX Lojistik Logo" 
+                  width={80} 
+                  height={80}
+                  className="h-16 w-auto"
+                />
+              </div>
             </Link>
             <p className="text-blue-200 text-sm mb-4">
               2003 yılından bu yana güvenilir, hızlı ve profesyonel uluslararası lojistik çözümleri.
@@ -44,6 +46,7 @@ export function Footer() {
               <li><Link href="#" className="hover:text-accent transition-colors">Kara Yolu Taşımacılığı</Link></li>
               <li><Link href="#" className="hover:text-accent transition-colors">Gümrükleme Hizmetleri</Link></li>
               <li><Link href="#" className="hover:text-accent transition-colors">Depolama ve Antrepo</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Sigorta Hizmetleri</Link></li>
             </ul>
           </div>
 
@@ -55,6 +58,7 @@ export function Footer() {
               <li><Link href="#" className="hover:text-accent transition-colors">Vizyonumuz</Link></li>
               <li><Link href="#referanslar" className="hover:text-accent transition-colors">Referanslarımız</Link></li>
               <li><Link href="#iletisim" className="hover:text-accent transition-colors">İletişim</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Kariyer</Link></li>
             </ul>
           </div>
 

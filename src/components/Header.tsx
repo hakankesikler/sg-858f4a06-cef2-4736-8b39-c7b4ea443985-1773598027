@@ -10,11 +10,11 @@ export function Header() {
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center">
             <Image 
-              src="/rex-logo.svg" 
+              src="/rex-logo-original.png" 
               alt="REX Lojistik Logo" 
-              width={180} 
-              height={50}
-              className="h-12 w-auto"
+              width={100} 
+              height={100}
+              className="h-16 w-auto"
               priority
             />
           </Link>
