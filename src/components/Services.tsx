@@ -1,4 +1,4 @@
-import { Plane, Ship, Truck, Warehouse, Globe, Box, MapPin } from "lucide-react";
+import { Plane, Ship, Truck, Warehouse, Globe, Box, MapPin, Package } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const services = [
@@ -19,14 +19,19 @@ const services = [
     description: "Acil ve değerli kargolarınız için hızlı ve güvenilir hava yolu taşımacılığı hizmetleri.",
   },
   {
-    icon: Ship,
-    title: "Deniz Yolu Taşımacılığı",
-    description: "FCL ve LCL konteyner taşımacılığı, dökme yük ve deniz yolu kargo çözümleri.",
-  },
-  {
     icon: Globe,
     title: "Uluslararası Taşımacılık",
     description: "Dünya genelinde kapsamlı lojistik ağımızla güvenilir uluslararası taşımacılık.",
+  },
+  {
+    icon: Package,
+    title: "Express Kargo Hizmeti",
+    description: "Dünya çapında güvenilir express kargo iş ortaklarımızla dünyanın ulaşılabilir her ülkesine hızlı dosya, paket ve kargo teslimatı.",
+  },
+  {
+    icon: Ship,
+    title: "Deniz Yolu Taşımacılığı",
+    description: "FCL ve LCL konteyner taşımacılığı, dökme yük ve deniz yolu kargo çözümleri.",
   },
   {
     icon: Warehouse,
