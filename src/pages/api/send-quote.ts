@@ -32,7 +32,6 @@ function formatEmailContent(data: any): string {
     "container-40": "40 cc Konteyner",
   };
 
-  // Format multiple cargos
   const cargosHtml = data.cargos.map((cargo: any, index: number) => `
     <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
       <div style="font-weight: bold; color: #F97316; margin-bottom: 8px;">📦 Yük #${index + 1}</div>
@@ -62,11 +61,7 @@ function formatEmailContent(data: any): string {
   `).join('');
 
   return `
-<html>
-<head>
-  <meta charset="UTF-8">
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: #0F172A; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
       <h1 style="margin: 0; font-size: 24px;">🚚 Yeni Teklif Talebi</h1>
@@ -163,8 +158,7 @@ function formatEmailContent(data: any): string {
       </div>
     </div>
   </div>
-</body>
-</html>
+</div>
   `;
 }
 
@@ -179,7 +173,6 @@ export default async function handler(
   try {
     const formData = req.body;
 
-    // Validate cargos array
     if (!formData.cargos || !Array.isArray(formData.cargos) || formData.cargos.length === 0) {
       return res.status(400).json({
         success: false,
@@ -187,10 +180,8 @@ export default async function handler(
       });
     }
 
-    // Format email content
     const emailHtml = formatEmailContent(formData);
 
-    // Send email using Resend
     const { data, error } = await resend.emails.send({
       from: "REX Lojistik <onboarding@resend.dev>",
       to: ["info@rexlojistik.com"],
