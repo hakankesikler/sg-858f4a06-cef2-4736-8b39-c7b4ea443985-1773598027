@@ -81,7 +81,7 @@ export function TrackingSection() {
               </div>
 
               <div className="mt-6 text-center text-sm text-muted-foreground">
-                <p>Takip numaranızı bulamıyor musunuz? <a href="tel:+905327173434" className="text-primary hover:underline">0532 717 34 34</a> numaralı hattan bize ulaşabilirsiniz.</p>
+                <p>Takip numaranızı bulamıyor musunuz? <a href="tel:+905434010755" className="text-primary hover:underline">0543 401 07 55</a> numaralı hattan bize ulaşabilirsiniz.</p>
               </div>
             </CardContent>
           </Card>
