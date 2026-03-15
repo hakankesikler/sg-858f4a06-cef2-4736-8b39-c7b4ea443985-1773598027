@@ -99,11 +99,11 @@ const config: Config = {
         "pulse-glow": {
           "0%, 100%": {
             opacity: "1",
-            textShadow: "0 0 10px rgba(249, 115, 22, 0.5)",
+            transform: "scale(1)",
           },
           "50%": {
-            opacity: "0.7",
-            textShadow: "0 0 20px rgba(249, 115, 22, 0.8)",
+            opacity: "0.85",
+            transform: "scale(1.02)",
           },
         },
       },

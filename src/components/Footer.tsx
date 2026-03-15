@@ -11,7 +11,7 @@ export function Footer() {
             <Link href="/" className="inline-block mb-4">
               <div className="bg-white rounded-full p-2 inline-block">
                 <Image 
-                  src="/rex-logo-original.png" 
+                  src="/rex-lojistik-logo-new.png" 
                   alt="REX Lojistik Logo" 
                   width={80} 
                   height={80}
@@ -20,7 +20,7 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-blue-200 text-sm mb-4">
-              2003 yılından bu yana güvenilir, hızlı ve profesyonel uluslararası lojistik çözümleri.
+              2002 yılından bu yana sektör tecrübesi ile 2022'de kurulan REX Lojistik, güvenilir ve profesyonel lojistik çözümleri sunuyor.
             </p>
             <div className="flex gap-3">
               <a href="#" className="bg-white/10 hover:bg-accent p-2 rounded-lg transition-colors">
