@@ -18,6 +18,11 @@ const services = [
     description: "FCL ve LCL konteyner taşımacılığı, dökme yük ve deniz yolu kargo çözümleri.",
   },
   {
+    icon: Globe,
+    title: "Uluslararası Taşımacılık",
+    description: "Dünya genelinde kapsamlı lojistik ağımızla güvenilir uluslararası taşımacılık.",
+  },
+  {
     icon: Warehouse,
     title: "Depolama Hizmetleri",
     description: "Türkiye'nin 81 ilinde gümrüksüz depolama ve stok yönetimi hizmetleri.",
@@ -27,11 +32,6 @@ const services = [
     icon: Box,
     title: "Paketleme ve Elleçleme",
     description: "Profesyonel paketleme, etiketleme ve yük elleçleme hizmetleri.",
-  },
-  {
-    icon: Globe,
-    title: "Uluslararası Taşımacılık",
-    description: "Dünya genelinde kapsamlı lojistik ağımızla güvenilir uluslararası taşımacılık.",
   },
 ];
 
