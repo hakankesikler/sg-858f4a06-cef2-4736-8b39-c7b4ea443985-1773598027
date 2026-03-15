@@ -50,6 +50,8 @@ const config: Config = {
         navy: "hsl(var(--navy))",
         "blue-light": "hsl(var(--blue-light))",
         "orange-light": "hsl(var(--orange-light))",
+        "slate-text": "hsl(var(--slate-text))",
+        "logo-orange": "hsl(var(--logo-orange))",
       },
       backgroundImage: {
         "gradient-hero": "var(--gradient-hero)",

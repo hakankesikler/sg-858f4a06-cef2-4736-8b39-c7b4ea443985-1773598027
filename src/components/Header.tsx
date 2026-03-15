@@ -42,26 +42,26 @@ export function Header() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="#hizmetler" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            <Link href="#hizmetler" className="text-sm font-medium text-slate-text hover:text-navy transition-colors">
               Hizmetlerimiz
             </Link>
-            <Link href="#hakkimizda" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            <Link href="#hakkimizda" className="text-sm font-medium text-slate-text hover:text-navy transition-colors">
               Hakkımızda
             </Link>
-            <Link href="#referanslar" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            <Link href="#referanslar" className="text-sm font-medium text-slate-text hover:text-navy transition-colors">
               Referanslar
             </Link>
-            <Link href="#iletisim" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+            <Link href="#iletisim" className="text-sm font-medium text-slate-text hover:text-navy transition-colors">
               İletişim
             </Link>
           </nav>
 
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
+            <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 border-slate-text/20 text-navy hover:border-navy">
               <Phone className="w-4 h-4" />
               <span>+90 543 401 07 55</span>
             </Button>
-            <Button size="sm" className="bg-gradient-accent hover:opacity-90">
+            <Button size="sm" className="bg-logo-orange hover:bg-logo-orange/90 text-white shadow-lg shadow-logo-orange/20">
               Teklif Al
             </Button>
             <Button variant="ghost" size="icon" className="md:hidden">

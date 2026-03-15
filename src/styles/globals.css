@@ -6,21 +6,21 @@
 
 @layer base {
   :root {
-    /* Logistics Brand Colors - Professional Blue & Energetic Orange */
+    /* Logistics Brand Colors - Matched with REX Logo */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 222 47% 11%;           /* #0F172A - Logo REX text color */
     
-    --primary: 222 84% 35%;        /* Deep Professional Blue */
+    --primary: 222 47% 11%;              /* #0F172A - Deep slate matching logo */
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 222 20% 95%;      /* Light Blue Grey */
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 215 25% 27%;            /* Darker slate for depth */
+    --secondary-foreground: 0 0% 100%;
     
-    --accent: 28 89% 55%;          /* Energetic Orange */
+    --accent: 24 95% 53%;                /* #F97316 - Exact logo orange */
     --accent-foreground: 0 0% 100%;
     
     --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 215 16% 47%;     /* #64748B - Logo subtitle color */
     
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -30,21 +30,23 @@
     
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 222 84% 35%;
+    --ring: 222 47% 11%;                 /* Logo color for focus rings */
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
     --radius: 0.5rem;
     
-    /* Custom Logistics Colors */
-    --navy: 222 47% 11%;
+    /* Custom Logistics Colors - Logo Matched */
+    --navy: 222 47% 11%;                 /* #0F172A */
+    --slate-text: 215 16% 47%;           /* #64748B */
+    --logo-orange: 24 95% 53%;           /* #F97316 */
     --blue-light: 214 95% 93%;
-    --orange-light: 28 100% 95%;
+    --orange-light: 24 100% 97%;
     
-    /* Custom Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(222, 84%, 35%) 0%, hsl(222, 84%, 25%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(28, 89%, 55%) 0%, hsl(35, 95%, 60%) 100%);
+    /* Custom Gradients - Using Logo Colors */
+    --gradient-hero: linear-gradient(135deg, hsl(222, 47%, 11%) 0%, hsl(222, 47%, 8%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(24, 95%, 53%) 0%, hsl(28, 90%, 58%) 100%);
   }
 
   .dark {
