@@ -1,9 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { Resend } from "resend";
 
 type ResponseData = {
   success: boolean;
   message: string;
 };
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 function formatEmailContent(data: any): string {
   const serviceTypeLabel = data.serviceType === "domestic" ? "Yurt İçi" : "Uluslararası";
@@ -184,34 +187,25 @@ export default async function handler(
     // Format email content
     const emailHtml = formatEmailContent(formData);
 
-    // Send email using a service (example with Resend, SendGrid, or native fetch to email API)
-    // For now, we'll use a simple implementation that works with most email services
-    
-    const emailData = {
-      to: "info@rexlojistik.com",
+    // Send email using Resend
+    const { data, error } = await resend.emails.send({
+      from: "REX Lojistik <onboarding@resend.dev>",
+      to: ["info@rexlojistik.com"],
+      replyTo: formData.email,
       subject: `Yeni Teklif Talebi - ${formData.companyName}`,
       html: emailHtml,
-      from: "noreply@rexlojistik.com",
-      replyTo: formData.email,
-    };
+    });
 
-    // Example with Resend (you'll need to install: npm i resend)
-    // const resend = new Resend(process.env.RESEND_API_KEY);
-    // await resend.emails.send(emailData);
+    if (error) {
+      console.error("Resend API Error:", error);
+      return res.status(400).json({
+        success: false,
+        message: "E-posta gönderilemedi. Lütfen tekrar deneyin.",
+      });
+    }
 
-    // For development/testing, log the email content
-    console.log("=== EMAIL TO SEND ===");
-    console.log("To:", emailData.to);
-    console.log("Subject:", emailData.subject);
-    console.log("From:", emailData.from);
-    console.log("Reply-To:", emailData.replyTo);
-    console.log("\nForm Data:", JSON.stringify(formData, null, 2));
-    console.log("====================");
+    console.log("✅ Email sent successfully:", data);
 
-    // TODO: Implement actual email sending here
-    // You can use: Resend, SendGrid, NodeMailer, AWS SES, etc.
-    // For now, returning success for testing
-    
     return res.status(200).json({
       success: true,
       message: "Teklif talebiniz başarıyla alındı",
