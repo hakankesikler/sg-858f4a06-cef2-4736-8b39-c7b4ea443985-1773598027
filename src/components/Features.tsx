@@ -4,7 +4,7 @@ const features = [
   {
     icon: Clock,
     title: "Zamanında Teslimat",
-    description: "20 yılı aşkın tecrübemizle tüm gönderileriniz belirlenen sürede eksiksiz teslim edilir.",
+    description: "Profesyonel ekibimizle tüm gönderileriniz belirlenen sürede eksiksiz teslim edilir.",
   },
   {
     icon: Shield,
@@ -27,12 +27,12 @@ const companyValues = [
   {
     icon: Award,
     title: "Kalite Politikamız",
-    description: "Müşteri memnuniyeti odaklı, ISO sertifikalı kalite yönetim sistemimizle hizmet veriyoruz.",
+    description: "Müşteri memnuniyeti odaklı, kaliteli hizmet anlayışıyla modern lojistik çözümleri sunuyoruz.",
   },
   {
     icon: CheckCircle2,
     title: "Vizyonumuz",
-    description: "Türkiye ve dünya pazarında lider konumunu güçlendirerek, sektörün öncü kuruluşu olmak.",
+    description: "Türkiye ve dünya pazarında güçlü konumumuzu sürdürerek, sektörün dinamik ve güvenilir kuruluşu olmak.",
   },
 ];
 
@@ -46,7 +46,7 @@ export function Features() {
               Neden REX Lojistik?
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              2003 yılından bu yana lojistik sektöründe faaliyet gösteren REX Lojistik, müşteri memnuniyeti odaklı yaklaşımı ve kaliteli hizmet anlayışıyla sektörde güvenilir bir iş ortağıdır.
+              2022 yılından bu yana lojistik sektöründe faaliyet gösteren REX Lojistik, müşteri memnuniyeti odaklı yaklaşımı ve kaliteli hizmet anlayışıyla sektörde güvenilir bir iş ortağıdır.
             </p>
 
             <div className="space-y-6">
@@ -88,11 +88,11 @@ export function Features() {
 
               <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/20">
                 <div>
-                  <div className="text-3xl font-heading font-bold">2003</div>
+                  <div className="text-3xl font-heading font-bold">2022</div>
                   <div className="text-sm text-blue-200">Kuruluş Yılı</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-heading font-bold">20+</div>
+                  <div className="text-3xl font-heading font-bold">2+</div>
                   <div className="text-sm text-blue-200">Yıllık Deneyim</div>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { Package, Plane, Ship, Warehouse, Globe, FileText, Truck, Box } from "lucide-react";
+import { Package, Plane, Ship, Warehouse, Globe, Truck, Box } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const services = [
@@ -16,11 +16,6 @@ const services = [
     icon: Truck,
     title: "Kara Yolu Taşımacılığı",
     description: "Türkiye ve Avrupa genelinde kapıdan kapıya kara yolu taşımacılığı hizmetleri.",
-  },
-  {
-    icon: FileText,
-    title: "Gümrükleme Hizmetleri",
-    description: "İthalat ve ihracat gümrük işlemlerinizde profesyonel danışmanlık ve işlem takibi.",
   },
   {
     icon: Warehouse,

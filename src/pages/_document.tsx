@@ -7,13 +7,13 @@ export default function Document() {
       <Head>
         <SEOElements
           title="REX Lojistik - Uluslararası Lojistik ve Nakliye Hizmetleri"
-          description="REX Lojistik ile güvenli, hızlı ve ekonomik uluslararası taşımacılık. Kara, hava, deniz yolu taşımacılığı, depolama, gümrük ve sigorta hizmetleri. 20+ yıllık deneyim, 50+ ülkeye hizmet."
+          description="REX Lojistik ile güvenli, hızlı ve ekonomik uluslararası taşımacılık. Kara, hava, deniz yolu taşımacılığı, depolama ve sigorta hizmetleri. 2022'den beri profesyonel hizmet."
           image="/og-image.png"
         />
         <link rel="icon" href="/favicon.ico" />
         <meta name="theme-color" content="#1e3a8a" />
         <link rel="apple-touch-icon" href="/og-image.png" />
-        <meta name="keywords" content="rex lojistik, uluslararası lojistik, kargo taşımacılığı, hava kargo, deniz yolu taşımacılığı, kara taşımacılığı, depolama hizmeti, gümrük müşavirliği, nakliye sigortası, parsiyel taşıma, komple taşıma, proje taşımacılığı" />
+        <meta name="keywords" content="rex lojistik, uluslararası lojistik, kargo taşımacılığı, hava kargo, deniz yolu taşımacılığı, kara taşımacılığı, depolama hizmeti, nakliye sigortası, parsiyel taşıma, komple taşıma, proje taşımacılığı" />
         <meta name="author" content="REX Lojistik" />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="https://www.rexlojistik.com" />
@@ -29,6 +29,7 @@ export default function Document() {
               "description": "Uluslararası lojistik ve nakliye hizmetleri - Kara, hava, deniz yolu taşımacılığı",
               "url": "https://www.rexlojistik.com",
               "logo": "https://www.rexlojistik.com/og-image.png",
+              "foundingDate": "2022-12",
               "contactPoint": {
                 "@type": "ContactPoint",
                 "telephone": "+90-216-123-4567",
@@ -52,8 +53,8 @@ export default function Document() {
               },
               "aggregateRating": {
                 "@type": "AggregateRating",
-                "ratingValue": "4.8",
-                "reviewCount": "500+"
+                "ratingValue": "4.9",
+                "reviewCount": "150+"
               }
             })
           }}
@@ -128,16 +129,16 @@ export default function Document() {
                     "@type": "Offer",
                     "itemOffered": {
                       "@type": "Service",
-                      "name": "Gümrük Müşavirliği",
-                      "description": "İthalat ve ihracat gümrük işlemleri"
+                      "name": "Paketleme ve Elleçleme",
+                      "description": "Profesyonel paketleme hizmetleri"
                     }
                   },
                   {
                     "@type": "Offer",
                     "itemOffered": {
                       "@type": "Service",
-                      "name": "Nakliye Sigortası",
-                      "description": "Kapsamlı kargo sigortası çözümleri"
+                      "name": "Proje Kargo",
+                      "description": "Ağır ve büyük boy ekipman taşımacılığı"
                     }
                   }
                 ]
@@ -158,7 +159,7 @@ export default function Document() {
                   "name": "REX Lojistik hangi ülkelere hizmet veriyor?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "REX Lojistik, Avrupa, Asya, Orta Doğu ve Afrika olmak üzere 50'den fazla ülkeye kara, hava ve deniz yolu taşımacılığı hizmeti sunmaktadır."
+                    "text": "REX Lojistik, Avrupa, Asya, Orta Doğu ve Afrika olmak üzere 30'dan fazla ülkeye kara, hava ve deniz yolu taşımacılığı hizmeti sunmaktadır."
                   }
                 },
                 {

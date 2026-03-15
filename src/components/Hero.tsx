@@ -25,7 +25,7 @@ export function Hero() {
             </h1>
             
             <p className="text-lg text-blue-100 max-w-xl">
-              2003 yılından bu yana Türkiye ve dünya genelinde profesyonel lojistik hizmetleri sunuyoruz. Yüklerinizi güvenle, zamanında ve eksiksiz teslim ediyoruz.
+              2022 yılından bu yana Türkiye ve dünya genelinde profesyonel lojistik hizmetleri sunuyoruz. Yüklerinizi güvenle, zamanında ve eksiksiz teslim ediyoruz.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -39,11 +39,11 @@ export function Hero() {
 
             <div className="grid grid-cols-3 gap-6 pt-8">
               <div>
-                <div className="text-3xl font-heading font-bold">20+</div>
+                <div className="text-3xl font-heading font-bold">2+</div>
                 <div className="text-sm text-blue-200">Yıllık Tecrübe</div>
               </div>
               <div>
-                <div className="text-3xl font-heading font-bold">100+</div>
+                <div className="text-3xl font-heading font-bold">30+</div>
                 <div className="text-sm text-blue-200">Ülkeye Teslimat</div>
               </div>
               <div>
