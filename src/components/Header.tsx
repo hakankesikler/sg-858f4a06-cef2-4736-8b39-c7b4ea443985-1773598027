@@ -30,12 +30,12 @@ export function Header() {
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center transition-transform hover:scale-105">
             <Image 
-              src="/rex-logo.png" 
+              src="/2_3_.png" 
               alt="REX Lojistik Logo" 
-              width={300} 
-              height={90}
+              width={350} 
+              height={100}
               className={`w-auto transition-all duration-300 ${
-                isScrolled ? "h-16" : "h-20"
+                isScrolled ? "h-20" : "h-24"
               }`}
               priority
             />
