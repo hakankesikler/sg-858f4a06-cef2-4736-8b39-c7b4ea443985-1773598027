@@ -43,7 +43,7 @@ export function Hero() {
                 <div className="text-sm text-blue-200">Yıllık Tecrübe</div>
               </div>
               <div>
-                <div className="text-3xl font-heading font-bold">30+</div>
+                <div className="text-3xl font-heading font-bold">240</div>
                 <div className="text-sm text-blue-200">Ülkeye Teslimat</div>
               </div>
               <div>
