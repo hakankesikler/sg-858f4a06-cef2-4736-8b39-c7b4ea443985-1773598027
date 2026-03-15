@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Truck, Clock, MapPin, ArrowRight, Package } from "lucide-react";
+import Image from "next/image";
 
 export function Hero() {
   return (
@@ -52,34 +53,4 @@ export function Hero() {
                 <div className="text-sm text-blue-200">Ülkeye Teslimat</div>
               </div>
               <div>
-                <div className="text-3xl font-heading font-bold">99%</div>
-                <div className="text-sm text-blue-200">Müşteri Memnuniyeti</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative hidden lg:block">
-            <div className="relative animate-float">
-              <div className="absolute inset-0 bg-gradient-accent opacity-20 blur-3xl rounded-full" />
-              <div className="relative bg-white/10 backdrop-blur-sm p-8 rounded-2xl border border-white/20">
-                <Truck className="w-full h-64 text-white" strokeWidth={1} />
-              </div>
-            </div>
-            
-            <div className="absolute -bottom-4 -left-4 bg-white p-4 rounded-xl shadow-2xl">
-              <div className="flex items-center gap-3">
-                <div className="bg-green-500 p-2 rounded-lg">
-                  <Package className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-navy">Anlık Takip</div>
-                  <div className="text-xs text-muted-foreground">Güvenli Teslimat</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+                <div className="text-3xl font-heading
