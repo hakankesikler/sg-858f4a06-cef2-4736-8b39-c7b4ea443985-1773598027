@@ -37,7 +37,7 @@ export function Header() {
           <div className="flex items-center gap-4">
             <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              <span>+90 216 504 23 96</span>
+              <span>+90 232 218 24 83</span>
             </Button>
             <Button size="sm" className="bg-gradient-accent hover:opacity-90">
               Teklif Al

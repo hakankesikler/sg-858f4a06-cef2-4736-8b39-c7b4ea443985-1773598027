@@ -44,9 +44,9 @@ export function Footer() {
               <li><Link href="#" className="hover:text-accent transition-colors">Hava Yolu Taşımacılığı</Link></li>
               <li><Link href="#" className="hover:text-accent transition-colors">Deniz Yolu Taşımacılığı</Link></li>
               <li><Link href="#" className="hover:text-accent transition-colors">Kara Yolu Taşımacılığı</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Gümrükleme Hizmetleri</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Depolama ve Antrepo</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Sigorta Hizmetleri</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Depolama Hizmetleri</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Paketleme ve Elleçleme</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Uluslararası Taşımacılık</Link></li>
             </ul>
           </div>
 
@@ -64,20 +64,41 @@ export function Footer() {
 
           <div>
             <h3 className="font-heading font-semibold text-lg mb-4">İletişim</h3>
-            <ul className="space-y-3 text-sm text-blue-200">
-              <li className="flex items-start gap-2">
-                <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>+90 216 504 23 96</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>info@rexlojistik.com</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>Küçükbakkalköy Mah. Kayışdağı Cad.<br />No: 110/5 Ataşehir / İstanbul</span>
-              </li>
-            </ul>
+            <div className="space-y-4 text-sm text-blue-200">
+              <div>
+                <h4 className="font-semibold text-white mb-2">Merkez Ofis - İzmir</h4>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>Folkart Towers A Kule No:47/B K:26 D:2601<br />Adalet Mahallesi Manas Bulvarı<br />Bayraklı / İzmir, 35530</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-white mb-2">Manisa Ofisi</h4>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>Muradiye Mahallesi 42 Sokak 3/C<br />Yunusemre, 45140<br />Manisa, Türkiye</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-white mb-2">Telefon</h4>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>+90 232 218 24 83</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>+90 543 401 07 55</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
 
