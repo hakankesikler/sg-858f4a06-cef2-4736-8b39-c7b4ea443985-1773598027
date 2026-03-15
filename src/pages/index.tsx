@@ -1,12 +1,27 @@
-import React from 'react'
+import { SEO } from "@/components/SEO";
+import { Header } from "@/components/Header";
+import { Hero } from "@/components/Hero";
+import { Services } from "@/components/Services";
+import { Features } from "@/components/Features";
+import { Footer } from "@/components/Footer";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-foreground">Hello World</h1>
-        <p className="text-lg text-muted-foreground">This is going to be your softgen app, start by describing your project.</p>
+    <>
+      <SEO
+        title="LogisticPro - Profesyonel Lojistik Çözümleri"
+        description="Kara, hava ve deniz taşımacılığı ile depolama hizmetleri. 150+ ülkeye güvenli ve hızlı teslimat. 7/24 müşteri desteği ve anlık kargo takibi."
+        image="/og-image.png"
+      />
+      <div className="min-h-screen">
+        <Header />
+        <main>
+          <Hero />
+          <Services />
+          <Features />
+        </main>
+        <Footer />
       </div>
-    </main>
-  )
+    </>
+  );
 }
