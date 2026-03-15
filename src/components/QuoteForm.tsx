@@ -45,8 +45,6 @@ const formSchema = z.object({
   receiverDistrict: z.string().min(2, "İlçe giriniz"),
   receiverPostalCode: z.string().min(5, "Posta kodu giriniz"),
   receiverAddress: z.string().min(10, "Adres giriniz"),
-  
-  cargos: z.array(cargoSchema).min(1, "En az bir yük bilgisi girilmelidir"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -93,6 +91,7 @@ export function QuoteForm() {
   const [cargos, setCargos] = useState<CargoData[]>([
     { width: "", length: "", height: "", weight: "", quantity: "" }
   ]);
+  const [cargoErrors, setCargoErrors] = useState<Array<Partial<Record<keyof CargoData, string>>>>([{}]);
 
   const {
     register,
@@ -103,9 +102,6 @@ export function QuoteForm() {
     reset,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      cargos: [{ width: "", length: "", height: "", weight: "", quantity: "" }]
-    }
   });
 
   const serviceType = watch("serviceType");
@@ -135,16 +131,16 @@ export function QuoteForm() {
   };
 
   const addCargo = () => {
-    const newCargos = [...cargos, { width: "", length: "", height: "", weight: "", quantity: "" }];
-    setCargos(newCargos);
-    setValue("cargos", newCargos);
+    setCargos([...cargos, { width: "", length: "", height: "", weight: "", quantity: "" }]);
+    setCargoErrors([...cargoErrors, {}]);
   };
 
   const removeCargo = (index: number) => {
     if (cargos.length > 1) {
       const newCargos = cargos.filter((_, i) => i !== index);
+      const newErrors = cargoErrors.filter((_, i) => i !== index);
       setCargos(newCargos);
-      setValue("cargos", newCargos);
+      setCargoErrors(newErrors);
     }
   };
 
@@ -152,10 +148,53 @@ export function QuoteForm() {
     const newCargos = [...cargos];
     newCargos[index] = { ...newCargos[index], [field]: value };
     setCargos(newCargos);
-    setValue("cargos", newCargos);
+    
+    const newErrors = [...cargoErrors];
+    newErrors[index] = { ...newErrors[index], [field]: undefined };
+    setCargoErrors(newErrors);
+  };
+
+  const validateCargos = (): boolean => {
+    const newErrors: Array<Partial<Record<keyof CargoData, string>>> = [];
+    let isValid = true;
+
+    cargos.forEach((cargo) => {
+      const errors: Partial<Record<keyof CargoData, string>> = {};
+      
+      if (!cargo.width || cargo.width.trim() === "") {
+        errors.width = "En giriniz";
+        isValid = false;
+      }
+      if (!cargo.length || cargo.length.trim() === "") {
+        errors.length = "Boy giriniz";
+        isValid = false;
+      }
+      if (!cargo.height || cargo.height.trim() === "") {
+        errors.height = "Yükseklik giriniz";
+        isValid = false;
+      }
+      if (!cargo.weight || cargo.weight.trim() === "") {
+        errors.weight = "Ağırlık giriniz";
+        isValid = false;
+      }
+      if (!cargo.quantity || cargo.quantity.trim() === "") {
+        errors.quantity = "Adet giriniz";
+        isValid = false;
+      }
+      
+      newErrors.push(errors);
+    });
+
+    setCargoErrors(newErrors);
+    return isValid;
   };
 
   const onSubmit = async (data: FormData) => {
+    if (!validateCargos()) {
+      setSubmitError("Lütfen tüm yük bilgilerini doldurun");
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError("");
 
@@ -165,20 +204,26 @@ export function QuoteForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          cargos: cargos,
+        }),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error("Form gönderilemedi");
+        throw new Error(result.message || "Form gönderilemedi");
       }
 
       setSubmitSuccess(true);
       reset();
       setCargos([{ width: "", length: "", height: "", weight: "", quantity: "" }]);
+      setCargoErrors([{}]);
       
       setTimeout(() => setSubmitSuccess(false), 5000);
     } catch (error) {
-      setSubmitError("Form gönderilirken bir hata oluştu. Lütfen tekrar deneyin.");
+      setSubmitError(error instanceof Error ? error.message : "Form gönderilirken bir hata oluştu. Lütfen tekrar deneyin.");
       console.error("Form submission error:", error);
     } finally {
       setIsSubmitting(false);
@@ -497,8 +542,8 @@ export function QuoteForm() {
                   className="mt-1 bg-white/95"
                   placeholder="100"
                 />
-                {errors.cargos?.[index]?.width && (
-                  <p className="text-red-300 text-sm mt-1">{errors.cargos[index]?.width?.message}</p>
+                {cargoErrors[index]?.width && (
+                  <p className="text-red-300 text-sm mt-1">{cargoErrors[index].width}</p>
                 )}
               </div>
 
@@ -512,8 +557,8 @@ export function QuoteForm() {
                   className="mt-1 bg-white/95"
                   placeholder="120"
                 />
-                {errors.cargos?.[index]?.length && (
-                  <p className="text-red-300 text-sm mt-1">{errors.cargos[index]?.length?.message}</p>
+                {cargoErrors[index]?.length && (
+                  <p className="text-red-300 text-sm mt-1">{cargoErrors[index].length}</p>
                 )}
               </div>
 
@@ -527,8 +572,8 @@ export function QuoteForm() {
                   className="mt-1 bg-white/95"
                   placeholder="80"
                 />
-                {errors.cargos?.[index]?.height && (
-                  <p className="text-red-300 text-sm mt-1">{errors.cargos[index]?.height?.message}</p>
+                {cargoErrors[index]?.height && (
+                  <p className="text-red-300 text-sm mt-1">{cargoErrors[index].height}</p>
                 )}
               </div>
 
@@ -542,8 +587,8 @@ export function QuoteForm() {
                   className="mt-1 bg-white/95"
                   placeholder="500"
                 />
-                {errors.cargos?.[index]?.weight && (
-                  <p className="text-red-300 text-sm mt-1">{errors.cargos[index]?.weight?.message}</p>
+                {cargoErrors[index]?.weight && (
+                  <p className="text-red-300 text-sm mt-1">{cargoErrors[index].weight}</p>
                 )}
               </div>
 
@@ -557,8 +602,8 @@ export function QuoteForm() {
                   className="mt-1 bg-white/95"
                   placeholder="1"
                 />
-                {errors.cargos?.[index]?.quantity && (
-                  <p className="text-red-300 text-sm mt-1">{errors.cargos[index]?.quantity?.message}</p>
+                {cargoErrors[index]?.quantity && (
+                  <p className="text-red-300 text-sm mt-1">{cargoErrors[index].quantity}</p>
                 )}
               </div>
             </div>
