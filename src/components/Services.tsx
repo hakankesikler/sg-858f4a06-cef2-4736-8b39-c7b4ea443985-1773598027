@@ -117,22 +117,28 @@ export function Services() {
             <Card 
               key={index} 
               className={`border-2 hover:border-primary hover:shadow-xl transition-all duration-300 group ${
-                service.featured ? "ring-2 ring-primary/20 bg-primary/5" : ""
+                service.featured ? "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 border-blue-400" : ""
               }`}
             >
               <CardContent className="p-6">
-                <div className="bg-gradient-accent p-3 rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform">
+                <div className={`p-3 rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform ${
+                  service.featured ? "bg-orange-500" : "bg-gradient-accent"
+                }`}>
                   <service.icon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="font-heading font-semibold text-lg text-navy mb-2">
+                <h3 className={`font-heading font-semibold text-lg mb-2 ${
+                  service.featured ? "text-white" : "text-navy"
+                }`}>
                   {service.title}
                   {service.featured && (
-                    <span className="ml-2 text-xs bg-primary text-white px-2 py-1 rounded-full">
+                    <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-bold">
                       Türkiye Geneli
                     </span>
                   )}
                 </h3>
-                <p className="text-muted-foreground text-sm">
+                <p className={`text-sm ${
+                  service.featured ? "text-blue-50" : "text-muted-foreground"
+                }`}>
                   {service.description}
                 </p>
               </CardContent>
