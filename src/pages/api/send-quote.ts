@@ -32,6 +32,35 @@ function formatEmailContent(data: any): string {
     "container-40": "40 cc Konteyner",
   };
 
+  // Format multiple cargos
+  const cargosHtml = data.cargos.map((cargo: any, index: number) => `
+    <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
+      <div style="font-weight: bold; color: #F97316; margin-bottom: 8px;">📦 Yük #${index + 1}</div>
+      <div class="cargo-specs">
+        <div class="info-row">
+          <span class="info-label">En:</span>
+          <span class="info-value">${cargo.width} cm</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Boy:</span>
+          <span class="info-value">${cargo.length} cm</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Yükseklik:</span>
+          <span class="info-value">${cargo.height} cm</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Ağırlık:</span>
+          <span class="info-value">${cargo.weight} kg</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Adet:</span>
+          <span class="info-value">${cargo.quantity}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
   return `
 <!DOCTYPE html>
 <html>
@@ -137,29 +166,8 @@ function formatEmailContent(data: any): string {
       </div>
 
       <div class="section">
-        <div class="section-title">📏 Yük Özellikleri</div>
-        <div class="cargo-specs">
-          <div class="info-row">
-            <span class="info-label">En:</span>
-            <span class="info-value">${data.cargoWidth} cm</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Boy:</span>
-            <span class="info-value">${data.cargoLength} cm</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Yükseklik:</span>
-            <span class="info-value">${data.cargoHeight} cm</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Ağırlık:</span>
-            <span class="info-value">${data.cargoWeight} kg</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Adet:</span>
-            <span class="info-value">${data.cargoQuantity}</span>
-          </div>
-        </div>
+        <div class="section-title">📏 Yük Özellikleri (${data.cargos.length} Adet Yük)</div>
+        ${cargosHtml}
       </div>
 
       <div style="text-align: center; margin-top: 20px; color: #64748B; font-size: 12px;">
@@ -183,6 +191,14 @@ export default async function handler(
 
   try {
     const formData = req.body;
+
+    // Validate cargos array
+    if (!formData.cargos || !Array.isArray(formData.cargos) || formData.cargos.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "En az bir yük bilgisi girilmelidir",
+      });
+    }
 
     // Format email content
     const emailHtml = formatEmailContent(formData);
