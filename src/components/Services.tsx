@@ -3,6 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const services = [
   {
+    icon: Truck,
+    title: "Kara Yolu Taşımacılığı",
+    description: "Türkiye ve Avrupa genelinde kapıdan kapıya kara yolu taşımacılığı hizmetleri.",
+  },
+  {
     icon: Plane,
     title: "Hava Yolu Taşımacılığı",
     description: "Acil ve değerli kargolarınız için hızlı ve güvenilir hava yolu taşımacılığı hizmetleri.",
@@ -11,11 +16,6 @@ const services = [
     icon: Ship,
     title: "Deniz Yolu Taşımacılığı",
     description: "FCL ve LCL konteyner taşımacılığı, dökme yük ve deniz yolu kargo çözümleri.",
-  },
-  {
-    icon: Truck,
-    title: "Kara Yolu Taşımacılığı",
-    description: "Türkiye ve Avrupa genelinde kapıdan kapıya kara yolu taşımacılığı hizmetleri.",
   },
   {
     icon: Warehouse,
