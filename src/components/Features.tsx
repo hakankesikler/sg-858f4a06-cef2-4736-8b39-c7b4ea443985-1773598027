@@ -79,10 +79,10 @@ export function Features() {
           </div>
 
           <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-logo-orange/20 to-navy/20 rounded-2xl blur-xl"></div>
-            <div className="relative bg-gradient-to-br from-navy via-slate-800 to-slate-900 rounded-2xl p-8 text-white shadow-2xl border border-white/10">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-logo-orange/10 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-logo-orange/30 to-blue-500/30 rounded-2xl blur-xl"></div>
+            <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 rounded-2xl p-8 text-white shadow-2xl border border-white/10">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-logo-orange/20 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl"></div>
               
               <h3 className="font-heading font-bold text-2xl mb-6 relative">
                 Kurumsal Değerlerimiz
@@ -92,12 +92,12 @@ export function Features() {
               <div className="space-y-6 mb-8 relative">
                 {companyValues.map((value, index) => (
                   <div key={index} className="flex gap-4 group">
-                    <div className="bg-gradient-to-br from-logo-orange/30 to-logo-orange/10 backdrop-blur-sm p-3 rounded-lg h-fit group-hover:from-logo-orange/40 group-hover:to-logo-orange/20 transition-all duration-300 border border-logo-orange/20">
+                    <div className="bg-logo-orange/40 backdrop-blur-sm p-3 rounded-lg h-fit group-hover:bg-logo-orange/60 transition-all duration-300 border border-logo-orange/30">
                       <value.icon className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h4 className="font-heading font-semibold text-lg mb-2">{value.title}</h4>
-                      <p className="text-blue-100 text-sm leading-relaxed">{value.description}</p>
+                      <h4 className="font-heading font-semibold text-lg mb-2 text-white">{value.title}</h4>
+                      <p className="text-blue-50 text-sm leading-relaxed">{value.description}</p>
                     </div>
                   </div>
                 ))}
@@ -105,13 +105,13 @@ export function Features() {
 
               <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/20 relative">
                 <div className="group">
-                  <div className="text-4xl font-heading font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">2022</div>
-                  <div className="text-sm text-blue-200 font-medium">Kuruluş Yılı</div>
+                  <div className="text-4xl font-heading font-bold text-blue-300">2022</div>
+                  <div className="text-sm text-blue-100 font-medium">Kuruluş Yılı</div>
                   <div className="mt-2 h-1 w-0 group-hover:w-full bg-logo-orange rounded-full transition-all duration-500"></div>
                 </div>
                 <div className="group">
-                  <div className="text-4xl font-heading font-bold bg-gradient-to-r from-logo-orange to-orange-300 bg-clip-text text-transparent">81</div>
-                  <div className="text-sm text-blue-200 font-medium">İlde Depolama</div>
+                  <div className="text-4xl font-heading font-bold text-logo-orange">81</div>
+                  <div className="text-sm text-blue-100 font-medium">İlde Depolama</div>
                   <div className="mt-2 h-1 w-0 group-hover:w-full bg-logo-orange rounded-full transition-all duration-500"></div>
                 </div>
               </div>
