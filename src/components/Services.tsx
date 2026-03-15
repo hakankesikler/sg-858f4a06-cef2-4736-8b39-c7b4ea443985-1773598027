@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Plane, Ship, Truck, Warehouse, Globe, Box, MapPin, Package } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type ServiceCategory = "all" | "domestic" | "international" | "additional";
 
@@ -13,6 +14,7 @@ interface Service {
   description: string;
   featured?: boolean;
   category: ServiceCategory;
+  badge?: string;
 }
 
 const services: Service[] = [
@@ -27,6 +29,7 @@ const services: Service[] = [
     title: "Türkiye Geneli Dağıtım",
     description: "81 ile ve tüm ilçelere 1 palet minimum miktar ile esnek ve hızlı teslimat hizmeti.",
     featured: true,
+    badge: "Türkiye Geneli",
     category: "domestic",
   },
   {
@@ -112,33 +115,34 @@ export function Services() {
         </div>
 
         {/* Services Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredServices.map((service, index) => (
-            <Card 
-              key={index} 
-              className={`border-2 hover:border-primary hover:shadow-xl transition-all duration-300 group ${
-                service.featured ? "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 border-blue-400" : ""
-              }`}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {services.map((service, index) => (
+            <Card
+              key={index}
+              className={cn(
+                "group hover:shadow-xl transition-all duration-300 border-2",
+                service.featured
+                  ? "border-orange-500 bg-white"
+                  : "border-gray-200 hover:border-orange-300 bg-white"
+              )}
             >
-              <CardContent className="p-6">
-                <div className={`p-3 rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform ${
-                  service.featured ? "bg-orange-500" : "bg-gradient-accent"
-                }`}>
-                  <service.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className={`font-heading font-semibold text-lg mb-2 ${
-                  service.featured ? "text-white" : "text-navy"
-                }`}>
-                  {service.title}
+              <CardHeader>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-4 bg-orange-500 rounded-2xl text-white group-hover:scale-110 transition-transform duration-300">
+                    <service.icon className="w-8 h-8" />
+                  </div>
                   {service.featured && (
-                    <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-bold">
-                      Türkiye Geneli
+                    <span className="px-3 py-1 bg-orange-500 text-white text-sm font-semibold rounded-full">
+                      {service.badge}
                     </span>
                   )}
-                </h3>
-                <p className={`text-sm ${
-                  service.featured ? "text-blue-50" : "text-muted-foreground"
-                }`}>
+                </div>
+                <CardTitle className="text-2xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
+                  {service.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 leading-relaxed">
                   {service.description}
                 </p>
               </CardContent>
