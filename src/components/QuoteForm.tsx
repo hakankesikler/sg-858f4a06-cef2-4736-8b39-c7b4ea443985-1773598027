@@ -15,7 +15,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Plus, Trash2 } from "lucide-react";
+
+const cargoSchema = z.object({
+  width: z.string().min(1, "En giriniz"),
+  length: z.string().min(1, "Boy giriniz"),
+  height: z.string().min(1, "Yükseklik giriniz"),
+  weight: z.string().min(1, "Ağırlık giriniz"),
+  quantity: z.string().min(1, "Adet giriniz"),
+});
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Ad Soyad en az 2 karakter olmalıdır"),
@@ -38,14 +46,11 @@ const formSchema = z.object({
   receiverPostalCode: z.string().min(5, "Posta kodu giriniz"),
   receiverAddress: z.string().min(10, "Adres giriniz"),
   
-  cargoWidth: z.string().min(1, "En giriniz"),
-  cargoLength: z.string().min(1, "Boy giriniz"),
-  cargoHeight: z.string().min(1, "Uzunluk giriniz"),
-  cargoWeight: z.string().min(1, "Ağırlık giriniz"),
-  cargoQuantity: z.string().min(1, "Adet giriniz"),
+  cargos: z.array(cargoSchema).min(1, "En az bir yük bilgisi girilmelidir"),
 });
 
 type FormData = z.infer<typeof formSchema>;
+type CargoData = z.infer<typeof cargoSchema>;
 
 const domesticRoadOptions = [
   { value: "pallet", label: "Palet" },
@@ -85,6 +90,9 @@ export function QuoteForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [cargos, setCargos] = useState<CargoData[]>([
+    { width: "", length: "", height: "", weight: "", quantity: "" }
+  ]);
 
   const {
     register,
@@ -95,6 +103,9 @@ export function QuoteForm() {
     reset,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      cargos: [{ width: "", length: "", height: "", weight: "", quantity: "" }]
+    }
   });
 
   const serviceType = watch("serviceType");
@@ -123,6 +134,27 @@ export function QuoteForm() {
     return [];
   };
 
+  const addCargo = () => {
+    const newCargos = [...cargos, { width: "", length: "", height: "", weight: "", quantity: "" }];
+    setCargos(newCargos);
+    setValue("cargos", newCargos);
+  };
+
+  const removeCargo = (index: number) => {
+    if (cargos.length > 1) {
+      const newCargos = cargos.filter((_, i) => i !== index);
+      setCargos(newCargos);
+      setValue("cargos", newCargos);
+    }
+  };
+
+  const updateCargo = (index: number, field: keyof CargoData, value: string) => {
+    const newCargos = [...cargos];
+    newCargos[index] = { ...newCargos[index], [field]: value };
+    setCargos(newCargos);
+    setValue("cargos", newCargos);
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     setSubmitError("");
@@ -142,6 +174,7 @@ export function QuoteForm() {
 
       setSubmitSuccess(true);
       reset();
+      setCargos([{ width: "", length: "", height: "", weight: "", quantity: "" }]);
       
       setTimeout(() => setSubmitSuccess(false), 5000);
     } catch (error) {
@@ -427,85 +460,124 @@ export function QuoteForm() {
         </div>
       </div>
 
-      {/* Yük Özellikleri */}
+      {/* Yük Özellikleri - Dinamik */}
       <div className="space-y-4">
-        <h3 className="font-heading font-semibold text-xl text-white mb-4">Yük Özellikleri</h3>
-        
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div>
-            <Label htmlFor="cargoWidth" className="text-white">En (cm) *</Label>
-            <Input
-              id="cargoWidth"
-              type="number"
-              {...register("cargoWidth")}
-              className="mt-1 bg-white/95"
-              placeholder="100"
-            />
-            {errors.cargoWidth && (
-              <p className="text-red-300 text-sm mt-1">{errors.cargoWidth.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="cargoLength" className="text-white">Boy (cm) *</Label>
-            <Input
-              id="cargoLength"
-              type="number"
-              {...register("cargoLength")}
-              className="mt-1 bg-white/95"
-              placeholder="120"
-            />
-            {errors.cargoLength && (
-              <p className="text-red-300 text-sm mt-1">{errors.cargoLength.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="cargoHeight" className="text-white">Yükseklik (cm) *</Label>
-            <Input
-              id="cargoHeight"
-              type="number"
-              {...register("cargoHeight")}
-              className="mt-1 bg-white/95"
-              placeholder="80"
-            />
-            {errors.cargoHeight && (
-              <p className="text-red-300 text-sm mt-1">{errors.cargoHeight.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="cargoWeight" className="text-white">Ağırlık (kg) *</Label>
-            <Input
-              id="cargoWeight"
-              type="number"
-              {...register("cargoWeight")}
-              className="mt-1 bg-white/95"
-              placeholder="500"
-            />
-            {errors.cargoWeight && (
-              <p className="text-red-300 text-sm mt-1">{errors.cargoWeight.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="cargoQuantity" className="text-white">Adet *</Label>
-            <Input
-              id="cargoQuantity"
-              type="number"
-              {...register("cargoQuantity")}
-              className="mt-1 bg-white/95"
-              placeholder="1"
-            />
-            {errors.cargoQuantity && (
-              <p className="text-red-300 text-sm mt-1">{errors.cargoQuantity.message}</p>
-            )}
-          </div>
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading font-semibold text-xl text-white">Yük Özellikleri</h3>
         </div>
+        
+        {cargos.map((cargo, index) => (
+          <div key={index} className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-heading font-medium text-lg text-white">
+                Yük #{index + 1}
+              </h4>
+              {cargos.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeCargo(index)}
+                  className="text-red-300 hover:text-red-400 hover:bg-red-500/10"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Sil
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div>
+                <Label htmlFor={`cargo-${index}-width`} className="text-white">En (cm) *</Label>
+                <Input
+                  id={`cargo-${index}-width`}
+                  type="number"
+                  value={cargo.width}
+                  onChange={(e) => updateCargo(index, "width", e.target.value)}
+                  className="mt-1 bg-white/95"
+                  placeholder="100"
+                />
+                {errors.cargos?.[index]?.width && (
+                  <p className="text-red-300 text-sm mt-1">{errors.cargos[index]?.width?.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor={`cargo-${index}-length`} className="text-white">Boy (cm) *</Label>
+                <Input
+                  id={`cargo-${index}-length`}
+                  type="number"
+                  value={cargo.length}
+                  onChange={(e) => updateCargo(index, "length", e.target.value)}
+                  className="mt-1 bg-white/95"
+                  placeholder="120"
+                />
+                {errors.cargos?.[index]?.length && (
+                  <p className="text-red-300 text-sm mt-1">{errors.cargos[index]?.length?.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor={`cargo-${index}-height`} className="text-white">Yükseklik (cm) *</Label>
+                <Input
+                  id={`cargo-${index}-height`}
+                  type="number"
+                  value={cargo.height}
+                  onChange={(e) => updateCargo(index, "height", e.target.value)}
+                  className="mt-1 bg-white/95"
+                  placeholder="80"
+                />
+                {errors.cargos?.[index]?.height && (
+                  <p className="text-red-300 text-sm mt-1">{errors.cargos[index]?.height?.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor={`cargo-${index}-weight`} className="text-white">Ağırlık (kg) *</Label>
+                <Input
+                  id={`cargo-${index}-weight`}
+                  type="number"
+                  value={cargo.weight}
+                  onChange={(e) => updateCargo(index, "weight", e.target.value)}
+                  className="mt-1 bg-white/95"
+                  placeholder="500"
+                />
+                {errors.cargos?.[index]?.weight && (
+                  <p className="text-red-300 text-sm mt-1">{errors.cargos[index]?.weight?.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor={`cargo-${index}-quantity`} className="text-white">Adet *</Label>
+                <Input
+                  id={`cargo-${index}-quantity`}
+                  type="number"
+                  value={cargo.quantity}
+                  onChange={(e) => updateCargo(index, "quantity", e.target.value)}
+                  className="mt-1 bg-white/95"
+                  placeholder="1"
+                />
+                {errors.cargos?.[index]?.quantity && (
+                  <p className="text-red-300 text-sm mt-1">{errors.cargos[index]?.quantity?.message}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addCargo}
+          className="w-full border-white/20 text-white hover:bg-white/10 hover:text-white"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Yeni Yük Ekle
+        </Button>
       </div>
 
       {/* Submit Button */}
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-4 pt-4">
         <Button
           type="submit"
           size="lg"
