@@ -8,7 +8,7 @@ type ResponseData = {
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-function formatEmailContent(data: any): string {
+function formatEmailText(data: any): string {
   const serviceTypeLabel = data.serviceType === "domestic" ? "Yurt İçi" : "Uluslararası";
   
   const transportModeLabels: Record<string, string> = {
@@ -32,133 +32,59 @@ function formatEmailContent(data: any): string {
     "container-40": "40 cc Konteyner",
   };
 
-  const cargosHtml = data.cargos.map((cargo: any, index: number) => `
-    <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
-      <div style="font-weight: bold; color: #F97316; margin-bottom: 8px;">📦 Yük #${index + 1}</div>
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">En:</span>
-          <span style="color: #0F172A;">${cargo.width} cm</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Boy:</span>
-          <span style="color: #0F172A;">${cargo.length} cm</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Yükseklik:</span>
-          <span style="color: #0F172A;">${cargo.height} cm</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Ağırlık:</span>
-          <span style="color: #0F172A;">${cargo.weight} kg</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Adet:</span>
-          <span style="color: #0F172A;">${cargo.quantity}</span>
-        </div>
-      </div>
-    </div>
-  `).join('');
+  const cargosText = data.cargos.map((cargo: any, index: number) => `
+📦 Yük #${index + 1}
+  En: ${cargo.width} cm
+  Boy: ${cargo.length} cm
+  Yükseklik: ${cargo.height} cm
+  Ağırlık: ${cargo.weight} kg
+  Adet: ${cargo.quantity}
+`).join('\n');
 
   return `
-<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #0F172A; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-      <h1 style="margin: 0; font-size: 24px;">🚚 Yeni Teklif Talebi</h1>
-      <p style="margin: 10px 0 0 0; font-size: 14px;">REX Lojistik - Teklif Formu</p>
-    </div>
-    
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px;">
-      <div style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px;">
-        <div style="color: #0F172A; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #F97316; padding-bottom: 5px;">👤 Kişisel Bilgiler</div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Ad Soyad:</span>
-          <span style="color: #0F172A;">${data.fullName}</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Firma İsmi:</span>
-          <span style="color: #0F172A;">${data.companyName}</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">E-posta:</span>
-          <span style="color: #0F172A;">${data.email}</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Telefon:</span>
-          <span style="color: #0F172A;">${data.phone}</span>
-        </div>
-      </div>
+🚚 YENİ TEKLİF TALEBİ
+REX Lojistik - Teklif Formu
 
-      <div style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px;">
-        <div style="color: #0F172A; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #F97316; padding-bottom: 5px;">📦 Hizmet Bilgileri</div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Hizmet Türü:</span>
-          <span style="color: #0F172A;">${serviceTypeLabel}</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Taşıma Türü:</span>
-          <span style="color: #0F172A;">${transportModeLabels[data.transportMode] || data.transportMode}</span>
-        </div>
-        ${data.transportDetail ? `
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Detay:</span>
-          <span style="color: #0F172A;">${transportDetailLabels[data.transportDetail] || data.transportDetail}</span>
-        </div>
-        ` : ""}
-      </div>
+============================================
+👤 KİŞİSEL BİLGİLER
+============================================
+Ad Soyad: ${data.fullName}
+Firma İsmi: ${data.companyName}
+E-posta: ${data.email}
+Telefon: ${data.phone}
 
-      <div style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px;">
-        <div style="color: #0F172A; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #F97316; padding-bottom: 5px;">📍 Gönderen Bilgileri</div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Ülke:</span>
-          <span style="color: #0F172A;">${data.senderCountry}</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">İl / İlçe:</span>
-          <span style="color: #0F172A;">${data.senderCity} / ${data.senderDistrict}</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Posta Kodu:</span>
-          <span style="color: #0F172A;">${data.senderPostalCode}</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Adres:</span>
-          <span style="color: #0F172A;">${data.senderAddress}</span>
-        </div>
-      </div>
+============================================
+📦 HİZMET BİLGİLERİ
+============================================
+Hizmet Türü: ${serviceTypeLabel}
+Taşıma Türü: ${transportModeLabels[data.transportMode] || data.transportMode}
+${data.transportDetail ? `Detay: ${transportDetailLabels[data.transportDetail] || data.transportDetail}` : ""}
 
-      <div style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px;">
-        <div style="color: #0F172A; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #F97316; padding-bottom: 5px;">🎯 Alıcı Bilgileri</div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Ülke:</span>
-          <span style="color: #0F172A;">${data.receiverCountry}</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">İl / İlçe:</span>
-          <span style="color: #0F172A;">${data.receiverCity} / ${data.receiverDistrict}</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Posta Kodu:</span>
-          <span style="color: #0F172A;">${data.receiverPostalCode}</span>
-        </div>
-        <div style="display: flex; margin-bottom: 8px;">
-          <span style="font-weight: bold; min-width: 150px; color: #64748B;">Adres:</span>
-          <span style="color: #0F172A;">${data.receiverAddress}</span>
-        </div>
-      </div>
+============================================
+📍 GÖNDEREN BİLGİLERİ
+============================================
+Ülke: ${data.senderCountry}
+İl / İlçe: ${data.senderCity} / ${data.senderDistrict}
+Posta Kodu: ${data.senderPostalCode}
+Adres: ${data.senderAddress}
 
-      <div style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 6px;">
-        <div style="color: #0F172A; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #F97316; padding-bottom: 5px;">📏 Yük Özellikleri (${data.cargos.length} Adet Yük)</div>
-        ${cargosHtml}
-      </div>
+============================================
+🎯 ALICI BİLGİLERİ
+============================================
+Ülke: ${data.receiverCountry}
+İl / İlçe: ${data.receiverCity} / ${data.receiverDistrict}
+Posta Kodu: ${data.receiverPostalCode}
+Adres: ${data.receiverAddress}
 
-      <div style="text-align: center; margin-top: 20px; color: #64748B; font-size: 12px;">
-        <p style="margin: 5px 0;">Bu e-posta REX Lojistik web sitesi teklif formundan otomatik olarak gönderilmiştir.</p>
-        <p style="margin: 5px 0;">Tarih: ${new Date().toLocaleString("tr-TR")}</p>
-      </div>
-    </div>
-  </div>
-</div>
+============================================
+📏 YÜK ÖZELLİKLERİ (${data.cargos.length} Adet Yük)
+============================================
+${cargosText}
+
+============================================
+Bu e-posta REX Lojistik web sitesi teklif formundan otomatik olarak gönderilmiştir.
+Tarih: ${new Date().toLocaleString("tr-TR")}
+============================================
   `;
 }
 
@@ -180,14 +106,14 @@ export default async function handler(
       });
     }
 
-    const emailHtml = formatEmailContent(formData);
+    const emailText = formatEmailText(formData);
 
     const { data, error } = await resend.emails.send({
       from: "REX Lojistik <onboarding@resend.dev>",
       to: ["info@rexlojistik.com"],
       replyTo: formData.email,
       subject: `Yeni Teklif Talebi - ${formData.companyName}`,
-      html: emailHtml,
+      text: emailText,
     });
 
     if (error) {
