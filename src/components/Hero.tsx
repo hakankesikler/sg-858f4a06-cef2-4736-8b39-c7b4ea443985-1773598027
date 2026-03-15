@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export function Hero() {
   return (
-    <section className="relative pt-32 pb-20 bg-gradient-to-br from-[#030712] via-[#0a0f1e] to-[#0f172a] overflow-hidden">
+    <section className="relative pt-32 pb-20 bg-gradient-to-br from-[#0a0e1a] via-[#0F172A] to-[#1e293b] overflow-hidden">
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-10 w-64 h-64 bg-white rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent rounded-full blur-3xl" />
