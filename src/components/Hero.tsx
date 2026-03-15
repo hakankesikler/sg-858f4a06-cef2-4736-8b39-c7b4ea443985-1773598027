@@ -33,14 +33,14 @@ export function Hero() {
             </h1>
             
             <p className="text-lg text-blue-100 max-w-xl">
-              2022 yılından bu yana Türkiye ve dünya genelinde profesyonel lojistik hizmetleri sunuyoruz. Yüklerinizi güvenle, zamanında ve eksiksiz teslim ediyoruz.
+              20+ yıllık sektör tecrübesiyle 2022'den bu yana Türkiye ve dünya genelinde profesyonel lojistik hizmetleri sunuyoruz. Yüklerinizi güvenle, zamanında ve eksiksiz teslim ediyoruz.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
               <Button size="lg" className="bg-accent hover:bg-accent/90 text-white font-medium">
                 Hizmetlerimiz <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm font-medium">
+              <Button size="lg" className="bg-accent/90 hover:bg-accent text-white font-medium">
                 İletişime Geçin
               </Button>
             </div>

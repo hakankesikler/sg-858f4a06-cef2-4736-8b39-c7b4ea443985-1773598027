@@ -141,8 +141,8 @@ export function Services() {
                   {service.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 leading-relaxed">
+              <CardContent className="space-y-4 p-6">
+                <p className="text-muted-foreground leading-relaxed">
                   {service.description}
                 </p>
               </CardContent>
