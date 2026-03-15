@@ -2,7 +2,7 @@ import { QuoteForm } from "@/components/QuoteForm";
 
 export function CTA() {
   return (
-    <section className="py-20 bg-gradient-hero">
+    <section id="teklif" className="py-20 bg-gradient-hero">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center text-white mb-12">

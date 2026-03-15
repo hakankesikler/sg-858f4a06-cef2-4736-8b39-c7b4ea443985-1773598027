@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import ReCAPTCHA from "react-google-recaptcha";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,7 +85,6 @@ export function QuoteForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const {
     register,
@@ -126,13 +124,6 @@ export function QuoteForm() {
   };
 
   const onSubmit = async (data: FormData) => {
-    const recaptchaValue = recaptchaRef.current?.getValue();
-    
-    if (!recaptchaValue) {
-      setSubmitError("Lütfen reCAPTCHA doğrulamasını tamamlayın");
-      return;
-    }
-
     setIsSubmitting(true);
     setSubmitError("");
 
@@ -142,10 +133,7 @@ export function QuoteForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...data,
-          recaptchaToken: recaptchaValue,
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -154,7 +142,6 @@ export function QuoteForm() {
 
       setSubmitSuccess(true);
       reset();
-      recaptchaRef.current?.reset();
       
       setTimeout(() => setSubmitSuccess(false), 5000);
     } catch (error) {
@@ -515,15 +502,6 @@ export function QuoteForm() {
             )}
           </div>
         </div>
-      </div>
-
-      {/* reCAPTCHA */}
-      <div className="flex justify-center">
-        <ReCAPTCHA
-          ref={recaptchaRef}
-          sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"}
-          theme="dark"
-        />
       </div>
 
       {/* Submit Button */}

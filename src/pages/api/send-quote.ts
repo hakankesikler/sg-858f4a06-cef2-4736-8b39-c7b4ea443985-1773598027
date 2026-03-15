@@ -5,31 +5,6 @@ type ResponseData = {
   message: string;
 };
 
-async function verifyRecaptcha(token: string): Promise<boolean> {
-  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
-  
-  if (!secretKey) {
-    console.error("RECAPTCHA_SECRET_KEY is not set");
-    return false;
-  }
-
-  try {
-    const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: `secret=${secretKey}&response=${token}`,
-    });
-
-    const data = await response.json();
-    return data.success;
-  } catch (error) {
-    console.error("reCAPTCHA verification error:", error);
-    return false;
-  }
-}
-
 function formatEmailContent(data: any): string {
   const serviceTypeLabel = data.serviceType === "domestic" ? "Yurt İçi" : "Uluslararası";
   
@@ -204,16 +179,7 @@ export default async function handler(
   }
 
   try {
-    const { recaptchaToken, ...formData } = req.body;
-
-    // Verify reCAPTCHA
-    const isValidRecaptcha = await verifyRecaptcha(recaptchaToken);
-    if (!isValidRecaptcha) {
-      return res.status(400).json({
-        success: false,
-        message: "reCAPTCHA doğrulaması başarısız",
-      });
-    }
+    const formData = req.body;
 
     // Format email content
     const emailHtml = formatEmailContent(formData);
