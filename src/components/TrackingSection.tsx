@@ -13,10 +13,10 @@ export function TrackingSection() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-heading font-bold text-4xl text-navy mb-4">
-              Kargonuzu Takip Edin
+              Gönderinizi Takip Edin
             </h2>
             <p className="text-muted-foreground text-lg">
-              Gönderinizin anlık konumunu ve durumunu öğrenin
+              REX Lojistik kargo takip sistemi ile gönderinizin anlık konumunu öğrenin
             </p>
           </div>
 
@@ -27,7 +27,7 @@ export function TrackingSection() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Takip numaranızı girin"
+                    placeholder="Takip numaranızı girin (örn: REX2024001234)"
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
                     className="pl-10 h-12"
@@ -44,7 +44,7 @@ export function TrackingSection() {
                     <div className="bg-primary p-3 rounded-full mb-2">
                       <Package className="w-6 h-6 text-white" />
                     </div>
-                    <div className="text-sm font-semibold text-navy">Alındı</div>
+                    <div className="text-sm font-semibold text-navy">Teslim Alındı</div>
                     <div className="text-xs text-muted-foreground">12.03.2026</div>
                   </div>
 
@@ -64,7 +64,7 @@ export function TrackingSection() {
                     <div className="bg-muted p-3 rounded-full mb-2">
                       <MapPin className="w-6 h-6 text-muted-foreground" />
                     </div>
-                    <div className="text-sm font-semibold text-muted-foreground">Dağıtımda</div>
+                    <div className="text-sm font-semibold text-muted-foreground">Transfer</div>
                     <div className="text-xs text-muted-foreground">Bekleniyor</div>
                   </div>
 
@@ -78,6 +78,10 @@ export function TrackingSection() {
                     <div className="text-xs text-muted-foreground">Bekleniyor</div>
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-6 text-center text-sm text-muted-foreground">
+                <p>Takip numaranızı bulamıyor musunuz? <a href="tel:+905327173434" className="text-primary hover:underline">0532 717 34 34</a> numaralı hattan bize ulaşabilirsiniz.</p>
               </div>
             </CardContent>
           </Card>

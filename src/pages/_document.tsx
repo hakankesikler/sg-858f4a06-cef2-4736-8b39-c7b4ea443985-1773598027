@@ -6,17 +6,17 @@ export default function Document() {
     <Html lang="tr">
       <Head>
         <SEOElements
-          title="LogisticPro - Profesyonel Lojistik Çözümleri"
-          description="Kara, hava ve deniz taşımacılığı ile depolama hizmetleri. 150+ ülkeye güvenli ve hızlı teslimat. 7/24 müşteri desteği ve anlık kargo takibi."
+          title="REX Lojistik - Uluslararası Lojistik ve Nakliye Hizmetleri"
+          description="REX Lojistik ile güvenli, hızlı ve ekonomik uluslararası taşımacılık. Kara, hava, deniz yolu taşımacılığı, depolama, gümrük ve sigorta hizmetleri. 20+ yıllık deneyim, 50+ ülkeye hizmet."
           image="/og-image.png"
         />
         <link rel="icon" href="/favicon.ico" />
         <meta name="theme-color" content="#1e3a8a" />
         <link rel="apple-touch-icon" href="/og-image.png" />
-        <meta name="keywords" content="lojistik, kargo, taşımacılık, depolama, hava kargo, deniz taşımacılığı, kara taşımacılığı, uluslararası lojistik, kargo takip, tedarik zinciri" />
-        <meta name="author" content="LogisticPro" />
+        <meta name="keywords" content="rex lojistik, uluslararası lojistik, kargo taşımacılığı, hava kargo, deniz yolu taşımacılığı, kara taşımacılığı, depolama hizmeti, gümrük müşavirliği, nakliye sigortası, parsiyel taşıma, komple taşıma, proje taşımacılığı" />
+        <meta name="author" content="REX Lojistik" />
         <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://logisticpro.com" />
+        <link rel="canonical" href="https://www.rexlojistik.com" />
         
         {/* JSON-LD Structured Data for SEO */}
         <script
@@ -25,29 +25,35 @@ export default function Document() {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              "name": "LogisticPro",
-              "description": "Profesyonel lojistik ve kargo taşımacılığı hizmetleri",
-              "url": "https://logisticpro.com",
-              "logo": "https://logisticpro.com/og-image.png",
+              "name": "REX Lojistik",
+              "description": "Uluslararası lojistik ve nakliye hizmetleri - Kara, hava, deniz yolu taşımacılığı",
+              "url": "https://www.rexlojistik.com",
+              "logo": "https://www.rexlojistik.com/og-image.png",
               "contactPoint": {
                 "@type": "ContactPoint",
-                "telephone": "+90-850-123-4567",
+                "telephone": "+90-216-123-4567",
                 "contactType": "customer service",
                 "areaServed": "TR",
                 "availableLanguage": ["tr", "en"]
               },
               "sameAs": [
-                "https://facebook.com/logisticpro",
-                "https://twitter.com/logisticpro",
-                "https://instagram.com/logisticpro",
-                "https://linkedin.com/company/logisticpro"
+                "https://facebook.com/rexlojistik",
+                "https://twitter.com/rexlojistik",
+                "https://instagram.com/rexlojistik",
+                "https://linkedin.com/company/rexlojistik"
               ],
               "address": {
                 "@type": "PostalAddress",
-                "streetAddress": "Atatürk Mah. Lojistik Cad. No:123",
+                "streetAddress": "Atatürk Mahallesi, Lojistik Caddesi No:45",
                 "addressLocality": "İstanbul",
+                "addressRegion": "Marmara",
                 "postalCode": "34758",
                 "addressCountry": "TR"
+              },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "reviewCount": "500+"
               }
             })
           }}
@@ -59,15 +65,29 @@ export default function Document() {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Service",
-              "serviceType": "Lojistik ve Kargo Hizmetleri",
+              "serviceType": "Uluslararası Lojistik ve Nakliye Hizmetleri",
               "provider": {
                 "@type": "Organization",
-                "name": "LogisticPro"
+                "name": "REX Lojistik"
               },
-              "areaServed": {
-                "@type": "Country",
-                "name": "Turkey"
-              },
+              "areaServed": [
+                {
+                  "@type": "Country",
+                  "name": "Turkey"
+                },
+                {
+                  "@type": "Place",
+                  "name": "Europe"
+                },
+                {
+                  "@type": "Place",
+                  "name": "Asia"
+                },
+                {
+                  "@type": "Place",
+                  "name": "Middle East"
+                }
+              ],
               "hasOfferCatalog": {
                 "@type": "OfferCatalog",
                 "name": "Lojistik Hizmetleri",
@@ -76,32 +96,88 @@ export default function Document() {
                     "@type": "Offer",
                     "itemOffered": {
                       "@type": "Service",
-                      "name": "Kara Taşımacılığı"
+                      "name": "Kara Yolu Taşımacılığı",
+                      "description": "Parsiyel ve komple yük taşımacılığı"
                     }
                   },
                   {
                     "@type": "Offer",
                     "itemOffered": {
                       "@type": "Service",
-                      "name": "Hava Kargo"
+                      "name": "Hava Yolu Taşımacılığı",
+                      "description": "Express ve standart hava kargo"
                     }
                   },
                   {
                     "@type": "Offer",
                     "itemOffered": {
                       "@type": "Service",
-                      "name": "Deniz Taşımacılığı"
+                      "name": "Deniz Yolu Taşımacılığı",
+                      "description": "FCL ve LCL konteyner taşımacılığı"
                     }
                   },
                   {
                     "@type": "Offer",
                     "itemOffered": {
                       "@type": "Service",
-                      "name": "Depolama Hizmeti"
+                      "name": "Depolama Hizmeti",
+                      "description": "Güvenli depolama ve stok yönetimi"
+                    }
+                  },
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Gümrük Müşavirliği",
+                      "description": "İthalat ve ihracat gümrük işlemleri"
+                    }
+                  },
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Nakliye Sigortası",
+                      "description": "Kapsamlı kargo sigortası çözümleri"
                     }
                   }
                 ]
               }
+            })
+          }}
+        />
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": [
+                {
+                  "@type": "Question",
+                  "name": "REX Lojistik hangi ülkelere hizmet veriyor?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "REX Lojistik, Avrupa, Asya, Orta Doğu ve Afrika olmak üzere 50'den fazla ülkeye kara, hava ve deniz yolu taşımacılığı hizmeti sunmaktadır."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Kargomun durumunu nasıl takip edebilirim?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Web sitemizin kargo takip bölümünden takip numaranızı girerek kargonuzun anlık konumunu ve durumunu görebilirsiniz. Ayrıca SMS ve e-posta bildirimleri alırsınız."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Nakliye sigortası zorunlu mudur?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Nakliye sigortası zorunlu değildir ancak yükünüzün güvenliği için şiddetle tavsiye edilir. REX Lojistik, kapsamlı sigorta seçenekleri sunmaktadır."
+                  }
+                }
+              ]
             })
           }}
         />

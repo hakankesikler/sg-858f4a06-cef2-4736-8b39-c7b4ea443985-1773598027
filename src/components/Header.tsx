@@ -11,18 +11,18 @@ export function Header() {
             <div className="bg-gradient-hero p-2 rounded-lg">
               <Package className="w-6 h-6 text-white" />
             </div>
-            <span className="font-heading font-bold text-xl text-navy">LogisticPro</span>
+            <span className="font-heading font-bold text-xl text-navy">REX LOJİSTİK</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
             <Link href="#hizmetler" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-              Hizmetler
+              Hizmetlerimiz
             </Link>
             <Link href="#hakkimizda" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
               Hakkımızda
             </Link>
-            <Link href="#cozumler" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-              Çözümler
+            <Link href="#referanslar" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+              Referanslar
             </Link>
             <Link href="#iletisim" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
               İletişim
@@ -32,7 +32,7 @@ export function Header() {
           <div className="flex items-center gap-4">
             <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              <span>0850 123 45 67</span>
+              <span>+90 216 504 23 96</span>
             </Button>
             <Button size="sm" className="bg-gradient-accent hover:opacity-90">
               Teklif Al

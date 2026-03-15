@@ -9,8 +9,8 @@ interface SEOProps {
 
 // SEO elements that can be used in _document.tsx (returns JSX without Head wrapper)
 export function SEOElements({
-  title = "Hello World",
-  description = "Welcome to my app",
+  title = "REX Lojistik - Uluslararası Taşımacılık ve Lojistik Hizmetleri",
+  description = "2003 yılından bu yana hava, deniz ve kara yolu taşımacılığı, gümrükleme ve depolama hizmetlerinde profesyonel çözümler. İstanbul merkezli uluslararası lojistik şirketi.",
   image = "/og-image.png",
   url,
 }: SEOProps) {
@@ -18,6 +18,7 @@ export function SEOElements({
     <>
       <title>{title}</title>
       <meta name="description" content={description} />
+      <meta name="keywords" content="lojistik, uluslararası taşımacılık, hava kargo, deniz yolu taşımacılığı, kara yolu taşımacılığı, gümrükleme, depolama, antrepo, İstanbul lojistik, ithalat ihracat" />
       <link rel="icon" href="/favicon.ico" />
 
       {/* Open Graph */}
@@ -26,6 +27,7 @@ export function SEOElements({
       {image && <meta property="og:image" content={image} />}
       {url && <meta property="og:url" content={url} />}
       <meta property="og:type" content="website" />
+      <meta property="og:locale" content="tr_TR" />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
@@ -39,8 +41,8 @@ export function SEOElements({
 // SEO component for use in pages/_app.tsx or individual pages (uses next/head)
 // Note: Flattened structure (no fragment) for better Next.js Head compatibility during hot reload
 export function SEO({
-  title = "Hello World",
-  description = "Welcome to my app",
+  title = "REX Lojistik - Uluslararası Taşımacılık ve Lojistik Hizmetleri",
+  description = "2003 yılından bu yana hava, deniz ve kara yolu taşımacılığı, gümrükleme ve depolama hizmetlerinde profesyonel çözümler. İstanbul merkezli uluslararası lojistik şirketi.",
   image = "/og-image.png",
   url,
 }: SEOProps) {
@@ -48,6 +50,7 @@ export function SEO({
     <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
+      <meta name="keywords" content="lojistik, uluslararası taşımacılık, hava kargo, deniz yolu taşımacılığı, kara yolu taşımacılığı, gümrükleme, depolama, antrepo, İstanbul lojistik, ithalat ihracat" />
       <link rel="icon" href="/favicon.ico" />
 
       {/* Open Graph */}
@@ -56,6 +59,7 @@ export function SEO({
       {image && <meta property="og:image" content={image} />}
       {url && <meta property="og:url" content={url} />}
       <meta property="og:type" content="website" />
+      <meta property="og:locale" content="tr_TR" />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />

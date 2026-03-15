@@ -11,10 +11,10 @@ export function Footer() {
               <div className="bg-gradient-accent p-2 rounded-lg">
                 <Package className="w-5 h-5 text-white" />
               </div>
-              <span className="font-heading font-bold text-lg">LogisticPro</span>
+              <span className="font-heading font-bold text-lg">REX LOJİSTİK</span>
             </div>
             <p className="text-blue-200 text-sm mb-4">
-              Güvenilir, hızlı ve profesyonel lojistik çözümleri ile yanınızdayız.
+              2003 yılından bu yana güvenilir, hızlı ve profesyonel uluslararası lojistik çözümleri.
             </p>
             <div className="flex gap-3">
               <a href="#" className="bg-white/10 hover:bg-accent p-2 rounded-lg transition-colors">
@@ -33,24 +33,24 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-heading font-semibold text-lg mb-4">Hizmetler</h3>
+            <h3 className="font-heading font-semibold text-lg mb-4">Hizmetlerimiz</h3>
             <ul className="space-y-2 text-sm text-blue-200">
-              <li><Link href="#" className="hover:text-accent transition-colors">Kara Taşımacılığı</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Hava Kargo</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Deniz Taşımacılığı</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Depolama</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Gümrükleme</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Hava Yolu Taşımacılığı</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Deniz Yolu Taşımacılığı</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Kara Yolu Taşımacılığı</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Gümrükleme Hizmetleri</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Depolama ve Antrepo</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-heading font-semibold text-lg mb-4">Kurumsal</h3>
             <ul className="space-y-2 text-sm text-blue-200">
-              <li><Link href="#" className="hover:text-accent transition-colors">Hakkımızda</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Kariyer</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Haberler</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Sürdürülebilirlik</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">İş Ortaklığı</Link></li>
+              <li><Link href="#hakkimizda" className="hover:text-accent transition-colors">Hakkımızda</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Kalite Politikamız</Link></li>
+              <li><Link href="#" className="hover:text-accent transition-colors">Vizyonumuz</Link></li>
+              <li><Link href="#referanslar" className="hover:text-accent transition-colors">Referanslarımız</Link></li>
+              <li><Link href="#iletisim" className="hover:text-accent transition-colors">İletişim</Link></li>
             </ul>
           </div>
 
@@ -59,22 +59,22 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-blue-200">
               <li className="flex items-start gap-2">
                 <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>0850 123 45 67</span>
+                <span>+90 216 504 23 96</span>
               </li>
               <li className="flex items-start gap-2">
                 <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>info@logisticpro.com</span>
+                <span>info@rexlojistik.com</span>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>Atatürk Mah. Lojistik Cad. No:123<br />34758 İstanbul, Türkiye</span>
+                <span>Küçükbakkalköy Mah. Kayışdağı Cad.<br />No: 110/5 Ataşehir / İstanbul</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-blue-200">
-          <p>© 2026 LogisticPro. Tüm hakları saklıdır.</p>
+          <p>© 2026 REX Lojistik. Tüm hakları saklıdır.</p>
           <div className="flex gap-6">
             <Link href="#" className="hover:text-accent transition-colors">Gizlilik Politikası</Link>
             <Link href="#" className="hover:text-accent transition-colors">Kullanım Koşulları</Link>

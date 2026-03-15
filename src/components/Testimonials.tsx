@@ -4,23 +4,23 @@ import { Quote, Star } from "lucide-react";
 const testimonials = [
   {
     name: "Ahmet Yılmaz",
-    company: "ABC Tekstil",
-    role: "Lojistik Müdürü",
-    content: "LogisticPro ile çalışmaya başladıktan sonra teslimat sürelerimiz %40 iyileşti. Profesyonel ekip ve güvenilir hizmet.",
+    company: "İnşaat Firması",
+    role: "Satın Alma Müdürü",
+    content: "REX Lojistik ile çalışmaya başladıktan sonra malzeme tedarik süreçlerimiz çok daha düzenli hale geldi. Özellikle parsiyel yük taşımacılığında çok başarılılar.",
     rating: 5,
   },
   {
     name: "Zeynep Kaya",
-    company: "XYZ E-ticaret",
-    role: "Operasyon Direktörü",
-    content: "Anlık takip sistemi ve müşteri desteği mükemmel. Uluslararası gönderilerimizde hiç sorun yaşamadık.",
+    company: "E-ticaret Şirketi",
+    role: "Operasyon Müdürü",
+    content: "Gümrükleme ve depolama hizmetlerinde son derece profesyoneller. Avrupa sevkiyatlarımızda hiç sorun yaşamadık. Kesinlikle tavsiye ederim.",
     rating: 5,
   },
   {
     name: "Mehmet Demir",
-    company: "DEF Otomotiv",
-    role: "Tedarik Zinciri Yöneticisi",
-    content: "15 yıldır lojistik sektöründeyim, bu kadar kaliteli hizmet ilk defa görüyorum. Kesinlikle tavsiye ederim.",
+    company: "Üretim Firması",
+    role: "Lojistik Koordinatörü",
+    content: "Komple araç kiralama ve nakliye hizmetlerinde çok memnunuz. Hem fiyat hem kalite açısından sektörün en iyilerinden biri.",
     rating: 5,
   },
 ];
@@ -34,7 +34,7 @@ export function Testimonials() {
             Müşterilerimiz Ne Diyor?
           </h2>
           <p className="text-muted-foreground text-lg">
-            Binlerce mutlu müşterimizin deneyimlerinden bazıları
+            REX Lojistik ile çalışan mutlu müşterilerimizin deneyimleri
           </p>
         </div>
 

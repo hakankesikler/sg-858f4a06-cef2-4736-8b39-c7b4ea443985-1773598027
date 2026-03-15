@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://logisticpro.com/sitemap.xml
+Sitemap: https://www.rexlojistik.com/sitemap.xml

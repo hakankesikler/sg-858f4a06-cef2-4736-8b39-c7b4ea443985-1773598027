@@ -12,8 +12,8 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="LogisticPro - Profesyonel Lojistik Çözümleri | Kargo Takip ve Taşımacılık"
-        description="Kara, hava ve deniz taşımacılığı ile depolama hizmetleri. 150+ ülkeye güvenli ve hızlı teslimat. 7/24 müşteri desteği ve anlık kargo takibi. ISO sertifikalı lojistik hizmetleri."
+        title="REX Lojistik - Kara, Hava ve Deniz Taşımacılığı | Gümrükleme ve Depolama Hizmetleri"
+        description="REX Lojistik olarak parsiyel yük taşımacılığı, komple araç kiralama, hava ve deniz taşımacılığı, gümrükleme ve depolama hizmetleri sunuyoruz. Türkiye ve Avrupa'ya güvenli teslimat. 0532 717 34 34"
         image="/og-image.png"
       />
       <div className="min-h-screen">

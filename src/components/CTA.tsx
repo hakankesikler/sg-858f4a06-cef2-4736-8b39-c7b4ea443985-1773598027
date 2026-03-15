@@ -8,10 +8,10 @@ export function CTA() {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center text-white">
           <h2 className="font-heading font-bold text-4xl mb-4">
-            Lojistik Operasyonlarınızı Optimize Edin
+            Lojistik Çözümleriniz İçin Hemen İletişime Geçin
           </h2>
           <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
-            Ücretsiz danışmanlık için iletişime geçin. Uzman ekibimiz size özel lojistik çözümler sunmaya hazır.
+            REX Lojistik ile güvenli, hızlı ve ekonomik taşımacılık hizmetinden yararlanın. Uzman ekibimiz size özel çözümler sunmaya hazır.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto mb-8">
@@ -30,15 +30,15 @@ export function CTA() {
 
           <div className="flex flex-wrap justify-center gap-8 pt-8 border-t border-white/20">
             <div className="text-center">
-              <div className="text-3xl font-heading font-bold mb-1">24/7</div>
+              <div className="text-3xl font-heading font-bold mb-1">7/24</div>
               <div className="text-sm text-blue-200">Müşteri Desteği</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-heading font-bold mb-1">150+</div>
-              <div className="text-sm text-blue-200">Ülkeye Teslimat</div>
+              <div className="text-3xl font-heading font-bold mb-1">20+</div>
+              <div className="text-sm text-blue-200">Yıllık Tecrübe</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-heading font-bold mb-1">99.8%</div>
+              <div className="text-3xl font-heading font-bold mb-1">100%</div>
               <div className="text-sm text-blue-200">Müşteri Memnuniyeti</div>
             </div>
           </div>
