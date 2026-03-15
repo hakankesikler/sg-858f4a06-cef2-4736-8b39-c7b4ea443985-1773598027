@@ -80,7 +80,7 @@ export function Features() {
 
           <div className="relative">
             <div className="absolute -inset-1 bg-gradient-to-r from-logo-orange/20 to-navy/20 rounded-2xl blur-xl"></div>
-            <div className="relative bg-gradient-to-br from-navy via-navy to-slate-900 rounded-2xl p-8 text-white shadow-2xl border border-white/10">
+            <div className="relative bg-gradient-to-br from-navy via-slate-800 to-slate-900 rounded-2xl p-8 text-white shadow-2xl border border-white/10">
               <div className="absolute top-0 right-0 w-32 h-32 bg-logo-orange/10 rounded-full blur-3xl"></div>
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl"></div>
               
