@@ -62,7 +62,7 @@ export function Features() {
             <div className="space-y-6">
               {features.map((feature, index) => (
                 <div key={index} className="flex gap-4 group">
-                  <div className="bg-gradient-to-br from-blue-light to-blue-light/50 p-3 rounded-lg h-fit group-hover:shadow-md transition-all duration-300 group-hover:scale-105">
+                  <div className="bg-blue-100 p-3 rounded-lg h-fit group-hover:bg-blue-200 transition-all duration-300 group-hover:scale-105">
                     <feature.icon className="w-6 h-6 text-navy" />
                   </div>
                   <div>
@@ -79,40 +79,40 @@ export function Features() {
           </div>
 
           <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-logo-orange/30 to-blue-500/30 rounded-2xl blur-xl"></div>
-            <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 rounded-2xl p-8 text-white shadow-2xl border border-white/10">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-logo-orange/20 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl"></div>
-              
-              <h3 className="font-heading font-bold text-2xl mb-6 relative">
+            <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-2xl">
+              <h3 className="font-heading font-bold text-3xl mb-2 text-white">
                 Kurumsal Değerlerimiz
-                <div className="absolute -bottom-2 left-0 w-20 h-1 bg-logo-orange rounded-full"></div>
               </h3>
+              <div className="w-24 h-1 bg-orange-500 rounded-full mb-8"></div>
               
-              <div className="space-y-6 mb-8 relative">
+              <div className="space-y-6 mb-8">
                 {companyValues.map((value, index) => (
                   <div key={index} className="flex gap-4 group">
-                    <div className="bg-logo-orange/40 backdrop-blur-sm p-3 rounded-lg h-fit group-hover:bg-logo-orange/60 transition-all duration-300 border border-logo-orange/30">
-                      <value.icon className="w-5 h-5 text-white" />
+                    <div className="bg-orange-500 p-3 rounded-lg h-fit group-hover:bg-orange-600 transition-all duration-300">
+                      <value.icon className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h4 className="font-heading font-semibold text-lg mb-2 text-white">{value.title}</h4>
-                      <p className="text-blue-50 text-sm leading-relaxed">{value.description}</p>
+                      <h4 className="font-heading font-semibold text-xl mb-2 text-white">
+                        {value.title}
+                      </h4>
+                      <p className="text-blue-50 leading-relaxed">
+                        {value.description}
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/20 relative">
+              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/30">
                 <div className="group">
-                  <div className="text-4xl font-heading font-bold text-blue-300">2022</div>
+                  <div className="text-5xl font-heading font-bold text-white mb-1">2022</div>
                   <div className="text-sm text-blue-100 font-medium">Kuruluş Yılı</div>
-                  <div className="mt-2 h-1 w-0 group-hover:w-full bg-logo-orange rounded-full transition-all duration-500"></div>
+                  <div className="mt-2 h-1 w-0 group-hover:w-full bg-orange-500 rounded-full transition-all duration-500"></div>
                 </div>
                 <div className="group">
-                  <div className="text-4xl font-heading font-bold text-logo-orange">81</div>
+                  <div className="text-5xl font-heading font-bold text-orange-500 mb-1">81</div>
                   <div className="text-sm text-blue-100 font-medium">İlde Depolama</div>
-                  <div className="mt-2 h-1 w-0 group-hover:w-full bg-logo-orange rounded-full transition-all duration-500"></div>
+                  <div className="mt-2 h-1 w-0 group-hover:w-full bg-orange-500 rounded-full transition-all duration-500"></div>
                 </div>
               </div>
             </div>
