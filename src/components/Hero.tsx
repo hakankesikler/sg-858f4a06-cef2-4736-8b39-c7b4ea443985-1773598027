@@ -35,9 +35,6 @@ export function Hero() {
 
             <div className="flex flex-wrap gap-4 pt-4">
               <Button size="lg" className="bg-accent hover:bg-accent/90 text-white font-medium">
-                Hizmetlerimiz <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button size="lg" className="bg-accent/90 hover:bg-accent text-white font-medium">
                 İletişime Geçin
               </Button>
             </div>
