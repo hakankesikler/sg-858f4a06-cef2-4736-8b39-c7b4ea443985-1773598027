@@ -26,16 +26,16 @@ export function Header() {
           : "bg-white/95 backdrop-blur-sm border-b border-border"
       }`}
     >
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center transition-transform hover:scale-105">
             <Image 
-              src="/rex-logo-original.png" 
+              src="/rex-logo.svg" 
               alt="REX Lojistik Logo" 
-              width={100} 
-              height={100}
+              width={200} 
+              height={60}
               className={`w-auto transition-all duration-300 ${
-                isScrolled ? "h-12" : "h-16"
+                isScrolled ? "h-14" : "h-16"
               }`}
               priority
             />
