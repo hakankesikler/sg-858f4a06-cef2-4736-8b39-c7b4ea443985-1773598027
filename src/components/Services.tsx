@@ -1,4 +1,4 @@
-import { Package, Plane, Ship, Warehouse, Globe, Truck, Box } from "lucide-react";
+import { Plane, Ship, Truck, Warehouse, Globe, Box } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const services = [
@@ -10,7 +10,7 @@ const services = [
   {
     icon: Ship,
     title: "Deniz Yolu Taşımacılığı",
-    description: "FCL ve LCL konteyner taşımacılığı, dökme yük ve proje kargo çözümleri.",
+    description: "FCL ve LCL konteyner taşımacılığı, dökme yük ve deniz yolu kargo çözümleri.",
   },
   {
     icon: Truck,
@@ -19,8 +19,9 @@ const services = [
   },
   {
     icon: Warehouse,
-    title: "Depolama ve Antrepo",
-    description: "Gümrüklü ve gümrüksüz depolama, antrepo işlemleri ve stok yönetimi hizmetleri.",
+    title: "Depolama Hizmetleri",
+    description: "Türkiye'nin 81 ilinde gümrüksüz depolama ve stok yönetimi hizmetleri.",
+    featured: true,
   },
   {
     icon: Box,
@@ -31,11 +32,6 @@ const services = [
     icon: Globe,
     title: "Uluslararası Taşımacılık",
     description: "Dünya genelinde kapsamlı lojistik ağımızla güvenilir uluslararası taşımacılık.",
-  },
-  {
-    icon: Package,
-    title: "Proje Kargo",
-    description: "Ağır ve büyük boy endüstriyel ekipman taşımacılığında özel çözümler.",
   },
 ];
 
@@ -52,15 +48,25 @@ export function Services() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service, index) => (
-            <Card key={index} className="border-2 hover:border-primary hover:shadow-xl transition-all duration-300 group">
+            <Card 
+              key={index} 
+              className={`border-2 hover:border-primary hover:shadow-xl transition-all duration-300 group ${
+                service.featured ? 'ring-2 ring-primary/20 bg-primary/5' : ''
+              }`}
+            >
               <CardContent className="p-6">
                 <div className="bg-gradient-accent p-3 rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform">
                   <service.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg text-navy mb-2">
                   {service.title}
+                  {service.featured && (
+                    <span className="ml-2 text-xs bg-primary text-white px-2 py-1 rounded-full">
+                      Türkiye Geneli
+                    </span>
+                  )}
                 </h3>
                 <p className="text-muted-foreground text-sm">
                   {service.description}

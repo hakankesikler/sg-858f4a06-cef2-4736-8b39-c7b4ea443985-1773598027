@@ -13,7 +13,7 @@ const testimonials = [
     name: "Zeynep Kaya",
     company: "E-ticaret Şirketi",
     role: "Operasyon Müdürü",
-    content: "Gümrükleme ve depolama hizmetlerinde son derece profesyoneller. Avrupa sevkiyatlarımızda hiç sorun yaşamadık. Kesinlikle tavsiye ederim.",
+    content: "Depolama hizmetlerinde son derece profesyoneller. Avrupa sevkiyatlarımızda hiç sorun yaşamadık. Kesinlikle tavsiye ederim.",
     rating: 5,
   },
   {

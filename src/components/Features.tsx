@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, Shield, Users, Award, Headphones } from "lucide-react";
+import { CheckCircle2, Clock, Shield, Users, Award, Headphones, MapPin } from "lucide-react";
 
 const features = [
   {
@@ -10,6 +10,11 @@ const features = [
     icon: Shield,
     title: "Güvenli Taşımacılık",
     description: "Yükleriniz tam kapsamlı sigorta güvencesi altında ve profesyonel ekibimizle taşınır.",
+  },
+  {
+    icon: MapPin,
+    title: "81 İlde Depolama",
+    description: "Türkiye'nin her ilinde gümrüksüz depolama ve stok yönetimi hizmetleri.",
   },
   {
     icon: Users,
@@ -92,8 +97,8 @@ export function Features() {
                   <div className="text-sm text-blue-200">Kuruluş Yılı</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-heading font-bold">2+</div>
-                  <div className="text-sm text-blue-200">Yıllık Deneyim</div>
+                  <div className="text-3xl font-heading font-bold">81</div>
+                  <div className="text-sm text-blue-200">İlde Depolama</div>
                 </div>
               </div>
             </div>

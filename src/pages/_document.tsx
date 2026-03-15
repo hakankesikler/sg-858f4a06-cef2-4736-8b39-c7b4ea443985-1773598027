@@ -7,13 +7,13 @@ export default function Document() {
       <Head>
         <SEOElements
           title="REX Lojistik - Uluslararası Lojistik ve Nakliye Hizmetleri"
-          description="REX Lojistik ile güvenli, hızlı ve ekonomik uluslararası taşımacılık. Kara, hava, deniz yolu taşımacılığı, depolama ve sigorta hizmetleri. 2022'den beri profesyonel hizmet."
+          description="REX Lojistik ile güvenli, hızlı ve ekonomik uluslararası taşımacılık. Kara, hava, deniz yolu taşımacılığı ve Türkiye'nin 81 ilinde gümrüksüz depolama hizmetleri. 2022'den beri profesyonel hizmet."
           image="/og-image.png"
         />
         <link rel="icon" href="/favicon.ico" />
         <meta name="theme-color" content="#1e3a8a" />
         <link rel="apple-touch-icon" href="/og-image.png" />
-        <meta name="keywords" content="rex lojistik, uluslararası lojistik, kargo taşımacılığı, hava kargo, deniz yolu taşımacılığı, kara taşımacılığı, depolama hizmeti, nakliye sigortası, parsiyel taşıma, komple taşıma, proje taşımacılığı" />
+        <meta name="keywords" content="rex lojistik, uluslararası lojistik, kargo taşımacılığı, hava kargo, deniz yolu taşımacılığı, kara taşımacılığı, depolama hizmeti, gümrüksüz depolama, nakliye, parsiyel taşıma, komple taşıma" />
         <meta name="author" content="REX Lojistik" />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="https://www.rexlojistik.com" />
@@ -26,7 +26,7 @@ export default function Document() {
               "@context": "https://schema.org",
               "@type": "Organization",
               "name": "REX Lojistik",
-              "description": "Uluslararası lojistik ve nakliye hizmetleri - Kara, hava, deniz yolu taşımacılığı",
+              "description": "Uluslararası lojistik ve nakliye hizmetleri - Kara, hava, deniz yolu taşımacılığı ve Türkiye'nin 81 ilinde gümrüksüz depolama",
               "url": "https://www.rexlojistik.com",
               "logo": "https://www.rexlojistik.com/og-image.png",
               "foundingDate": "2022-12",
@@ -122,7 +122,7 @@ export default function Document() {
                     "itemOffered": {
                       "@type": "Service",
                       "name": "Depolama Hizmeti",
-                      "description": "Güvenli depolama ve stok yönetimi"
+                      "description": "Türkiye'nin 81 ilinde gümrüksüz depolama ve stok yönetimi"
                     }
                   },
                   {
@@ -137,8 +137,8 @@ export default function Document() {
                     "@type": "Offer",
                     "itemOffered": {
                       "@type": "Service",
-                      "name": "Proje Kargo",
-                      "description": "Ağır ve büyük boy ekipman taşımacılığı"
+                      "name": "Uluslararası Taşımacılık",
+                      "description": "Dünya genelinde kapsamlı lojistik hizmeti"
                     }
                   }
                 ]
@@ -172,10 +172,10 @@ export default function Document() {
                 },
                 {
                   "@type": "Question",
-                  "name": "Nakliye sigortası zorunlu mudur?",
+                  "name": "REX Lojistik hangi illerde depolama hizmeti veriyor?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Nakliye sigortası zorunlu değildir ancak yükünüzün güvenliği için şiddetle tavsiye edilir. REX Lojistik, kapsamlı sigorta seçenekleri sunmaktadır."
+                    "text": "REX Lojistik, Türkiye'nin 81 ilinde gümrüksüz depolama ve stok yönetimi hizmeti sunmaktadır."
                   }
                 }
               ]
