@@ -61,9 +61,11 @@ export function Header() {
               <Phone className="w-4 h-4" />
               <span>+90 543 401 07 55</span>
             </Button>
-            <Button size="sm" className="bg-logo-orange hover:bg-logo-orange/90 text-white shadow-lg shadow-logo-orange/20">
-              Teklif Al
-            </Button>
+            <Link href="#teklif">
+              <Button size="sm" className="bg-logo-orange hover:bg-logo-orange/90 text-white shadow-lg shadow-logo-orange/20">
+                Teklif Al
+              </Button>
+            </Link>
             <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="w-5 h-5" />
             </Button>

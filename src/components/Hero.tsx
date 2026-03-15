@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Clock, MapPin, ArrowRight, Package } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export function Hero() {
   return (
@@ -34,9 +35,11 @@ export function Hero() {
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
-              <Button size="lg" className="bg-accent hover:bg-accent/90 text-white font-medium">
-                İletişime Geçin
-              </Button>
+              <Link href="#teklif">
+                <Button size="lg" className="bg-accent hover:bg-accent/90 text-white font-medium">
+                  İletişime Geçin
+                </Button>
+              </Link>
             </div>
 
             <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/10">
