@@ -1,17 +1,22 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, Package, Phone } from "lucide-react";
+import { Menu, Phone } from "lucide-react";
+import Image from "next/image";
 
 export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="bg-gradient-hero p-2 rounded-lg">
-              <Package className="w-6 h-6 text-white" />
-            </div>
-            <span className="font-heading font-bold text-xl text-navy">REX LOJİSTİK</span>
+          <Link href="/" className="flex items-center">
+            <Image 
+              src="/rex-logo.svg" 
+              alt="REX Lojistik Logo" 
+              width={180} 
+              height={50}
+              className="h-12 w-auto"
+              priority
+            />
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">

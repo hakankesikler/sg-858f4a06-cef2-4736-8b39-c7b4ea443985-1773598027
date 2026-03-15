@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Package, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -7,12 +8,15 @@ export function Footer() {
       <div className="container mx-auto px-4 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="bg-gradient-accent p-2 rounded-lg">
-                <Package className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-heading font-bold text-lg">REX LOJİSTİK</span>
-            </div>
+            <Link href="/" className="inline-block mb-4">
+              <Image 
+                src="/rex-logo.svg" 
+                alt="REX Lojistik Logo" 
+                width={180} 
+                height={50}
+                className="h-12 w-auto brightness-0 invert"
+              />
+            </Link>
             <p className="text-blue-200 text-sm mb-4">
               2003 yılından bu yana güvenilir, hızlı ve profesyonel uluslararası lojistik çözümleri.
             </p>
