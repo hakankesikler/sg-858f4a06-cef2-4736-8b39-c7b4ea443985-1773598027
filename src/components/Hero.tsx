@@ -74,19 +74,6 @@ export function Hero() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/80 via-transparent to-transparent" />
               </div>
             </div>
-            
-            {/* Floating Info Card */}
-            <div className="absolute -bottom-6 -left-6 bg-white p-5 rounded-xl shadow-2xl border border-border/50 animate-bounce" style={{ animationDuration: '3s' }}>
-              <div className="flex items-center gap-4">
-                <div className="bg-accent/10 p-3 rounded-lg">
-                  <Package className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-navy">Anlık Takip</div>
-                  <div className="text-xs text-muted-foreground font-medium">Güvenli ve Hızlı Teslimat</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
