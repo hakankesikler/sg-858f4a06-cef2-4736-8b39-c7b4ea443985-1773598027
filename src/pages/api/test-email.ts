@@ -17,7 +17,7 @@ export default async function handler(
 
     const { data, error } = await resend.emails.send({
       from: "REX Lojistik <onboarding@resend.dev>",
-      to: ["info@rexlojistik.com"],
+      to: ["hakankesikler@gmail.com"],
       subject: "Test Email - Resend API Testi",
       text: "Bu bir test emailidir. Eğer bu emaili aldıysanız, Resend API çalışıyor demektir!",
     });
