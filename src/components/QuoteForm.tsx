@@ -210,6 +210,14 @@ export function QuoteForm() {
         }),
       });
 
+      // Check if response is actually JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const textResponse = await response.text();
+        console.error("Non-JSON response:", textResponse);
+        throw new Error("Sunucu beklenmeyen bir yanıt döndü. Lütfen daha sonra tekrar deneyin.");
+      }
+
       const result = await response.json();
 
       if (!response.ok) {
@@ -223,7 +231,12 @@ export function QuoteForm() {
       
       setTimeout(() => setSubmitSuccess(false), 5000);
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Form gönderilirken bir hata oluştu. Lütfen tekrar deneyin.");
+      if (error instanceof SyntaxError) {
+        setSubmitError("API yanıtı işlenemedi. Lütfen sayfayı yenileyip tekrar deneyin.");
+        console.error("JSON parse error:", error);
+      } else {
+        setSubmitError(error instanceof Error ? error.message : "Form gönderilirken bir hata oluştu. Lütfen tekrar deneyin.");
+      }
       console.error("Form submission error:", error);
     } finally {
       setIsSubmitting(false);
