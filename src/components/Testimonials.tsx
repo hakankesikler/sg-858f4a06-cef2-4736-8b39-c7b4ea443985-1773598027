@@ -20,7 +20,7 @@ const testimonials = [
     name: "Mehmet Demir",
     company: "Üretim Firması",
     role: "Lojistik Koordinatörü",
-    content: "Komple araç kiralama ve nakliye hizmetlerinde çok memnunuz. Hem fiyat hem kalite açısından sektörün en iyilerinden biri.",
+    content: "Komple kamyon tedariği ve nakliye hizmetlerinde çok memnunuz. Hem fiyat hem kalite açısından sektörün en iyilerinden biri.",
     rating: 5,
   },
 ];
