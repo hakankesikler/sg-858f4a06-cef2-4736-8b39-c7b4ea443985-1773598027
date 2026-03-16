@@ -19,7 +19,7 @@ const features = [
   {
     icon: MapPin,
     title: "81 İlde Depolama",
-    description: "Türkiye'nin her ilinde gümrüksüz depolama ve stok yönetimi hizmetleri.",
+    description: "Türkiye'nin her ilinde depolama ve stok yönetimi hizmetleri.",
   },
   {
     icon: Users,
