@@ -4,7 +4,17 @@ import Image from "next/image";
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <section className="relative min-h-screen flex items-center">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-slate-900/60 z-10" />
+        <img
+          src="/hero-warehouse.jpg"
+          alt="Rex Lojistik Depo"
+          className="w-full h-full object-cover"
+        />
+      </div>
+
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
       
@@ -41,42 +51,26 @@ export function Hero() {
             </div>
 
             <div className="space-y-6">
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
                 <span className="text-white">Lojistikte</span>
                 <br />
                 <span className="text-accent">Güvenilir Çözüm Ortağınız</span>
               </h1>
-
-              <p className="text-lg text-slate-300 max-w-xl leading-relaxed">
-                Türkiye'nin her noktasına hızlı, güvenli ve uygun fiyatlı lojistik çözümleri sunuyoruz.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-gradient-primary hover:opacity-90 text-white group">
-                  Hemen Teklif Al
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-                <Button size="lg" variant="outline" className="border-2" asChild>
-                  <a href="tel:+905434010755">
-                    Bizi Arayın
-                  </a>
-                </Button>
-              </div>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 pt-8 border-t border-slate-700/50">
+            <div className="grid grid-cols-3 gap-8 pt-8 border-t border-white/20">
               <div>
-                <div className="text-3xl font-bold text-primary mb-1">15+</div>
-                <div className="text-sm text-slate-400">Yıllık Deneyim</div>
+                <div className="text-3xl font-bold text-white mb-1">15+</div>
+                <div className="text-sm font-bold text-white">Yıllık Deneyim</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-primary mb-1">50K+</div>
-                <div className="text-sm text-slate-400">Mutlu Müşteri</div>
+                <div className="text-3xl font-bold text-white mb-1">50K+</div>
+                <div className="text-sm font-bold text-white">Mutlu Müşteri</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-primary mb-1">81</div>
-                <div className="text-sm text-slate-400">İl Kapsama</div>
+                <div className="text-3xl font-bold text-white mb-1">81</div>
+                <div className="text-sm font-bold text-white">İl Kapsama</div>
               </div>
             </div>
           </div>

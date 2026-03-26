@@ -63,20 +63,39 @@ export function Footer() {
 
           <div>
             <h3 className="font-heading font-semibold text-lg mb-4">İletişim</h3>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+            <ul className="space-y-3 text-sm text-blue-200">
               <li className="flex items-start space-x-2">
-                <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                <span>Merkez Mahallesi, Lojistik Caddesi No:123<br />34000 İstanbul, Türkiye</span>
+                <MapPin className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-white mb-1">Merkez Ofis - İzmir</p>
+                  <p>Folkart Towers A Kule No:47/B K:26 D:2601<br />
+                  Adalet Mahallesi Manas Bulvarı<br />
+                  Bayraklı / İzmir, 35530</p>
+                </div>
+              </li>
+              <li className="flex items-start space-x-2">
+                <MapPin className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-white mb-1">Manisa Ofisi</p>
+                  <p>Muradiye Mahallesi 42 Sokak 3/C<br />
+                  Yunusemre, 45140<br />
+                  Manisa, Türkiye</p>
+                </div>
               </li>
               <li className="flex items-center space-x-2">
-                <Phone className="h-5 w-5 text-primary flex-shrink-0" />
-                <a href="tel:+905434010755" className="hover:text-primary transition-colors">
-                  +90 543 401 07 55
-                </a>
+                <Phone className="h-5 w-5 text-accent flex-shrink-0" />
+                <div>
+                  <a href="tel:+902322182483" className="hover:text-accent transition-colors block">
+                    +90 232 218 24 83
+                  </a>
+                  <a href="tel:+905434010755" className="hover:text-accent transition-colors block">
+                    +90 543 401 07 55
+                  </a>
+                </div>
               </li>
               <li className="flex items-center space-x-2">
-                <Mail className="h-5 w-5 text-primary flex-shrink-0" />
-                <a href="mailto:info@rexlojistik.com" className="hover:text-primary transition-colors">
+                <Mail className="h-5 w-5 text-accent flex-shrink-0" />
+                <a href="mailto:info@rexlojistik.com" className="hover:text-accent transition-colors">
                   info@rexlojistik.com
                 </a>
               </li>
