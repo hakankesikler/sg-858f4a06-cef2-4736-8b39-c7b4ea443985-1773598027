@@ -119,4 +119,50 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* Delivery Badge Animations */
+  @keyframes badge-float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes badge-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(251, 146, 60, 0.3),
+                  0 0 40px rgba(251, 146, 60, 0.2),
+                  0 0 60px rgba(251, 146, 60, 0.1);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(251, 146, 60, 0.5),
+                  0 0 60px rgba(251, 146, 60, 0.3),
+                  0 0 90px rgba(251, 146, 60, 0.2);
+    }
+  }
+
+  @keyframes badge-slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-badge-float {
+    animation: badge-float 3s ease-in-out infinite;
+  }
+
+  .animate-badge-glow {
+    animation: badge-glow 2s ease-in-out infinite;
+  }
+
+  .animate-badge-slide-in {
+    animation: badge-slide-in 0.8s ease-out forwards;
+  }
 }

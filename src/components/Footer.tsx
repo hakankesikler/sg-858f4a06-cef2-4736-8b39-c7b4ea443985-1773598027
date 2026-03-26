@@ -63,41 +63,24 @@ export function Footer() {
 
           <div>
             <h3 className="font-heading font-semibold text-lg mb-4">İletişim</h3>
-            <div className="space-y-4 text-sm text-blue-200">
-              <div>
-                <h4 className="font-semibold text-white mb-2">Merkez Ofis - İzmir</h4>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>Folkart Towers A Kule No:47/B K:26 D:2601<br />Adalet Mahallesi Manas Bulvarı<br />Bayraklı / İzmir, 35530</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-white mb-2">Manisa Ofisi</h4>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>Muradiye Mahallesi 42 Sokak 3/C<br />Yunusemre, 45140<br />Manisa, Türkiye</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-white mb-2">Telefon</h4>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>+90 232 218 24 83</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>+90 543 401 07 55</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li className="flex items-start space-x-2">
+                <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <span>Merkez Mahallesi, Lojistik Caddesi No:123<br />34000 İstanbul, Türkiye</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Phone className="h-5 w-5 text-primary flex-shrink-0" />
+                <a href="tel:+905434010755" className="hover:text-primary transition-colors">
+                  +90 543 401 07 55
+                </a>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Mail className="h-5 w-5 text-primary flex-shrink-0" />
+                <a href="mailto:info@rexlojistik.com" className="hover:text-primary transition-colors">
+                  info@rexlojistik.com
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
