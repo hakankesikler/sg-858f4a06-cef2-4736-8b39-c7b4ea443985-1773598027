@@ -152,7 +152,7 @@ export default function PersonelProfil() {
               {["genel", "aktiviteler", "hizli-erisim"].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => setActiveTab(tab as "genel" | "aktiviteler" | "hizli-erisim")}
                   className={`px-4 py-3 font-medium whitespace-nowrap transition-colors ${
                     activeTab === tab
                       ? "text-orange-600 border-b-2 border-orange-600"
