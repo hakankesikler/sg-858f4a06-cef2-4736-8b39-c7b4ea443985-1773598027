@@ -47,10 +47,6 @@ export function Hero() {
                 <span className="text-accent">Güvenilir Çözüm Ortağınız</span>
               </h1>
 
-              <p className="text-xl md:text-2xl text-accent font-semibold mb-6">
-                Güvenilir Çözüm Ortağınız
-              </p>
-
               <p className="text-lg text-slate-300 max-w-xl leading-relaxed">
                 Türkiye'nin her noktasına hızlı, güvenli ve uygun fiyatlı lojistik çözümleri sunuyoruz.
               </p>
