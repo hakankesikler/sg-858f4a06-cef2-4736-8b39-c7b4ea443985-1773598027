@@ -1,28 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Clock, MapPin, ArrowRight, Package } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 export function Hero() {
   return (
     <section className="relative pt-32 pb-20 bg-gradient-to-br from-[#0a0e1a] via-[#0F172A] to-[#1e293b] overflow-hidden">
-      
-
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="text-white space-y-6">
-            <div className="flex flex-wrap gap-3">
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm">
-                <Clock className="w-4 h-4" />
-                <span>Güvenilir ve Hızlı Teslimat</span>
-              </div>
-              
-              <div className="inline-flex items-center gap-2 bg-accent/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm">
-                <MapPin className="w-4 h-4" />
-                <span>81 İle ve İlçelerine 1 Paletten Başlayan Teslimat</span>
-              </div>
-            </div>
-            
             <h1 className="font-heading font-bold text-5xl lg:text-6xl leading-tight text-balance">
               Lojistikte
               <span className="block gradient-text text-transparent bg-clip-text bg-gradient-to-r from-accent to-yellow-300">
@@ -36,8 +22,14 @@ export function Hero() {
 
             <div className="flex flex-wrap gap-4 pt-4">
               <Link href="#teklif">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-white font-medium">
-                  İletişime Geçin
+                <Button size="lg" className="bg-accent hover:bg-accent/90 text-white font-medium group">
+                  Teklif Alın
+                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Link href="#hizmetler">
+                <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                  Hizmetlerimiz
                 </Button>
               </Link>
             </div>
@@ -70,7 +62,6 @@ export function Hero() {
                   className="w-full h-[500px] object-cover"
                   priority
                 />
-                {/* Overlay gradient for depth */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/80 via-transparent to-transparent" />
               </div>
             </div>
