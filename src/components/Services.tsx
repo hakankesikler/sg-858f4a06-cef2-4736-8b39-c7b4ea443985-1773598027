@@ -48,7 +48,7 @@ const services: Service[] = [
   {
     icon: Warehouse,
     title: "Depolama Hizmetleri",
-    description: "Türkiye'nin 81 ilinde gümrüksüz depolama ve stok yönetimi hizmetleri.",
+    description: "Türkiye'nin 81 ilinde depolama ve stok yönetimi hizmetleri.",
   },
   {
     icon: Box,
