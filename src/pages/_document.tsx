@@ -5,9 +5,8 @@ export default function Document() {
   return (
     <Html lang="tr">
       <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
         <SEOElements />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </Head>
       <body className="antialiased">
         <Main />

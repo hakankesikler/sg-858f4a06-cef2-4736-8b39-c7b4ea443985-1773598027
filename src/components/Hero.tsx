@@ -4,26 +4,20 @@ import Image from "next/image";
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center">
-      {/* Background Image */}
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+      {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-slate-900/60 z-10" />
-        <img
-          src="/hero-warehouse.jpg"
-          alt="Rex Lojistik Depo"
+        <img 
+          src="/hero-warehouse.jpg" 
+          alt="Lojistik Depo" 
           className="w-full h-full object-cover"
         />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/85 to-slate-900/70"></div>
       </div>
 
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-      
-      {/* Gradient Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse delay-1000" />
-
-      <div className="container mx-auto px-4 relative z-20">
-        <div className="max-w-4xl">
+      {/* Content */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-3xl">
           {/* Delivery Badge */}
           <div className="inline-block animate-badge-slide-in mb-8">
             <div className="relative group">

@@ -18,55 +18,56 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-20">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
+        <div className="w-full px-4 sm:px-6">
+          <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
               <img 
                 src="/rex-lojistik-logo-new.png" 
-                alt="Rex Lojistik Logo" 
-                className="h-20 w-auto"
+                alt="Rex Lojistik" 
+                className="h-12 w-12 sm:h-16 sm:w-16 object-contain"
               />
-            </Link>
+            </div>
 
-            {/* Navigation - Hidden on mobile */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#hizmetler" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
-                Hizmetlerimiz
-              </Link>
-              <Link href="#hakkimizda" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-8 flex-1 justify-center">
+              <a href="#hizmetler" className="text-gray-700 hover:text-orange-500 transition-colors font-medium">
+                Hizmetler
+              </a>
+              <a href="#takip" className="text-gray-700 hover:text-orange-500 transition-colors font-medium">
+                Kargo Takip
+              </a>
+              <a href="#hakkimizda" className="text-gray-700 hover:text-orange-500 transition-colors font-medium">
                 Hakkımızda
-              </Link>
-              <Link href="#referanslar" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
-                Referanslar
-              </Link>
-              <Link href="#iletisim" className="text-sm font-medium text-gray-700 hover:text-primary transition-colors">
+              </a>
+              <a href="#iletisim" className="text-gray-700 hover:text-orange-500 transition-colors font-medium">
                 İletişim
-              </Link>
+              </a>
             </nav>
 
-            {/* CTA Buttons - Desktop */}
-            <div className="hidden md:flex items-center space-x-4">
-              <a
-                href="tel:+905434010755"
-                className="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors"
-              >
-                <Phone className="h-4 w-4" />
-                <span>+90 543 401 07 55</span>
+            {/* Desktop CTA */}
+            <div className="hidden md:flex items-center gap-4">
+              <a href="tel:+905434010755" className="flex items-center gap-2 text-gray-700 hover:text-orange-500 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <span className="font-semibold">0543 401 07 55</span>
               </a>
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">
+              <Button size="lg" className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
                 Teklif Al
               </Button>
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Hamburger Button */}
             <button
-              onClick={toggleMobileMenu}
-              className="md:hidden p-2 text-gray-700 hover:text-primary transition-colors"
-              aria-label="Menüyü aç"
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 text-gray-700 hover:text-orange-500 transition-colors"
+              aria-label="Menüyü Aç"
             >
-              <Menu className="h-6 w-6" />
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
             </button>
           </div>
         </div>
@@ -146,21 +147,56 @@ export function Header() {
           </nav>
 
           {/* Contact & CTA */}
-          <div className="p-6 border-t border-gray-200 space-y-4">
-            <a
-              href="tel:+905434010755"
-              className="flex items-center justify-center space-x-2 w-full py-3 text-base font-medium text-gray-700 hover:text-primary transition-colors border border-gray-200 rounded-lg"
-            >
-              <Phone className="h-5 w-5" />
-              <span>+90 543 401 07 55</span>
-            </a>
-            <Button 
-              size="lg" 
-              className="w-full bg-primary hover:bg-primary/90 text-white"
-              onClick={closeMobileMenu}
-            >
-              Teklif Al
-            </Button>
+          <div className="p-6 space-y-6">
+            <nav className="space-y-4">
+              <a 
+                href="#hizmetler" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors font-medium"
+              >
+                Hizmetler
+              </a>
+              <a 
+                href="#takip" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors font-medium"
+              >
+                Kargo Takip
+              </a>
+              <a 
+                href="#hakkimizda" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors font-medium"
+              >
+                Hakkımızda
+              </a>
+              <a 
+                href="#iletisim" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors font-medium"
+              >
+                İletişim
+              </a>
+            </nav>
+
+            <div className="pt-6 border-t border-gray-200 space-y-4">
+              <a 
+                href="tel:+905434010755" 
+                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <span className="font-semibold">0543 401 07 55</span>
+              </a>
+              
+              <Button 
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                size="lg"
+              >
+                Teklif Al
+              </Button>
+            </div>
           </div>
         </div>
       </div>
