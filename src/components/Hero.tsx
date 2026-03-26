@@ -22,7 +22,7 @@ export function Hero() {
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse delay-1000" />
 
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 relative z-20">
         <div className="max-w-4xl">
           {/* Delivery Badge */}
           <div className="inline-block animate-badge-slide-in mb-8">
