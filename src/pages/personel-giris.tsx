@@ -15,19 +15,19 @@ export default function PersonelGiris() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Simulated login - Replace with real authentication
+    // Simulate API call
     setTimeout(() => {
-      setIsLoading(false);
       if (email === "demo@rexlojistik.com" && password === "demo123") {
-        alert("Giriş başarılı! (Demo mode)");
-        // Redirect to dashboard would go here
+        // Successful login - redirect to profile
+        window.location.href = "/personel/profil";
       } else {
-        setError("E-posta veya şifre hatalı. Lütfen tekrar deneyin.");
+        setError("E-posta veya şifre hatalı!");
+        setIsLoading(false);
       }
     }, 1500);
   };
@@ -73,7 +73,7 @@ export default function PersonelGiris() {
                 </Alert>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleLogin} className="space-y-5">
                 {/* Email Input */}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">
