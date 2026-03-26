@@ -56,18 +56,18 @@ export function Hero() {
           </h1>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 pt-8 border-t border-white/20 max-w-2xl">
-            <div>
-              <div className="text-3xl font-bold text-white mb-1">15+</div>
-              <div className="text-sm font-bold text-white">Yıllık Deneyim</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl">
+            <div className="p-6">
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2">20+</div>
+              <div className="text-white/90">Yıllık Deneyim</div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-white mb-1">50K+</div>
-              <div className="text-sm font-bold text-white">Mutlu Müşteri</div>
+            <div className="p-6">
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2">50K+</div>
+              <div className="text-white/90">Mutlu Müşteri</div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-white mb-1">81</div>
-              <div className="text-sm font-bold text-white">İl Kapsama</div>
+            <div className="p-6">
+              <div className="text-4xl md:text-5xl font-bold text-white mb-2">81</div>
+              <div className="text-white/90">İl Kapsama</div>
             </div>
           </div>
         </div>

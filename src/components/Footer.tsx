@@ -7,35 +7,18 @@ export function Footer() {
     <footer id="iletisim" className="bg-navy text-white">
       <div className="container mx-auto px-4 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          <div>
-            <Link href="/" className="inline-block mb-4">
-              <div className="bg-white rounded-full p-2 inline-block">
-                <Image 
-                  src="/rex-lojistik-logo-new.png" 
-                  alt="REX Lojistik Logo" 
-                  width={80} 
-                  height={80}
-                  className="h-16 w-auto"
-                />
-              </div>
-            </Link>
-            <p className="text-blue-200 text-sm mb-4">
+          <div className="space-y-4">
+            <div className="relative inline-block">
+              <div className="absolute inset-0 bg-white rounded-full scale-90"></div>
+              <img 
+                src="/rex-lojistik-logo-new.png" 
+                alt="Rex Lojistik" 
+                className="h-44 w-44 object-contain relative z-10"
+              />
+            </div>
+            <p className="text-gray-400 max-w-xs">
               2002 yılından bu yana sektör tecrübesi ile 2022'de kurulan REX Lojistik, güvenilir ve profesyonel lojistik çözümleri sunuyor.
             </p>
-            <div className="flex gap-3">
-              <a href="#" className="bg-white/10 hover:bg-accent p-2 rounded-lg transition-colors">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href="#" className="bg-white/10 hover:bg-accent p-2 rounded-lg transition-colors">
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a href="#" className="bg-white/10 hover:bg-accent p-2 rounded-lg transition-colors">
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a href="#" className="bg-white/10 hover:bg-accent p-2 rounded-lg transition-colors">
-                <Linkedin className="w-4 h-4" />
-              </a>
-            </div>
           </div>
 
           <div>
