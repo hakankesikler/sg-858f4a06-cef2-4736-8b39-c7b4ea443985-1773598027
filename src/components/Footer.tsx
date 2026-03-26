@@ -105,7 +105,7 @@ export function Footer() {
           <p>© 2026 REX Lojistik. Tüm hakları saklıdır.</p>
           <div className="flex gap-6">
             <Link href="/gizlilik-politikasi" className="hover:text-accent transition-colors">Gizlilik Politikası</Link>
-            <Link href="#" className="hover:text-accent transition-colors">Kullanım Koşulları</Link>
+            <Link href="/kullanim-kosullari" className="hover:text-accent transition-colors">Kullanım Koşulları</Link>
             <Link href="/kvkk-aydinlatma-metni" className="hover:text-accent transition-colors">KVKK</Link>
           </div>
         </div>
