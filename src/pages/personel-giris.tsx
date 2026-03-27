@@ -34,13 +34,13 @@ export default function PersonelGiris() {
 
   return (
     <>
-      <SEO 
-        title="Personel Girişi | Rex Lojistik"
-        description="Rex Lojistik personel portal girişi. Çalışanlar için özel erişim alanı."
+      <SEO
+        title="Personel Girişi - Rex Lojistik"
+        description="Rex Lojistik personel giriş sayfası"
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
-        {/* Background Pattern */}
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+        {/* Header */}
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
 
         <div className="w-full max-w-md relative z-10">
@@ -53,16 +53,16 @@ export default function PersonelGiris() {
             Ana Sayfaya Dön
           </Link>
 
-          <Card className="shadow-2xl border-0">
-            <CardHeader className="space-y-3 text-center pb-8">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-orange-500 rounded-2xl flex items-center justify-center mb-2">
-                <Lock className="w-8 h-8 text-white" />
+          <Card className="shadow-xl border-0">
+            <CardHeader className="space-y-2 text-center pb-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <User className="w-10 h-10 text-white" />
               </div>
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                 Personel Girişi
               </CardTitle>
-              <CardDescription className="text-base">
-                Rex Lojistik Personel Portalı
+              <CardDescription className="text-base text-slate-600">
+                Devam etmek için giriş yapın
               </CardDescription>
             </CardHeader>
 
@@ -156,33 +156,10 @@ export default function PersonelGiris() {
                   )}
                 </Button>
               </form>
-
-              {/* Demo Credentials Info */}
-              <div className="pt-6 border-t border-gray-100">
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                  <p className="text-xs text-blue-900 font-semibold mb-2">
-                    Demo Giriş Bilgileri:
-                  </p>
-                  <p className="text-xs text-blue-700">
-                    E-posta: <code className="bg-white px-2 py-1 rounded">demo@rexlojistik.com</code>
-                  </p>
-                  <p className="text-xs text-blue-700 mt-1">
-                    Şifre: <code className="bg-white px-2 py-1 rounded">demo123</code>
-                  </p>
-                </div>
-              </div>
-
-              {/* Help Text */}
-              <p className="text-center text-xs text-gray-500">
-                Giriş yaparken sorun mu yaşıyorsunuz?{" "}
-                <a href="tel:+905434010755" className="text-orange-500 hover:text-orange-600 font-medium">
-                  IT Destek: 0543 401 07 55
-                </a>
-              </p>
             </CardContent>
           </Card>
 
-          {/* Footer Note */}
+          {/* Footer Links */}
           <p className="text-center text-xs text-gray-500 mt-6">
             © 2026 Rex Lojistik. Tüm hakları saklıdır.
           </p>
