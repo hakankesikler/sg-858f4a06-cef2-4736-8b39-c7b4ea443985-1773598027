@@ -7,40 +7,33 @@ interface SEOProps {
   url?: string;
 }
 
-const defaultSEO = {
-  title: "REX Lojistik - Kara, Hava ve Deniz Taşımacılığı | Gümrükleme ve Depolama Hizmetleri",
-  description: "REX Lojistik olarak parsiyel yük taşımacılığı, komple araç kiralama, hava ve deniz taşımacılığı, gümrükleme ve depolama hizmetleri sunuyoruz. Türkiye ve Avrupa'ya güvenli teslimat.",
-  image: "/og-image.png",
-  url: "https://rexlojistik.com",
-};
-
-export function SEO({ 
-  title = defaultSEO.title, 
-  description = defaultSEO.description, 
-  image = defaultSEO.image,
-  url = defaultSEO.url 
+export function SEO({
+  title = "Rex Lojistik - Hızlı ve Güvenilir Lojistik Çözümleri",
+  description = "Kara, hava ve deniz taşımacılığı, depolama ve uluslararası kargo hizmetleri. 7/24 müşteri desteği ile güvenli teslimat.",
+  image = "/og-image.png",
+  url = "https://rexlojistik.com"
 }: SEOProps) {
   return (
     <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
+      <meta name="keywords" content="lojistik, kargo, taşımacılık, depolama, hava kargo, deniz kargo, uluslararası kargo, hızlı teslimat" />
       
+      {/* Open Graph */}
       <meta property="og:type" content="website" />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
       <meta property="og:url" content={url} />
       
+      {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
       
+      {/* Canonical */}
       <link rel="canonical" href={url} />
-      
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <meta charSet="utf-8" />
-      <link rel="icon" href="/favicon.ico" />
     </Head>
   );
 }
@@ -48,21 +41,16 @@ export function SEO({
 export function SEOElements() {
   return (
     <>
-      <title>{defaultSEO.title}</title>
-      <meta name="description" content={defaultSEO.description} />
-      
+      <meta name="description" content="Kara, hava ve deniz taşımacılığı, depolama ve uluslararası kargo hizmetleri. 7/24 müşteri desteği ile güvenli teslimat." />
+      <meta name="keywords" content="lojistik, kargo, taşımacılık, depolama, hava kargo, deniz kargo, uluslararası kargo, hızlı teslimat" />
       <meta property="og:type" content="website" />
-      <meta property="og:title" content={defaultSEO.title} />
-      <meta property="og:description" content={defaultSEO.description} />
-      <meta property="og:image" content={defaultSEO.image} />
-      <meta property="og:url" content={defaultSEO.url} />
-      
+      <meta property="og:title" content="Rex Lojistik - Hızlı ve Güvenilir Lojistik Çözümleri" />
+      <meta property="og:description" content="Kara, hava ve deniz taşımacılığı, depolama ve uluslararası kargo hizmetleri. 7/24 müşteri desteği ile güvenli teslimat." />
+      <meta property="og:image" content="/og-image.png" />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={defaultSEO.title} />
-      <meta name="twitter:description" content={defaultSEO.description} />
-      <meta name="twitter:image" content={defaultSEO.image} />
-      
-      <link rel="canonical" href={defaultSEO.url} />
+      <meta name="twitter:title" content="Rex Lojistik - Hızlı ve Güvenilir Lojistik Çözümleri" />
+      <meta name="twitter:description" content="Kara, hava ve deniz taşımacılığı, depolama ve uluslararası kargo hizmetleri. 7/24 müşteri desteği ile güvenli teslimat." />
+      <meta name="twitter:image" content="/og-image.png" />
     </>
   );
 }
