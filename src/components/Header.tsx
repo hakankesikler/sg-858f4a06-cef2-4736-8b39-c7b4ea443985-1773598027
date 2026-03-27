@@ -4,9 +4,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Phone, Menu, X } from "lucide-react";
 import Link from "next/link";
+import { QuoteForm } from "@/components/QuoteForm";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [quoteFormOpen, setQuoteFormOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -14,6 +16,11 @@ export function Header() {
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
+  };
+
+  const openQuoteForm = () => {
+    setQuoteFormOpen(true);
+    closeMobileMenu();
   };
 
   return (
@@ -54,7 +61,11 @@ export function Header() {
                 </svg>
                 <span className="font-semibold">0543 401 07 55</span>
               </a>
-              <Button size="lg" className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                onClick={openQuoteForm}
+              >
                 Teklif Al
               </Button>
             </div>
@@ -193,6 +204,7 @@ export function Header() {
               <Button 
                 className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                 size="lg"
+                onClick={openQuoteForm}
               >
                 Teklif Al
               </Button>
@@ -200,6 +212,9 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {/* Quote Form Modal */}
+      <QuoteForm isOpen={quoteFormOpen} onClose={() => setQuoteFormOpen(false)} />
     </>
   );
 }
