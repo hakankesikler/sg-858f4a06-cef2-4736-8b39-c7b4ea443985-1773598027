@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CariForm } from "@/components/CariForm";
+import { IsGirisForm } from "@/components/IsGirisForm";
 import { 
   User, 
   Mail, 
@@ -21,7 +22,6 @@ import {
   Plus,
   Package
 } from "lucide-react";
-import { IsGirisForm } from "@/components/IsGirisForm";
 
 export default function PersonelProfil() {
   const [activeTab, setActiveTab] = useState<"genel" | "aktiviteler" | "hizli-erisim">("genel");
