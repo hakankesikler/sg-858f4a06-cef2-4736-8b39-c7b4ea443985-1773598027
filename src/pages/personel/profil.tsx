@@ -18,12 +18,15 @@ import {
   FileText,
   MessageSquare,
   Settings,
-  Plus
+  Plus,
+  Package
 } from "lucide-react";
+import { IsGirisForm } from "@/components/IsGirisForm";
 
 export default function PersonelProfil() {
   const [activeTab, setActiveTab] = useState<"genel" | "aktiviteler" | "hizli-erisim">("genel");
-  const [showCariForm, setShowCariForm] = useState(false);
+  const [isCariFormOpen, setIsCariFormOpen] = useState(false);
+  const [isIsGirisFormOpen, setIsIsGirisFormOpen] = useState(false);
 
   // Mock user data
   const user = {
@@ -270,7 +273,7 @@ export default function PersonelProfil() {
               {/* Yeni Cari Ekle Kartı */}
               <Card 
                 className="p-6 hover:shadow-lg transition-all cursor-pointer group border-2 border-green-200 hover:border-green-500"
-                onClick={() => setShowCariForm(true)}
+                onClick={() => setIsCariFormOpen(true)}
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-lg">
@@ -282,6 +285,24 @@ export default function PersonelProfil() {
                 </h3>
                 <p className="text-sm text-gray-600">
                   Müşteri/tedarikçi kaydı oluştur
+                </p>
+              </Card>
+
+              {/* Yeni İş Giriş Kartı */}
+              <Card 
+                className="p-6 hover:shadow-lg transition-all cursor-pointer group border-2 border-green-200 hover:border-green-500"
+                onClick={() => setIsIsGirisFormOpen(true)}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-lg">
+                    <Package className="w-7 h-7" />
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 group-hover:text-green-600 transition-colors mb-2">
+                  Yeni İş Girişi
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Sevkiyat kaydı oluştur
                 </p>
               </Card>
 
@@ -311,7 +332,16 @@ export default function PersonelProfil() {
       </div>
 
       {/* Cari Form Modal */}
-      <CariForm isOpen={showCariForm} onClose={() => setShowCariForm(false)} />
+      <CariForm 
+        isOpen={isCariFormOpen}
+        onClose={() => setIsCariFormOpen(false)}
+      />
+
+      {/* İş Giriş Form Modal */}
+      <IsGirisForm 
+        isOpen={isIsGirisFormOpen}
+        onClose={() => setIsIsGirisFormOpen(false)}
+      />
     </>
   );
 }
