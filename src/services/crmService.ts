@@ -2,108 +2,65 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type Customer = Database["public"]["Tables"]["customers"]["Row"];
-type CustomerInsert = Database["public"]["Tables"]["customers"]["Insert"];
-type CariCard = Database["public"]["Tables"]["cari_cards"]["Row"];
 
 export const crmService = {
-  // Customers
+  // Get all customers
   async getCustomers() {
     const { data, error } = await supabase
       .from("customers")
       .select("*")
       .order("created_at", { ascending: false });
-    
+
     if (error) {
       console.error("Error fetching customers:", error);
-      throw error;
+      return [];
     }
+
     return data || [];
   },
 
+  // Get customer by ID with related data
   async getCustomerById(id: string) {
-    const { data, error } = await supabase
+    const { data: customer, error: customerError } = await supabase
       .from("customers")
       .select("*")
       .eq("id", id)
       .single();
-    
-    if (error) {
-      console.error("Error fetching customer:", error);
-      throw error;
-    }
-    return data;
-  },
 
-  async updateCustomer(id: string, updates: Partial<CustomerInsert>) {
-    const { data, error } = await supabase
-      .from("customers")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error updating customer:", error);
-      throw error;
+    if (customerError) {
+      console.error("Error fetching customer:", customerError);
+      return null;
     }
-    return data;
-  },
 
-  async deleteCustomer(id: string) {
-    const { error } = await supabase
-      .from("customers")
-      .delete()
-      .eq("id", id);
-    
-    if (error) {
-      console.error("Error deleting customer:", error);
-      throw error;
-    }
-  },
-
-  // Cari Cards
-  async getCariCards() {
-    const { data, error } = await supabase
-      .from("cari_cards")
-      .select("*, customers(*)")
+    // Get related shipments
+    const { data: shipments } = await supabase
+      .from("shipments")
+      .select("*")
+      .eq("customer_id", id)
       .order("created_at", { ascending: false });
-    
-    if (error) {
-      console.error("Error fetching cari cards:", error);
-      throw error;
-    }
-    return data || [];
+
+    // Get related invoices
+    const { data: invoices } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("customer_id", id)
+      .order("created_at", { ascending: false });
+
+    return {
+      ...customer,
+      shipments: shipments || [],
+      invoices: invoices || []
+    };
   },
 
-  async getCariCardByCustomerId(customerId: string) {
-    const { data, error } = await supabase
-      .from("cari_cards")
-      .select("*, customers(*)")
-      .eq("customer_id", customerId)
-      .single();
-    
-    if (error) {
-      console.error("Error fetching cari card:", error);
-      throw error;
-    }
-    return data;
-  },
-
-  // Statistics
+  // Get customer stats
   async getCustomerStats() {
-    const { data: customers, error } = await supabase
-      .from("customers")
-      .select("status");
+    const customers = await this.getCustomers();
     
-    if (error) {
-      console.error("Error fetching customer stats:", error);
-      throw error;
-    }
-
-    const total = customers?.length || 0;
-    const active = customers?.filter(c => c.status === "Aktif").length || 0;
-    const potential = customers?.filter(c => c.status === "Potansiyel").length || 0;
-    const old = customers?.filter(c => c.status === "Eski Müşteri").length || 0;
+    const total = customers.length;
+    const active = customers.filter(c => c.status === "Aktif").length || 0;
+    const potential = customers.filter(c => c.status === "Potansiyel").length || 0;
+    const old = customers.filter(c => c.status === "Eski Müşteri").length || 0;
 
     return { total, active, potential, old };
   },
@@ -117,6 +74,7 @@ export const crmService = {
     address?: string;
     city?: string;
     status: "Aktif" | "Potansiyel" | "Eski Müşteri";
+    notes?: string;
   }) {
     const { data, error } = await supabase
       .from("customers")
@@ -129,6 +87,7 @@ export const crmService = {
           address: customerData.address || null,
           city: customerData.city || null,
           status: customerData.status,
+          notes: customerData.notes || null,
           last_contact: new Date().toISOString()
         }
       ])
@@ -141,5 +100,56 @@ export const crmService = {
     }
 
     return data;
+  },
+
+  // Update customer
+  async updateCustomer(id: string, customerData: Partial<Customer>) {
+    const { data, error } = await supabase
+      .from("customers")
+      .update({
+        ...customerData,
+        last_contact: new Date().toISOString()
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating customer:", error);
+      throw error;
+    }
+
+    return data;
+  },
+
+  // Delete customer
+  async deleteCustomer(id: string) {
+    const { error } = await supabase
+      .from("customers")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting customer:", error);
+      throw error;
+    }
+
+    return true;
+  },
+
+  // Get unique cities for filter
+  async getCities() {
+    const { data, error } = await supabase
+      .from("customers")
+      .select("city")
+      .not("city", "is", null);
+
+    if (error) {
+      console.error("Error fetching cities:", error);
+      return [];
+    }
+
+    const cities = [...new Set(data.map(c => c.city).filter(Boolean))];
+    return cities.sort();
   }
 };
