@@ -4,6 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { crmService } from "@/services/crmService";
 
 export function CRMModule() {
@@ -11,6 +14,17 @@ export function CRMModule() {
   const [stats, setStats] = useState({ total: 0, active: 0, potential: 0, old: 0 });
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: "",
+    company: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    status: "Potansiyel" as const
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -29,6 +43,42 @@ export function CRMModule() {
       console.error("Error loading CRM data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddCustomer = async () => {
+    if (!newCustomer.name || !newCustomer.email) {
+      alert("Lütfen en az isim ve email giriniz!");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await crmService.createCustomer(newCustomer);
+      
+      // Reset form
+      setNewCustomer({
+        name: "",
+        company: "",
+        email: "",
+        phone: "",
+        address: "",
+        city: "",
+        status: "Potansiyel"
+      });
+      
+      // Close dialog
+      setIsAddDialogOpen(false);
+      
+      // Reload data
+      await loadData();
+      
+      alert("✅ Müşteri başarıyla eklendi!");
+    } catch (error) {
+      console.error("Error creating customer:", error);
+      alert("❌ Müşteri eklenirken hata oluştu!");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -66,7 +116,10 @@ export function CRMModule() {
           <h2 className="text-2xl font-bold text-gray-900">CRM - Müşteri Yönetimi</h2>
           <p className="text-gray-600 mt-1">Müşteri ilişkileri ve cari kartlarını yönetin</p>
         </div>
-        <Button className="bg-purple-600 hover:bg-purple-700">
+        <Button 
+          className="bg-purple-600 hover:bg-purple-700"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Yeni Müşteri
         </Button>
@@ -199,6 +252,112 @@ export function CRMModule() {
           </div>
         </Card>
       )}
+
+      {/* Add Customer Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Yeni Müşteri Ekle</DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Ad Soyad *</Label>
+              <Input
+                id="name"
+                value={newCustomer.name}
+                onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                placeholder="Ahmet Yılmaz"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company">Şirket</Label>
+              <Input
+                id="company"
+                value={newCustomer.company}
+                onChange={(e) => setNewCustomer({ ...newCustomer, company: e.target.value })}
+                placeholder="ABC Lojistik A.Ş."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={newCustomer.email}
+                onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                placeholder="ahmet@example.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefon</Label>
+              <Input
+                id="phone"
+                value={newCustomer.phone}
+                onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                placeholder="0532 123 45 67"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="city">Şehir</Label>
+              <Input
+                id="city"
+                value={newCustomer.city}
+                onChange={(e) => setNewCustomer({ ...newCustomer, city: e.target.value })}
+                placeholder="İstanbul"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Durum</Label>
+              <Select
+                value={newCustomer.status}
+                onValueChange={(value: any) => setNewCustomer({ ...newCustomer, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Aktif">Aktif</SelectItem>
+                  <SelectItem value="Potansiyel">Potansiyel</SelectItem>
+                  <SelectItem value="Eski Müşteri">Eski Müşteri</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="address">Adres</Label>
+              <Input
+                id="address"
+                value={newCustomer.address}
+                onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
+                placeholder="Büyükdere Cad. No:123 Şişli"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              İptal
+            </Button>
+            <Button
+              onClick={handleAddCustomer}
+              disabled={isSubmitting}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {isSubmitting ? "Ekleniyor..." : "Müşteri Ekle"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

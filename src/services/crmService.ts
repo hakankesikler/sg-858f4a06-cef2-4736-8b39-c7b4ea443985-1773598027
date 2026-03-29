@@ -34,20 +34,6 @@ export const crmService = {
     return data;
   },
 
-  async createCustomer(customer: CustomerInsert) {
-    const { data, error } = await supabase
-      .from("customers")
-      .insert(customer)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error creating customer:", error);
-      throw error;
-    }
-    return data;
-  },
-
   async updateCustomer(id: string, updates: Partial<CustomerInsert>) {
     const { data, error } = await supabase
       .from("customers")
@@ -120,5 +106,40 @@ export const crmService = {
     const old = customers?.filter(c => c.status === "Eski Müşteri").length || 0;
 
     return { total, active, potential, old };
+  },
+
+  // Create new customer
+  async createCustomer(customerData: {
+    name: string;
+    company?: string;
+    email: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    status: "Aktif" | "Potansiyel" | "Eski Müşteri";
+  }) {
+    const { data, error } = await supabase
+      .from("customers")
+      .insert([
+        {
+          name: customerData.name,
+          company: customerData.company || null,
+          email: customerData.email,
+          phone: customerData.phone || null,
+          address: customerData.address || null,
+          city: customerData.city || null,
+          status: customerData.status,
+          last_contact: new Date().toISOString()
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating customer:", error);
+      throw error;
+    }
+
+    return data;
   }
 };
