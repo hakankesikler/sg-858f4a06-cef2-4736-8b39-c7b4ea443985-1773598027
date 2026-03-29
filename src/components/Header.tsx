@@ -39,7 +39,7 @@ export function Header() {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8 flex-1 justify-center">
+            <nav className="hidden md:flex items-center gap-8">
               <a href="#hizmetler" className="text-gray-700 hover:text-orange-500 transition-colors font-medium">
                 Hizmetler
               </a>
@@ -52,6 +52,15 @@ export function Header() {
               <a href="#iletisim" className="text-gray-700 hover:text-orange-500 transition-colors font-medium">
                 İletişim
               </a>
+              <Link 
+                href="/rexgen"
+                className="text-blue-600 hover:text-blue-700 transition-colors font-semibold flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Rex Portal
+              </Link>
             </nav>
 
             {/* Desktop CTA */}
