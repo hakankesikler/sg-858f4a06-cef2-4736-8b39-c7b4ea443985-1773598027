@@ -1,35 +1,31 @@
 import { useState } from "react";
-import { SEO } from "@/components/SEO";
+import { useRouter } from "next/router";
+import Link from "next/link";
+import { ArrowLeft, Eye, EyeOff, User, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Lock, User, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
+import { SEO } from "@/components/SEO";
 
 export default function PersonelGiris() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      if (email === "demo@rexlojistik.com" && password === "demo123") {
-        // Successful login - redirect to profile
-        window.location.href = "/personel/profil";
-      } else {
-        setError("E-posta veya şifre hatalı!");
-        setIsLoading(false);
-      }
-    }, 1500);
+    // Demo credentials
+    if (email === "demo@rexlojistik.com" && password === "demo123") {
+      router.push("/personel/profil");
+    } else {
+      setError("E-posta veya şifre hatalı!");
+    }
   };
 
   return (
@@ -41,61 +37,66 @@ export default function PersonelGiris() {
 
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
         {/* Header */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+        <div className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <Link 
+              href="/" 
+              className="inline-flex items-center text-gray-600 hover:text-blue-600 transition-colors group"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+              <span className="font-medium">Ana Sayfaya Dön</span>
+            </Link>
+          </div>
+        </div>
 
-        <div className="w-full max-w-md relative z-10">
-          {/* Back to Home Link */}
-          <Link 
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-orange-500 transition-colors mb-8"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Ana Sayfaya Dön
-          </Link>
-
-          <Card className="shadow-xl border-0">
-            <CardHeader className="space-y-2 text-center pb-8">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+        {/* Login Form */}
+        <div className="max-w-md mx-auto px-4 py-12">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            {/* Header Section */}
+            <div className="text-center pt-12 pb-8 px-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <User className="w-10 h-10 text-white" />
               </div>
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-2">
                 Personel Girişi
-              </CardTitle>
-              <CardDescription className="text-base text-slate-600">
+              </h1>
+              <p className="text-base text-slate-600">
                 Devam etmek için giriş yapın
-              </CardDescription>
-            </CardHeader>
+              </p>
+            </div>
 
-            <CardContent className="space-y-6">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+            {/* Form Section */}
+            <div className="px-6 pb-8">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Error Message */}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {error}
+                  </div>
+                )}
 
-              <form onSubmit={handleLogin} className="space-y-5">
-                {/* Email Input */}
+                {/* Email Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                     E-posta Adresi
                   </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="ornek@rexlojistik.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-11 h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500"
+                      placeholder="ornek@rexlojistik.com"
+                      className="pl-11 h-12 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                       required
                     />
                   </div>
                 </div>
 
-                {/* Password Input */}
+                {/* Password Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                     Şifre
                   </Label>
                   <div className="relative">
@@ -103,10 +104,10 @@ export default function PersonelGiris() {
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-11 pr-11 h-12 border-gray-200 focus:border-orange-500 focus:ring-orange-500"
+                      placeholder="••••••••"
+                      className="pl-11 pr-11 h-12 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                       required
                     />
                     <button
@@ -124,56 +125,48 @@ export default function PersonelGiris() {
                 </div>
 
                 {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="remember"
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
                     />
-                    <span className="text-gray-600">Beni Hatırla</span>
-                  </label>
-                  <button
-                    type="button"
-                    className="text-orange-500 hover:text-orange-600 font-medium transition-colors"
+                    <Label
+                      htmlFor="remember"
+                      className="text-sm text-gray-600 cursor-pointer select-none"
+                    >
+                      Beni Hatırla
+                    </Label>
+                  </div>
+                  <Link
+                    href="/sifremi-unuttum"
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
                   >
                     Şifremi Unuttum
-                  </button>
+                  </Link>
                 </div>
 
                 {/* Submit Button */}
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white font-semibold text-base shadow-lg"
-                  disabled={isLoading}
+                  className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  size="lg"
                 >
-                  {isLoading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Giriş Yapılıyor...
-                    </div>
-                  ) : (
-                    "Giriş Yap"
-                  )}
+                  Giriş Yap
                 </Button>
               </form>
-            </CardContent>
-          </Card>
 
-          {/* Footer Links */}
-          <p className="text-center text-xs text-gray-500 mt-6">
-            © 2026 Rex Lojistik. Tüm hakları saklıdır.
-          </p>
+              {/* Footer */}
+              <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                <p className="text-sm text-gray-500">
+                  © 2026 Rex Lojistik. Tüm hakları saklıdır.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .bg-grid-pattern {
-          background-image: 
-            linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-          background-size: 20px 20px;
-        }
-      `}</style>
     </>
   );
 }
