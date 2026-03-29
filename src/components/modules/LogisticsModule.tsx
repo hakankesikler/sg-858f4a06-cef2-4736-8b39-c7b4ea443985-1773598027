@@ -1,249 +1,186 @@
-import { useState } from "react";
-import { Truck, Package, MapPin, Clock, CheckCircle2, AlertCircle, Search, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Truck, Package, MapPin, Clock, CheckCircle2, AlertCircle, Search, Plus } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { logisticsService } from "@/services/logisticsService";
 
 export function LogisticsModule() {
+  const [shipments, setShipments] = useState<any[]>([]);
+  const [stats, setStats] = useState({ active: 0, pending: 0, completed: 0 });
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // Mock sevkiyat verileri
-  const shipments = [
-    {
-      id: "SHM-2026-001",
-      sender: "Anadolu Lojistik",
-      receiver: "Ege Ticaret",
-      origin: "İstanbul",
-      destination: "İzmir",
-      status: "Yolda",
-      vehicle: "34 ABC 123",
-      driver: "Ahmet Yılmaz",
-      cargo: "Electronics",
-      weight: "2,500 kg",
-      eta: "2026-03-30 14:00",
-      progress: 65
-    },
-    {
-      id: "SHM-2026-002",
-      sender: "Marmara Gıda",
-      receiver: "Akdeniz Market",
-      origin: "Bursa",
-      destination: "Antalya",
-      status: "Teslim Edildi",
-      vehicle: "16 XYZ 456",
-      driver: "Mehmet Demir",
-      cargo: "Food Products",
-      weight: "1,800 kg",
-      eta: "2026-03-29 16:30",
-      progress: 100
-    },
-    {
-      id: "SHM-2026-003",
-      sender: "Karadeniz Tekstil",
-      receiver: "İstanbul Moda",
-      origin: "Trabzon",
-      destination: "İstanbul",
-      status: "Depoda",
-      vehicle: "61 DEF 789",
-      driver: "Can Öztürk",
-      cargo: "Textiles",
-      weight: "3,200 kg",
-      eta: "2026-03-31 10:00",
-      progress: 30
-    },
-    {
-      id: "SHM-2026-004",
-      sender: "Ege İnşaat",
-      receiver: "Ankara Yapı",
-      origin: "İzmir",
-      destination: "Ankara",
-      status: "Gecikmiş",
-      vehicle: "35 GHI 321",
-      driver: "Zeynep Kaya",
-      cargo: "Construction Materials",
-      weight: "5,000 kg",
-      eta: "2026-03-29 09:00",
-      progress: 45
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [shipmentData, statsData] = await Promise.all([
+        logisticsService.getShipments(),
+        logisticsService.getShipmentStats()
+      ]);
+      setShipments(shipmentData);
+      setStats(statsData);
+    } catch (error) {
+      console.error("Error loading logistics data:", error);
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      "Yolda": "bg-blue-100 text-blue-700 border-blue-200",
-      "Teslim Edildi": "bg-green-100 text-green-700 border-green-200",
-      "Depoda": "bg-orange-100 text-orange-700 border-orange-200",
-      "Gecikmiş": "bg-red-100 text-red-700 border-red-200"
-    };
-    return colors[status] || "bg-gray-100 text-gray-700";
   };
 
-  const filteredShipments = shipments.filter(ship =>
-    ship.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ship.sender.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ship.vehicle.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredShipments = shipments.filter(shipment =>
+    shipment.tracking_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    shipment.origin?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    shipment.destination?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const getStatusConfig = (status: string) => {
+    const configs = {
+      "Hazırlanıyor": { color: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: Package, progress: 25 },
+      "Yolda": { color: "bg-blue-100 text-blue-700 border-blue-200", icon: Truck, progress: 50 },
+      "Dağıtımda": { color: "bg-orange-100 text-orange-700 border-orange-200", icon: MapPin, progress: 75 },
+      "Teslim Edildi": { color: "bg-green-100 text-green-700 border-green-200", icon: CheckCircle2, progress: 100 }
+    };
+    return configs[status as keyof typeof configs] || configs["Hazırlanıyor"];
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Sevkiyatlar yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Lojistik Yönetimi</h1>
-          <p className="text-gray-600 mt-1">Sevkiyat, araç ve depo takibi</p>
+          <h2 className="text-2xl font-bold text-gray-900">Lojistik Yönetimi</h2>
+          <p className="text-gray-600 mt-1">Sevkiyat ve araç takip sistemi</p>
         </div>
-        <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800">
-          <Package className="w-4 h-4 mr-2" />
+        <Button className="bg-orange-600 hover:bg-orange-700">
+          <Plus className="w-4 h-4 mr-2" />
           Yeni Sevkiyat
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-6 border-l-4 border-l-blue-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-blue-700 font-medium">Aktif Sevkiyat</p>
-              <p className="text-3xl font-bold text-blue-900 mt-2">48</p>
-              <p className="text-xs text-blue-600 mt-1">Yolda</p>
+              <p className="text-sm text-gray-600 font-medium">Aktif Sevkiyat</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.active}</p>
             </div>
-            <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center">
-              <Truck className="w-7 h-7 text-white" />
-            </div>
+            <Truck className="w-10 h-10 text-blue-600" />
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+        <Card className="p-6 border-l-4 border-l-yellow-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-green-700 font-medium">Teslim Edildi</p>
-              <p className="text-3xl font-bold text-green-900 mt-2">142</p>
-              <p className="text-xs text-green-600 mt-1">Bu ay</p>
+              <p className="text-sm text-gray-600 font-medium">Bekleyen</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.pending}</p>
             </div>
-            <div className="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center">
-              <CheckCircle2 className="w-7 h-7 text-white" />
-            </div>
+            <Clock className="w-10 h-10 text-yellow-600" />
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+        <Card className="p-6 border-l-4 border-l-green-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-orange-700 font-medium">Depoda</p>
-              <p className="text-3xl font-bold text-orange-900 mt-2">23</p>
-              <p className="text-xs text-orange-600 mt-1">Bekliyor</p>
+              <p className="text-sm text-gray-600 font-medium">Tamamlanan</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.completed}</p>
             </div>
-            <div className="w-14 h-14 bg-orange-600 rounded-xl flex items-center justify-center">
-              <Package className="w-7 h-7 text-white" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-red-700 font-medium">Gecikmiş</p>
-              <p className="text-3xl font-bold text-red-900 mt-2">7</p>
-              <p className="text-xs text-red-600 mt-1">Dikkat!</p>
-            </div>
-            <div className="w-14 h-14 bg-red-600 rounded-xl flex items-center justify-center">
-              <AlertCircle className="w-7 h-7 text-white" />
-            </div>
+            <CheckCircle2 className="w-10 h-10 text-green-600" />
           </div>
         </Card>
       </div>
 
       {/* Search */}
-      <Card className="p-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              placeholder="Sevkiyat ara (ID, gönderici, araç)..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button variant="outline" className="gap-2">
-            <Filter className="w-4 h-4" />
-            Filtrele
-          </Button>
+      <Card className="p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Sevkiyat ara (takip no, güzergah)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
       </Card>
 
       {/* Shipments List */}
-      <div className="space-y-4">
-        {filteredShipments.map((shipment) => (
-          <Card key={shipment.id} className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white font-bold">
-                  <Truck className="w-7 h-7" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {filteredShipments.map((shipment) => {
+          const statusConfig = getStatusConfig(shipment.status);
+          const StatusIcon = statusConfig.icon;
+
+          return (
+            <Card key={shipment.id} className="p-6 hover:shadow-lg transition-shadow">
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-900">{shipment.tracking_no}</h3>
+                    <p className="text-sm text-gray-600">{shipment.customers?.name || "Müşteri Yok"}</p>
+                  </div>
+                  <Badge className={statusConfig.color}>
+                    <StatusIcon className="w-3 h-3 mr-1" />
+                    {shipment.status}
+                  </Badge>
                 </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg">{shipment.id}</h3>
-                  <p className="text-sm text-gray-600">{shipment.cargo}</p>
+
+                <Progress value={statusConfig.progress} className="h-2" />
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <MapPin className="w-4 h-4" />
+                    <span>{shipment.origin} → {shipment.destination}</span>
+                  </div>
+                  {shipment.vehicles && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Truck className="w-4 h-4" />
+                      <span>{shipment.vehicles.plate_no} - {shipment.vehicles.driver_name}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Package className="w-4 h-4" />
+                    <span>Tutar: ₺{shipment.amount?.toLocaleString('tr-TR')}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button variant="outline" size="sm" className="flex-1">
+                    Detaylar
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1">
+                    İletişim
+                  </Button>
                 </div>
               </div>
-              <Badge className={getStatusColor(shipment.status)}>
-                {shipment.status}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Gönderici</p>
-                <p className="font-semibold text-gray-900">{shipment.sender}</p>
-                <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {shipment.origin}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Alıcı</p>
-                <p className="font-semibold text-gray-900">{shipment.receiver}</p>
-                <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {shipment.destination}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Araç & Sürücü</p>
-                <p className="font-semibold text-gray-900">{shipment.vehicle}</p>
-                <p className="text-sm text-gray-600">{shipment.driver}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Ağırlık & ETA</p>
-                <p className="font-semibold text-gray-900">{shipment.weight}</p>
-                <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {shipment.eta}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">İlerleme</span>
-                <span className="font-semibold text-gray-900">{shipment.progress}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all"
-                  style={{ width: `${shipment.progress}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-4 pt-4 border-t">
-              <Button size="sm" variant="outline">Detay</Button>
-              <Button size="sm" variant="outline">Harita</Button>
-              <Button size="sm" variant="outline">İletişim</Button>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
+
+      {filteredShipments.length === 0 && (
+        <Card className="p-12">
+          <div className="text-center text-gray-500">
+            <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>Arama kriterlerine uygun sevkiyat bulunamadı.</p>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

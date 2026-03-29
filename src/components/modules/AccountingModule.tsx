@@ -1,226 +1,175 @@
-import { useState } from "react";
-import { FileText, DollarSign, TrendingUp, TrendingDown, Calendar, Search, Filter, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { FileText, DollarSign, TrendingUp, TrendingDown, Clock, CheckCircle2, AlertCircle, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { accountingService } from "@/services/accountingService";
 
 export function AccountingModule() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [stats, setStats] = useState({ totalRevenue: 0, paid: 0, pending: 0, overdue: 0 });
+  const [loading, setLoading] = useState(true);
 
-  // Mock fatura verileri
-  const invoices = [
-    {
-      id: "INV-2026-0325",
-      customer: "Anadolu Lojistik A.Ş.",
-      amount: 45000,
-      status: "Ödendi",
-      dueDate: "2026-03-25",
-      paidDate: "2026-03-23",
-      type: "Gelir"
-    },
-    {
-      id: "INV-2026-0326",
-      customer: "Ege Taşımacılık Ltd.",
-      amount: 32500,
-      status: "Bekliyor",
-      dueDate: "2026-04-05",
-      paidDate: null,
-      type: "Gelir"
-    },
-    {
-      id: "INV-2026-0327",
-      customer: "Shell Türkiye (Yakıt)",
-      amount: 18000,
-      status: "Ödendi",
-      dueDate: "2026-03-28",
-      paidDate: "2026-03-27",
-      type: "Gider"
-    },
-    {
-      id: "INV-2026-0328",
-      customer: "Akdeniz Gıda San.",
-      amount: 67800,
-      status: "Gecikmiş",
-      dueDate: "2026-03-20",
-      paidDate: null,
-      type: "Gelir"
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [invoiceData, statsData] = await Promise.all([
+        accountingService.getInvoices(),
+        accountingService.getFinancialStats()
+      ]);
+      setInvoices(invoiceData);
+      setStats(statsData);
+    } catch (error) {
+      console.error("Error loading accounting data:", error);
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      "Ödendi": "bg-green-100 text-green-700 border-green-200",
-      "Bekliyor": "bg-orange-100 text-orange-700 border-orange-200",
-      "Gecikmiş": "bg-red-100 text-red-700 border-red-200"
-    };
-    return colors[status] || "bg-gray-100 text-gray-700";
   };
 
-  const totalIncome = invoices.filter(inv => inv.type === "Gelir" && inv.status === "Ödendi").reduce((sum, inv) => sum + inv.amount, 0);
-  const totalExpense = invoices.filter(inv => inv.type === "Gider" && inv.status === "Ödendi").reduce((sum, inv) => sum + inv.amount, 0);
-  const pending = invoices.filter(inv => inv.status === "Bekliyor").reduce((sum, inv) => sum + inv.amount, 0);
-  const overdue = invoices.filter(inv => inv.status === "Gecikmiş").reduce((sum, inv) => sum + inv.amount, 0);
+  const getStatusConfig = (status: string) => {
+    const configs = {
+      "Ödendi": { color: "bg-green-100 text-green-700 border-green-200", icon: CheckCircle2 },
+      "Bekliyor": { color: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: Clock },
+      "Gecikmiş": { color: "bg-red-100 text-red-700 border-red-200", icon: AlertCircle }
+    };
+    return configs[status as keyof typeof configs] || configs["Bekliyor"];
+  };
 
-  const filteredInvoices = invoices.filter(inv =>
-    inv.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    inv.customer.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Finansal veriler yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Muhasebe</h1>
-          <p className="text-gray-600 mt-1">Faturalar, ödemeler ve finansal raporlar</p>
+          <h2 className="text-2xl font-bold text-gray-900">Muhasebe</h2>
+          <p className="text-gray-600 mt-1">Fatura ve ödeme yönetimi</p>
         </div>
-        <Button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800">
-          <FileText className="w-4 h-4 mr-2" />
-          Yeni Fatura
-        </Button>
+        <div className="flex gap-2">
+          <Button className="bg-green-600 hover:bg-green-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Yeni Fatura
+          </Button>
+          <Button variant="outline">
+            <DollarSign className="w-4 h-4 mr-2" />
+            Ödeme Kaydet
+          </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+      {/* Financial Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="p-6 border-l-4 border-l-green-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-green-700 font-medium">Toplam Gelir</p>
-              <p className="text-3xl font-bold text-green-900 mt-2">₺{totalIncome.toLocaleString()}</p>
-              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />
-                ↑ 12% bu ay
-              </p>
+              <p className="text-sm text-gray-600 font-medium">Toplam Gelir</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">₺{stats.totalRevenue.toLocaleString('tr-TR')}</p>
             </div>
-            <div className="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-7 h-7 text-white" />
-            </div>
+            <TrendingUp className="w-10 h-10 text-green-600" />
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+        <Card className="p-6 border-l-4 border-l-blue-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-red-700 font-medium">Toplam Gider</p>
-              <p className="text-3xl font-bold text-red-900 mt-2">₺{totalExpense.toLocaleString()}</p>
-              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                <TrendingDown className="w-3 h-3" />
-                ↓ 5% bu ay
-              </p>
+              <p className="text-sm text-gray-600 font-medium">Ödenen</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.paid}</p>
             </div>
-            <div className="w-14 h-14 bg-red-600 rounded-xl flex items-center justify-center">
-              <TrendingDown className="w-7 h-7 text-white" />
-            </div>
+            <CheckCircle2 className="w-10 h-10 text-blue-600" />
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+        <Card className="p-6 border-l-4 border-l-yellow-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-orange-700 font-medium">Bekleyen</p>
-              <p className="text-3xl font-bold text-orange-900 mt-2">₺{pending.toLocaleString()}</p>
-              <p className="text-xs text-orange-600 mt-1">Tahsil edilecek</p>
+              <p className="text-sm text-gray-600 font-medium">Bekleyen</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.pending}</p>
             </div>
-            <div className="w-14 h-14 bg-orange-600 rounded-xl flex items-center justify-center">
-              <Calendar className="w-7 h-7 text-white" />
-            </div>
+            <Clock className="w-10 h-10 text-yellow-600" />
           </div>
         </Card>
 
-        <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+        <Card className="p-6 border-l-4 border-l-red-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-purple-700 font-medium">Net Kar</p>
-              <p className="text-3xl font-bold text-purple-900 mt-2">₺{(totalIncome - totalExpense).toLocaleString()}</p>
-              <p className="text-xs text-purple-600 mt-1">Bu ay</p>
+              <p className="text-sm text-gray-600 font-medium">Gecikmiş</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.overdue}</p>
             </div>
-            <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-7 h-7 text-white" />
-            </div>
+            <AlertCircle className="w-10 h-10 text-red-600" />
           </div>
         </Card>
       </div>
-
-      {/* Search and Actions */}
-      <Card className="p-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              placeholder="Fatura ara (ID, müşteri)..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button variant="outline" className="gap-2">
-            <Filter className="w-4 h-4" />
-            Filtrele
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Dışa Aktar
-          </Button>
-        </div>
-      </Card>
 
       {/* Invoices Table */}
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Fatura No</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Müşteri/Tedarikçi</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Tutar</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Tür</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Vade Tarihi</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Durum</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">İşlemler</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fatura No</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Müşteri</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tutar</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vergi</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Toplam</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vade</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-gray-900">{invoice.id}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-gray-900">{invoice.customer}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className={`font-bold ${invoice.type === "Gelir" ? "text-green-600" : "text-red-600"}`}>
-                      {invoice.type === "Gelir" ? "+" : "-"}₺{invoice.amount.toLocaleString()}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge variant={invoice.type === "Gelir" ? "default" : "secondary"}>
-                      {invoice.type}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      {invoice.dueDate}
-                    </div>
-                    {invoice.paidDate && (
-                      <p className="text-xs text-gray-500 mt-1">Ödendi: {invoice.paidDate}</p>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge className={getStatusColor(invoice.status)}>
-                      {invoice.status}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">Görüntüle</Button>
-                      <Button size="sm" variant="outline">İndir</Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="bg-white divide-y divide-gray-200">
+              {invoices.map((invoice) => {
+                const statusConfig = getStatusConfig(invoice.status);
+                const StatusIcon = statusConfig.icon;
+                const total = Number(invoice.amount) + Number(invoice.tax);
+
+                return (
+                  <tr key={invoice.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <FileText className="w-4 h-4 text-gray-400 mr-2" />
+                        <span className="font-medium text-gray-900">{invoice.invoice_no}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-gray-900">{invoice.customers?.company || invoice.customers?.name || "N/A"}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                      ₺{Number(invoice.amount).toLocaleString('tr-TR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                      ₺{Number(invoice.tax).toLocaleString('tr-TR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
+                      ₺{total.toLocaleString('tr-TR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge className={statusConfig.color}>
+                        <StatusIcon className="w-3 h-3 mr-1" />
+                        {invoice.status}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('tr-TR') : "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Button variant="ghost" size="sm">Detay</Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
