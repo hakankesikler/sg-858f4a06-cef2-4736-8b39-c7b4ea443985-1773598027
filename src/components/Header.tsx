@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Phone, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { QuoteForm } from "@/components/QuoteForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -214,7 +215,14 @@ export function Header() {
       </div>
 
       {/* Quote Form Modal */}
-      <QuoteForm isOpen={quoteFormOpen} onClose={() => setQuoteFormOpen(false)} />
+      <Dialog open={quoteFormOpen} onOpenChange={setQuoteFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800 p-6">
+          <DialogHeader>
+            <DialogTitle className="text-white text-2xl font-bold mb-4">Teklif Al</DialogTitle>
+          </DialogHeader>
+          <QuoteForm />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
