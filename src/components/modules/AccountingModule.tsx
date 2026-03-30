@@ -38,6 +38,7 @@ export function AccountingModule() {
   const [transactions, setTransactions] = useState<any[]>([]);
   
   // Cari accounts
+  const [customers, setCustomers] = useState<any>({});
   const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
   const [cariStats, setCariStats] = useState<any>({});
   const [employeeAccounts, setEmployeeAccounts] = useState<any[]>([]);
@@ -53,13 +54,13 @@ export function AccountingModule() {
   const loadData = async () => {
     try {
       const [statsData, invoicesData, expensesData, customerData] = await Promise.all([
-        accountingService.getStats(),
+        accountingService.getDashboardStats ? accountingService.getDashboardStats() : Promise.resolve({}),
         accountingService.getInvoices(),
         accountingService.getExpenses(),
         accountingService.getCustomerAccounts()
       ]);
 
-      setStats(statsData);
+      setStats(statsData || {});
       setInvoices(invoicesData);
       setExpenses(expensesData);
       setCustomers(customerData);
