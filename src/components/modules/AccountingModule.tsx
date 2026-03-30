@@ -47,64 +47,91 @@ export function AccountingModule() {
 
   useEffect(() => {
     loadData();
+    loadProducts();
   }, []);
 
   const loadData = async () => {
     try {
-      setLoading(true);
-      const [
-        statsData,
-        dashboardData,
-        invoiceData,
-        purchaseData,
-        expenseData,
-        productData,
-        customerData,
-        cariStatsData,
-        salesInvoiceData,
-        salesStatsData,
-        accountData,
-        transactionData,
-        projectData,
-        employeeData,
-        employeeStatsData,
-        partnerData,
-        partnerStatsData
-      ] = await Promise.all([
-        accountingService.getFinancialStats(),
-        accountingService.getDashboardStats(),
+      const [statsData, invoicesData, expensesData, customerData] = await Promise.all([
+        accountingService.getStats(),
         accountingService.getInvoices(),
-        accountingService.getPurchases(),
         accountingService.getExpenses(),
-        accountingService.getProducts(),
-        accountingService.getCustomerAccounts(),
-        accountingService.getCustomerAccountStats(),
-        accountingService.getSalesInvoices(),
-        accountingService.getSalesInvoiceStats(),
-        accountingService.getFinancialAccounts(),
-        accountingService.getTransactions(),
-        accountingService.getProjects(),
-        accountingService.getEmployeeAccounts(),
-        accountingService.getEmployeeAccountStats(),
-        accountingService.getPartnerAccounts(),
-        accountingService.getPartnerAccountStats()
+        accountingService.getCustomerAccounts()
       ]);
 
       setStats(statsData);
-      setDashboardStats(dashboardData);
-      setInvoices(invoiceData);
-      setPurchases(purchaseData);
-      setExpenses(expenseData);
-      setProducts(productData);
-      setCustomerAccounts(customerData);
-      setCariStats(cariStatsData);
-      setSalesInvoices(salesInvoiceData);
-      setSalesInvoiceStats(salesStatsData);
-      setFinancialAccounts(accountData);
+      setInvoices(invoicesData);
+      setExpenses(expensesData);
+      setCustomers(customerData);
+      setCustomerAccounts(customerData.general || []);
     } catch (error) {
       console.error("Error loading accounting data:", error);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const loadProducts = async () => {
+    try {
+      // Mock data - replace with actual API call
+      const mockProducts = [
+        {
+          id: "1",
+          type: "Ürün",
+          barcode: "8699876543210",
+          code: "PRD-001",
+          status: "Aktif",
+          name: "Uluslararası Kara Taşımacılığı",
+          tags: ["Kara Taşıma", "Export"],
+          vat: 20,
+          description: "Avrupa ülkelerine tam yük taşımacılığı hizmeti"
+        },
+        {
+          id: "2",
+          type: "Hizmet",
+          barcode: "",
+          code: "SRV-001",
+          status: "Aktif",
+          name: "Depo Yönetimi",
+          tags: ["Depo", "Lojistik"],
+          vat: 20,
+          description: "7/24 güvenli depo ve envanter yönetimi hizmeti"
+        },
+        {
+          id: "3",
+          type: "Ürün",
+          barcode: "8699876543227",
+          code: "PRD-002",
+          status: "Aktif",
+          name: "Hava Kargo Taşımacılığı",
+          tags: ["Hava Kargo", "Hızlı Teslimat"],
+          vat: 20,
+          description: "Dünya çapında hızlı hava kargo hizmeti"
+        },
+        {
+          id: "4",
+          type: "Hizmet",
+          barcode: "",
+          code: "SRV-002",
+          status: "Pasif",
+          name: "Gümrük Danışmanlığı",
+          tags: ["Gümrük", "Danışmanlık"],
+          vat: 20,
+          description: "İthalat-İhracat gümrük işlemleri danışmanlığı"
+        },
+        {
+          id: "5",
+          type: "Ürün",
+          barcode: "8699876543234",
+          code: "PRD-003",
+          status: "Aktif",
+          name: "Deniz Konteyner Taşımacılığı",
+          tags: ["Deniz Taşıma", "Konteyner"],
+          vat: 20,
+          description: "FCL ve LCL konteyner taşımacılığı hizmeti"
+        }
+      ];
+      setProducts(mockProducts);
+    } catch (error) {
+      console.error("Error loading products:", error);
     }
   };
 
@@ -140,42 +167,34 @@ export function AccountingModule() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-3 lg:grid-cols-9 gap-1">
-          <TabsTrigger value="dashboard">
-            <LayoutDashboard className="w-4 h-4 mr-2" />
-            Panel
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-7 gap-2">
+          <TabsTrigger value="panel" className="gap-2">
+            <LayoutDashboard className="w-4 h-4" />
+            <span className="hidden sm:inline">Panel</span>
           </TabsTrigger>
-          <TabsTrigger value="satis">
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Satış
+          <TabsTrigger value="satis" className="gap-2">
+            <ShoppingCart className="w-4 h-4" />
+            <span className="hidden sm:inline">Satış</span>
           </TabsTrigger>
-          <TabsTrigger value="satin-alma">
-            <ShoppingBag className="w-4 h-4 mr-2" />
-            Satın Alma
+          <TabsTrigger value="alis" className="gap-2">
+            <ShoppingBag className="w-4 h-4" />
+            <span className="hidden sm:inline">Alış</span>
           </TabsTrigger>
-          <TabsTrigger value="giderler">
-            <Receipt className="w-4 h-4 mr-2" />
-            Giderler
+          <TabsTrigger value="giderler" className="gap-2">
+            <Receipt className="w-4 h-4" />
+            <span className="hidden sm:inline">Giderler</span>
           </TabsTrigger>
-          <TabsTrigger value="urunler">
-            <Package className="w-4 h-4 mr-2" />
-            Ürün/Hizmet
+          <TabsTrigger value="urun-hizmet" className="gap-2">
+            <Package className="w-4 h-4" />
+            <span className="hidden sm:inline">Ürün/Hizmet</span>
           </TabsTrigger>
-          <TabsTrigger value="cari">
-            <Users className="w-4 h-4 mr-2" />
-            Cari Hesaplar
+          <TabsTrigger value="cari" className="gap-2">
+            <Users className="w-4 h-4" />
+            <span className="hidden sm:inline">Cari Hesaplar</span>
           </TabsTrigger>
-          <TabsTrigger value="finans">
-            <Wallet className="w-4 h-4 mr-2" />
-            Finans
-          </TabsTrigger>
-          <TabsTrigger value="projeler">
-            <FolderOpen className="w-4 h-4 mr-2" />
-            Projeler
-          </TabsTrigger>
-          <TabsTrigger value="raporlar">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Raporlar
+          <TabsTrigger value="raporlar" className="gap-2">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Raporlar</span>
           </TabsTrigger>
         </TabsList>
 
@@ -222,6 +241,269 @@ export function AccountingModule() {
               <p className="text-2xl font-bold text-red-600">{dashboardStats.overdueInvoices || 0}</p>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Ürün ve Hizmetler Tab */}
+        <TabsContent value="urun-hizmet" className="space-y-6">
+          <Card className="overflow-hidden">
+            {/* Header with Actions */}
+            <div className="p-6 border-b border-gray-200 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900">Ürün Ve Hizmetler</h3>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Search className="w-4 h-4" />
+                    Detaylı Arama
+                    <ArrowUpDown className="w-3 h-3" />
+                  </Button>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input 
+                      placeholder="Ara..." 
+                      className="pl-9 w-64"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Info Text */}
+              <p className="text-sm text-gray-600">
+                İlk {products.length} adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Toplu Seç
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button className="bg-green-600 hover:bg-green-700 gap-2">
+                    <Plus className="w-4 h-4" />
+                    Ürün/Hizmet Oluştur
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Download className="w-4 h-4" />
+                    İçe Aktar
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Download className="w-4 h-4 rotate-180" />
+                    Dışarıya Aktar
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Filter className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Products/Services Table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-3 text-left w-12">
+                      <input type="checkbox" className="rounded border-gray-300" />
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Tür
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Barkod
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Kod
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Durum
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Ad
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Etiketler
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        KDV
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Açıklama
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      İşlemler
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {products.map((product) => (
+                    <tr key={product.id} className="hover:bg-gray-50">
+                      {/* Checkbox */}
+                      <td className="px-3 py-4 whitespace-nowrap">
+                        <input type="checkbox" className="rounded border-gray-300" />
+                      </td>
+
+                      {/* Tür */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant="outline" className={
+                          product.type === "Ürün"
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            : "bg-purple-50 text-purple-700 border-purple-200"
+                        }>
+                          {product.type === "Ürün" && <Package className="w-3 h-3 mr-1" />}
+                          {product.type === "Hizmet" && <Briefcase className="w-3 h-3 mr-1" />}
+                          {product.type}
+                        </Badge>
+                      </td>
+
+                      {/* Barkod */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-mono text-sm text-gray-900">
+                          {product.barcode || "-"}
+                        </span>
+                      </td>
+
+                      {/* Kod */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-mono text-sm font-medium text-gray-900">
+                          {product.code}
+                        </span>
+                      </td>
+
+                      {/* Durum */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge className={
+                          product.status === "Aktif"
+                            ? "bg-green-100 text-green-800 hover:bg-green-100"
+                            : "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                        }>
+                          {product.status === "Aktif" && <CheckCircle className="w-3 h-3 mr-1" />}
+                          {product.status === "Pasif" && <XCircle className="w-3 h-3 mr-1" />}
+                          {product.status}
+                        </Badge>
+                      </td>
+
+                      {/* Ad */}
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-gray-900 max-w-xs truncate">
+                          {product.name}
+                        </div>
+                      </td>
+
+                      {/* Etiketler */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {product.tags?.map((tag: string, idx: number) => (
+                            <Badge 
+                              key={idx}
+                              variant="outline" 
+                              className="text-xs bg-orange-50 text-orange-700 border-orange-200"
+                            >
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </td>
+
+                      {/* KDV */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-900">
+                          %{product.vat}
+                        </span>
+                      </td>
+
+                      {/* Açıklama */}
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-600 max-w-md truncate">
+                          {product.description}
+                        </div>
+                      </td>
+
+                      {/* İşlemler */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm" className="hover:bg-blue-50">
+                            <Eye className="w-4 h-4 text-blue-600" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="hover:bg-green-50">
+                            <Edit className="w-4 h-4 text-green-600" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="hover:bg-red-50">
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {/* Empty State */}
+                  {products.length === 0 && (
+                    <tr>
+                      <td colSpan={10} className="px-6 py-12 text-center">
+                        <Package className="mx-auto h-12 w-12 text-gray-400" />
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">Henüz ürün/hizmet kaydı yok</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Başlamak için yeni bir ürün veya hizmet oluşturun.
+                        </p>
+                        <div className="mt-6">
+                          <Button className="bg-green-600 hover:bg-green-700 gap-2">
+                            <Plus className="w-4 h-4" />
+                            Ürün/Hizmet Oluştur
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Footer */}
+            {products.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Toplam {products.length} kayıt gösteriliyor
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" disabled>
+                    Önceki
+                  </Button>
+                  <Button variant="outline" size="sm" className="bg-blue-600 text-white hover:bg-blue-700">
+                    1
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    2
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    3
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Sonraki
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
         </TabsContent>
 
         {/* Cari Hesaplar with 3 Sub-tabs */}
@@ -374,12 +656,6 @@ export function AccountingModule() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
                           <div className="flex items-center gap-1">
                             Cari Tipi
-                            <ArrowUpDown className="w-3 h-3" />
-                          </div>
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                          <div className="flex items-center gap-1">
-                            Telefon Numarası
                             <ArrowUpDown className="w-3 h-3" />
                           </div>
                         </th>
@@ -1597,7 +1873,10 @@ export function AccountingModule() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Button className="bg-green-600 hover:bg-green-700 gap-2">
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700 gap-2"
+                    onClick={() => setShowExpenseForm(true)}
+                  >
                     <Plus className="w-4 h-4" />
                     Genel Gider Oluştur
                   </Button>
@@ -2254,405 +2533,6 @@ export function AccountingModule() {
                 </Button>
               </div>
             </div>
-          </Card>
-        </TabsContent>
-
-        {/* Alım Yönetimi (Satınalma) Tab */}
-        <TabsContent value="satin-alma" className="space-y-6">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="p-6 border-l-4 border-l-red-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Toplam Alım</p>
-                  <p className="text-2xl font-bold text-red-600">₺{dashboardStats.totalPurchases?.toLocaleString('tr-TR') || 0}</p>
-                </div>
-                <ShoppingCart className="w-8 h-8 text-red-500" />
-              </div>
-            </Card>
-
-            <Card className="p-6 border-l-4 border-l-orange-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Bekleyen Ödemeler</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    ₺{purchases.filter(p => p.status === "Bekliyor").reduce((sum, p) => sum + Number(p.subtotal) + Number(p.tax), 0).toLocaleString('tr-TR') || 0}
-                  </p>
-                </div>
-                <Clock className="w-8 h-8 text-orange-500" />
-              </div>
-            </Card>
-
-            <Card className="p-6 border-l-4 border-l-green-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Ödenen Alımlar</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {purchases.filter(p => p.status === "Ödendi").length}
-                  </p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              </div>
-            </Card>
-
-            <Card className="p-6 border-l-4 border-l-blue-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Toplam Fatura</p>
-                  <p className="text-2xl font-bold text-gray-900">{purchases.length}</p>
-                </div>
-                <Receipt className="w-8 h-8 text-blue-500" />
-              </div>
-            </Card>
-          </div>
-
-          {/* Advanced Purchase Invoice List */}
-          <Card className="overflow-hidden">
-            {/* Header with Actions */}
-            <div className="p-6 border-b border-gray-200 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-900">Alış Faturaları</h3>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Search className="w-4 h-4" />
-                    Detaylı Arama
-                    <ArrowUpDown className="w-3 h-3" />
-                  </Button>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input 
-                      placeholder="Ara..." 
-                      className="pl-9 w-64"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Info Text */}
-              <p className="text-sm text-gray-600">
-                {purchases.length} adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Toplu Seç
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button 
-                    className="bg-green-600 hover:bg-green-700 gap-2"
-                    onClick={() => setShowPurchaseForm(true)}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Alış Faturası Oluştur
-                  </Button>
-                  <Button variant="outline" className="gap-2">
-                    <ShoppingBag className="w-4 h-4" />
-                    Satış İade Faturası Oluştur
-                  </Button>
-                  <Button variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 gap-2">
-                    <Mail className="w-4 h-4" />
-                    e-Fatura Gelen Kutusu
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Download className="w-4 h-4" />
-                    İçe Aktar
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Download className="w-4 h-4 rotate-180" />
-                    Dışarıya Aktar
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Filter className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Advanced Table */}
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-3 py-3 text-left">
-                      <input type="checkbox" className="rounded border-gray-300" />
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center gap-1">
-                        e-Fatura Durumu
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center gap-1">
-                        Belge Tipi
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center gap-1">
-                        Cari Bilgisi
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center gap-1">
-                        Proje
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Etiketler
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center gap-1">
-                        Seri No
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center gap-1">
-                        Durum
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center gap-1">
-                        Düzenlenme Tarihi
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center gap-1">
-                        Vade Tarihi
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center justify-end gap-1">
-                        Fatura Tutarı
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center justify-end gap-1">
-                        Takip Tutarı
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center justify-end gap-1">
-                        Onaylanma Bekleyen
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                      <div className="flex items-center justify-end gap-1">
-                        Bakiye
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      İşlemler
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {purchases.map((purchase) => {
-                    const statusConfig = getStatusBadge(purchase.status);
-                    const StatusIcon = statusConfig.icon;
-                    const totalAmount = Number(purchase.subtotal) + Number(purchase.tax);
-                    const balance = purchase.status === "Ödendi" ? 0 : totalAmount;
-                    const pendingApproval = purchase.status === "Bekliyor" ? totalAmount : 0;
-
-                    return (
-                      <tr key={purchase.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-4">
-                          <input type="checkbox" className="rounded border-gray-300" />
-                        </td>
-                        
-                        {/* e-Fatura Durumu */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {Math.random() > 0.5 ? (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Gönderildi
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
-                              <XCircle className="w-3 h-3 mr-1" />
-                              Gönderilmedi
-                            </Badge>
-                          )}
-                        </td>
-
-                        {/* Belge Tipi */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                            <ShoppingCart className="w-3 h-3 mr-1" />
-                            Alış Faturası
-                          </Badge>
-                        </td>
-
-                        {/* Cari Bilgisi (Tedarikçi) */}
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            <Building className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <div className="font-medium text-gray-900 truncate">
-                                {purchase.supplier_name || "Tedarikçi"}
-                              </div>
-                              <div className="text-sm text-gray-500 truncate">
-                                {purchase.supplier_tax_id || "-"}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Proje */}
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <FolderKanban className="w-4 h-4 text-gray-400" />
-                        </td>
-
-                        {/* Etiketler */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-1">
-                            {purchase.notes && (
-                              <Badge variant="outline" className="text-xs">
-                                Not var
-                              </Badge>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Seri No */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <FileText className="w-4 h-4 text-gray-400 mr-2" />
-                            <span className="font-mono text-sm text-gray-900">
-                              {purchase.purchase_order_no || `AL-${purchase.id.substring(0, 8)}`}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Durum */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className={statusConfig.color}>
-                            <StatusIcon className="w-3 h-3 mr-1" />
-                            {purchase.status}
-                          </Badge>
-                        </td>
-
-                        {/* Düzenlenme Tarihi */}
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(purchase.purchase_date).toLocaleDateString('tr-TR')}
-                        </td>
-
-                        {/* Vade Tarihi */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center text-sm">
-                            <Calendar className="w-4 h-4 text-gray-400 mr-1" />
-                            <span className={`${
-                              purchase.delivery_date && new Date(purchase.delivery_date) < new Date() && purchase.status !== "Ödendi"
-                                ? "text-red-600 font-medium"
-                                : "text-gray-900"
-                            }`}>
-                              {purchase.delivery_date 
-                                ? new Date(purchase.delivery_date).toLocaleDateString('tr-TR')
-                                : "-"
-                              }
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Fatura Tutarı */}
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="font-bold text-gray-900">
-                            ₺{totalAmount.toLocaleString('tr-TR')}
-                          </div>
-                        </td>
-
-                        {/* Takip Tutarı */}
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="text-sm text-gray-900">
-                            ₺{totalAmount.toLocaleString('tr-TR')}
-                          </div>
-                        </td>
-
-                        {/* Onaylanma Bekleyen Tutar */}
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className={`font-medium ${
-                            pendingApproval > 0 ? 'text-orange-600' : 'text-gray-400'
-                          }`}>
-                            ₺{pendingApproval.toLocaleString('tr-TR')}
-                          </div>
-                        </td>
-
-                        {/* Bakiye */}
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className={`font-bold ${
-                            balance > 0 ? 'text-red-600' : 'text-green-600'
-                          }`}>
-                            ₺{Math.abs(balance).toLocaleString('tr-TR')}
-                          </div>
-                        </td>
-
-                        {/* İşlemler */}
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" className="hover:bg-blue-50">
-                              <Eye className="w-4 h-4 text-blue-600" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="hover:bg-green-50">
-                              <Edit className="w-4 h-4 text-green-600" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="hover:bg-red-50">
-                              <Trash2 className="w-4 h-4 text-red-600" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <div className="text-sm text-gray-600">
-                Toplam {purchases.length} kayıt gösteriliyor
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled>
-                  Önceki
-                </Button>
-                <Button variant="outline" size="sm" className="bg-blue-600 text-white hover:bg-blue-700">
-                  1
-                </Button>
-                <Button variant="outline" size="sm">
-                  2
-                </Button>
-                <Button variant="outline" size="sm">
-                  3
-                </Button>
-                <Button variant="outline" size="sm">
-                  Sonraki
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* Ürün ve Hizmetler Tab */}
-        <TabsContent value="urunler">
-          <Card className="p-6">
-            <h3 className="text-lg font-bold mb-4">Ürün ve Hizmetler</h3>
-            <p className="text-gray-600">Ürün/hizmet kataloğu ve fiyatlandırma.</p>
           </Card>
         </TabsContent>
 
