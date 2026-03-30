@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 
 export function AccountingModule() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [cariSubTab, setCariSubTab] = useState("customers");
   const [stats, setStats] = useState<any>(null);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -180,7 +181,7 @@ export function AccountingModule() {
       case "projects":
         loadProjects();
         break;
-      case "customers":
+      case "cariler":
         loadCustomerAccounts();
         break;
       case "employees":
@@ -204,26 +205,14 @@ export function AccountingModule() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-6 lg:grid-cols-12 gap-1">
+        <TabsList className="grid grid-cols-3 lg:grid-cols-9 gap-1">
           <TabsTrigger value="dashboard">
             <LayoutDashboard className="h-4 w-4 mr-2" />
             Panel
           </TabsTrigger>
-          <TabsTrigger value="customers">
+          <TabsTrigger value="cariler">
             <Users className="h-4 w-4 mr-2" />
-            Müşteri Cari
-          </TabsTrigger>
-          <TabsTrigger value="suppliers">
-            <Building className="h-4 w-4 mr-2" />
-            Tedarikçi Cari
-          </TabsTrigger>
-          <TabsTrigger value="employees">
-            <Users className="h-4 w-4 mr-2" />
-            Personel Cari
-          </TabsTrigger>
-          <TabsTrigger value="partners">
-            <Handshake className="h-4 w-4 mr-2" />
-            Ortak Cari
+            Cariler
           </TabsTrigger>
           <TabsTrigger value="invoices">
             <FileText className="h-4 w-4 mr-2" />
@@ -334,184 +323,207 @@ export function AccountingModule() {
           </div>
         </TabsContent>
 
-        <TabsContent value="customers">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Müşteri Cari Hesapları</h3>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Yeni Müşteri
-              </Button>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Müşteri Adı</TableHead>
-                  <TableHead>Şirket</TableHead>
-                  <TableHead>E-posta</TableHead>
-                  <TableHead>Telefon</TableHead>
-                  <TableHead>Bakiye</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customerAccounts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
-                      Henüz müşteri cari hesabı eklenmemiş
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  customerAccounts.map((account) => (
-                    <TableRow key={account.id}>
-                      <TableCell>{account.name}</TableCell>
-                      <TableCell>{account.company || "-"}</TableCell>
-                      <TableCell>{account.email || "-"}</TableCell>
-                      <TableCell>{account.phone || "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant={account.balance > 0 ? "default" : "secondary"}>
-                          ₺{account.balance?.toLocaleString() || "0"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
+        <TabsContent value="cariler" className="space-y-4">
+          <Tabs value={cariSubTab} onValueChange={setCariSubTab} className="space-y-4">
+            <TabsList className="grid grid-cols-2 lg:grid-cols-4 gap-1">
+              <TabsTrigger value="customers">
+                <Users className="h-4 w-4 mr-2" />
+                Müşteri Cari
+              </TabsTrigger>
+              <TabsTrigger value="suppliers">
+                <Building className="h-4 w-4 mr-2" />
+                Tedarikçi Cari
+              </TabsTrigger>
+              <TabsTrigger value="employees">
+                <Users className="h-4 w-4 mr-2" />
+                Personel Cari
+              </TabsTrigger>
+              <TabsTrigger value="partners">
+                <Handshake className="h-4 w-4 mr-2" />
+                Ortaklar Cari
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="suppliers">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Tedarikçi Cari Hesapları</h3>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Yeni Tedarikçi
-              </Button>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Tedarikçi cari hesapları burada görüntülenecek...
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="employees">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Personel Cari Hesapları</h3>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Yeni Personel
-              </Button>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Personel</TableHead>
-                  <TableHead>Pozisyon</TableHead>
-                  <TableHead>Maaş</TableHead>
-                  <TableHead>Avans Bakiyesi</TableHead>
-                  <TableHead>Toplam Bakiye</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employeeAccounts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
-                      Henüz personel cari hesabı eklenmemiş
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  employeeAccounts.map((account) => (
-                    <TableRow key={account.id}>
-                      <TableCell>
-                        {account.employees?.first_name} {account.employees?.last_name}
-                      </TableCell>
-                      <TableCell>{account.employees?.position || "-"}</TableCell>
-                      <TableCell>₺{account.salary?.toLocaleString() || "0"}</TableCell>
-                      <TableCell>₺{account.advance_balance?.toLocaleString() || "0"}</TableCell>
-                      <TableCell>
-                        <Badge variant={account.balance >= 0 ? "default" : "destructive"}>
-                          ₺{account.balance?.toLocaleString() || "0"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+            <TabsContent value="customers">
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Müşteri Cari Hesapları</h3>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Yeni Müşteri
+                  </Button>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Müşteri Adı</TableHead>
+                      <TableHead>Şirket</TableHead>
+                      <TableHead>E-posta</TableHead>
+                      <TableHead>Telefon</TableHead>
+                      <TableHead>Bakiye</TableHead>
+                      <TableHead className="text-right">İşlemler</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
+                  </TableHeader>
+                  <TableBody>
+                    {customerAccounts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
+                          Henüz müşteri cari hesabı eklenmemiş
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      customerAccounts.map((account) => (
+                        <TableRow key={account.id}>
+                          <TableCell>{account.name}</TableCell>
+                          <TableCell>{account.company || "-"}</TableCell>
+                          <TableCell>{account.email || "-"}</TableCell>
+                          <TableCell>{account.phone || "-"}</TableCell>
+                          <TableCell>
+                            <Badge variant={account.balance > 0 ? "default" : "secondary"}>
+                              ₺{account.balance?.toLocaleString() || "0"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
 
-        <TabsContent value="partners">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Ortak Cari Hesapları</h3>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Yeni Ortak
-              </Button>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ortak Adı</TableHead>
-                  <TableHead>Hisse Oranı</TableHead>
-                  <TableHead>Sermaye Katkısı</TableHead>
-                  <TableHead>Bakiye</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {partnerAccounts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      Henüz ortak cari hesabı eklenmemiş
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  partnerAccounts.map((account) => (
-                    <TableRow key={account.id}>
-                      <TableCell>{account.partner_name}</TableCell>
-                      <TableCell>%{account.share_percentage}</TableCell>
-                      <TableCell>₺{account.capital_contribution?.toLocaleString() || "0"}</TableCell>
-                      <TableCell>
-                        <Badge variant={account.balance >= 0 ? "default" : "destructive"}>
-                          ₺{account.balance?.toLocaleString() || "0"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+            <TabsContent value="suppliers">
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Tedarikçi Cari Hesapları</h3>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Yeni Tedarikçi
+                  </Button>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Tedarikçi cari hesapları burada görüntülenecek...
+                </div>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="employees">
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Personel Cari Hesapları</h3>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Yeni Personel
+                  </Button>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Personel</TableHead>
+                      <TableHead>Pozisyon</TableHead>
+                      <TableHead>Maaş</TableHead>
+                      <TableHead>Avans Bakiyesi</TableHead>
+                      <TableHead>Toplam Bakiye</TableHead>
+                      <TableHead className="text-right">İşlemler</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {employeeAccounts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
+                          Henüz personel cari hesabı eklenmemiş
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      employeeAccounts.map((account) => (
+                        <TableRow key={account.id}>
+                          <TableCell>
+                            {account.employees?.first_name} {account.employees?.last_name}
+                          </TableCell>
+                          <TableCell>{account.employees?.position || "-"}</TableCell>
+                          <TableCell>₺{account.salary?.toLocaleString() || "0"}</TableCell>
+                          <TableCell>₺{account.advance_balance?.toLocaleString() || "0"}</TableCell>
+                          <TableCell>
+                            <Badge variant={account.balance >= 0 ? "default" : "destructive"}>
+                              ₺{account.balance?.toLocaleString() || "0"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="partners">
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Ortak Cari Hesapları</h3>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Yeni Ortak
+                  </Button>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ortak Adı</TableHead>
+                      <TableHead>Hisse Oranı</TableHead>
+                      <TableHead>Sermaye Katkısı</TableHead>
+                      <TableHead>Bakiye</TableHead>
+                      <TableHead className="text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {partnerAccounts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          Henüz ortak cari hesabı eklenmemiş
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      partnerAccounts.map((account) => (
+                        <TableRow key={account.id}>
+                          <TableCell>{account.partner_name}</TableCell>
+                          <TableCell>%{account.share_percentage}</TableCell>
+                          <TableCell>₺{account.capital_contribution?.toLocaleString() || "0"}</TableCell>
+                          <TableCell>
+                            <Badge variant={account.balance >= 0 ? "default" : "destructive"}>
+                              ₺{account.balance?.toLocaleString() || "0"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="invoices">
