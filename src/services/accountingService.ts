@@ -430,32 +430,199 @@ export const accountingService = {
   },
 
   // ==================== CARI ACCOUNTS (CUSTOMERS) ====================
-  async getCariAccounts() {
+  async getCustomerAccounts() {
     const { data, error } = await supabase
-      .from("cari_cards")
-      .select("*, customers(name, company, email, phone)")
+      .from("customers")
+      .select("*")
       .order("created_at", { ascending: false });
-    
+
     if (error) {
-      console.error("Error fetching cari accounts:", error);
+      console.error("Error fetching customer accounts:", error);
       throw error;
     }
+
     return data || [];
   },
 
-  async getCariStats() {
-    const { data } = await supabase.from("cari_cards").select("balance, account_type");
-    
-    const totalReceivables = data?.filter(c => c.account_type === "Müşteri" && Number(c.balance) < 0)
-                                  .reduce((sum, c) => sum + Math.abs(Number(c.balance)), 0) || 0;
-    const totalPayables = data?.filter(c => c.account_type === "Tedarikçi" && Number(c.balance) > 0)
-                               .reduce((sum, c) => sum + Number(c.balance), 0) || 0;
-    
-    return {
-      totalReceivables,
-      totalPayables,
-      netPosition: totalReceivables - totalPayables,
-      accountCount: data?.length || 0
-    };
+  async getCustomerAccountStats() {
+    const { data: customers } = await supabase.from("customers").select("balance");
+    const { data: invoices } = await supabase.from("invoices").select("amount, tax, status");
+
+    const totalReceivables = invoices?.reduce((sum, inv) => {
+      if (inv.status === "Bekliyor" || inv.status === "Gecikmiş") {
+        return sum + Number(inv.amount) + Number(inv.tax);
+      }
+      return sum;
+    }, 0) || 0;
+
+    const totalPayables = customers?.reduce((sum, c) => {
+      if (Number(c.balance) > 0) return sum + Number(c.balance);
+      return sum;
+    }, 0) || 0;
+
+    const netPosition = totalReceivables - totalPayables;
+    const total = customers?.length || 0;
+    const active = customers?.filter(c => Number(c.balance) !== 0).length || 0;
+
+    return { totalReceivables, totalPayables, netPosition, accountCount: total, activeAccounts: active };
+  },
+
+  // ==================== EMPLOYEE ACCOUNTS (PERSONEL CARİLERİ) ====================
+  async getEmployeeAccounts() {
+    const { data, error } = await supabase
+      .from("employee_accounts")
+      .select(`
+        *,
+        employees (
+          first_name,
+          last_name,
+          email,
+          phone,
+          position,
+          department
+        )
+      `)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching employee accounts:", error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  async getEmployeeAccountStats() {
+    const { data } = await supabase.from("employee_accounts").select("balance, advance_balance, salary");
+
+    const totalOwed = data?.reduce((sum, acc) => sum + (Number(acc.balance) < 0 ? Math.abs(Number(acc.balance)) : 0), 0) || 0;
+    const totalAdvances = data?.reduce((sum, acc) => sum + Number(acc.advance_balance), 0) || 0;
+    const monthlySalaryBudget = data?.reduce((sum, acc) => sum + Number(acc.salary), 0) || 0;
+    const accountCount = data?.length || 0;
+
+    return { totalOwed, totalAdvances, monthlySalaryBudget, accountCount };
+  },
+
+  async createEmployeeAccount(accountData: any) {
+    const { data, error } = await supabase
+      .from("employee_accounts")
+      .insert([accountData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating employee account:", error);
+      throw error;
+    }
+
+    return data;
+  },
+
+  async updateEmployeeAccount(id: string, accountData: any) {
+    const { data, error } = await supabase
+      .from("employee_accounts")
+      .update({ ...accountData, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating employee account:", error);
+      throw error;
+    }
+
+    return data;
+  },
+
+  // ==================== PARTNER ACCOUNTS (ORTAKLAR CARİLERİ) ====================
+  async getPartnerAccounts() {
+    const { data, error } = await supabase
+      .from("partner_accounts")
+      .select("*")
+      .eq("is_active", true)
+      .order("share_percentage", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching partner accounts:", error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  async getPartnerAccountStats() {
+    const { data } = await supabase.from("partner_accounts").select("capital_contribution, balance, share_percentage");
+
+    const totalCapital = data?.reduce((sum, acc) => sum + Number(acc.capital_contribution), 0) || 0;
+    const totalBalance = data?.reduce((sum, acc) => sum + Number(acc.balance), 0) || 0;
+    const partnerCount = data?.length || 0;
+    const totalShares = data?.reduce((sum, acc) => sum + Number(acc.share_percentage), 0) || 0;
+
+    return { totalCapital, totalBalance, partnerCount, totalShares };
+  },
+
+  async createPartnerAccount(accountData: any) {
+    const { data, error } = await supabase
+      .from("partner_accounts")
+      .insert([accountData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating partner account:", error);
+      throw error;
+    }
+
+    return data;
+  },
+
+  async updatePartnerAccount(id: string, accountData: any) {
+    const { data, error } = await supabase
+      .from("partner_accounts")
+      .update({ ...accountData, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating partner account:", error);
+      throw error;
+    }
+
+    return data;
+  },
+
+  // ==================== ACCOUNT TRANSACTIONS ====================
+  async getAccountTransactions(accountType: string, accountId: string, limit = 10) {
+    const { data, error } = await supabase
+      .from("account_transactions")
+      .select("*")
+      .eq("account_type", accountType)
+      .eq("account_id", accountId)
+      .order("transaction_date", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("Error fetching transactions:", error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  async createTransaction(transactionData: any) {
+    const { data, error } = await supabase
+      .from("account_transactions")
+      .insert([transactionData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating transaction:", error);
+      throw error;
+    }
+
+    return data;
   }
 };

@@ -15,6 +15,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_transactions: {
+        Row: {
+          account_id: string
+          account_type: string
+          amount: number
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          reference_no: string | null
+          transaction_date: string | null
+          transaction_type: string
+          user_id: string | null
+        }
+        Insert: {
+          account_id: string
+          account_type: string
+          amount: number
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          reference_no?: string | null
+          transaction_date?: string | null
+          transaction_type: string
+          user_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          account_type?: string
+          amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          reference_no?: string | null
+          transaction_date?: string | null
+          transaction_type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       cari_cards: {
         Row: {
           account_type: string | null
@@ -55,6 +97,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      company_settings: {
+        Row: {
+          address: string | null
+          auto_offsetting: boolean | null
+          city: string | null
+          company_name: string
+          company_type: string | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          document_type: string | null
+          e_invoice_provider: string | null
+          e_invoice_status: string | null
+          email: string | null
+          id: string
+          mersis_code: string | null
+          operating_center: string | null
+          phone: string | null
+          registration_number: string | null
+          sector: string | null
+          tax_id: string | null
+          tax_office: string | null
+          updated_at: string | null
+          user_id: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          auto_offsetting?: boolean | null
+          city?: string | null
+          company_name?: string
+          company_type?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          document_type?: string | null
+          e_invoice_provider?: string | null
+          e_invoice_status?: string | null
+          email?: string | null
+          id?: string
+          mersis_code?: string | null
+          operating_center?: string | null
+          phone?: string | null
+          registration_number?: string | null
+          sector?: string | null
+          tax_id?: string | null
+          tax_office?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          auto_offsetting?: boolean | null
+          city?: string | null
+          company_name?: string
+          company_type?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          document_type?: string | null
+          e_invoice_provider?: string | null
+          e_invoice_status?: string | null
+          email?: string | null
+          id?: string
+          mersis_code?: string | null
+          operating_center?: string | null
+          phone?: string | null
+          registration_number?: string | null
+          sector?: string | null
+          tax_id?: string | null
+          tax_office?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Relationships: []
       }
       customers: {
         Row: {
@@ -100,6 +220,62 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      employee_accounts: {
+        Row: {
+          account_code: string
+          advance_balance: number | null
+          balance: number | null
+          created_at: string | null
+          credit_limit: number | null
+          employee_id: string | null
+          id: string
+          is_active: boolean | null
+          last_transaction_date: string | null
+          notes: string | null
+          salary: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_code: string
+          advance_balance?: number | null
+          balance?: number | null
+          created_at?: string | null
+          credit_limit?: number | null
+          employee_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_transaction_date?: string | null
+          notes?: string | null
+          salary?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_code?: string
+          advance_balance?: number | null
+          balance?: number | null
+          created_at?: string | null
+          credit_limit?: number | null
+          employee_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_transaction_date?: string | null
+          notes?: string | null
+          salary?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_accounts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       employees: {
         Row: {
@@ -365,6 +541,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      partner_accounts: {
+        Row: {
+          account_code: string
+          address: string | null
+          balance: number | null
+          capital_contribution: number | null
+          created_at: string | null
+          email: string | null
+          id: string
+          identity_number: string | null
+          is_active: boolean | null
+          last_transaction_date: string | null
+          notes: string | null
+          partner_name: string
+          partner_type: string | null
+          phone: string | null
+          share_percentage: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_code: string
+          address?: string | null
+          balance?: number | null
+          capital_contribution?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          identity_number?: string | null
+          is_active?: boolean | null
+          last_transaction_date?: string | null
+          notes?: string | null
+          partner_name: string
+          partner_type?: string | null
+          phone?: string | null
+          share_percentage?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_code?: string
+          address?: string | null
+          balance?: number | null
+          capital_contribution?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          identity_number?: string | null
+          is_active?: boolean | null
+          last_transaction_date?: string | null
+          notes?: string | null
+          partner_name?: string
+          partner_type?: string | null
+          phone?: string | null
+          share_percentage?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       payments: {
         Row: {
