@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 export function AccountingModule() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [cariSubTab, setCariSubTab] = useState("customers");
+  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -42,6 +43,19 @@ export function AccountingModule() {
   const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
   const [employeeAccounts, setEmployeeAccounts] = useState<any[]>([]);
   const [partnerAccounts, setPartnerAccounts] = useState<any[]>([]);
+  
+  // Invoice form state
+  const [invoiceForm, setInvoiceForm] = useState({
+    invoice_no: "",
+    invoice_date: new Date().toISOString().split('T')[0],
+    customer_id: "",
+    due_date: "",
+    payment_status: "Beklemede",
+    notes: "",
+    items: [
+      { product_id: "", product_name: "", quantity: 1, unit_price: 0, tax_rate: 20, total: 0 }
+    ]
+  });
 
   useEffect(() => {
     loadDashboardData();
