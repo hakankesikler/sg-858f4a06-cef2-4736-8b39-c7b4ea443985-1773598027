@@ -49,13 +49,13 @@ export function AccountingModule() {
         statsData,
         dashboardData,
         invoiceData,
-        salesInvoiceData,
-        salesStatsData,
         purchaseData,
         expenseData,
         productData,
         customerData,
         cariStatsData,
+        salesInvoiceData,
+        salesStatsData,
         accountData,
         transactionData,
         projectData,
@@ -67,13 +67,13 @@ export function AccountingModule() {
         accountingService.getFinancialStats(),
         accountingService.getDashboardStats(),
         accountingService.getInvoices(),
-        accountingService.getSalesInvoices(),
-        accountingService.getSalesInvoiceStats(),
         accountingService.getPurchases(),
         accountingService.getExpenses(),
         accountingService.getProducts(),
         accountingService.getCustomerAccounts(),
         accountingService.getCustomerAccountStats(),
+        accountingService.getSalesInvoices(),
+        accountingService.getSalesInvoiceStats(),
         accountingService.getFinancialAccounts(),
         accountingService.getTransactions(),
         accountingService.getProjects(),
@@ -86,20 +86,14 @@ export function AccountingModule() {
       setStats(statsData);
       setDashboardStats(dashboardData);
       setInvoices(invoiceData);
-      setSalesInvoices(salesInvoiceData);
-      setSalesInvoiceStats(salesStatsData);
       setPurchases(purchaseData);
       setExpenses(expenseData);
       setProducts(productData);
-      setProjects(projectData);
-      setFinancialAccounts(accountData);
-      setTransactions(transactionData);
       setCustomerAccounts(customerData);
       setCariStats(cariStatsData);
-      setEmployeeAccounts(employeeData);
-      setEmployeeStats(employeeStatsData);
-      setPartnerAccounts(partnerData);
-      setPartnerStats(partnerStatsData);
+      setSalesInvoices(salesInvoiceData);
+      setSalesInvoiceStats(salesStatsData);
+      setFinancialAccounts(accountData);
     } catch (error) {
       console.error("Error loading accounting data:", error);
     } finally {
