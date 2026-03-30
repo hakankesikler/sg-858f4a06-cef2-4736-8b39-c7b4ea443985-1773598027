@@ -393,11 +393,11 @@ export const accountingService = {
   // ==================== STATISTICS ====================
   async getFinancialStats() {
     const { data: invoices } = await supabase.from("invoices").select("amount, tax, status");
-    const { data: purchases } = await supabase.from("purchases").select("amount, tax");
+    const { data: purchases } = await supabase.from("purchases").select("subtotal, tax");
     const { data: expenses } = await supabase.from("expenses").select("amount, tax");
 
     const totalRevenue = invoices?.reduce((sum, inv) => sum + Number(inv.amount) + Number(inv.tax), 0) || 0;
-    const totalCosts = (purchases?.reduce((sum, p) => sum + Number(p.amount) + Number(p.tax), 0) || 0) +
+    const totalCosts = (purchases?.reduce((sum, p) => sum + Number(p.subtotal) + Number(p.tax), 0) || 0) +
                        (expenses?.reduce((sum, e) => sum + Number(e.amount) + Number(e.tax), 0) || 0);
     const profit = totalRevenue - totalCosts;
     const paid = invoices?.filter(i => i.status === "Ödendi").length || 0;
@@ -409,12 +409,12 @@ export const accountingService = {
 
   async getDashboardStats() {
     const { data: invoices } = await supabase.from("invoices").select("amount, tax, status");
-    const { data: purchases } = await supabase.from("purchases").select("amount, tax, status");
+    const { data: purchases } = await supabase.from("purchases").select("subtotal, tax, status");
     const { data: expenses } = await supabase.from("expenses").select("amount, tax");
-    const { data: projects } = await supabase.from("projects").select("budget, total_cost, status");
+    const { data: projects } = await supabase.from("projects").select("budget, actual_cost, status");
 
     const salesRevenue = invoices?.reduce((sum, inv) => sum + Number(inv.amount) + Number(inv.tax), 0) || 0;
-    const purchaseCosts = purchases?.reduce((sum, p) => sum + Number(p.amount) + Number(p.tax), 0) || 0;
+    const purchaseCosts = purchases?.reduce((sum, p) => sum + Number(p.subtotal) + Number(p.tax), 0) || 0;
     const expenseCosts = expenses?.reduce((sum, e) => sum + Number(e.amount) + Number(e.tax), 0) || 0;
     const activeProjects = projects?.filter(p => p.status === "Devam Ediyor").length || 0;
 

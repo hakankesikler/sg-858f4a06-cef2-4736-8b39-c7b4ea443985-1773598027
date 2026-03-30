@@ -399,7 +399,7 @@ export function AccountingModule() {
                   {purchases.map((purchase) => {
                     const statusConfig = getStatusBadge(purchase.status);
                     const StatusIcon = statusConfig.icon;
-                    const total = Number(purchase.amount) + Number(purchase.tax);
+                    const total = Number(purchase.subtotal) + Number(purchase.tax);
 
                     return (
                       <tr key={purchase.id} className="hover:bg-gray-50">
@@ -413,7 +413,7 @@ export function AccountingModule() {
                           {purchase.customers?.company || purchase.customers?.name || "N/A"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                          ₺{Number(purchase.amount).toLocaleString('tr-TR')}
+                          ₺{Number(purchase.subtotal).toLocaleString('tr-TR')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-900">
                           ₺{Number(purchase.tax).toLocaleString('tr-TR')}
@@ -745,13 +745,13 @@ export function AccountingModule() {
             {projects.map((project) => {
               const statusConfig = getStatusBadge(project.status);
               const StatusIcon = statusConfig.icon;
-              const completionRate = project.budget > 0 ? (project.total_cost / project.budget * 100).toFixed(1) : 0;
+              const completionRate = project.budget > 0 ? (project.actual_cost / project.budget * 100).toFixed(1) : 0;
 
               return (
                 <Card key={project.id} className="p-6 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h4 className="font-bold text-lg text-gray-900">{project.name}</h4>
+                      <h4 className="font-bold text-lg text-gray-900">{project.project_name}</h4>
                       <p className="text-sm text-gray-600">{project.customers?.company || project.customers?.name}</p>
                     </div>
                     <Badge className={statusConfig.color}>
@@ -769,12 +769,12 @@ export function AccountingModule() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Harcanan:</span>
-                      <span className="font-medium text-red-600">₺{Number(project.total_cost).toLocaleString('tr-TR')}</span>
+                      <span className="font-medium text-red-600">₺{Number(project.actual_cost).toLocaleString('tr-TR')}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Kalan:</span>
                       <span className="font-medium text-green-600">
-                        ₺{(Number(project.budget) - Number(project.total_cost)).toLocaleString('tr-TR')}
+                        ₺{(Number(project.budget) - Number(project.actual_cost)).toLocaleString('tr-TR')}
                       </span>
                     </div>
                     <div>
