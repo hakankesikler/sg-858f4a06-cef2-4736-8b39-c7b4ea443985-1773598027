@@ -13,9 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { accountingService } from "@/services/accountingService";
+import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
 
 export function AccountingModule() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("panel");
+  const [showPurchaseForm, setShowPurchaseForm] = useState(false);
   const [loading, setLoading] = useState(true);
   
   // Stats
@@ -619,7 +621,10 @@ export function AccountingModule() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Button className="bg-green-600 hover:bg-green-700 gap-2">
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700 gap-2"
+                    onClick={() => setShowPurchaseForm(true)}
+                  >
                     <Plus className="w-4 h-4" />
                     Satış Faturası Oluştur
                   </Button>
@@ -983,7 +988,10 @@ export function AccountingModule() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Button className="bg-green-600 hover:bg-green-700 gap-2">
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700 gap-2"
+                    onClick={() => setShowPurchaseForm(true)}
+                  >
                     <Plus className="w-4 h-4" />
                     Alış Faturası Oluştur
                   </Button>
@@ -1320,6 +1328,19 @@ export function AccountingModule() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Purchase Invoice Form Modal */}
+      {showPurchaseForm && (
+        <PurchaseInvoiceForm
+          onClose={() => setShowPurchaseForm(false)}
+          onSave={(data) => {
+            console.log("Purchase invoice data:", data);
+            // TODO: Save to database
+            setShowPurchaseForm(false);
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 }
