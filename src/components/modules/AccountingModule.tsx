@@ -3,11 +3,14 @@ import {
   LayoutDashboard, ShoppingCart, ShoppingBag, Receipt, Package, 
   Users, Wallet, FolderOpen, BarChart3, Plus, FileText, 
   DollarSign, TrendingUp, TrendingDown, UserCheck, Handshake, 
-  Briefcase, PieChart, Building, CheckCircle, Clock, XCircle, Calendar 
+  Briefcase, PieChart, Building, CheckCircle, Clock, XCircle, Calendar,
+  Search, ArrowUpDown, CheckCircle2, Mail, Download, Filter, FolderKanban,
+  Eye, Edit, Trash2
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { accountingService } from "@/services/accountingService";
 
