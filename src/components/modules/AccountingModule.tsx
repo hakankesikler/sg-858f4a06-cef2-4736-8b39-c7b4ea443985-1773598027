@@ -14,10 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { accountingService } from "@/services/accountingService";
 import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
+import { ExpenseForm } from "@/components/ExpenseForm";
 
 export function AccountingModule() {
   const [activeTab, setActiveTab] = useState("panel");
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [loading, setLoading] = useState(true);
   
   // Stats
@@ -990,10 +992,10 @@ export function AccountingModule() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <Button 
                     className="bg-green-600 hover:bg-green-700 gap-2"
-                    onClick={() => setShowPurchaseForm(true)}
+                    onClick={() => setShowExpenseForm(true)}
                   >
                     <Plus className="w-4 h-4" />
-                    Alış Faturası Oluştur
+                    Genel Gider Oluştur
                   </Button>
                   <Button variant="outline" className="gap-2">
                     <ShoppingBag className="w-4 h-4" />
@@ -2466,6 +2468,19 @@ export function AccountingModule() {
             console.log("Purchase invoice data:", data);
             // TODO: Save to database
             setShowPurchaseForm(false);
+            loadData();
+          }}
+        />
+      )}
+
+      {/* Expense Form Modal */}
+      {showExpenseForm && (
+        <ExpenseForm
+          onClose={() => setShowExpenseForm(false)}
+          onSave={(data) => {
+            console.log("Expense data:", data);
+            // TODO: Save to database
+            setShowExpenseForm(false);
             loadData();
           }}
         />
