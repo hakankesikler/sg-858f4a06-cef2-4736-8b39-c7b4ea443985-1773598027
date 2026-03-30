@@ -898,7 +898,7 @@ export function AccountingModule() {
         </TabsContent>
 
         {/* Alım Yönetimi (Satınalma) Tab */}
-        <TabsContent value="alim" className="space-y-6">
+        <TabsContent value="satin-alma" className="space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="p-6 border-l-4 border-l-red-500">
