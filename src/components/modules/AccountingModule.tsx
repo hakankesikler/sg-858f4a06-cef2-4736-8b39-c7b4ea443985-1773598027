@@ -634,7 +634,7 @@ export function AccountingModule() {
                   </Button>
                   <Button variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 gap-2">
                     <Mail className="w-4 h-4" />
-                    e-Fatura Giden Kutusu
+                    e-Fatura Gelen Kutusu
                   </Button>
                   <Button variant="outline" size="sm" className="gap-2">
                     <Download className="w-4 h-4" />
@@ -1001,7 +1001,7 @@ export function AccountingModule() {
                   </Button>
                   <Button variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 gap-2">
                     <Mail className="w-4 h-4" />
-                    e-Fatura Giden Kutusu
+                    e-Fatura Gelen Kutusu
                   </Button>
                   <Button variant="outline" size="sm" className="gap-2">
                     <Download className="w-4 h-4" />
