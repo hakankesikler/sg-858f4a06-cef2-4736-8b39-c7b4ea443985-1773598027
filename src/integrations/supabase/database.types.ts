@@ -996,6 +996,133 @@ export type Database = {
           },
         ]
       }
+      sales_invoice_items: {
+        Row: {
+          created_at: string | null
+          description: string
+          discount_amount: number
+          id: string
+          invoice_id: string | null
+          product_code: string
+          quantity: number
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          discount_amount?: number
+          id?: string
+          invoice_id?: string | null
+          product_code: string
+          quantity?: number
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          discount_amount?: number
+          id?: string
+          invoice_id?: string | null
+          product_code?: string
+          quantity?: number
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_invoices: {
+        Row: {
+          created_at: string | null
+          currency: string
+          customer_id: string | null
+          due_date: string
+          general_discount: number
+          grand_total: number
+          id: string
+          invoice_date: string
+          invoice_no: string
+          notes: string | null
+          payment_method: string | null
+          payment_status: string
+          shipping_cost: number
+          subtotal: number
+          total_discount: number
+          total_tax: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string
+          customer_id?: string | null
+          due_date: string
+          general_discount?: number
+          grand_total?: number
+          id?: string
+          invoice_date?: string
+          invoice_no: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          shipping_cost?: number
+          subtotal?: number
+          total_discount?: number
+          total_tax?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string
+          customer_id?: string | null
+          due_date?: string
+          general_discount?: number
+          grand_total?: number
+          id?: string
+          invoice_date?: string
+          invoice_no?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          shipping_cost?: number
+          subtotal?: number
+          total_discount?: number
+          total_tax?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       settings: {
         Row: {
           category: string
