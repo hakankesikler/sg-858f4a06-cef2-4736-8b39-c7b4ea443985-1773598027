@@ -3,7 +3,7 @@ import {
   LayoutDashboard, ShoppingCart, ShoppingBag, Receipt, Package, 
   Users, Wallet, FolderOpen, BarChart3, Plus, FileText, 
   DollarSign, TrendingUp, TrendingDown, UserCheck, Handshake, 
-  Briefcase, PieChart, Building, CheckCircle, Clock, XCircle 
+  Briefcase, PieChart, Building, CheckCircle, Clock, XCircle, Calendar 
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,13 @@ export function AccountingModule() {
   const [loading, setLoading] = useState(true);
   
   // Stats
+  const [stats, setStats] = useState<any>({});
   const [dashboardStats, setDashboardStats] = useState<any>({});
   
   // Data states
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [salesInvoices, setSalesInvoices] = useState<any[]>([]);
+  const [salesInvoiceStats, setSalesInvoiceStats] = useState<any>({});
   const [purchases, setPurchases] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -43,39 +46,48 @@ export function AccountingModule() {
     try {
       setLoading(true);
       const [
+        statsData,
         dashboardData,
         invoiceData,
+        salesInvoiceData,
+        salesStatsData,
         purchaseData,
         expenseData,
         productData,
-        projectData,
-        accountData,
-        transactionData,
         customerData,
         cariStatsData,
+        accountData,
+        transactionData,
+        projectData,
         employeeData,
         employeeStatsData,
         partnerData,
         partnerStatsData
       ] = await Promise.all([
+        accountingService.getFinancialStats(),
         accountingService.getDashboardStats(),
         accountingService.getInvoices(),
+        accountingService.getSalesInvoices(),
+        accountingService.getSalesInvoiceStats(),
         accountingService.getPurchases(),
         accountingService.getExpenses(),
         accountingService.getProducts(),
-        accountingService.getProjects(),
-        accountingService.getFinancialAccounts(),
-        accountingService.getTransactions(),
         accountingService.getCustomerAccounts(),
         accountingService.getCustomerAccountStats(),
+        accountingService.getFinancialAccounts(),
+        accountingService.getTransactions(),
+        accountingService.getProjects(),
         accountingService.getEmployeeAccounts(),
         accountingService.getEmployeeAccountStats(),
         accountingService.getPartnerAccounts(),
         accountingService.getPartnerAccountStats()
       ]);
 
+      setStats(statsData);
       setDashboardStats(dashboardData);
       setInvoices(invoiceData);
+      setSalesInvoices(salesInvoiceData);
+      setSalesInvoiceStats(salesStatsData);
       setPurchases(purchaseData);
       setExpenses(expenseData);
       setProducts(productData);
@@ -524,11 +536,203 @@ export function AccountingModule() {
           </Tabs>
         </TabsContent>
 
-        {/* Other tabs placeholder */}
-        <TabsContent value="satis">
-          <Card className="p-6">
-            <h3 className="text-lg font-bold mb-4">Satış Yönetimi</h3>
-            <p className="text-gray-600">Satış faturaları ve yönetimi burada görüntülenecek.</p>
+        {/* Satış Yönetimi Tab */}
+        <TabsContent value="satis" className="space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="p-6 border-l-4 border-l-green-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Toplam Ciro</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    ₺{salesInvoiceStats.totalRevenue?.toLocaleString('tr-TR') || 0}
+                  </p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-green-500" />
+              </div>
+            </Card>
+
+            <Card className="p-6 border-l-4 border-l-blue-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Aylık Ciro</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    ₺{salesInvoiceStats.monthlyRevenue?.toLocaleString('tr-TR') || 0}
+                  </p>
+                </div>
+                <Calendar className="w-8 h-8 text-blue-500" />
+              </div>
+            </Card>
+
+            <Card className="p-6 border-l-4 border-l-emerald-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Ödenen Faturalar</p>
+                  <p className="text-2xl font-bold text-gray-900">{salesInvoiceStats.paidInvoices || 0}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-emerald-500" />
+              </div>
+            </Card>
+
+            <Card className="p-6 border-l-4 border-l-orange-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Bekleyen</p>
+                  <p className="text-2xl font-bold text-orange-600">{salesInvoiceStats.pendingInvoices || 0}</p>
+                </div>
+                <Clock className="w-8 h-8 text-orange-500" />
+              </div>
+            </Card>
+          </div>
+
+          {/* Invoices Table */}
+          <Card className="overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900">Satış Faturaları</h3>
+                <Button className="bg-green-600 hover:bg-green-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Yeni Fatura
+                </Button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              {salesInvoices.map((invoice) => {
+                const statusConfig = getStatusBadge(invoice.payment_status);
+                const StatusIcon = statusConfig.icon;
+
+                return (
+                  <div key={invoice.id} className="border-b border-gray-200 last:border-b-0">
+                    {/* Invoice Header */}
+                    <div className="bg-gray-50 px-6 py-4 grid grid-cols-12 gap-4 items-center">
+                      <div className="col-span-2">
+                        <div className="flex items-center">
+                          <FileText className="w-4 h-4 text-gray-400 mr-2" />
+                          <span className="font-bold text-gray-900">{invoice.invoice_no}</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {new Date(invoice.invoice_date).toLocaleDateString('tr-TR')}
+                        </div>
+                      </div>
+
+                      <div className="col-span-3">
+                        <div className="font-medium text-gray-900">
+                          {invoice.customers?.company || invoice.customers?.name}
+                        </div>
+                        <div className="text-sm text-gray-500">{invoice.customers?.tax_id}</div>
+                      </div>
+
+                      <div className="col-span-2 text-right">
+                        <div className="text-sm text-gray-600">Ara Toplam</div>
+                        <div className="font-medium text-gray-900">
+                          ₺{Number(invoice.subtotal).toLocaleString('tr-TR')}
+                        </div>
+                      </div>
+
+                      <div className="col-span-2 text-right">
+                        <div className="text-sm text-gray-600">KDV</div>
+                        <div className="font-medium text-gray-900">
+                          ₺{Number(invoice.total_tax).toLocaleString('tr-TR')}
+                        </div>
+                      </div>
+
+                      <div className="col-span-2 text-right">
+                        <div className="text-sm text-gray-600">Genel Toplam</div>
+                        <div className="font-bold text-lg text-green-600">
+                          ₺{Number(invoice.grand_total).toLocaleString('tr-TR')}
+                        </div>
+                      </div>
+
+                      <div className="col-span-1 flex justify-end">
+                        <Badge className={statusConfig.color}>
+                          <StatusIcon className="w-3 h-3 mr-1" />
+                          {invoice.payment_status}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Invoice Items */}
+                    {invoice.sales_invoice_items && invoice.sales_invoice_items.length > 0 && (
+                      <div className="px-6 py-3 bg-white">
+                        <table className="min-w-full">
+                          <thead>
+                            <tr className="text-xs text-gray-500 border-b">
+                              <th className="py-2 text-left">Ürün/Hizmet Kodu</th>
+                              <th className="py-2 text-left">Açıklama</th>
+                              <th className="py-2 text-center">Miktar</th>
+                              <th className="py-2 text-center">Birim</th>
+                              <th className="py-2 text-right">Birim Fiyat</th>
+                              <th className="py-2 text-right">KDV %</th>
+                              <th className="py-2 text-right">İskonto</th>
+                              <th className="py-2 text-right">Toplam</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {invoice.sales_invoice_items.map((item: any) => (
+                              <tr key={item.id} className="text-sm border-b last:border-b-0">
+                                <td className="py-2 text-gray-900 font-mono">{item.product_code}</td>
+                                <td className="py-2 text-gray-700">{item.description}</td>
+                                <td className="py-2 text-center text-gray-900">{item.quantity}</td>
+                                <td className="py-2 text-center text-gray-600">{item.unit}</td>
+                                <td className="py-2 text-right text-gray-900">
+                                  ₺{Number(item.unit_price).toLocaleString('tr-TR')}
+                                </td>
+                                <td className="py-2 text-right text-gray-600">{item.tax_rate}%</td>
+                                <td className="py-2 text-right text-red-600">
+                                  {item.discount_amount > 0 ? `-₺${Number(item.discount_amount).toLocaleString('tr-TR')}` : '-'}
+                                </td>
+                                <td className="py-2 text-right font-bold text-gray-900">
+                                  ₺{Number(item.total).toLocaleString('tr-TR')}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+
+                        {/* Invoice Footer Info */}
+                        {(invoice.shipping_cost > 0 || invoice.general_discount > 0 || invoice.notes) && (
+                          <div className="mt-3 pt-3 border-t grid grid-cols-2 gap-4">
+                            <div>
+                              {invoice.notes && (
+                                <div className="text-sm">
+                                  <span className="font-medium text-gray-700">Not:</span>
+                                  <p className="text-gray-600 mt-1">{invoice.notes}</p>
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right space-y-1 text-sm">
+                              {invoice.general_discount > 0 && (
+                                <div className="flex justify-end gap-2">
+                                  <span className="text-gray-600">Genel İskonto:</span>
+                                  <span className="font-medium text-red-600">
+                                    -₺{Number(invoice.general_discount).toLocaleString('tr-TR')}
+                                  </span>
+                                </div>
+                              )}
+                              {invoice.shipping_cost > 0 && (
+                                <div className="flex justify-end gap-2">
+                                  <span className="text-gray-600">Kargo Ücreti:</span>
+                                  <span className="font-medium text-gray-900">
+                                    +₺{Number(invoice.shipping_cost).toLocaleString('tr-TR')}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex justify-end gap-2 pt-2 border-t">
+                                <span className="text-gray-600">Vade:</span>
+                                <span className="font-medium text-gray-900">
+                                  {new Date(invoice.due_date).toLocaleDateString('tr-TR')}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </Card>
         </TabsContent>
 

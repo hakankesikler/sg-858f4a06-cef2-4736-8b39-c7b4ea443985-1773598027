@@ -615,5 +615,196 @@ export const accountingService = {
     }
 
     return data || [];
+  },
+
+  // ==================== SALES INVOICES (DETAILED) ====================
+  async getSalesInvoices() {
+    const { data, error } = await supabase
+      .from("sales_invoices")
+      .select(`
+        *,
+        customers (
+          name,
+          company,
+          email,
+          phone,
+          address,
+          tax_id,
+          tax_office
+        ),
+        sales_invoice_items (
+          id,
+          product_code,
+          description,
+          quantity,
+          unit,
+          unit_price,
+          subtotal,
+          tax_rate,
+          tax_amount,
+          discount_amount,
+          total
+        )
+      `)
+      .order("invoice_date", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching sales invoices:", error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  async getSalesInvoiceById(id: string) {
+    const { data, error } = await supabase
+      .from("sales_invoices")
+      .select(`
+        *,
+        customers (
+          name,
+          company,
+          email,
+          phone,
+          address,
+          tax_id,
+          tax_office,
+          city,
+          country
+        ),
+        sales_invoice_items (
+          id,
+          product_code,
+          description,
+          quantity,
+          unit,
+          unit_price,
+          subtotal,
+          tax_rate,
+          tax_amount,
+          discount_amount,
+          total
+        )
+      `)
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching sales invoice:", error);
+      throw error;
+    }
+
+    return data;
+  },
+
+  async createSalesInvoice(invoiceData: any, items: any[]) {
+    // Create invoice header
+    const { data: invoice, error: invoiceError } = await supabase
+      .from("sales_invoices")
+      .insert([invoiceData])
+      .select()
+      .single();
+
+    if (invoiceError) {
+      console.error("Error creating sales invoice:", invoiceError);
+      throw invoiceError;
+    }
+
+    // Create invoice items
+    const itemsWithInvoiceId = items.map(item => ({
+      ...item,
+      invoice_id: invoice.id
+    }));
+
+    const { error: itemsError } = await supabase
+      .from("sales_invoice_items")
+      .insert(itemsWithInvoiceId);
+
+    if (itemsError) {
+      console.error("Error creating invoice items:", itemsError);
+      throw itemsError;
+    }
+
+    return invoice;
+  },
+
+  async updateSalesInvoice(id: string, invoiceData: any, items?: any[]) {
+    // Update invoice header
+    const { data: invoice, error: invoiceError } = await supabase
+      .from("sales_invoices")
+      .update({ ...invoiceData, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (invoiceError) {
+      console.error("Error updating sales invoice:", invoiceError);
+      throw invoiceError;
+    }
+
+    // If items provided, update them
+    if (items && items.length > 0) {
+      // Delete existing items
+      await supabase.from("sales_invoice_items").delete().eq("invoice_id", id);
+
+      // Insert new items
+      const itemsWithInvoiceId = items.map(item => ({
+        ...item,
+        invoice_id: id
+      }));
+
+      const { error: itemsError } = await supabase
+        .from("sales_invoice_items")
+        .insert(itemsWithInvoiceId);
+
+      if (itemsError) {
+        console.error("Error updating invoice items:", itemsError);
+        throw itemsError;
+      }
+    }
+
+    return invoice;
+  },
+
+  async deleteSalesInvoice(id: string) {
+    // Items will be deleted automatically due to CASCADE
+    const { error } = await supabase
+      .from("sales_invoices")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting sales invoice:", error);
+      throw error;
+    }
+
+    return true;
+  },
+
+  async getSalesInvoiceStats() {
+    const { data } = await supabase.from("sales_invoices").select("grand_total, payment_status, invoice_date");
+
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    const totalRevenue = data?.reduce((sum, inv) => sum + Number(inv.grand_total), 0) || 0;
+    const paidInvoices = data?.filter(inv => inv.payment_status === "Ödendi").length || 0;
+    const pendingInvoices = data?.filter(inv => inv.payment_status === "Bekliyor").length || 0;
+    const overdueInvoices = data?.filter(inv => inv.payment_status === "Gecikmiş").length || 0;
+    
+    const monthlyRevenue = data?.filter(inv => {
+      const invDate = new Date(inv.invoice_date);
+      return invDate.getMonth() === currentMonth && invDate.getFullYear() === currentYear;
+    }).reduce((sum, inv) => sum + Number(inv.grand_total), 0) || 0;
+
+    return {
+      totalRevenue,
+      monthlyRevenue,
+      paidInvoices,
+      pendingInvoices,
+      overdueInvoices,
+      totalInvoices: data?.length || 0
+    };
   }
 };
