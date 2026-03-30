@@ -251,7 +251,7 @@ export function AccountingModule() {
                     <div>
                       <p className="text-sm text-gray-600">Toplam Alacak</p>
                       <p className="text-2xl font-bold text-green-600">
-                        ₺{customers.general?.filter((c: any) => Number(c.balance || 0) > 0).reduce((sum: number, c: any) => sum + Number(c.balance || 0), 0).toLocaleString('tr-TR') || 0}
+                        ₺{customerAccounts?.filter((c: any) => Number(c.balance || 0) > 0).reduce((sum: number, c: any) => sum + Number(c.balance || 0), 0).toLocaleString('tr-TR') || 0}
                       </p>
                     </div>
                     <TrendingUp className="w-8 h-8 text-green-500" />
@@ -263,7 +263,7 @@ export function AccountingModule() {
                     <div>
                       <p className="text-sm text-gray-600">Toplam Borç</p>
                       <p className="text-2xl font-bold text-red-600">
-                        ₺{Math.abs(customers.general?.filter((c: any) => Number(c.balance || 0) < 0).reduce((sum: number, c: any) => sum + Number(c.balance || 0), 0)).toLocaleString('tr-TR') || 0}
+                        ₺{Math.abs(customerAccounts?.filter((c: any) => Number(c.balance || 0) < 0).reduce((sum: number, c: any) => sum + Number(c.balance || 0), 0)).toLocaleString('tr-TR') || 0}
                       </p>
                     </div>
                     <TrendingDown className="w-8 h-8 text-red-500" />
@@ -275,7 +275,7 @@ export function AccountingModule() {
                     <div>
                       <p className="text-sm text-gray-600">Net Pozisyon</p>
                       <p className="text-2xl font-bold text-blue-600">
-                        ₺{customers.general?.reduce((sum: number, c: any) => sum + Number(c.balance || 0), 0).toLocaleString('tr-TR') || 0}
+                        ₺{customerAccounts?.reduce((sum: number, c: any) => sum + Number(c.balance || 0), 0).toLocaleString('tr-TR') || 0}
                       </p>
                     </div>
                     <DollarSign className="w-8 h-8 text-blue-500" />
@@ -287,7 +287,7 @@ export function AccountingModule() {
                     <div>
                       <p className="text-sm text-gray-600">Cari Sayısı</p>
                       <p className="text-2xl font-bold text-purple-600">
-                        {customers.general?.length || 0}
+                        {customerAccounts?.length || 0}
                       </p>
                     </div>
                     <Users className="w-8 h-8 text-purple-500" />
@@ -319,7 +319,7 @@ export function AccountingModule() {
 
                   {/* Info Text */}
                   <p className="text-sm text-gray-600">
-                    {customers.general?.length || 0} adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+                    {customerAccounts?.length || 0} adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
                   </p>
 
                   {/* Action Buttons */}
@@ -401,7 +401,7 @@ export function AccountingModule() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {customers.general?.map((customer: any) => {
+                      {customerAccounts?.map((customer: any) => {
                         const balance = Number(customer.balance || 0);
                         const customerType = customer.customer_type || "Müşteri";
                         
@@ -494,7 +494,7 @@ export function AccountingModule() {
                       })}
 
                       {/* Empty State */}
-                      {(!customers.general || customers.general.length === 0) && (
+                      {(!customerAccounts || customerAccounts.length === 0) && (
                         <tr>
                           <td colSpan={8} className="px-6 py-12 text-center">
                             <Users className="mx-auto h-12 w-12 text-gray-400" />
@@ -516,10 +516,10 @@ export function AccountingModule() {
                 </div>
 
                 {/* Pagination Footer */}
-                {customers.general && customers.general.length > 0 && (
+                {customerAccounts && customerAccounts.length > 0 && (
                   <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                     <div className="text-sm text-gray-600">
-                      Toplam {customers.general.length} kayıt gösteriliyor
+                      Toplam {customerAccounts.length} kayıt gösteriliyor
                     </div>
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" disabled>
@@ -1683,6 +1683,12 @@ export function AccountingModule() {
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
                       <div className="flex items-center justify-end gap-1">
+                        Takip Tutarı
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center justify-end gap-1">
                         Bakiye
                         <ArrowUpDown className="w-3 h-3" />
                       </div>
@@ -1793,6 +1799,13 @@ export function AccountingModule() {
                         {/* Fatura Tutarı */}
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="font-bold text-gray-900">
+                            ₺{Number(expense.amount).toLocaleString('tr-TR')}
+                          </div>
+                        </td>
+
+                        {/* Takip Tutarı */}
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="text-sm text-gray-900">
                             ₺{Number(expense.amount).toLocaleString('tr-TR')}
                           </div>
                         </td>
