@@ -64,7 +64,10 @@ export function AccountingModule() {
       setInvoices(invoicesData);
       setExpenses(expensesData);
       setCustomers(customerData);
-      setCustomerAccounts(customerData.general || []);
+      
+      // Safely handle customerData whether it's an array or an object with a general property
+      const safeCustomerData = customerData as any;
+      setCustomerAccounts(Array.isArray(safeCustomerData) ? safeCustomerData : (safeCustomerData.general || []));
     } catch (error) {
       console.error("Error loading accounting data:", error);
     }
