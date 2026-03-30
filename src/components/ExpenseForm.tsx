@@ -180,6 +180,91 @@ export function ExpenseForm({ onClose, onSave }: ExpenseFormProps) {
     onSave(expenseData);
   };
 
+  // Kategorize edilmiş gider tipleri
+  const expenseCategories = {
+    "Kategorisiz Genel Gider Tipleri": [
+      "Yiyecek"
+    ],
+    "Araç Bakım Onarım": [
+      "Araç Tamir ve Bakım Giderleri",
+      "Araç Donanım Giderleri"
+    ],
+    "Yazılım": [
+      "Freight Forwarding Yazılımı"
+    ],
+    "Kurumsal Giderler": [
+      "İş Sağlığı Güvenliği Danışmanlık Hizmeti",
+      "Freight Forwarding Sigortası",
+      "Ticaret Odası Giderleri",
+      "Noter Giderleri",
+      "Elektrik",
+      "Su",
+      "Doğalgaz",
+      "Kömür",
+      "İnternet",
+      "Trafik Cezası",
+      "HGS",
+      "OGS",
+      "Belediye Ödemesi",
+      "SGK"
+    ],
+    "Finansal Giderler": [
+      "Vakıfbank Sky Kobi Dijital Kredi",
+      "Vakıfbank Tam Esnaf Standart Kredi",
+      "Halkbank İhtiyaç Kredisi",
+      "EFT",
+      "Havale",
+      "Faiz",
+      "Komisyon"
+    ],
+    "Demirbaş": [
+      "Mobilya",
+      "Ofis Eşyası",
+      "Donanım",
+      "Temizlik"
+    ],
+    "Ulaşım/Konaklama Giderleri": [
+      "Seyahat Harcaması",
+      "Akaryakıt",
+      "Araç Kiralama",
+      "Otopark Ücreti",
+      "Taksi",
+      "Bilet"
+    ],
+    "Temel Giderler": [
+      "Kargo Ödemesi",
+      "Kira",
+      "Yemek Harcaması",
+      "Muhasebe/Mali Müşavir",
+      "İletişim Gideri",
+      "Ağırlama Gideri",
+      "Kırtasiye",
+      "Eğlence",
+      "Eğitim",
+      "Fuar ve Organizasyon",
+      "Abonelik Ücreti",
+      "Bakım",
+      "Temizlik"
+    ],
+    "Vergi": [
+      "MTV (Motorlu Taşıtlar Vergisi)",
+      "Gerçek Usulde Katma Değer Vergisi",
+      "Kurumlar Vergisi",
+      "AGI",
+      "Stopaj",
+      "Damga Vergisi",
+      "Gümrük Vergisi",
+      "Belediye Vergileri",
+      "Belediye Harçları"
+    ],
+    "Diğer Giderler": [
+      "Marka / Patent",
+      "Ulaştırma Bakanlığı Taşıma İşleri Organizatörlüğü Yetki Belgesi Ödemesi",
+      "Market",
+      "Kargo"
+    ]
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <Card className="w-full max-w-7xl bg-white my-8">
@@ -427,21 +512,23 @@ export function ExpenseForm({ onClose, onSave }: ExpenseFormProps) {
                   {items.map((item) => (
                     <tr key={item.id}>
                       <td className="px-4 py-3">
-                        <Select
+                        <select
                           value={item.category}
-                          onValueChange={(value) => updateItem(item.id, 'category', value)}
+                          onChange={(e) => updateItem(item.id, "category", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          required
                         >
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((cat) => (
-                              <SelectItem key={cat} value={cat}>
-                                {cat}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          <option value="">Kategori Seçin</option>
+                          {Object.entries(expenseCategories).map(([categoryGroup, types]) => (
+                            <optgroup key={categoryGroup} label={categoryGroup}>
+                              {types.map((type) => (
+                                <option key={type} value={type}>
+                                  {type}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
                       </td>
                       <td className="px-4 py-3">
                         <Input
