@@ -579,153 +579,317 @@ export function AccountingModule() {
             </Card>
           </div>
 
-          {/* Invoices Table */}
+          {/* Advanced Invoice List */}
           <Card className="overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
+            {/* Header with Actions */}
+            <div className="p-6 border-b border-gray-200 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-gray-900">Satış Faturaları</h3>
-                <Button className="bg-green-600 hover:bg-green-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Yeni Fatura
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Search className="w-4 h-4" />
+                    Detaylı Arama
+                    <ArrowUpDown className="w-3 h-3" />
+                  </Button>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input 
+                      placeholder="Ara..." 
+                      className="pl-9 w-64"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Info Text */}
+              <p className="text-sm text-gray-600">
+                {salesInvoices.length} adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Toplu Seç
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button className="bg-green-600 hover:bg-green-700 gap-2">
+                    <Plus className="w-4 h-4" />
+                    Satış Faturası Oluştur
+                  </Button>
+                  <Button variant="outline" className="gap-2">
+                    <ShoppingBag className="w-4 h-4" />
+                    Alış İade Faturası Oluştur
+                  </Button>
+                  <Button variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 gap-2">
+                    <Mail className="w-4 h-4" />
+                    e-Fatura Giden Kutusu
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Download className="w-4 h-4" />
+                    İçe Aktar
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Download className="w-4 h-4 rotate-180" />
+                    Dışarıya Aktar
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Filter className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
+            {/* Advanced Table */}
             <div className="overflow-x-auto">
-              {salesInvoices.map((invoice) => {
-                const statusConfig = getStatusBadge(invoice.payment_status);
-                const StatusIcon = statusConfig.icon;
-
-                return (
-                  <div key={invoice.id} className="border-b border-gray-200 last:border-b-0">
-                    {/* Invoice Header */}
-                    <div className="bg-gray-50 px-6 py-4 grid grid-cols-12 gap-4 items-center">
-                      <div className="col-span-2">
-                        <div className="flex items-center">
-                          <FileText className="w-4 h-4 text-gray-400 mr-2" />
-                          <span className="font-bold text-gray-900">{invoice.invoice_no}</span>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(invoice.invoice_date).toLocaleDateString('tr-TR')}
-                        </div>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-3 text-left">
+                      <input type="checkbox" className="rounded border-gray-300" />
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        e-Fatura Durumu
+                        <ArrowUpDown className="w-3 h-3" />
                       </div>
-
-                      <div className="col-span-3">
-                        <div className="font-medium text-gray-900">
-                          {invoice.customers?.company || invoice.customers?.name}
-                        </div>
-                        <div className="text-sm text-gray-500">{invoice.customers?.tax_id}</div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Belge Tipi
+                        <ArrowUpDown className="w-3 h-3" />
                       </div>
-
-                      <div className="col-span-2 text-right">
-                        <div className="text-sm text-gray-600">Ara Toplam</div>
-                        <div className="font-medium text-gray-900">
-                          ₺{Number(invoice.subtotal).toLocaleString('tr-TR')}
-                        </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Cari Bilgisi
+                        <ArrowUpDown className="w-3 h-3" />
                       </div>
-
-                      <div className="col-span-2 text-right">
-                        <div className="text-sm text-gray-600">KDV</div>
-                        <div className="font-medium text-gray-900">
-                          ₺{Number(invoice.total_tax).toLocaleString('tr-TR')}
-                        </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Proje
+                        <ArrowUpDown className="w-3 h-3" />
                       </div>
-
-                      <div className="col-span-2 text-right">
-                        <div className="text-sm text-gray-600">Genel Toplam</div>
-                        <div className="font-bold text-lg text-green-600">
-                          ₺{Number(invoice.grand_total).toLocaleString('tr-TR')}
-                        </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Etiketler
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Seri No
+                        <ArrowUpDown className="w-3 h-3" />
                       </div>
-
-                      <div className="col-span-1 flex justify-end">
-                        <Badge className={statusConfig.color}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {invoice.payment_status}
-                        </Badge>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Durum
+                        <ArrowUpDown className="w-3 h-3" />
                       </div>
-                    </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Düzenlenme Tarihi
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        Vade Tarihi
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center justify-end gap-1">
+                        Fatura Tutarı
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center justify-end gap-1">
+                        Takip Tutarı
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center justify-end gap-1">
+                        Bakiye
+                        <ArrowUpDown className="w-3 h-3" />
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      İşlemler
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {salesInvoices.map((invoice) => {
+                    const statusConfig = getStatusBadge(invoice.payment_status);
+                    const StatusIcon = statusConfig.icon;
+                    const balance = Number(invoice.grand_total) - (invoice.payment_date ? Number(invoice.grand_total) : 0);
 
-                    {/* Invoice Items */}
-                    {invoice.sales_invoice_items && invoice.sales_invoice_items.length > 0 && (
-                      <div className="px-6 py-3 bg-white">
-                        <table className="min-w-full">
-                          <thead>
-                            <tr className="text-xs text-gray-500 border-b">
-                              <th className="py-2 text-left">Ürün/Hizmet Kodu</th>
-                              <th className="py-2 text-left">Açıklama</th>
-                              <th className="py-2 text-center">Miktar</th>
-                              <th className="py-2 text-center">Birim</th>
-                              <th className="py-2 text-right">Birim Fiyat</th>
-                              <th className="py-2 text-right">KDV %</th>
-                              <th className="py-2 text-right">İskonto</th>
-                              <th className="py-2 text-right">Toplam</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {invoice.sales_invoice_items.map((item: any) => (
-                              <tr key={item.id} className="text-sm border-b last:border-b-0">
-                                <td className="py-2 text-gray-900 font-mono">{item.product_code}</td>
-                                <td className="py-2 text-gray-700">{item.description}</td>
-                                <td className="py-2 text-center text-gray-900">{item.quantity}</td>
-                                <td className="py-2 text-center text-gray-600">{item.unit}</td>
-                                <td className="py-2 text-right text-gray-900">
-                                  ₺{Number(item.unit_price).toLocaleString('tr-TR')}
-                                </td>
-                                <td className="py-2 text-right text-gray-600">{item.tax_rate}%</td>
-                                <td className="py-2 text-right text-red-600">
-                                  {item.discount_amount > 0 ? `-₺${Number(item.discount_amount).toLocaleString('tr-TR')}` : '-'}
-                                </td>
-                                <td className="py-2 text-right font-bold text-gray-900">
-                                  ₺{Number(item.total).toLocaleString('tr-TR')}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                    return (
+                      <tr key={invoice.id} className="hover:bg-gray-50">
+                        <td className="px-3 py-4">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                        </td>
+                        
+                        {/* e-Fatura Durumu */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {invoice.e_invoice_uuid ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Gönderildi
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Gönderilmedi
+                            </Badge>
+                          )}
+                        </td>
 
-                        {/* Invoice Footer Info */}
-                        {(invoice.shipping_cost > 0 || invoice.general_discount > 0 || invoice.notes) && (
-                          <div className="mt-3 pt-3 border-t grid grid-cols-2 gap-4">
-                            <div>
-                              {invoice.notes && (
-                                <div className="text-sm">
-                                  <span className="font-medium text-gray-700">Not:</span>
-                                  <p className="text-gray-600 mt-1">{invoice.notes}</p>
-                                </div>
-                              )}
-                            </div>
-                            <div className="text-right space-y-1 text-sm">
-                              {invoice.general_discount > 0 && (
-                                <div className="flex justify-end gap-2">
-                                  <span className="text-gray-600">Genel İskonto:</span>
-                                  <span className="font-medium text-red-600">
-                                    -₺{Number(invoice.general_discount).toLocaleString('tr-TR')}
-                                  </span>
-                                </div>
-                              )}
-                              {invoice.shipping_cost > 0 && (
-                                <div className="flex justify-end gap-2">
-                                  <span className="text-gray-600">Kargo Ücreti:</span>
-                                  <span className="font-medium text-gray-900">
-                                    +₺{Number(invoice.shipping_cost).toLocaleString('tr-TR')}
-                                  </span>
-                                </div>
-                              )}
-                              <div className="flex justify-end gap-2 pt-2 border-t">
-                                <span className="text-gray-600">Vade:</span>
-                                <span className="font-medium text-gray-900">
-                                  {new Date(invoice.due_date).toLocaleDateString('tr-TR')}
-                                </span>
+                        {/* Belge Tipi */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            <FileText className="w-3 h-3 mr-1" />
+                            Satış Faturası
+                          </Badge>
+                        </td>
+
+                        {/* Cari Bilgisi */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <Building className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <div className="font-medium text-gray-900 truncate">
+                                {invoice.customers?.company || invoice.customers?.name}
                               </div>
+                              <div className="text-sm text-gray-500 truncate">{invoice.customers?.tax_id}</div>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                        </td>
+
+                        {/* Proje */}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <FolderKanban className="w-4 h-4 text-gray-400" />
+                        </td>
+
+                        {/* Etiketler */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-1">
+                            {invoice.notes && (
+                              <Badge variant="outline" className="text-xs">
+                                Not var
+                              </Badge>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Seri No */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <FileText className="w-4 h-4 text-gray-400 mr-2" />
+                            <span className="font-mono text-sm text-gray-900">{invoice.invoice_no}</span>
+                          </div>
+                        </td>
+
+                        {/* Durum */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge className={statusConfig.color}>
+                            <StatusIcon className="w-3 h-3 mr-1" />
+                            {invoice.payment_status}
+                          </Badge>
+                        </td>
+
+                        {/* Düzenlenme Tarihi */}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {new Date(invoice.invoice_date).toLocaleDateString('tr-TR')}
+                        </td>
+
+                        {/* Vade Tarihi */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm">
+                            <Calendar className="w-4 h-4 text-gray-400 mr-1" />
+                            <span className={`${
+                              new Date(invoice.due_date) < new Date() && invoice.payment_status !== "Ödendi"
+                                ? "text-red-600 font-medium"
+                                : "text-gray-900"
+                            }`}>
+                              {new Date(invoice.due_date).toLocaleDateString('tr-TR')}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Fatura Tutarı */}
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="font-bold text-gray-900">
+                            ₺{Number(invoice.grand_total).toLocaleString('tr-TR')}
+                          </div>
+                        </td>
+
+                        {/* Takip Tutarı */}
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="text-sm text-gray-900">
+                            ₺{Number(invoice.grand_total).toLocaleString('tr-TR')}
+                          </div>
+                        </td>
+
+                        {/* Bakiye */}
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className={`font-bold ${
+                            balance > 0 ? 'text-orange-600' : 'text-green-600'
+                          }`}>
+                            ₺{Math.abs(balance).toLocaleString('tr-TR')}
+                          </div>
+                        </td>
+
+                        {/* İşlemler */}
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" className="hover:bg-blue-50">
+                              <Eye className="w-4 h-4 text-blue-600" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="hover:bg-green-50">
+                              <Edit className="w-4 h-4 text-green-600" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="hover:bg-red-50">
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Toplam {salesInvoices.length} kayıt gösteriliyor
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled>
+                  Önceki
+                </Button>
+                <Button variant="outline" size="sm" className="bg-blue-600 text-white hover:bg-blue-700">
+                  1
+                </Button>
+                <Button variant="outline" size="sm">
+                  2
+                </Button>
+                <Button variant="outline" size="sm">
+                  3
+                </Button>
+                <Button variant="outline" size="sm">
+                  Sonraki
+                </Button>
+              </div>
             </div>
           </Card>
         </TabsContent>
