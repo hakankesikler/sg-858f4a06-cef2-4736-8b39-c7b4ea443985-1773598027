@@ -244,94 +244,302 @@ export function AccountingModule() {
 
             {/* Genel Cariler */}
             <TabsContent value="genel" className="space-y-6">
+              {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="p-6 border-l-4 border-l-green-500">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600">Toplam Alacak</p>
                       <p className="text-2xl font-bold text-green-600">
-                        ₺{(cariStats.totalReceivables || 0).toLocaleString('tr-TR')}
+                        ₺{customers.general?.filter((c: any) => Number(c.balance || 0) > 0).reduce((sum: number, c: any) => sum + Number(c.balance || 0), 0).toLocaleString('tr-TR') || 0}
                       </p>
                     </div>
                     <TrendingUp className="w-8 h-8 text-green-500" />
                   </div>
                 </Card>
+
                 <Card className="p-6 border-l-4 border-l-red-500">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600">Toplam Borç</p>
                       <p className="text-2xl font-bold text-red-600">
-                        ₺{(cariStats.totalPayables || 0).toLocaleString('tr-TR')}
+                        ₺{Math.abs(customers.general?.filter((c: any) => Number(c.balance || 0) < 0).reduce((sum: number, c: any) => sum + Number(c.balance || 0), 0)).toLocaleString('tr-TR') || 0}
                       </p>
                     </div>
                     <TrendingDown className="w-8 h-8 text-red-500" />
                   </div>
                 </Card>
+
                 <Card className="p-6 border-l-4 border-l-blue-500">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600">Net Pozisyon</p>
-                      <p className={`text-2xl font-bold ${(cariStats.netPosition || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        ₺{Math.abs(cariStats.netPosition || 0).toLocaleString('tr-TR')}
+                      <p className="text-2xl font-bold text-blue-600">
+                        ₺{customers.general?.reduce((sum: number, c: any) => sum + Number(c.balance || 0), 0).toLocaleString('tr-TR') || 0}
                       </p>
                     </div>
                     <DollarSign className="w-8 h-8 text-blue-500" />
                   </div>
                 </Card>
+
                 <Card className="p-6 border-l-4 border-l-purple-500">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600">Cari Sayısı</p>
-                      <p className="text-2xl font-bold">{cariStats.accountCount || 0}</p>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {customers.general?.length || 0}
+                      </p>
                     </div>
                     <Users className="w-8 h-8 text-purple-500" />
                   </div>
                 </Card>
               </div>
 
-              <Card>
-                <div className="p-6 border-b">
+              {/* Main Content Card */}
+              <Card className="overflow-hidden">
+                {/* Header with Actions */}
+                <div className="p-6 border-b border-gray-200 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold">Müşteri ve Tedarikçi Hesapları</h3>
-                    <Button className="bg-purple-600 hover:bg-purple-700">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Yeni Cari
-                    </Button>
+                    <h3 className="text-lg font-bold text-gray-900">Müşteri ve Tedarikçi Hesapları</h3>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Search className="w-4 h-4" />
+                        Detaylı Arama
+                        <ArrowUpDown className="w-3 h-3" />
+                      </Button>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input 
+                          placeholder="Ara..." 
+                          className="pl-9 w-64"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Info Text */}
+                  <p className="text-sm text-gray-600">
+                    {customers.general?.length || 0} adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+                  </p>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Toplu Seç
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button className="bg-green-600 hover:bg-green-700 gap-2">
+                        <Plus className="w-4 h-4" />
+                        Cari Oluştur
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Download className="w-4 h-4" />
+                        İçe Aktar
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Download className="w-4 h-4 rotate-180" />
+                        Dışarıya Aktar
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Filter className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Advanced Customer Table - EXACTLY 8 COLUMNS */}
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cari Adı</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tip</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bakiye</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İletişim</th>
+                        <th className="px-3 py-3 text-left w-12">
+                          <input type="checkbox" className="rounded border-gray-300" />
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                          <div className="flex items-center gap-1">
+                            Kod
+                            <ArrowUpDown className="w-3 h-3" />
+                          </div>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                          <div className="flex items-center gap-1">
+                            Ünvan
+                            <ArrowUpDown className="w-3 h-3" />
+                          </div>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                          <div className="flex items-center gap-1">
+                            Cari Tipi
+                            <ArrowUpDown className="w-3 h-3" />
+                          </div>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                          <div className="flex items-center gap-1">
+                            Telefon Numarası
+                            <ArrowUpDown className="w-3 h-3" />
+                          </div>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Etiketler
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                          <div className="flex items-center gap-1">
+                            VKN/TCKN
+                            <ArrowUpDown className="w-3 h-3" />
+                          </div>
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                          <div className="flex items-center justify-end gap-1">
+                            Yerel Bakiye
+                            <ArrowUpDown className="w-3 h-3" />
+                          </div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {customerAccounts.map((account) => {
-                        const balance = Number(account.balance) || 0;
+                      {customers.general?.map((customer: any) => {
+                        const balance = Number(customer.balance || 0);
+                        const customerType = customer.customer_type || "Müşteri";
+                        
                         return (
-                          <tr key={account.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4">
-                              <div className="font-medium text-gray-900">{account.company || account.name}</div>
+                          <tr key={customer.id} className="hover:bg-gray-50">
+                            {/* Checkbox */}
+                            <td className="px-3 py-4 whitespace-nowrap">
+                              <input type="checkbox" className="rounded border-gray-300" />
                             </td>
-                            <td className="px-6 py-4">
-                              <Badge variant="outline">{account.account_type || "Müşteri"}</Badge>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`font-bold ${balance < 0 ? 'text-green-600' : balance > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                                {balance < 0 ? '-' : balance > 0 ? '+' : ''}₺{Math.abs(balance).toLocaleString('tr-TR')}
+
+                            {/* Kod */}
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="font-mono text-sm text-gray-900">
+                                {customer.customer_code || `CR-${customer.id.substring(0, 6)}`}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">{account.email || '-'}</td>
+
+                            {/* Ünvan */}
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <Building className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+                                <div className="min-w-0">
+                                  <div className="font-medium text-gray-900 truncate">
+                                    {customer.company_name || customer.full_name || "İsimsiz"}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Cari Tipi */}
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <Badge variant="outline" className={
+                                customerType === "Müşteri" 
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : customerType === "Tedarikçi"
+                                  ? "bg-red-50 text-red-700 border-red-200"
+                                  : "bg-purple-50 text-purple-700 border-purple-200"
+                              }>
+                                {customerType === "Müşteri" && <Users className="w-3 h-3 mr-1" />}
+                                {customerType === "Tedarikçi" && <ShoppingCart className="w-3 h-3 mr-1" />}
+                                {customerType === "Her İkisi" && <Handshake className="w-3 h-3 mr-1" />}
+                                {customerType}
+                              </Badge>
+                            </td>
+
+                            {/* Telefon Numarası */}
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {customer.phone || "-"}
+                            </td>
+
+                            {/* Etiketler */}
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-1">
+                                {customer.tags?.map((tag: string, idx: number) => (
+                                  <Badge 
+                                    key={idx}
+                                    variant="outline" 
+                                    className="text-xs bg-green-50 text-green-700 border-green-200"
+                                  >
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {(!customer.tags || customer.tags.length === 0) && (
+                                  <span className="text-sm text-gray-400">-</span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* VKN/TCKN */}
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="font-mono text-sm text-gray-900">
+                                {customer.tax_number || customer.id_number || "-"}
+                              </span>
+                            </td>
+
+                            {/* Yerel Bakiye */}
+                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                              <div className={`font-bold text-base ${
+                                balance > 0 
+                                  ? 'text-green-600'  // Alacak (müşteri bize borçlu)
+                                  : balance < 0
+                                  ? 'text-red-600'    // Borç (biz müşteriye borçluyuz)
+                                  : 'text-gray-600'   // Dengeli
+                              }`}>
+                                ₺{Math.abs(balance).toLocaleString('tr-TR')}
+                              </div>
+                            </td>
                           </tr>
                         );
                       })}
+
+                      {/* Empty State */}
+                      {(!customers.general || customers.general.length === 0) && (
+                        <tr>
+                          <td colSpan={8} className="px-6 py-12 text-center">
+                            <Users className="mx-auto h-12 w-12 text-gray-400" />
+                            <h3 className="mt-2 text-sm font-medium text-gray-900">Henüz cari kaydı yok</h3>
+                            <p className="mt-1 text-sm text-gray-500">
+                              Başlamak için yeni bir cari oluşturun.
+                            </p>
+                            <div className="mt-6">
+                              <Button className="bg-green-600 hover:bg-green-700 gap-2">
+                                <Plus className="w-4 h-4" />
+                                Cari Oluştur
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Footer */}
+                {customers.general && customers.general.length > 0 && (
+                  <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      Toplam {customers.general.length} kayıt gösteriliyor
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" disabled>
+                        Önceki
+                      </Button>
+                      <Button variant="outline" size="sm" className="bg-blue-600 text-white hover:bg-blue-700">
+                        1
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        2
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        3
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        Sonraki
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </Card>
             </TabsContent>
 
