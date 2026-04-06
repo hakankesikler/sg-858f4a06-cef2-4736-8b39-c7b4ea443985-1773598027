@@ -12,6 +12,7 @@ import { AccountingModule } from "@/components/modules/AccountingModule";
 import { HRModule } from "@/components/modules/HRModule";
 import { ReportsModule } from "@/components/modules/ReportsModule";
 import { SettingsModule } from "@/components/modules/SettingsModule";
+import { AnalyticsModule } from "@/components/modules/AnalyticsModule";
 import { 
   LayoutDashboard,
   Users,
@@ -28,11 +29,12 @@ import {
   Clock,
   Award,
   Plus,
-  Package
+  Package,
+  Activity
 } from "lucide-react";
 
 export default function PersonelProfil() {
-  const [activeModule, setActiveModule] = useState<"dashboard" | "crm" | "logistics" | "accounting" | "hr" | "reports" | "settings">("dashboard");
+  const [activeModule, setActiveModule] = useState<"dashboard" | "crm" | "logistics" | "accounting" | "hr" | "reports" | "settings" | "analytics">("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCariFormOpen, setIsCariFormOpen] = useState(false);
   const [isIsGirisFormOpen, setIsIsGirisFormOpen] = useState(false);
@@ -43,6 +45,7 @@ export default function PersonelProfil() {
     { id: "logistics", name: "Lojistik Yönetimi", icon: Truck, color: "from-orange-500 to-orange-600" },
     { id: "accounting", name: "Muhasebe", icon: DollarSign, color: "from-green-500 to-green-600" },
     { id: "hr", name: "İnsan Kaynakları", icon: UserCircle, color: "from-indigo-500 to-indigo-600" },
+    { id: "analytics", name: "Web Analitik", icon: Activity, color: "from-cyan-500 to-cyan-600" },
     { id: "reports", name: "Raporlama", icon: BarChart3, color: "from-pink-500 to-pink-600" },
     { id: "settings", name: "Ayarlar", icon: Settings, color: "from-gray-500 to-gray-600" }
   ];
@@ -62,6 +65,8 @@ export default function PersonelProfil() {
         return <AccountingModule />;
       case "hr":
         return <HRModule />;
+      case "analytics":
+        return <AnalyticsModule />;
       case "reports":
         return <ReportsModule />;
       case "settings":
