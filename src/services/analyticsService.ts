@@ -49,8 +49,11 @@ export async function trackPageVisit(visitorInfo: VisitorInfo) {
             .eq("visitor_id", visitorId)
             .order("visited_at", { ascending: false })
             .limit(1)
-            .then(() => {})
-            .catch(() => {}); // Silently fail
+            .then(({ error }) => {
+              // Intentionally empty - silent update
+            }, () => {
+              // Silent fail
+            });
         }
       })
       .catch(() => {}); // Silently fail
