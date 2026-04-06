@@ -29,25 +29,33 @@ function getOrCreateVisitorId(): string {
   return visitorId;
 }
 
-// Track a page visit
+// Track a page visit - ROBUST FALLBACK: Works even if geolocation fails
 export async function trackPageVisit(visitorInfo: VisitorInfo) {
   try {
     const deviceType = getDeviceType(visitorInfo.user_agent || navigator.userAgent);
     const visitorId = getOrCreateVisitorId();
     
-    // Get location asynchronously without blocking
-    let location: { ip?: string; country?: string; city?: string } = {};
-    try {
-      location = await Promise.race([
-        getVisitorLocation(),
-        new Promise<{ ip?: string; country?: string; city?: string }>((resolve) => 
-          setTimeout(() => resolve({}), 2000) // 2 second timeout
-        )
-      ]);
-    } catch {
-      // Ignore location errors
-    }
+    // Default location object (empty but valid)
+    const location: { ip?: string; country?: string; city?: string } = {};
 
+    // Try to get location but NEVER let it block the tracking
+    // This runs in background and if it fails, we just skip it
+    getVisitorLocation()
+      .then(loc => {
+        // If we got location data, update the record
+        if (loc.ip || loc.country || loc.city) {
+          supabase.from("website_visits")
+            .update({ ip_address: loc.ip, country: loc.country, city: loc.city })
+            .eq("visitor_id", visitorId)
+            .order("visited_at", { ascending: false })
+            .limit(1)
+            .then(() => {})
+            .catch(() => {}); // Silently fail
+        }
+      })
+      .catch(() => {}); // Silently fail
+
+    // Insert visit record immediately (without waiting for location)
     const { error } = await supabase.from("website_visits").insert({
       visitor_id: visitorId,
       page_url: visitorInfo.page_url,
@@ -60,9 +68,12 @@ export async function trackPageVisit(visitorInfo: VisitorInfo) {
       city: location.city,
     } as any);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error tracking visit:", error);
+    }
   } catch (error) {
-    console.error("Error tracking visit:", error);
+    console.error("Error in trackPageVisit:", error);
+    // Even if everything fails, don't throw - just log
   }
 }
 
@@ -81,11 +92,22 @@ function getDeviceType(userAgent: string): "desktop" | "mobile" | "tablet" {
   return "desktop";
 }
 
-// Get visitor location (using a free IP geolocation API)
+// Get visitor location - COMPLETELY OPTIONAL (never blocks)
 async function getVisitorLocation(): Promise<{ ip?: string; country?: string; city?: string }> {
   try {
-    const response = await fetch("https://ipapi.co/json/");
-    if (!response.ok) return {};
+    // Set a hard timeout - if API doesn't respond in 1 second, give up
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1000);
+    
+    const response = await fetch("https://ipapi.co/json/", {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      return {};
+    }
     
     const data = await response.json();
     return {
@@ -94,7 +116,7 @@ async function getVisitorLocation(): Promise<{ ip?: string; country?: string; ci
       city: data.city,
     };
   } catch (error) {
-    console.error("Error getting location:", error);
+    // Silently fail - geolocation is optional
     return {};
   }
 }
