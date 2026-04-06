@@ -33,8 +33,20 @@ function getOrCreateVisitorId(): string {
 export async function trackPageVisit(visitorInfo: VisitorInfo) {
   try {
     const deviceType = getDeviceType(visitorInfo.user_agent || navigator.userAgent);
-    const location = await getVisitorLocation();
     const visitorId = getOrCreateVisitorId();
+    
+    // Get location asynchronously without blocking
+    let location: { ip?: string; country?: string; city?: string } = {};
+    try {
+      location = await Promise.race([
+        getVisitorLocation(),
+        new Promise<{ ip?: string; country?: string; city?: string }>((resolve) => 
+          setTimeout(() => resolve({}), 2000) // 2 second timeout
+        )
+      ]);
+    } catch {
+      // Ignore location errors
+    }
 
     const { error } = await supabase.from("website_visits").insert({
       visitor_id: visitorId,
