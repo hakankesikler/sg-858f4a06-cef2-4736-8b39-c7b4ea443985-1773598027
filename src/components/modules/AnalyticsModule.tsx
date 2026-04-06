@@ -107,11 +107,11 @@ export function AnalyticsModule() {
       setActiveVisitors(activeCount);
       setTotalVisits(totalCount);
       setUniqueVisitors(uniqueCount);
-      setDailyStats(dailyData as DailyStat[]);
-      setTopPages(pagesData as PageStat[]);
-      setTopReferrers(referrersData as ReferrerStat[]);
+      setDailyStats(dailyData as unknown as DailyStat[]);
+      setTopPages(pagesData as unknown as PageStat[]);
+      setTopReferrers(referrersData as unknown as ReferrerStat[]);
       setDeviceStats(devicesData);
-      setLocationStats(locationsData as LocationStat[]);
+      setLocationStats(locationsData as unknown as LocationStat[]);
     } catch (error) {
       console.error("Error loading analytics:", error);
     } finally {

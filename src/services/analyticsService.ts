@@ -1,9 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
 
-export type VisitStats = Tables<"website_visits">;
-export type DailyStats = Tables<"daily_visit_stats">;
-export type ReferrerStats = Tables<"referrer_stats">;
+export type VisitStats = any;
+export type DailyStats = any;
+export type ReferrerStats = any;
 
 interface VisitorInfo {
   page_url: string;
@@ -12,13 +11,33 @@ interface VisitorInfo {
   user_agent?: string;
 }
 
+// Generate or get visitor ID
+function getOrCreateVisitorId(): string {
+  if (typeof window === 'undefined') {
+    return '00000000-0000-0000-0000-000000000000'; // Fallback for SSR
+  }
+  
+  let visitorId = localStorage.getItem('rex_visitor_id');
+  if (!visitorId) {
+    // Generate UUID v4
+    visitorId = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+    localStorage.setItem('rex_visitor_id', visitorId);
+  }
+  return visitorId;
+}
+
 // Track a page visit
 export async function trackPageVisit(visitorInfo: VisitorInfo) {
   try {
     const deviceType = getDeviceType(visitorInfo.user_agent || navigator.userAgent);
     const location = await getVisitorLocation();
+    const visitorId = getOrCreateVisitorId();
 
     const { error } = await supabase.from("website_visits").insert({
+      visitor_id: visitorId,
       page_url: visitorInfo.page_url,
       page_title: visitorInfo.page_title || document.title,
       referrer: visitorInfo.referrer || document.referrer,
@@ -27,7 +46,7 @@ export async function trackPageVisit(visitorInfo: VisitorInfo) {
       ip_address: location.ip,
       country: location.country,
       city: location.city,
-    });
+    } as any);
 
     if (error) throw error;
   } catch (error) {
@@ -88,7 +107,7 @@ export async function getActiveVisitors() {
 // Get daily statistics for a date range
 export async function getDailyStats(startDate: string, endDate: string) {
   const { data, error } = await supabase
-    .from("daily_visit_stats")
+    .from("daily_visit_stats" as any)
     .select("*")
     .gte("date", startDate)
     .lte("date", endDate)
@@ -134,7 +153,7 @@ export async function getTopPages(limit: number = 10, days: number = 30) {
 // Get top referrers
 export async function getTopReferrers(limit: number = 10) {
   const { data, error } = await supabase
-    .from("referrer_stats")
+    .from("referrer_stats" as any)
     .select("*")
     .order("visit_count", { ascending: false })
     .limit(limit);
