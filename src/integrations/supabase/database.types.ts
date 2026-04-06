@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -217,6 +217,69 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      daily_analytics: {
+        Row: {
+          avg_pages_per_session: number | null
+          avg_session_duration: number | null
+          bounce_rate: number | null
+          created_at: string | null
+          date: string
+          desktop_visits: number | null
+          direct_traffic: number | null
+          id: string
+          mobile_visits: number | null
+          new_visitors: number | null
+          organic_traffic: number | null
+          referral_traffic: number | null
+          returning_visitors: number | null
+          social_traffic: number | null
+          tablet_visits: number | null
+          total_visits: number | null
+          unique_visitors: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avg_pages_per_session?: number | null
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          date: string
+          desktop_visits?: number | null
+          direct_traffic?: number | null
+          id?: string
+          mobile_visits?: number | null
+          new_visitors?: number | null
+          organic_traffic?: number | null
+          referral_traffic?: number | null
+          returning_visitors?: number | null
+          social_traffic?: number | null
+          tablet_visits?: number | null
+          total_visits?: number | null
+          unique_visitors?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avg_pages_per_session?: number | null
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          date?: string
+          desktop_visits?: number | null
+          direct_traffic?: number | null
+          id?: string
+          mobile_visits?: number | null
+          new_visitors?: number | null
+          organic_traffic?: number | null
+          referral_traffic?: number | null
+          returning_visitors?: number | null
+          social_traffic?: number | null
+          tablet_visits?: number | null
+          total_visits?: number | null
+          unique_visitors?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -689,6 +752,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      popular_pages: {
+        Row: {
+          avg_time_on_page: number | null
+          id: string
+          last_updated: string | null
+          page_title: string | null
+          page_url: string
+          total_views: number | null
+          unique_views: number | null
+        }
+        Insert: {
+          avg_time_on_page?: number | null
+          id?: string
+          last_updated?: string | null
+          page_title?: string | null
+          page_url: string
+          total_views?: number | null
+          unique_views?: number | null
+        }
+        Update: {
+          avg_time_on_page?: number | null
+          id?: string
+          last_updated?: string | null
+          page_title?: string | null
+          page_url?: string
+          total_views?: number | null
+          unique_views?: number | null
+        }
+        Relationships: []
       }
       products_services: {
         Row: {
@@ -1226,6 +1319,33 @@ export type Database = {
           },
         ]
       }
+      traffic_sources: {
+        Row: {
+          id: string
+          last_updated: string | null
+          source_name: string
+          source_type: string
+          total_visits: number | null
+          unique_visitors: number | null
+        }
+        Insert: {
+          id?: string
+          last_updated?: string | null
+          source_name: string
+          source_type: string
+          total_visits?: number | null
+          unique_visitors?: number | null
+        }
+        Update: {
+          id?: string
+          last_updated?: string | null
+          source_name?: string
+          source_type?: string
+          total_visits?: number | null
+          unique_visitors?: number | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           account_id: string | null
@@ -1365,12 +1485,96 @@ export type Database = {
         }
         Relationships: []
       }
+      website_visits: {
+        Row: {
+          browser: string | null
+          city: string | null
+          clicks_count: number | null
+          country: string | null
+          created_at: string | null
+          device_type: string | null
+          id: string
+          ip_address: string | null
+          is_new_visitor: boolean | null
+          os: string | null
+          page_title: string | null
+          page_url: string
+          referrer: string | null
+          region: string | null
+          screen_resolution: string | null
+          scroll_depth: number | null
+          session_duration: number | null
+          session_id: string | null
+          time_on_page: number | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          visited_at: string | null
+          visitor_id: string
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          clicks_count?: number | null
+          country?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_new_visitor?: boolean | null
+          os?: string | null
+          page_title?: string | null
+          page_url: string
+          referrer?: string | null
+          region?: string | null
+          screen_resolution?: string | null
+          scroll_depth?: number | null
+          session_duration?: number | null
+          session_id?: string | null
+          time_on_page?: number | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visited_at?: string | null
+          visitor_id: string
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          clicks_count?: number | null
+          country?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_new_visitor?: boolean | null
+          os?: string | null
+          page_title?: string | null
+          page_url?: string
+          referrer?: string | null
+          region?: string | null
+          screen_resolution?: string | null
+          scroll_depth?: number | null
+          session_duration?: number | null
+          session_id?: string | null
+          time_on_page?: number | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visited_at?: string | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_daily_analytics: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
