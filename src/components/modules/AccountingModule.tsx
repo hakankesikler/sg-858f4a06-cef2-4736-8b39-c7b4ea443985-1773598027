@@ -214,7 +214,23 @@ export function AccountingModule() {
           </TabsTrigger>
           <TabsTrigger value="customers" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Cari Hesaplar
+            Genel Cari
+          </TabsTrigger>
+          <TabsTrigger value="musteri" className="flex items-center gap-2">
+            <Building className="h-4 w-4" />
+            Müşteri Cari
+          </TabsTrigger>
+          <TabsTrigger value="tedarikci" className="flex items-center gap-2">
+            <Handshake className="h-4 w-4" />
+            Tedarikçi Cari
+          </TabsTrigger>
+          <TabsTrigger value="personel" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Personel Cari
+          </TabsTrigger>
+          <TabsTrigger value="ortak" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Ortak Cari
           </TabsTrigger>
           <TabsTrigger value="reports" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
@@ -563,7 +579,7 @@ export function AccountingModule() {
           </Card>
         </TabsContent>
 
-        {/* Cari Hesaplar */}
+        {/* Cari Hesaplar - Genel */}
         <TabsContent value="customers" className="space-y-4">
           <div className="space-y-4">
             <div>
@@ -598,7 +614,7 @@ export function AccountingModule() {
                 İçe Aktar
               </Button>
               <Button variant="outline" className="bg-blue-600 text-white hover:bg-blue-700">
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4" />
                 Dışarıya Aktar
               </Button>
               <Button variant="outline">
@@ -617,45 +633,7 @@ export function AccountingModule() {
               </div>
             </div>
 
-            {/* Cari Tipleri Sekmeleri */}
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <div className="flex gap-2">
-                <Button
-                  variant={customerTab === "musteri" ? "default" : "ghost"}
-                  onClick={() => setCustomerTab("musteri")}
-                  className="flex items-center gap-2"
-                >
-                  <Building className="w-4 h-4" />
-                  Müşteri Cari
-                </Button>
-                <Button
-                  variant={customerTab === "tedarikci" ? "default" : "ghost"}
-                  onClick={() => setCustomerTab("tedarikci")}
-                  className="flex items-center gap-2"
-                >
-                  <Handshake className="w-4 h-4" />
-                  Tedarikçi Cari
-                </Button>
-                <Button
-                  variant={customerTab === "personel" ? "default" : "ghost"}
-                  onClick={() => setCustomerTab("personel")}
-                  className="flex items-center gap-2"
-                >
-                  <Users className="w-4 h-4" />
-                  Personel Cari
-                </Button>
-                <Button
-                  variant={customerTab === "ortak" ? "default" : "ghost"}
-                  onClick={() => setCustomerTab("ortak")}
-                  className="flex items-center gap-2"
-                >
-                  <Users className="w-4 h-4" />
-                  Ortak Cari
-                </Button>
-              </div>
-            </div>
-
-            {/* Cari Hesaplar Tablosu */}
+            {/* Cari Hesaplar Tablosu - Tüm Cariler */}
             <Card>
               <div className="overflow-x-auto">
                 <Table>
@@ -689,7 +667,6 @@ export function AccountingModule() {
                       </TableRow>
                     ) : (
                       customers
-                        .filter(c => c.account_type === customerTab)
                         .filter(c => {
                           if (!searchTerm) return true;
                           const search = searchTerm.toLowerCase();
@@ -718,10 +695,10 @@ export function AccountingModule() {
                               <div className="flex items-center gap-2">
                                 <Building className="w-4 h-4 text-gray-600" />
                                 <span className="text-sm">
-                                  {customerTab === "musteri" && "Müşteri"}
-                                  {customerTab === "tedarikci" && "Tedarikçi"}
-                                  {customerTab === "personel" && "Personel"}
-                                  {customerTab === "ortak" && "Ortak"}
+                                  {customer.account_type === "musteri" && "Müşteri"}
+                                  {customer.account_type === "tedarikci" && "Tedarikçi"}
+                                  {customer.account_type === "personel" && "Personel"}
+                                  {customer.account_type === "ortak" && "Ortak"}
                                 </span>
                               </div>
                             </TableCell>
@@ -761,16 +738,664 @@ export function AccountingModule() {
             </Card>
 
             {/* Sayfalama */}
-            {customers.filter(c => c.account_type === customerTab).length > 0 && (
+            {customers.length > 0 && (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Toplam {customers.filter(c => c.account_type === customerTab).length} kayıt gösteriliyor
+                  Toplam {customers.length} kayıt gösteriliyor
                 </p>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm">Önceki</Button>
                   <Button variant="default" size="sm">1</Button>
                   <Button variant="outline" size="sm">2</Button>
                   <Button variant="outline" size="sm">3</Button>
+                  <Button variant="outline" size="sm">Sonraki</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Müşteri Cari */}
+        <TabsContent value="musteri" className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">Müşteri Cari Hesapları</h2>
+              <div className="h-1 w-12 bg-primary mt-2"></div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="bg-blue-50">
+                <Search className="h-4 w-4 mr-2" />
+                Detaylı Arama
+              </Button>
+            </div>
+
+            <p className="text-sm text-muted-foreground italic">
+              {customers.filter(c => c.account_type === "musteri").length} adet kayıt listelenmektedir.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" className="bg-blue-50">
+                <Info className="h-4 w-4 mr-2" />
+                Toplu Seç
+              </Button>
+              <Button className="bg-green-600 hover:bg-green-700">
+                Müşteri Oluştur
+              </Button>
+              <Button variant="outline" className="bg-blue-600 text-white hover:bg-blue-700">
+                <Upload className="h-4 w-4 mr-2" />
+                İçe Aktar
+              </Button>
+              <Button variant="outline" className="bg-blue-600 text-white hover:bg-blue-700">
+                <Download className="h-4 w-4" />
+                Dışarıya Aktar
+              </Button>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+              </Button>
+              <div className="ml-auto flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Ara"
+                    className="pl-9 w-64"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Card>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50px]">
+                        <input type="checkbox" className="rounded" />
+                      </TableHead>
+                      <TableHead className="w-[100px]">Kod</TableHead>
+                      <TableHead className="w-[200px]">Unvan</TableHead>
+                      <TableHead className="w-[120px]">Cari Tipi</TableHead>
+                      <TableHead className="w-[140px]">Telefon Numarası</TableHead>
+                      <TableHead className="w-[120px]">Etiketler</TableHead>
+                      <TableHead className="w-[140px]">VKN/TCKN</TableHead>
+                      <TableHead className="w-[120px]">Yerel Bakiye</TableHead>
+                      <TableHead className="w-[100px] text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.filter(c => c.account_type === "musteri").length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                          <div className="flex flex-col items-center gap-2">
+                            <Building className="h-12 w-12 opacity-20" />
+                            <p>Henüz müşteri cari kaydı bulunmamaktadır</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      customers
+                        .filter(c => c.account_type === "musteri")
+                        .filter(c => {
+                          if (!searchTerm) return true;
+                          const search = searchTerm.toLowerCase();
+                          return (
+                            c.name?.toLowerCase().includes(search) ||
+                            c.company?.toLowerCase().includes(search) ||
+                            c.phone?.includes(search) ||
+                            c.tax_number?.includes(search)
+                          );
+                        })
+                        .map((customer) => (
+                          <TableRow key={customer.id}>
+                            <TableCell>
+                              <input type="checkbox" className="rounded" />
+                            </TableCell>
+                            <TableCell className="font-mono text-sm text-gray-600">
+                              {customer.id.substring(0, 8)}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-semibold">{customer.company || customer.name}</p>
+                                {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Building className="w-4 h-4 text-gray-600" />
+                                <span className="text-sm">Müşteri</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm">{customer.phone || "-"}</span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-blue-50">
+                                {customer.status || "Aktif"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {customer.tax_number || "-"}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              ₺0,00
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+
+            {customers.filter(c => c.account_type === "musteri").length > 0 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Toplam {customers.filter(c => c.account_type === "musteri").length} kayıt gösteriliyor
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm">Önceki</Button>
+                  <Button variant="default" size="sm">1</Button>
+                  <Button variant="outline" size="sm">Sonraki</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Tedarikçi Cari */}
+        <TabsContent value="tedarikci" className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">Tedarikçi Cari Hesapları</h2>
+              <div className="h-1 w-12 bg-primary mt-2"></div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="bg-blue-50">
+                <Search className="h-4 w-4 mr-2" />
+                Detaylı Arama
+              </Button>
+            </div>
+
+            <p className="text-sm text-muted-foreground italic">
+              {customers.filter(c => c.account_type === "tedarikci").length} adet kayıt listelenmektedir.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" className="bg-blue-50">
+                <Info className="h-4 w-4 mr-2" />
+                Toplu Seç
+              </Button>
+              <Button className="bg-green-600 hover:bg-green-700">
+                Tedarikçi Oluştur
+              </Button>
+              <Button variant="outline" className="bg-blue-600 text-white hover:bg-blue-700">
+                <Upload className="h-4 w-4 mr-2" />
+                İçe Aktar
+              </Button>
+              <Button variant="outline" className="bg-blue-600 text-white hover:bg-blue-700">
+                <Download className="h-4 w-4" />
+                Dışarıya Aktar
+              </Button>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+              </Button>
+              <div className="ml-auto flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Ara"
+                    className="pl-9 w-64"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Card>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50px]">
+                        <input type="checkbox" className="rounded" />
+                      </TableHead>
+                      <TableHead className="w-[100px]">Kod</TableHead>
+                      <TableHead className="w-[200px]">Unvan</TableHead>
+                      <TableHead className="w-[120px]">Cari Tipi</TableHead>
+                      <TableHead className="w-[140px]">Telefon Numarası</TableHead>
+                      <TableHead className="w-[120px]">Etiketler</TableHead>
+                      <TableHead className="w-[140px]">VKN/TCKN</TableHead>
+                      <TableHead className="w-[120px]">Yerel Bakiye</TableHead>
+                      <TableHead className="w-[100px] text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.filter(c => c.account_type === "tedarikci").length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                          <div className="flex flex-col items-center gap-2">
+                            <Handshake className="h-12 w-12 opacity-20" />
+                            <p>Henüz tedarikçi cari kaydı bulunmamaktadır</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      customers
+                        .filter(c => c.account_type === "tedarikci")
+                        .filter(c => {
+                          if (!searchTerm) return true;
+                          const search = searchTerm.toLowerCase();
+                          return (
+                            c.name?.toLowerCase().includes(search) ||
+                            c.company?.toLowerCase().includes(search) ||
+                            c.phone?.includes(search) ||
+                            c.tax_number?.includes(search)
+                          );
+                        })
+                        .map((customer) => (
+                          <TableRow key={customer.id}>
+                            <TableCell>
+                              <input type="checkbox" className="rounded" />
+                            </TableCell>
+                            <TableCell className="font-mono text-sm text-gray-600">
+                              {customer.id.substring(0, 8)}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-semibold">{customer.company || customer.name}</p>
+                                {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Handshake className="w-4 h-4 text-gray-600" />
+                                <span className="text-sm">Tedarikçi</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm">{customer.phone || "-"}</span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-blue-50">
+                                {customer.status || "Aktif"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {customer.tax_number || "-"}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              ₺0,00
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+
+            {customers.filter(c => c.account_type === "tedarikci").length > 0 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Toplam {customers.filter(c => c.account_type === "tedarikci").length} kayıt gösteriliyor
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm">Önceki</Button>
+                  <Button variant="default" size="sm">1</Button>
+                  <Button variant="outline" size="sm">Sonraki</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Personel Cari */}
+        <TabsContent value="personel" className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">Personel Cari Hesapları</h2>
+              <div className="h-1 w-12 bg-primary mt-2"></div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="bg-blue-50">
+                <Search className="h-4 w-4 mr-2" />
+                Detaylı Arama
+              </Button>
+            </div>
+
+            <p className="text-sm text-muted-foreground italic">
+              {customers.filter(c => c.account_type === "personel").length} adet kayıt listelenmektedir.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" className="bg-blue-50">
+                <Info className="h-4 w-4 mr-2" />
+                Toplu Seç
+              </Button>
+              <Button className="bg-green-600 hover:bg-green-700">
+                Personel Oluştur
+              </Button>
+              <Button variant="outline" className="bg-blue-600 text-white hover:bg-blue-700">
+                <Upload className="h-4 w-4 mr-2" />
+                İçe Aktar
+              </Button>
+              <Button variant="outline" className="bg-blue-600 text-white hover:bg-blue-700">
+                <Download className="h-4 w-4" />
+                Dışarıya Aktar
+              </Button>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+              </Button>
+              <div className="ml-auto flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Ara"
+                    className="pl-9 w-64"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Card>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50px]">
+                        <input type="checkbox" className="rounded" />
+                      </TableHead>
+                      <TableHead className="w-[100px]">Kod</TableHead>
+                      <TableHead className="w-[200px]">Unvan</TableHead>
+                      <TableHead className="w-[120px]">Cari Tipi</TableHead>
+                      <TableHead className="w-[140px]">Telefon Numarası</TableHead>
+                      <TableHead className="w-[120px]">Etiketler</TableHead>
+                      <TableHead className="w-[140px]">VKN/TCKN</TableHead>
+                      <TableHead className="w-[120px]">Yerel Bakiye</TableHead>
+                      <TableHead className="w-[100px] text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.filter(c => c.account_type === "personel").length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                          <div className="flex flex-col items-center gap-2">
+                            <Users className="h-12 w-12 opacity-20" />
+                            <p>Henüz personel cari kaydı bulunmamaktadır</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      customers
+                        .filter(c => c.account_type === "personel")
+                        .filter(c => {
+                          if (!searchTerm) return true;
+                          const search = searchTerm.toLowerCase();
+                          return (
+                            c.name?.toLowerCase().includes(search) ||
+                            c.company?.toLowerCase().includes(search) ||
+                            c.phone?.includes(search) ||
+                            c.tax_number?.includes(search)
+                          );
+                        })
+                        .map((customer) => (
+                          <TableRow key={customer.id}>
+                            <TableCell>
+                              <input type="checkbox" className="rounded" />
+                            </TableCell>
+                            <TableCell className="font-mono text-sm text-gray-600">
+                              {customer.id.substring(0, 8)}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-semibold">{customer.company || customer.name}</p>
+                                {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-gray-600" />
+                                <span className="text-sm">Personel</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm">{customer.phone || "-"}</span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-blue-50">
+                                {customer.status || "Aktif"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {customer.tax_number || "-"}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              ₺0,00
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+
+            {customers.filter(c => c.account_type === "personel").length > 0 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Toplam {customers.filter(c => c.account_type === "personel").length} kayıt gösteriliyor
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm">Önceki</Button>
+                  <Button variant="default" size="sm">1</Button>
+                  <Button variant="outline" size="sm">Sonraki</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Ortak Cari */}
+        <TabsContent value="ortak" className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">Ortak Cari Hesapları</h2>
+              <div className="h-1 w-12 bg-primary mt-2"></div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="bg-blue-50">
+                <Search className="h-4 w-4 mr-2" />
+                Detaylı Arama
+              </Button>
+            </div>
+
+            <p className="text-sm text-muted-foreground italic">
+              {customers.filter(c => c.account_type === "ortak").length} adet kayıt listelenmektedir.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" className="bg-blue-50">
+                <Info className="h-4 w-4 mr-2" />
+                Toplu Seç
+              </Button>
+              <Button className="bg-green-600 hover:bg-green-700">
+                Ortak Oluştur
+              </Button>
+              <Button variant="outline" className="bg-blue-600 text-white hover:bg-blue-700">
+                <Upload className="h-4 w-4 mr-2" />
+                İçe Aktar
+              </Button>
+              <Button variant="outline" className="bg-blue-600 text-white hover:bg-blue-700">
+                <Download className="h-4 w-4" />
+                Dışarıya Aktar
+              </Button>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+              </Button>
+              <div className="ml-auto flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Ara"
+                    className="pl-9 w-64"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Card>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50px]">
+                        <input type="checkbox" className="rounded" />
+                      </TableHead>
+                      <TableHead className="w-[100px]">Kod</TableHead>
+                      <TableHead className="w-[200px]">Unvan</TableHead>
+                      <TableHead className="w-[120px]">Cari Tipi</TableHead>
+                      <TableHead className="w-[140px]">Telefon Numarası</TableHead>
+                      <TableHead className="w-[120px]">Etiketler</TableHead>
+                      <TableHead className="w-[140px]">VKN/TCKN</TableHead>
+                      <TableHead className="w-[120px]">Yerel Bakiye</TableHead>
+                      <TableHead className="w-[100px] text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.filter(c => c.account_type === "ortak").length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                          <div className="flex flex-col items-center gap-2">
+                            <Users className="h-12 w-12 opacity-20" />
+                            <p>Henüz ortak cari kaydı bulunmamaktadır</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      customers
+                        .filter(c => c.account_type === "ortak")
+                        .filter(c => {
+                          if (!searchTerm) return true;
+                          const search = searchTerm.toLowerCase();
+                          return (
+                            c.name?.toLowerCase().includes(search) ||
+                            c.company?.toLowerCase().includes(search) ||
+                            c.phone?.includes(search) ||
+                            c.tax_number?.includes(search)
+                          );
+                        })
+                        .map((customer) => (
+                          <TableRow key={customer.id}>
+                            <TableCell>
+                              <input type="checkbox" className="rounded" />
+                            </TableCell>
+                            <TableCell className="font-mono text-sm text-gray-600">
+                              {customer.id.substring(0, 8)}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-semibold">{customer.company || customer.name}</p>
+                                {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-gray-600" />
+                                <span className="text-sm">Ortak</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm">{customer.phone || "-"}</span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-blue-50">
+                                {customer.status || "Aktif"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {customer.tax_number || "-"}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              ₺0,00
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+
+            {customers.filter(c => c.account_type === "ortak").length > 0 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Toplam {customers.filter(c => c.account_type === "ortak").length} kayıt gösteriliyor
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm">Önceki</Button>
+                  <Button variant="default" size="sm">1</Button>
                   <Button variant="outline" size="sm">Sonraki</Button>
                 </div>
               </div>
