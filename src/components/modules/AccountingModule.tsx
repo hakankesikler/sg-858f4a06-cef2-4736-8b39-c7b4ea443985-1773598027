@@ -38,7 +38,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { accountingService } from "@/services/accountingService";
 import type { Database } from "@/integrations/supabase/types";
-import PurchaseInvoiceForm from "@/components/PurchaseInvoiceForm";
+import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
 
 type Invoice = Database["public"]["Tables"]["invoices"]["Row"];
 type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
