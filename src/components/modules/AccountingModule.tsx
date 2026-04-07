@@ -572,6 +572,211 @@ export function AccountingModule() {
             <p className="text-muted-foreground">Yakında eklenecek...</p>
           </Card>
         </TabsContent>
+
+        <TabsContent value="purchases" className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">Alış Faturaları</h2>
+              <div className="h-1 w-12 bg-primary mt-2"></div>
+            </div>
+
+            {/* Üst Butonlar */}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="bg-blue-50">
+                <Search className="h-4 w-4 mr-2" />
+                Detaylı Arama
+              </Button>
+              <Button variant="outline">
+                <Info className="h-4 w-4 mr-2" />
+                Toplu Seç
+              </Button>
+            </div>
+
+            {/* Bilgi Mesajı */}
+            <p className="text-sm text-muted-foreground italic">
+              1000 adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+            </p>
+
+            {/* Ana Butonlar */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button className="bg-green-600 hover:bg-green-700">
+                Alış Faturası Oluştur
+              </Button>
+              <Button variant="outline">
+                Satış İade Faturası Oluştur
+              </Button>
+              <Button variant="outline" className="bg-blue-50">
+                e-Fatura Gelen Kutusu
+              </Button>
+              <Button variant="outline">
+                <Upload className="h-4 w-4 mr-2" />
+                İçe Aktar
+              </Button>
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Dışarıya Aktar
+              </Button>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+              </Button>
+              <div className="ml-auto flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Ara"
+                    className="pl-9 w-64"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Alış Faturası Tablosu */}
+            <Card>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">e-Fatura Durumu</TableHead>
+                      <TableHead className="w-[120px]">Belge Tipi</TableHead>
+                      <TableHead className="w-[180px]">Cari Bilgisi</TableHead>
+                      <TableHead className="w-[120px]">Proje</TableHead>
+                      <TableHead className="w-[100px]">Etiketler</TableHead>
+                      <TableHead className="w-[100px]">Seri No</TableHead>
+                      <TableHead className="w-[100px]">Durum</TableHead>
+                      <TableHead className="w-[120px]">Düzenlenme Tarihi</TableHead>
+                      <TableHead className="w-[120px]">Vade Tarihi</TableHead>
+                      <TableHead className="w-[120px]">Fatura Tutarı</TableHead>
+                      <TableHead className="w-[120px]">Takip Tutarı</TableHead>
+                      <TableHead className="w-[140px]">Onaylanma Bekleyen Tutar</TableHead>
+                      <TableHead className="w-[100px]">Bakiye</TableHead>
+                      <TableHead className="w-[100px] text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {purchases.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={14} className="text-center py-12 text-muted-foreground">
+                          <div className="flex flex-col items-center gap-2">
+                            <ShoppingBag className="h-12 w-12 opacity-20" />
+                            <p>Henüz alış faturası kaydı bulunmamaktadır</p>
+                            <Button variant="outline" size="sm">
+                              İlk Alış Faturanızı Oluşturun
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      purchases.map((purchase) => (
+                        <TableRow key={purchase.id}>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-blue-50">
+                              e-Fatura
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">Alış Faturası</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-sm">
+                                {purchase.supplier_accounts?.name || "-"}
+                              </span>
+                              {purchase.supplier_accounts?.company && (
+                                <span className="text-xs text-muted-foreground">
+                                  {purchase.supplier_accounts.company}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">-</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">-</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium text-sm">{purchase.invoice_no}</span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              purchase.status === "Onaylandı" ? "default" :
+                              purchase.status === "Beklemede" ? "secondary" : 
+                              purchase.status === "Reddedildi" ? "destructive" : "outline"
+                            }>
+                              {purchase.status || "Beklemede"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {new Date(purchase.purchase_date || purchase.created_at).toLocaleDateString('tr-TR')}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {purchase.due_date ? new Date(purchase.due_date).toLocaleDateString('tr-TR') : "-"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium text-sm">
+                              ₺{(purchase.total || 0).toLocaleString('tr-TR')}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              ₺{(purchase.total || 0).toLocaleString('tr-TR')}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              ₺{(purchase.pending_approval || 0).toLocaleString('tr-TR')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={purchase.status === "Ödendi" ? "default" : "secondary"}>
+                              ₺{(purchase.balance || purchase.total || 0).toLocaleString('tr-TR')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="sm">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+
+            {/* Sayfalama */}
+            {purchases.length > 0 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Toplam {purchases.length} kayıt gösteriliyor
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm">Önceki</Button>
+                  <Button variant="default" size="sm">1</Button>
+                  <Button variant="outline" size="sm">2</Button>
+                  <Button variant="outline" size="sm">3</Button>
+                  <Button variant="outline" size="sm">Sonraki</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
