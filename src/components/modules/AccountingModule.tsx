@@ -1,79 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
   Plus,
-  Search,
   FileText,
   TrendingUp,
   TrendingDown,
-  AlertCircle,
-  Calendar,
   DollarSign,
-  Filter,
-  Download,
-  Eye,
-  Edit,
-  Trash2,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { accountingService } from "@/services/accountingService";
-import type { Database } from "@/integrations/supabase/types";
-import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
-
-type Invoice = Database["public"]["Tables"]["invoices"]["Row"];
-type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
 
 export function AccountingModule() {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [loading, setLoading] = useState(false);
-  
-  // Fatura ve işlem verileri
-  const [purchaseInvoices, setPurchaseInvoices] = useState<Invoice[]>([]);
-  const [salesInvoices, setSalesInvoices] = useState<Invoice[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  
-  // Form görünürlük durumu
-  const [showPurchaseInvoiceForm, setShowPurchaseInvoiceForm] = useState(false);
-
-  // Veri yükleme fonksiyonu (örnek)
-  const loadPurchaseInvoices = async () => {
-    // Burada Supabase'den alış faturalarını çekeceğiz
-    // Şimdilik boş bırakıyoruz
-  };
-
-  const filteredPurchaseInvoices = purchaseInvoices.filter((invoice) => {
-    if (searchTerm && !invoice.invoice_no?.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
-    if (statusFilter !== "all" && invoice.status !== statusFilter) {
-      return false;
-    }
-    return true;
-  });
 
   return (
     <div className="space-y-6">
@@ -81,18 +19,104 @@ export function AccountingModule() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Muhasebe Modülü</h2>
           <p className="text-muted-foreground">
-            Faturalar, ödemeler ve finansal raporlar.
+            Finansal yönetim ve raporlama sistemi
           </p>
         </div>
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          Yeni İşlem
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Genel Bakış</TabsTrigger>
-          <TabsTrigger value="purchase-invoices">Alış Faturaları</TabsTrigger>
-          <TabsTrigger value="sales-invoices">Satış Faturaları</TabsTrigger>
-          <TabsTrigger value="transactions">İşlemler</TabsTrigger>
+          <TabsTrigger value="invoices">Faturalar</TabsTrigger>
+          <TabsTrigger value="expenses">Giderler</TabsTrigger>
+          <TabsTrigger value="reports">Raporlar</TabsTrigger>
         </TabsList>
+
+        {/* Genel Bakış */}
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Toplam Gelir
+                  </p>
+                  <h3 className="text-2xl font-bold">₺0</h3>
+                </div>
+                <TrendingUp className="h-8 w-8 text-green-500" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                +0% geçen aya göre
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Toplam Gider
+                  </p>
+                  <h3 className="text-2xl font-bold">₺0</h3>
+                </div>
+                <TrendingDown className="h-8 w-8 text-red-500" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                +0% geçen aya göre
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Bekleyen Faturalar
+                  </p>
+                  <h3 className="text-2xl font-bold">0</h3>
+                </div>
+                <FileText className="h-8 w-8 text-blue-500" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">0 adet ödenmedi</p>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Net Kar</p>
+                  <h3 className="text-2xl font-bold">₺0</h3>
+                </div>
+                <DollarSign className="h-8 w-8 text-purple-500" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Bu ayki performans
+              </p>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Faturalar */}
+        <TabsContent value="invoices" className="space-y-4">
+          <Card className="p-6">
+            <p className="text-muted-foreground">Fatura yönetimi yakında eklenecek...</p>
+          </Card>
+        </TabsContent>
+
+        {/* Giderler */}
+        <TabsContent value="expenses" className="space-y-4">
+          <Card className="p-6">
+            <p className="text-muted-foreground">Gider yönetimi yakında eklenecek...</p>
+          </Card>
+        </TabsContent>
+
+        {/* Raporlar */}
+        <TabsContent value="reports" className="space-y-4">
+          <Card className="p-6">
+            <p className="text-muted-foreground">Finansal raporlar yakında eklenecek...</p>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
