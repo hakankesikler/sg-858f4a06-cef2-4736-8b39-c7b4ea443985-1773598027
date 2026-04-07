@@ -44,6 +44,14 @@ import {
   X,
   Trash,
   Save,
+  Info,
+  Building,
+  Handshake,
+  LayoutDashboard,
+  Receipt,
+  Package,
+  Wallet,
+  Activity,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { accountingService } from "@/services/accountingService";
