@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -196,17 +197,15 @@ export default function LoginPage() {
               <p className="text-xs text-blue-700 font-mono">demo123</p>
             </div>
 
-            {/* Sign Up Link */}
-            <p className="mt-6 text-center text-sm text-gray-600">
-              Hesabınız yok mu?{" "}
-              <button
-                type="button"
-                className="font-medium text-blue-600 hover:text-blue-700"
-                disabled={loading}
-              >
-                Kayıt Ol
-              </button>
-            </p>
+            {/* Signup Link */}
+            <div className="text-center pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Henüz hesabınız yok mu?{" "}
+                <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-700 hover:underline">
+                  Hemen Kayıt Olun
+                </Link>
+              </p>
+            </div>
           </div>
 
           {/* Footer */}
