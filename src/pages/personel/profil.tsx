@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -34,7 +35,8 @@ import {
   Award,
   Plus,
   Package,
-  Activity as ActivityIcon
+  Activity as ActivityIcon,
+  CheckCircle2
 } from "lucide-react";
 
 export default function PersonelProfil() {
