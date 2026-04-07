@@ -41,6 +41,9 @@ import {
   BarChart3,
   Mail,
   Upload,
+  X,
+  Trash,
+  Save,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { accountingService } from "@/services/accountingService";
