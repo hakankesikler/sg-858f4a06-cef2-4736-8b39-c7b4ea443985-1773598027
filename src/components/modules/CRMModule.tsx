@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Plus, Phone, Mail, MapPin, Calendar, TrendingUp, Filter, ExternalLink, Edit, Trash2, Eye, Download, Send, X } from "lucide-react";
+import { Search, Plus, Phone, Mail, MapPin, Calendar, TrendingUp, Filter, ExternalLink, Edit, Trash2, Eye, Download, Send, Upload, ChevronDown, Building2, Users, UserCircle2, Briefcase } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { crmService } from "@/services/crmService";
 
 export function CRMModule() {
@@ -16,6 +18,7 @@ export function CRMModule() {
   const [stats, setStats] = useState({ total: 0, active: 0, potential: 0, old: 0 });
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("musteri");
   
   // Add/Edit Dialog States
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -28,8 +31,11 @@ export function CRMModule() {
     phone: "",
     address: "",
     city: "",
+    tax_number: "",
+    tax_office: "",
     status: "Potansiyel" as const,
-    notes: ""
+    notes: "",
+    account_type: "musteri"
   });
   
   // Delete Dialog State
@@ -43,6 +49,7 @@ export function CRMModule() {
   
   // Filter States
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
   const [filters, setFilters] = useState({
     status: "all",
     city: "all",
@@ -51,12 +58,8 @@ export function CRMModule() {
   });
   const [cities, setCities] = useState<string[]>([]);
   
-  // Bulk Email State
-  const [isBulkEmailOpen, setIsBulkEmailOpen] = useState(false);
+  // Bulk Selection State
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
-  const [emailSubject, setEmailSubject] = useState("");
-  const [emailBody, setEmailBody] = useState("");
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -93,8 +96,11 @@ export function CRMModule() {
       phone: "",
       address: "",
       city: "",
+      tax_number: "",
+      tax_office: "",
       status: "Potansiyel",
-      notes: ""
+      notes: "",
+      account_type: activeTab
     });
     setIsAddDialogOpen(true);
   };
@@ -108,8 +114,11 @@ export function CRMModule() {
       phone: customer.phone || "",
       address: customer.address || "",
       city: customer.city || "",
+      tax_number: customer.tax_number || "",
+      tax_office: customer.tax_office || "",
       status: customer.status,
-      notes: customer.notes || ""
+      notes: customer.notes || "",
+      account_type: customer.account_type || "musteri"
     });
     setIsEditDialogOpen(true);
   };
@@ -125,10 +134,10 @@ export function CRMModule() {
       await crmService.createCustomer(formData);
       setIsAddDialogOpen(false);
       await loadData();
-      alert("✅ Müşteri başarıyla eklendi!");
+      alert("✅ Cari başarıyla eklendi!");
     } catch (error) {
       console.error("Error creating customer:", error);
-      alert("❌ Müşteri eklenirken hata oluştu!");
+      alert("❌ Cari eklenirken hata oluştu!");
     } finally {
       setIsSubmitting(false);
     }
@@ -145,10 +154,10 @@ export function CRMModule() {
       await crmService.updateCustomer(editingCustomer.id, formData);
       setIsEditDialogOpen(false);
       await loadData();
-      alert("✅ Müşteri başarıyla güncellendi!");
+      alert("✅ Cari başarıyla güncellendi!");
     } catch (error) {
       console.error("Error updating customer:", error);
-      alert("❌ Müşteri güncellenirken hata oluştu!");
+      alert("❌ Cari güncellenirken hata oluştu!");
     } finally {
       setIsSubmitting(false);
     }
@@ -160,10 +169,10 @@ export function CRMModule() {
       await crmService.deleteCustomer(deletingCustomer.id);
       setIsDeleteDialogOpen(false);
       await loadData();
-      alert("✅ Müşteri başarıyla silindi!");
+      alert("✅ Cari başarıyla silindi!");
     } catch (error) {
       console.error("Error deleting customer:", error);
-      alert("❌ Müşteri silinirken hata oluştu!");
+      alert("❌ Cari silinirken hata oluştu!");
     } finally {
       setIsSubmitting(false);
     }
@@ -186,48 +195,25 @@ export function CRMModule() {
 
   const handleExportExcel = () => {
     const csvContent = [
-      ["Ad Soyad", "Şirket", "Email", "Telefon", "Şehir", "Durum", "Son İletişim"].join(","),
+      ["Kod", "Unvan", "Cari Tipi", "Email", "Telefon", "Şehir", "VKN/TCKN", "Durum"].join(","),
       ...filteredCustomers.map(c => [
-        c.name,
-        c.company || "",
+        c.id.substring(0, 8),
+        c.company || c.name,
+        getAccountTypeLabel(c.account_type || "musteri"),
         c.email,
         c.phone || "",
         c.city || "",
-        c.status,
-        c.last_contact ? new Date(c.last_contact).toLocaleDateString('tr-TR') : ""
+        c.tax_number || "",
+        c.status
       ].join(","))
     ].join("\n");
 
     const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `musteri_listesi_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `cari_listesi_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     alert("✅ Excel dosyası indirildi!");
-  };
-
-  const handleBulkEmail = () => {
-    if (selectedCustomers.length === 0) {
-      alert("Lütfen en az bir müşteri seçin!");
-      return;
-    }
-    setIsBulkEmailOpen(true);
-  };
-
-  const sendBulkEmail = () => {
-    if (!emailSubject || !emailBody) {
-      alert("Lütfen konu ve mesaj giriniz!");
-      return;
-    }
-
-    const selectedCustomerData = customers.filter(c => selectedCustomers.includes(c.id));
-    const emails = selectedCustomerData.map(c => c.email).join(", ");
-    
-    alert(`📧 Toplu email gönderiliyor...\n\nAlıcılar: ${emails}\n\nKonu: ${emailSubject}\n\nBu özellik backend entegrasyonu ile aktif hale gelecektir.`);
-    setIsBulkEmailOpen(false);
-    setSelectedCustomers([]);
-    setEmailSubject("");
-    setEmailBody("");
   };
 
   const toggleCustomerSelection = (customerId: string) => {
@@ -246,14 +232,44 @@ export function CRMModule() {
     }
   };
 
+  const getAccountTypeLabel = (type: string) => {
+    const types = {
+      musteri: "Müşteri",
+      tedarikci: "Tedarikçi",
+      personel: "Personel",
+      ortak: "Ortak"
+    };
+    return types[type as keyof typeof types] || "Müşteri";
+  };
+
+  const getAccountTypeIcon = (type: string) => {
+    const icons = {
+      musteri: Building2,
+      tedarikci: Briefcase,
+      personel: UserCircle2,
+      ortak: Users
+    };
+    return icons[type as keyof typeof icons] || Building2;
+  };
+
   // Apply filters
-  let filteredCustomers = customers.filter(customer =>
-    customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone?.includes(searchTerm) ||
-    customer.city?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  let filteredCustomers = customers.filter(customer => {
+    // Tab filter
+    const accountType = customer.account_type || "musteri";
+    if (accountType !== activeTab) return false;
+
+    // Search filter
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = 
+      customer.name?.toLowerCase().includes(searchLower) ||
+      customer.company?.toLowerCase().includes(searchLower) ||
+      customer.email?.toLowerCase().includes(searchLower) ||
+      customer.phone?.includes(searchTerm) ||
+      customer.city?.toLowerCase().includes(searchLower) ||
+      customer.tax_number?.includes(searchTerm);
+
+    return matchesSearch;
+  });
 
   if (filters.status !== "all") {
     filteredCustomers = filteredCustomers.filter(c => c.status === filters.status);
@@ -275,11 +291,11 @@ export function CRMModule() {
     );
   }
 
-  const getStatusConfig = (status: string) => {
+  const getStatusBadge = (status: string) => {
     const configs = {
-      "Aktif": { color: "bg-green-100 text-green-700 border-green-200", icon: TrendingUp },
-      "Potansiyel": { color: "bg-blue-100 text-blue-700 border-blue-200", icon: Calendar },
-      "Eski Müşteri": { color: "bg-gray-100 text-gray-700 border-gray-200", icon: Calendar }
+      "Aktif": "bg-green-100 text-green-700 border-green-200",
+      "Potansiyel": "bg-blue-100 text-blue-700 border-blue-200",
+      "Eski Müşteri": "bg-gray-100 text-gray-700 border-gray-200"
     };
     return configs[status as keyof typeof configs] || configs["Potansiyel"];
   };
@@ -289,7 +305,7 @@ export function CRMModule() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Müşteri verileri yükleniyor...</p>
+          <p className="text-gray-600">Cari verileri yükleniyor...</p>
         </div>
       </div>
     );
@@ -300,103 +316,37 @@ export function CRMModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">CRM - Müşteri Yönetimi</h2>
-          <p className="text-gray-600 mt-1">Müşteri ilişkileri ve cari kartlarını yönetin</p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline"
-            onClick={handleExportExcel}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Excel İndir
-          </Button>
-          <Button 
-            className="bg-purple-600 hover:bg-purple-700"
-            onClick={openAddDialog}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Yeni Müşteri
-          </Button>
+          <h2 className="text-2xl font-bold text-gray-900">Genel Cari Hesapları</h2>
+          <p className="text-gray-600 mt-1">Müşteri, tedarikçi, personel ve ortak cari hesaplarını yönetin</p>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-6 border-l-4 border-l-purple-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">Toplam Müşteri</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.total}</p>
-            </div>
-            <TrendingUp className="w-10 h-10 text-purple-600" />
-          </div>
-        </Card>
-
-        <Card className="p-6 border-l-4 border-l-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">Aktif</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.active}</p>
-            </div>
-            <TrendingUp className="w-10 h-10 text-green-600" />
-          </div>
-        </Card>
-
-        <Card className="p-6 border-l-4 border-l-blue-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">Potansiyel</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.potential}</p>
-            </div>
-            <Calendar className="w-10 h-10 text-blue-600" />
-          </div>
-        </Card>
-
-        <Card className="p-6 border-l-4 border-l-gray-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 font-medium">Eski Müşteri</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.old}</p>
-            </div>
-            <Calendar className="w-10 h-10 text-gray-600" />
-          </div>
-        </Card>
-      </div>
-
-      {/* Search and Filter */}
-      <Card className="p-4">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Müşteri ara (isim, şirket, email, telefon, şehir)..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+      {/* Action Buttons */}
+      <div className="flex gap-2 flex-wrap">
+        <Button 
+          variant="outline"
+          onClick={() => setIsAdvancedSearchOpen(!isAdvancedSearchOpen)}
+          className="bg-blue-600 text-white hover:bg-blue-700"
+        >
+          Detaylı Arama
+          <ChevronDown className="w-4 h-4 ml-2" />
+        </Button>
+        
+        {selectedCustomers.length > 0 && (
           <Button 
             variant="outline"
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            onClick={toggleSelectAll}
+            className="bg-blue-600 text-white hover:bg-blue-700"
           >
-            <Filter className="w-4 h-4 mr-2" />
-            Filtrele
+            Toplu Seç ({selectedCustomers.length})
           </Button>
-          {selectedCustomers.length > 0 && (
-            <Button 
-              variant="outline"
-              onClick={handleBulkEmail}
-            >
-              <Send className="w-4 h-4 mr-2" />
-              Toplu Email ({selectedCustomers.length})
-            </Button>
-          )}
-        </div>
+        )}
+      </div>
 
-        {/* Advanced Filters */}
-        {isFilterOpen && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+      {/* Advanced Search Panel */}
+      {isAdvancedSearchOpen && (
+        <Card className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Durum</Label>
               <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
@@ -428,138 +378,237 @@ export function CRMModule() {
             </div>
 
             <div className="space-y-2">
-              <Label>Başlangıç Tarihi</Label>
-              <Input 
-                type="date" 
-                value={filters.dateFrom}
-                onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Bitiş Tarihi</Label>
-              <Input 
-                type="date" 
-                value={filters.dateTo}
-                onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
-              />
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* Select All */}
-      {filteredCustomers.length > 0 && (
-        <div className="flex items-center gap-2 px-2">
-          <Checkbox
-            checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
-            onCheckedChange={toggleSelectAll}
-          />
-          <span className="text-sm text-gray-600">Tümünü Seç ({filteredCustomers.length} müşteri)</span>
-        </div>
-      )}
-
-      {/* Customer List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredCustomers.map((customer) => {
-          const statusConfig = getStatusConfig(customer.status);
-          const StatusIcon = statusConfig.icon;
-
-          return (
-            <Card key={customer.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="space-y-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-3 flex-1">
-                    <Checkbox
-                      checked={selectedCustomers.includes(customer.id)}
-                      onCheckedChange={() => toggleCustomerSelection(customer.id)}
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-gray-900">{customer.company || customer.name}</h3>
-                      {customer.company && <p className="text-gray-600 text-sm">{customer.name}</p>}
-                    </div>
-                  </div>
-                  <Badge className={statusConfig.color}>
-                    <StatusIcon className="w-3 h-3 mr-1" />
-                    {customer.status}
-                  </Badge>
-                </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Mail className="w-4 h-4" />
-                    <span className="truncate">{customer.email}</span>
-                  </div>
-                  {customer.phone && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Phone className="w-4 h-4" />
-                      <span>{customer.phone}</span>
-                    </div>
-                  )}
-                  {customer.city && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="w-4 h-4" />
-                      <span>{customer.city}</span>
-                    </div>
-                  )}
-                  {customer.last_contact && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>Son: {new Date(customer.last_contact).toLocaleDateString('tr-TR')}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-2 pt-4 border-t">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => openDetailDialog(customer)}
-                  >
-                    <Eye className="w-3 h-3 mr-1" />
-                    Detay
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => openEditDialog(customer)}
-                  >
-                    <Edit className="w-3 h-3 mr-1" />
-                    Düzenle
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setDeletingCustomer(customer);
-                      setIsDeleteDialogOpen(true);
-                    }}
-                  >
-                    <Trash2 className="w-3 h-3 text-red-600" />
-                  </Button>
-                </div>
+              <Label>Tarih Aralığı</Label>
+              <div className="flex gap-2">
+                <Input 
+                  type="date" 
+                  value={filters.dateFrom}
+                  onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                  className="w-full"
+                />
+                <Input 
+                  type="date" 
+                  value={filters.dateTo}
+                  onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
+                  className="w-full"
+                />
               </div>
-            </Card>
-          );
-        })}
-      </div>
-
-      {filteredCustomers.length === 0 && (
-        <Card className="p-12">
-          <div className="text-center text-gray-500">
-            <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Arama kriterlerine uygun müşteri bulunamadı.</p>
+            </div>
           </div>
         </Card>
       )}
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex items-center gap-2 mb-4">
+          <TabsList className="bg-transparent p-0 h-auto space-x-2">
+            <TabsTrigger 
+              value="musteri"
+              className="bg-green-600 text-white data-[state=active]:bg-green-700 px-4 py-2 rounded"
+            >
+              Cari Oluştur
+            </TabsTrigger>
+            <TabsTrigger 
+              value="import"
+              className="bg-blue-600 text-white data-[state=inactive]:bg-blue-500 px-4 py-2 rounded"
+              onClick={(e) => {
+                e.preventDefault();
+                alert("İçe aktarma özelliği yakında eklenecek");
+              }}
+            >
+              İçe Aktar
+            </TabsTrigger>
+            <TabsTrigger 
+              value="export"
+              className="bg-blue-600 text-white data-[state=inactive]:bg-blue-500 px-4 py-2 rounded"
+              onClick={(e) => {
+                e.preventDefault();
+                handleExportExcel();
+              }}
+            >
+              Dışarıya Aktar
+            </TabsTrigger>
+          </TabsList>
+          
+          <Button 
+            variant="outline"
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className="ml-auto"
+          >
+            <Filter className="w-4 h-4" />
+          </Button>
+
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Ara"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {/* Tab Content Filters */}
+        <div className="bg-gray-50 p-3 rounded-lg mb-4">
+          <div className="flex gap-2">
+            <Button
+              variant={activeTab === "musteri" ? "default" : "ghost"}
+              onClick={() => setActiveTab("musteri")}
+              className="flex items-center gap-2"
+            >
+              <Building2 className="w-4 h-4" />
+              Müşteri Cari
+            </Button>
+            <Button
+              variant={activeTab === "tedarikci" ? "default" : "ghost"}
+              onClick={() => setActiveTab("tedarikci")}
+              className="flex items-center gap-2"
+            >
+              <Briefcase className="w-4 h-4" />
+              Tedarikçi Cari
+            </Button>
+            <Button
+              variant={activeTab === "personel" ? "default" : "ghost"}
+              onClick={() => setActiveTab("personel")}
+              className="flex items-center gap-2"
+            >
+              <UserCircle2 className="w-4 h-4" />
+              Personel Cari
+            </Button>
+            <Button
+              variant={activeTab === "ortak" ? "default" : "ghost"}
+              onClick={() => setActiveTab("ortak")}
+              className="flex items-center gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Ortak Cari
+            </Button>
+          </div>
+        </div>
+
+        <TabsContent value={activeTab} className="mt-0">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead>Kod</TableHead>
+                  <TableHead>Unvan</TableHead>
+                  <TableHead>Cari Tipi</TableHead>
+                  <TableHead>Telefon Numarası</TableHead>
+                  <TableHead>Etiketler</TableHead>
+                  <TableHead>VKN/TCKN</TableHead>
+                  <TableHead>Yerel Bakiye</TableHead>
+                  <TableHead className="text-right">İşlemler</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCustomers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-12 text-gray-500">
+                      <div className="flex flex-col items-center gap-2">
+                        <Search className="w-12 h-12 opacity-50" />
+                        <p>Kayıt bulunamadı</p>
+                        <Button onClick={openAddDialog} className="mt-2">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Yeni {getAccountTypeLabel(activeTab)} Ekle
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredCustomers.map((customer) => {
+                    const AccountIcon = getAccountTypeIcon(customer.account_type || "musteri");
+                    return (
+                      <TableRow key={customer.id} className="hover:bg-gray-50">
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedCustomers.includes(customer.id)}
+                            onCheckedChange={() => toggleCustomerSelection(customer.id)}
+                          />
+                        </TableCell>
+                        <TableCell className="font-mono text-sm text-gray-600">
+                          {customer.id.substring(0, 8)}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-semibold">{customer.company || customer.name}</p>
+                            {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <AccountIcon className="w-4 h-4 text-gray-600" />
+                            <span>{getAccountTypeLabel(customer.account_type || "musteri")}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{customer.phone || "-"}</TableCell>
+                        <TableCell>
+                          <Badge className={getStatusBadge(customer.status)}>
+                            {customer.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {customer.tax_number || "-"}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          ₺0,00
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => openDetailDialog(customer)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => openEditDialog(customer)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setDeletingCustomer(customer);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+
+          {filteredCustomers.length > 0 && (
+            <div className="mt-4 text-sm text-gray-600">
+              Toplam {filteredCustomers.length} kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Add Customer Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Yeni Müşteri Ekle</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Yeni {getAccountTypeLabel(activeTab)} Ekle</DialogTitle>
           </DialogHeader>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
@@ -574,7 +623,7 @@ export function CRMModule() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="company">Şirket</Label>
+              <Label htmlFor="company">Şirket/Unvan</Label>
               <Input
                 id="company"
                 value={formData.company}
@@ -601,6 +650,26 @@ export function CRMModule() {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="0532 123 45 67"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tax_number">VKN/TCKN</Label>
+              <Input
+                id="tax_number"
+                value={formData.tax_number}
+                onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
+                placeholder="1234567890"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tax_office">Vergi Dairesi</Label>
+              <Input
+                id="tax_office"
+                value={formData.tax_office}
+                onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
+                placeholder="Kadıköy"
               />
             </div>
 
@@ -647,7 +716,7 @@ export function CRMModule() {
                 id="notes"
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Müşteri hakkında notlar..."
+                placeholder="Cari hakkında notlar..."
                 rows={3}
               />
             </div>
@@ -666,7 +735,7 @@ export function CRMModule() {
               disabled={isSubmitting}
               className="bg-purple-600 hover:bg-purple-700"
             >
-              {isSubmitting ? "Ekleniyor..." : "Müşteri Ekle"}
+              {isSubmitting ? "Ekleniyor..." : "Cari Ekle"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -676,7 +745,7 @@ export function CRMModule() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Müşteri Düzenle</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Cari Düzenle</DialogTitle>
           </DialogHeader>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
@@ -690,7 +759,7 @@ export function CRMModule() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-company">Şirket</Label>
+              <Label htmlFor="edit-company">Şirket/Unvan</Label>
               <Input
                 id="edit-company"
                 value={formData.company}
@@ -714,6 +783,24 @@ export function CRMModule() {
                 id="edit-phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-tax_number">VKN/TCKN</Label>
+              <Input
+                id="edit-tax_number"
+                value={formData.tax_number}
+                onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-tax_office">Vergi Dairesi</Label>
+              <Input
+                id="edit-tax_office"
+                value={formData.tax_office}
+                onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
               />
             </div>
 
@@ -786,9 +873,9 @@ export function CRMModule() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Müşteriyi Sil</DialogTitle>
+            <DialogTitle>Cari Sil</DialogTitle>
             <DialogDescription>
-              <strong>{deletingCustomer?.company || deletingCustomer?.name}</strong> müşterisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+              <strong>{deletingCustomer?.company || deletingCustomer?.name}</strong> cari kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -827,7 +914,7 @@ export function CRMModule() {
             <div className="space-y-6">
               {/* Customer Info */}
               <Card className="p-6">
-                <h3 className="font-bold text-lg mb-4">Müşteri Bilgileri</h3>
+                <h3 className="font-bold text-lg mb-4">Cari Bilgileri</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-600">Ad Soyad</p>
@@ -849,6 +936,18 @@ export function CRMModule() {
                       <p className="font-semibold">{detailCustomer.phone}</p>
                     </div>
                   )}
+                  {detailCustomer.tax_number && (
+                    <div>
+                      <p className="text-gray-600">VKN/TCKN</p>
+                      <p className="font-semibold">{detailCustomer.tax_number}</p>
+                    </div>
+                  )}
+                  {detailCustomer.tax_office && (
+                    <div>
+                      <p className="text-gray-600">Vergi Dairesi</p>
+                      <p className="font-semibold">{detailCustomer.tax_office}</p>
+                    </div>
+                  )}
                   {detailCustomer.city && (
                     <div>
                       <p className="text-gray-600">Şehir</p>
@@ -857,7 +956,7 @@ export function CRMModule() {
                   )}
                   <div>
                     <p className="text-gray-600">Durum</p>
-                    <Badge className={getStatusConfig(detailCustomer.status).color}>
+                    <Badge className={getStatusBadge(detailCustomer.status)}>
                       {detailCustomer.status}
                     </Badge>
                   </div>
@@ -894,11 +993,11 @@ export function CRMModule() {
                         <div>
                           <p className="font-semibold">{invoice.invoice_no}</p>
                           <p className="text-sm text-gray-600">
-                            {new Date(invoice.created_at).toLocaleDateString('tr-TR')}
+                            {new Date(invoice.created_at).toLocaleDateString("tr-TR")}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">₺{Number(invoice.amount).toLocaleString('tr-TR')}</p>
+                          <p className="font-semibold">₺{Number(invoice.amount).toLocaleString("tr-TR")}</p>
                           <Badge>{invoice.status}</Badge>
                         </div>
                       </div>
@@ -910,62 +1009,6 @@ export function CRMModule() {
               </Card>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Bulk Email Dialog */}
-      <Dialog open={isBulkEmailOpen} onOpenChange={setIsBulkEmailOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">
-              Toplu Email Gönder ({selectedCustomers.length} müşteri)
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="email-subject">Konu</Label>
-              <Input
-                id="email-subject"
-                value={emailSubject}
-                onChange={(e) => setEmailSubject(e.target.value)}
-                placeholder="Email konusu..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email-body">Mesaj</Label>
-              <Textarea
-                id="email-body"
-                value={emailBody}
-                onChange={(e) => setEmailBody(e.target.value)}
-                placeholder="Email içeriği..."
-                rows={8}
-              />
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Alıcılar:</strong> {customers.filter(c => selectedCustomers.includes(c.id)).map(c => c.email).join(", ")}
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsBulkEmailOpen(false)}
-            >
-              İptal
-            </Button>
-            <Button
-              onClick={sendBulkEmail}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              <Send className="w-4 h-4 mr-2" />
-              Gönder
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
