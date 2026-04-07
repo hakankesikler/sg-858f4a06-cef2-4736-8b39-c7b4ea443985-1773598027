@@ -226,16 +226,6 @@ export default function LoginPage() {
               <p className="text-xs text-blue-700 font-mono">demo@rexlojistik.com</p>
               <p className="text-xs text-blue-700 font-mono">demo123</p>
             </div>
-
-            {/* Signup Link */}
-            <div className="text-center pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                Henüz hesabınız yok mu?{" "}
-                <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-700 hover:underline">
-                  Hemen Kayıt Olun
-                </Link>
-              </p>
-            </div>
           </div>
 
           {/* Footer */}
