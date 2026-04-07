@@ -53,7 +53,7 @@ export function Header() {
                 İletişim
               </a>
               <Link 
-                href="/rexgen"
+                href="/"
                 className="text-blue-600 hover:text-blue-700 transition-colors font-semibold flex items-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
