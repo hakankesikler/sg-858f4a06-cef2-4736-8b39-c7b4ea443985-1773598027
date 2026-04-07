@@ -1,5 +1,5 @@
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,34 +10,96 @@ import { CRMModule } from "@/components/modules/CRMModule";
 import { LogisticsModule } from "@/components/modules/LogisticsModule";
 import { AccountingModule } from "@/components/modules/AccountingModule";
 import { HRModule } from "@/components/modules/HRModule";
+import { AnalyticsModule } from "@/components/modules/AnalyticsModule";
 import { ReportsModule } from "@/components/modules/ReportsModule";
 import { SettingsModule } from "@/components/modules/SettingsModule";
-import { AnalyticsModule } from "@/components/modules/AnalyticsModule";
-import { 
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import {
   LayoutDashboard,
   Users,
   Truck,
   DollarSign,
   UserCircle,
+  Activity,
   BarChart3,
   Settings,
+  LogOut,
+  Bell,
+  Search,
   Menu,
   X,
-  LogOut,
-  CheckCircle2,
   BarChart,
   Clock,
   Award,
   Plus,
   Package,
-  Activity
+  Activity as ActivityIcon
 } from "lucide-react";
 
 export default function PersonelProfil() {
+  const router = useRouter();
+  const { toast } = useToast();
   const [activeModule, setActiveModule] = useState<"dashboard" | "crm" | "logistics" | "accounting" | "hr" | "reports" | "settings" | "analytics">("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCariFormOpen, setIsCariFormOpen] = useState(false);
   const [isIsGirisFormOpen, setIsIsGirisFormOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  // Authentication check
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        router.push("/login?redirect=/personel/profil");
+        return;
+      }
+
+      setUser(session.user);
+      setLoading(false);
+
+      // Check if there's a module query parameter
+      const moduleParam = router.query.module as string;
+      if (moduleParam && ["dashboard", "crm", "logistics", "accounting", "hr", "reports", "settings", "analytics"].includes(moduleParam)) {
+        setActiveModule(moduleParam as any);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        router.push("/login?redirect=/personel/profil");
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Çıkış Yapıldı",
+      description: "Başarıyla çıkış yaptınız.",
+    });
+    router.push("/login");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   const modules = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, color: "from-blue-500 to-blue-600" },
@@ -45,7 +107,7 @@ export default function PersonelProfil() {
     { id: "logistics", name: "Lojistik Yönetimi", icon: Truck, color: "from-orange-500 to-orange-600" },
     { id: "accounting", name: "Muhasebe", icon: DollarSign, color: "from-green-500 to-green-600" },
     { id: "hr", name: "İnsan Kaynakları", icon: UserCircle, color: "from-indigo-500 to-indigo-600" },
-    { id: "analytics", name: "Web Analitik", icon: Activity, color: "from-cyan-500 to-cyan-600" },
+    { id: "analytics", name: "Web Analitik", icon: ActivityIcon, color: "from-cyan-500 to-cyan-600" },
     { id: "reports", name: "Raporlama", icon: BarChart3, color: "from-pink-500 to-pink-600" },
     { id: "settings", name: "Ayarlar", icon: Settings, color: "from-gray-500 to-gray-600" }
   ];
@@ -257,14 +319,16 @@ export default function PersonelProfil() {
               </button>
             </div>
 
-            {/* User Info */}
-            <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-lg">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                AY
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">Ahmet Yılmaz</p>
-                <p className="text-xs text-slate-400 truncate">Operasyon Müdürü</p>
+            {/* User Profile */}
+            <div className="p-6 border-b border-gray-700">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                  {user?.email?.[0]?.toUpperCase() || "A"}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">{user?.email?.split("@")[0] || "Kullanıcı"}</h3>
+                  <p className="text-sm text-gray-400">Operasyon Müdürü</p>
+                </div>
               </div>
             </div>
           </div>
@@ -319,12 +383,29 @@ export default function PersonelProfil() {
               </div>
               <span className="font-bold text-lg text-gray-900">Rex Portal</span>
             </div>
-            <button 
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Menu className="w-6 h-6 text-gray-700" />
-            </button>
+            <div className="flex items-center space-x-4">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
+                <Bell className="w-5 h-5 text-gray-600" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <Search className="w-5 h-5 text-gray-600" />
+              </button>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                className="flex items-center space-x-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Çıkış Yap</span>
+              </Button>
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
           </div>
 
           {/* Content Area */}
