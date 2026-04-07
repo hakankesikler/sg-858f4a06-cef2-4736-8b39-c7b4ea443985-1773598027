@@ -51,9 +51,9 @@ export default function Signup() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.email || !formData.password || !formData.confirmPassword) {
       toast({
@@ -85,6 +85,8 @@ export default function Signup() {
     setLoading(true);
 
     try {
+      console.log("📝 Signup attempt:", formData.email);
+
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -95,46 +97,72 @@ export default function Signup() {
         }
       });
 
+      console.log("📊 Signup response:", { data, error });
+
       if (error) {
-        throw error;
-      }
-
-      if (data.user) {
-        toast({
-          title: "Kayıt Başarılı! 🎉",
-          description: "Hesabınız oluşturuldu. Giriş yapabilirsiniz.",
-        });
-
-        // Auto login after signup
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password
-        });
-
-        if (signInError) {
-          // If auto-login fails, redirect to login page
-          router.push("/login?message=Kayıt başarılı! Lütfen giriş yapın.");
+        console.error("❌ Signup error:", error);
+        
+        let errorMessage = "Kayıt oluşturulamadı";
+        
+        if (error.message.includes("already registered")) {
+          errorMessage = "Bu e-posta adresi zaten kullanılıyor";
+        } else if (error.message.includes("Invalid email")) {
+          errorMessage = "Geçersiz e-posta adresi";
+        } else if (error.message.includes("Password")) {
+          errorMessage = "Şifre gereksinimleri karşılanmıyor";
         } else {
-          // Success! Redirect to profile
-          router.push("/personel/profil");
+          errorMessage = error.message;
         }
-      }
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      
-      let errorMessage = "Kayıt sırasında bir hata oluştu.";
-      
-      if (error.message.includes("already registered")) {
-        errorMessage = "Bu e-posta adresi zaten kayıtlı. Lütfen giriş yapın.";
-      } else if (error.message.includes("invalid email")) {
-        errorMessage = "Geçersiz e-posta adresi.";
-      } else if (error.message.includes("password")) {
-        errorMessage = "Şifre çok zayıf. Daha güçlü bir şifre deneyin.";
+        
+        toast({
+          title: "Kayıt Başarısız",
+          description: errorMessage,
+          variant: "destructive"
+        });
+        return;
       }
 
+      if (data?.user) {
+        console.log("✅ Signup successful! User:", data.user.email);
+        console.log("📧 Email confirmation required?", data.user.email_confirmed_at === null);
+        
+        // Check if email confirmation is required
+        if (data.user.email_confirmed_at === null) {
+          toast({
+            title: "Kayıt Başarılı",
+            description: "E-posta adresinize doğrulama linki gönderildi. Lütfen e-postanızı kontrol edin ve linke tıklayın.",
+            duration: 6000
+          });
+          
+          // Wait a bit then redirect to login
+          setTimeout(() => {
+            router.push("/login");
+          }, 3000);
+        } else {
+          // Email confirmed or confirmation not required
+          toast({
+            title: "Kayıt Başarılı",
+            description: "Hesabınız başarıyla oluşturuldu! Yönlendiriliyorsunuz..."
+          });
+          
+          // Redirect to profile after short delay
+          setTimeout(() => {
+            router.push("/personel/profil");
+          }, 1500);
+        }
+      } else {
+        console.warn("⚠️ No user returned");
+        toast({
+          title: "Hata",
+          description: "Kullanıcı oluşturulamadı. Lütfen tekrar deneyin.",
+          variant: "destructive"
+        });
+      }
+    } catch (err: any) {
+      console.error("💥 Unexpected error:", err);
       toast({
-        title: "Kayıt Başarısız",
-        description: errorMessage,
+        title: "Beklenmeyen Hata",
+        description: err.message || "Bir hata oluştu",
         variant: "destructive"
       });
     } finally {
@@ -167,7 +195,7 @@ export default function Signup() {
           </div>
 
           {/* Signup Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSignup} className="space-y-5">
             {/* Full Name */}
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-gray-700 font-medium">

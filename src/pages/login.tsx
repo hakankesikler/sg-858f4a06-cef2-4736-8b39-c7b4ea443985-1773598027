@@ -23,7 +23,7 @@ export default function LoginPage() {
     if (!email || !password) {
       toast({
         title: "Hata",
-        description: "Lütfen e-posta ve şifre giriniz.",
+        description: "Lütfen tüm alanları doldurun",
         variant: "destructive",
       });
       return;
@@ -32,36 +32,66 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      console.log("🔐 Login attempt:", email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: email.trim(),
+        password: password,
       });
 
+      console.log("📊 Login response:", { data, error });
+
       if (error) {
+        console.error("❌ Login error:", error);
+        
+        let errorMessage = "Giriş yapılamadı";
+        
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "E-posta veya şifre hatalı";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "E-posta adresiniz doğrulanmamış. Lütfen e-postanızdaki doğrulama linkine tıklayın.";
+        } else if (error.message.includes("Invalid")) {
+          errorMessage = "Geçersiz giriş bilgileri";
+        } else {
+          errorMessage = error.message;
+        }
+        
         toast({
           title: "Giriş Başarısız",
-          description: error.message === "Invalid login credentials"
-            ? "E-posta veya şifre hatalı."
-            : error.message,
+          description: errorMessage,
           variant: "destructive",
         });
         return;
       }
 
-      if (data.user) {
+      if (data?.session) {
+        console.log("✅ Login successful! Session:", data.session.user.email);
+        
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+        }
+
         toast({
-          title: "Giriş Başarılı!",
-          description: `Hoş geldiniz, ${data.user.email}`,
+          title: "Giriş Başarılı",
+          description: "Hoş geldiniz!",
         });
 
-        // Redirect to the page they were trying to access or default to profile
-        const redirectTo = (router.query.redirect as string) || "/personel/profil";
-        router.push(redirectTo);
+        const redirectUrl = router.query.redirect as string || "/personel/profil";
+        console.log("🔄 Redirecting to:", redirectUrl);
+        router.push(redirectUrl);
+      } else {
+        console.warn("⚠️ No session returned");
+        toast({
+          title: "Hata",
+          description: "Oturum oluşturulamadı. Lütfen tekrar deneyin.",
+          variant: "destructive",
+        });
       }
-    } catch (error: any) {
+    } catch (err: any) {
+      console.error("💥 Unexpected error:", err);
       toast({
-        title: "Hata",
-        description: "Bir hata oluştu. Lütfen tekrar deneyin.",
+        title: "Beklenmeyen Hata",
+        description: err.message || "Bir hata oluştu",
         variant: "destructive",
       });
     } finally {
