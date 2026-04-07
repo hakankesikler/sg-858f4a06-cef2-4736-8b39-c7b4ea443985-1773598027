@@ -58,4 +58,42 @@ export function AccountingModule() {
   
   // Form görünürlük durumu
   const [showPurchaseInvoiceForm, setShowPurchaseInvoiceForm] = useState(false);
+
+  // Veri yükleme fonksiyonu (örnek)
+  const loadPurchaseInvoices = async () => {
+    // Burada Supabase'den alış faturalarını çekeceğiz
+    // Şimdilik boş bırakıyoruz
+  };
+
+  const filteredPurchaseInvoices = purchaseInvoices.filter((invoice) => {
+    if (searchTerm && !invoice.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
+    }
+    if (statusFilter !== "all" && invoice.status !== statusFilter) {
+      return false;
+    }
+    return true;
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Muhasebe Modülü</h2>
+          <p className="text-muted-foreground">
+            Faturalar, ödemeler ve finansal raporlar.
+          </p>
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Genel Bakış</TabsTrigger>
+          <TabsTrigger value="purchase-invoices">Alış Faturaları</TabsTrigger>
+          <TabsTrigger value="sales-invoices">Satış Faturaları</TabsTrigger>
+          <TabsTrigger value="transactions">İşlemler</TabsTrigger>
+        </TabsList>
+      </Tabs>
+    </div>
+  );
 }
