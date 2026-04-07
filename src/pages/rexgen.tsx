@@ -1,5 +1,5 @@
 import { SEO } from "@/components/SEO";
-import AccountingModule from "@/components/modules/AccountingModule";
+import { AccountingModule } from "@/components/modules/AccountingModule";
 
 export default function RexPortal() {
   return (
