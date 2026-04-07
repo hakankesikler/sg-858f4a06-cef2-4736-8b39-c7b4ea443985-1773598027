@@ -71,6 +71,7 @@ export function AccountingModule() {
   // Veri state'leri
   const [salesInvoices, setSalesInvoices] = useState<Invoice[]>([]);
   const [purchaseInvoices, setPurchaseInvoices] = useState<Invoice[]>([]);
+  const [purchases, setPurchases] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
@@ -90,7 +91,7 @@ export function AccountingModule() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [sales, purchases, expenseData, transactionData] = await Promise.all([
+      const [sales, purchasesData, expenseData, transactionData] = await Promise.all([
         accountingService.getInvoices(),
         accountingService.getInvoices(),
         accountingService.getExpenses(),
@@ -98,7 +99,8 @@ export function AccountingModule() {
       ]);
 
       setSalesInvoices(sales || []);
-      setPurchaseInvoices(purchases || []);
+      setPurchaseInvoices(purchasesData || []);
+      setPurchases(purchasesData || []);
       setExpenses(expenseData || []);
       setTransactions(transactionData || []);
 
