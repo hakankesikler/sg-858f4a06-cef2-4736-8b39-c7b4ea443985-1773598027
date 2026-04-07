@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 export default function RexPortal() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -197,9 +198,9 @@ export default function RexPortal() {
             {/* Footer Links */}
             <div className="mt-6 text-center text-sm text-gray-600">
               Hesabınız yok mu?{" "}
-              <a href="/personel/profil" className="text-blue-600 hover:text-blue-700 font-medium">
+              <Link href="/personel/profil" className="font-medium text-blue-600 hover:text-blue-700">
                 Admin Paneline Git
-              </a>
+              </Link>
             </div>
           </Card>
         </div>
