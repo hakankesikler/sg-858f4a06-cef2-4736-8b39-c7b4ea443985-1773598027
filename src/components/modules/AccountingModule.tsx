@@ -66,7 +66,7 @@ export function AccountingModule() {
   };
 
   const filteredPurchaseInvoices = purchaseInvoices.filter((invoice) => {
-    if (searchTerm && !invoice.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())) {
+    if (searchTerm && !invoice.invoice_no?.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     if (statusFilter !== "all" && invoice.status !== statusFilter) {
