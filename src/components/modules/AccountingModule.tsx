@@ -652,6 +652,29 @@ export function AccountingModule() {
 
         {/* Alış Faturaları */}
         <TabsContent value="purchase" className="space-y-4">
+          {/* İstatistik Kartları */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 border-l-4 border-l-green-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Ödenen Faturalar</p>
+                  <p className="text-2xl font-bold">0</p>
+                </div>
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+              </div>
+            </Card>
+
+            <Card className="p-4 border-l-4 border-l-orange-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Bekleyen</p>
+                  <p className="text-2xl font-bold text-orange-600">0</p>
+                </div>
+                <Clock className="h-8 w-8 text-orange-500" />
+              </div>
+            </Card>
+          </div>
+
           {/* Alış Faturaları Başlık */}
           <div className="border-b border-gray-200 pb-2">
             <h2 className="text-2xl font-semibold border-b-4 border-blue-500 inline-block pb-2">
