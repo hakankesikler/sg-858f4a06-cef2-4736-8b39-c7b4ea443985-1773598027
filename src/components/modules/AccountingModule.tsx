@@ -790,6 +790,7 @@ export function AccountingModule() {
               <TabsTrigger value="genel">Genel</TabsTrigger>
               <TabsTrigger value="musteriler">Müşteriler</TabsTrigger>
               <TabsTrigger value="tedarikciler">Tedarikçiler</TabsTrigger>
+              <TabsTrigger value="ortaklar">Ortaklar</TabsTrigger>
             </TabsList>
 
             {/* Genel Cari Hesaplar */}
@@ -813,6 +814,7 @@ export function AccountingModule() {
                       <SelectItem value="all">Tümü</SelectItem>
                       <SelectItem value="customer">Müşteri</SelectItem>
                       <SelectItem value="supplier">Tedarikçi</SelectItem>
+                      <SelectItem value="partner">Ortak</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1049,6 +1051,48 @@ export function AccountingModule() {
                           </TableRow>
                         ))
                     )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+
+            {/* Ortaklar */}
+            <TabsContent value="ortaklar" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    placeholder="Ortak ara..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Yeni Ortak
+                </Button>
+              </div>
+
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ortak Adı</TableHead>
+                      <TableHead>Ortak Tipi</TableHead>
+                      <TableHead>Hesap Kodu</TableHead>
+                      <TableHead>Hisse Oranı</TableHead>
+                      <TableHead>Sermaye</TableHead>
+                      <TableHead>Bakiye</TableHead>
+                      <TableHead className="text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                        Ortak hesabı bulunamadı. Yeni ortak eklemek için yukarıdaki butona tıklayın.
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               </Card>
