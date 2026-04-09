@@ -108,6 +108,11 @@ export function AccountingModule() {
   const [currentCategory, setCurrentCategory] = useState<ExpenseCategory | null>(null);
   const [editedCategoryName, setEditedCategoryName] = useState("");
 
+  // Add New Type Modal State
+  const [addTypeModal, setAddTypeModal] = useState(false);
+  const [currentCategoryForType, setCurrentCategoryForType] = useState<ExpenseCategory | null>(null);
+  const [newTypeName, setNewTypeName] = useState("");
+
   // Expense Categories State
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([
     {
@@ -224,6 +229,49 @@ export function AccountingModule() {
     setEditCategoryModal(false);
     setCurrentCategory(null);
     setEditedCategoryName("");
+  };
+
+  // Open Add Type Modal
+  const handleAddType = (category: ExpenseCategory) => {
+    setCurrentCategoryForType(category);
+    setNewTypeName("");
+    setAddTypeModal(true);
+  };
+
+  // Save New Type
+  const handleSaveNewType = () => {
+    if (!currentCategoryForType || !newTypeName.trim()) {
+      toast({
+        title: "Hata",
+        description: "Genel gider adı boş olamaz",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setExpenseCategories(prev => 
+      prev.map(cat => 
+        cat.id === currentCategoryForType.id 
+          ? { ...cat, types: [...cat.types, newTypeName.trim()] }
+          : cat
+      )
+    );
+
+    toast({
+      title: "Başarılı",
+      description: "Yeni gider tipi eklendi",
+    });
+
+    setAddTypeModal(false);
+    setCurrentCategoryForType(null);
+    setNewTypeName("");
+  };
+
+  // Close Add Type Modal
+  const handleCloseAddTypeModal = () => {
+    setAddTypeModal(false);
+    setCurrentCategoryForType(null);
+    setNewTypeName("");
   };
 
   // Veri state'leri
@@ -734,7 +782,12 @@ export function AccountingModule() {
                           <Edit className="mr-2 h-4 w-4" />
                           Kategoriyi Düzenle
                         </Button>
-                        <Button variant="outline" size="sm" className="w-full">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => handleAddType(category)}
+                        >
                           <Plus className="mr-2 h-4 w-4" />
                           Yeni Tip Ekle
                         </Button>
@@ -1869,6 +1922,48 @@ export function AccountingModule() {
               className="bg-red-600 hover:bg-red-700"
             >
               Sil
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add New Type Modal */}
+      <Dialog open={addTypeModal} onOpenChange={setAddTypeModal}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">
+              Yeni Genel Gider Tipi
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="type-name" className="text-blue-600">
+                Genel Gider Adı <span className="text-blue-600">*</span>
+              </Label>
+              <Input
+                id="type-name"
+                value={newTypeName}
+                onChange={(e) => setNewTypeName(e.target.value)}
+                placeholder="Gider tipi adı girin"
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex justify-center gap-3 sm:justify-center">
+            <Button
+              variant="outline"
+              onClick={handleCloseAddTypeModal}
+              className="border-red-500 text-red-500 hover:bg-red-50 px-8"
+            >
+              Kapat
+            </Button>
+            <Button
+              onClick={handleSaveNewType}
+              className="bg-green-600 hover:bg-green-700 text-white px-8"
+            >
+              Kaydet
             </Button>
           </DialogFooter>
         </DialogContent>
