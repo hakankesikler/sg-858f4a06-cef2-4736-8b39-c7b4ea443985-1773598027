@@ -113,6 +113,11 @@ export function AccountingModule() {
   const [currentCategoryForType, setCurrentCategoryForType] = useState<ExpenseCategory | null>(null);
   const [newTypeName, setNewTypeName] = useState("");
 
+  // Edit Type Modal State
+  const [editTypeModal, setEditTypeModal] = useState(false);
+  const [currentTypeForEdit, setCurrentTypeForEdit] = useState<{ categoryId: string; typeName: string; typeIndex: number } | null>(null);
+  const [editedTypeName, setEditedTypeName] = useState("");
+
   // Expense Categories State
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([
     {
@@ -272,6 +277,79 @@ export function AccountingModule() {
     setAddTypeModal(false);
     setCurrentCategoryForType(null);
     setNewTypeName("");
+  };
+
+  // Open Edit Type Modal
+  const handleEditType = (categoryId: string, typeName: string, typeIndex: number) => {
+    setCurrentTypeForEdit({ categoryId, typeName, typeIndex });
+    setEditedTypeName(typeName);
+    setEditTypeModal(true);
+  };
+
+  // Update Type Name
+  const handleUpdateType = () => {
+    if (!currentTypeForEdit || !editedTypeName.trim()) {
+      toast({
+        title: "Hata",
+        description: "Gider tipi adı boş olamaz",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setExpenseCategories(prev => 
+      prev.map(cat => 
+        cat.id === currentTypeForEdit.categoryId 
+          ? { 
+              ...cat, 
+              types: cat.types.map((type, idx) => 
+                idx === currentTypeForEdit.typeIndex ? editedTypeName.trim() : type
+              ) 
+            }
+          : cat
+      )
+    );
+
+    toast({
+      title: "Başarılı",
+      description: "Gider tipi güncellendi",
+    });
+
+    setEditTypeModal(false);
+    setCurrentTypeForEdit(null);
+    setEditedTypeName("");
+  };
+
+  // Delete Type
+  const handleDeleteType = () => {
+    if (!currentTypeForEdit) return;
+
+    setExpenseCategories(prev => 
+      prev.map(cat => 
+        cat.id === currentTypeForEdit.categoryId 
+          ? { 
+              ...cat, 
+              types: cat.types.filter((_, idx) => idx !== currentTypeForEdit.typeIndex) 
+            }
+          : cat
+      )
+    );
+
+    toast({
+      title: "Başarılı",
+      description: "Gider tipi silindi",
+    });
+
+    setEditTypeModal(false);
+    setCurrentTypeForEdit(null);
+    setEditedTypeName("");
+  };
+
+  // Close Edit Type Modal
+  const handleCloseEditTypeModal = () => {
+    setEditTypeModal(false);
+    setCurrentTypeForEdit(null);
+    setEditedTypeName("");
   };
 
   // Veri state'leri
@@ -766,7 +844,11 @@ export function AccountingModule() {
                         {category.types.map((type, index) => (
                           <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
                             <span className="text-sm">{type}</span>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditType(category.id, type, index)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                           </div>
