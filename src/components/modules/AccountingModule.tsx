@@ -652,123 +652,152 @@ export function AccountingModule() {
 
         {/* Alış Faturaları */}
         <TabsContent value="purchase" className="space-y-4">
+          {/* Alış Faturaları Başlık */}
+          <div className="border-b border-gray-200 pb-2">
+            <h2 className="text-2xl font-semibold border-b-4 border-blue-500 inline-block pb-2">
+              Alış Faturaları
+            </h2>
+          </div>
+
+          {/* Detaylı Arama Butonu */}
+          <div>
+            <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
+              Detaylı Arama
+            </Button>
+          </div>
+
+          {/* Kayıt Sayısı Mesajı */}
+          <div className="text-sm text-gray-600 italic">
+            1000 adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+          </div>
+
+          {/* Aksiyon Butonları */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="relative w-64">
+            <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
+              <Info className="mr-2 h-4 w-4" />
+              Toplu Seç
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <Button className="bg-green-600 hover:bg-green-700">
+                Alış Faturası Oluştur
+              </Button>
+              <Button className="bg-green-600 hover:bg-green-700">
+                Satış İade Faturası Oluştur
+              </Button>
+              <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
+                e-Fatura Gelen Kutusu
+              </Button>
+              <Button variant="outline">
+                İçe Aktar
+              </Button>
+              <Button variant="outline">
+                Dışarıya Aktar
+              </Button>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+              </Button>
+              <div className="relative w-48">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
-                  placeholder="Fatura ara..."
+                  placeholder="Ara"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Durum" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tümü</SelectItem>
-                  <SelectItem value="paid">Ödendi</SelectItem>
-                  <SelectItem value="pending">Beklemede</SelectItem>
-                  <SelectItem value="overdue">Gecikmiş</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Yeni Fatura
-            </Button>
           </div>
 
+          {/* Fatura Tablosu */}
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fatura No</TableHead>
-                  <TableHead>Tedarikçi</TableHead>
-                  <TableHead>Tarih</TableHead>
-                  <TableHead>Vade</TableHead>
-                  <TableHead>Tutar</TableHead>
-                  <TableHead>Durum</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {purchaseInvoices.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      Alış faturası bulunamadı. Yeni fatura eklemek için yukarıdaki butona tıklayın.
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead>e-Fatura Durumu</TableHead>
+                    <TableHead>Belge Tipi</TableHead>
+                    <TableHead>Cari Bilgisi</TableHead>
+                    <TableHead>Proje</TableHead>
+                    <TableHead>Etiketler</TableHead>
+                    <TableHead>Seri No</TableHead>
+                    <TableHead>Durum</TableHead>
+                    <TableHead>Düzenlenme Tarihi</TableHead>
+                    <TableHead>Vade Tarihi</TableHead>
+                    <TableHead>Fatura Tutarı</TableHead>
+                    <TableHead>Bakiye</TableHead>
                   </TableRow>
-                ) : (
-                  purchaseInvoices
-                    .filter((invoice) => {
-                      const matchesSearch = invoice.invoice_no
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase());
-                      const matchesStatus =
-                        statusFilter === "all" || invoice.status === statusFilter;
-                      return matchesSearch && matchesStatus;
-                    })
-                    .map((invoice) => (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">
-                          {invoice.invoice_no}
-                        </TableCell>
-                        <TableCell>{invoice.customer_id}</TableCell>
-                        <TableCell>
-                          {new Date(invoice.created_at).toLocaleDateString("tr-TR")}
-                        </TableCell>
-                        <TableCell>
-                          {invoice.due_date
-                            ? new Date(invoice.due_date).toLocaleDateString("tr-TR")
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          {new Intl.NumberFormat("tr-TR", {
-                            style: "currency",
-                            currency: "TRY",
-                          }).format(invoice.total)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              invoice.status === "paid"
-                                ? "default"
+                </TableHeader>
+                <TableBody>
+                  {purchaseInvoices.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                        Alış faturası bulunamadı. Yeni fatura eklemek için yukarıdaki butona tıklayın.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    purchaseInvoices
+                      .filter((invoice) => {
+                        const matchesSearch = invoice.invoice_no
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase());
+                        const matchesStatus =
+                          statusFilter === "all" || invoice.status === statusFilter;
+                        return matchesSearch && matchesStatus;
+                      })
+                      .map((invoice) => (
+                        <TableRow key={invoice.id}>
+                          <TableCell>-</TableCell>
+                          <TableCell>Alış Faturası</TableCell>
+                          <TableCell>{invoice.customer_id}</TableCell>
+                          <TableCell>-</TableCell>
+                          <TableCell>-</TableCell>
+                          <TableCell className="font-medium">
+                            {invoice.invoice_no}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                invoice.status === "paid"
+                                  ? "default"
+                                  : invoice.status === "pending"
+                                  ? "secondary"
+                                  : "destructive"
+                              }
+                            >
+                              {invoice.status === "paid"
+                                ? "Ödendi"
                                 : invoice.status === "pending"
-                                ? "secondary"
-                                : "destructive"
-                            }
-                          >
-                            {invoice.status === "paid"
-                              ? "Ödendi"
-                              : invoice.status === "pending"
-                              ? "Beklemede"
-                              : "Gecikmiş"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                )}
-              </TableBody>
-            </Table>
+                                ? "Beklemede"
+                                : "Gecikmiş"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(invoice.created_at).toLocaleDateString("tr-TR")}
+                          </TableCell>
+                          <TableCell>
+                            {invoice.due_date
+                              ? new Date(invoice.due_date).toLocaleDateString("tr-TR")
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            {new Intl.NumberFormat("tr-TR", {
+                              style: "currency",
+                              currency: "TRY",
+                            }).format(invoice.total)}
+                          </TableCell>
+                          <TableCell>
+                            {new Intl.NumberFormat("tr-TR", {
+                              style: "currency",
+                              currency: "TRY",
+                            }).format(invoice.total)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </Card>
         </TabsContent>
 
