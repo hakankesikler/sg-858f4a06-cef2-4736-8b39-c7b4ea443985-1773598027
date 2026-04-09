@@ -503,7 +503,7 @@ export function AccountingModule() {
             <TabsList>
               <TabsTrigger value="general-expenses">Genel Giderler</TabsTrigger>
               <TabsTrigger value="expense-types">Genel Gider Tipleri</TabsTrigger>
-              <TabsTrigger value="transferred-expenses">Taşınan Genel Giderler</TabsTrigger>
+              <TabsTrigger value="recurring-expenses">Tekrarlı Genel Giderler</TabsTrigger>
             </TabsList>
 
             {/* Genel Giderler Alt Sekmesi */}
@@ -1015,10 +1015,10 @@ export function AccountingModule() {
               </div>
             </TabsContent>
 
-            {/* Taşınan Genel Giderler Alt Sekmesi */}
-            <TabsContent value="transferred-expenses" className="space-y-4">
+            {/* Tekrarlı Genel Giderler Alt Sekmesi */}
+            <TabsContent value="recurring-expenses" className="space-y-4">
               <Card className="p-6">
-                <p className="text-center text-gray-500">Taşınan genel giderler yakında eklenecek...</p>
+                <p className="text-center text-gray-500">Tekrarlı genel giderler yakında eklenecek...</p>
               </Card>
             </TabsContent>
 
