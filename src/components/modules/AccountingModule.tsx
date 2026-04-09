@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,59 +18,179 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus,
   Search,
-  FileText,
-  TrendingUp,
-  TrendingDown,
-  AlertCircle,
-  Calendar,
-  Filter,
-  Download,
-  Eye,
   Edit,
   Trash2,
-  LayoutGrid,
-  ShoppingCart,
-  ShoppingBag,
-  CreditCard,
+  Download,
+  Eye,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  FileText,
+  Calendar,
   Users,
   BarChart3,
-  Mail,
-  Upload,
-  X,
-  Trash,
-  Save,
-  Info,
-  Building,
-  Handshake,
-  LayoutDashboard,
-  Receipt,
-  Package,
-  Wallet,
-  Activity,
+  AlertCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { accountingService } from "@/services/accountingService";
-import type { Database } from "@/integrations/supabase/types";
+import {
+  getInvoices,
+  createInvoice,
+  updateInvoice,
+  deleteInvoice,
+  getTransactions,
+  createTransaction,
+  getCustomers,
+  createCustomer,
+  getDashboardStats,
+} from "@/services/accountingService";
 
-type Invoice = Database["public"]["Tables"]["invoices"]["Row"];
-type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
-type Expense = Database["public"]["Tables"]["expenses"]["Row"];
+interface ExpenseCategory {
+  id: string;
+  name: string;
+  types: string[];
+}
 
 export function AccountingModule() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("panel");
-  const [cariTab, setCariTab] = useState("genel");
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [loading, setLoading] = useState(false);
-  
-  // Remove customer tab state
-  const [customers, setCustomers] = useState<any[]>([]);
-  
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Category Edit Modal State
+  const [editCategoryModal, setEditCategoryModal] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState<ExpenseCategory | null>(null);
+  const [editedCategoryName, setEditedCategoryName] = useState("");
+
+  // Expense Categories State
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([
+    {
+      id: "1",
+      name: "Kategoriyle Genel Gider Tipleri",
+      types: ["Yiyecek"]
+    },
+    {
+      id: "2",
+      name: "Araç Bakım Durumu",
+      types: ["Araç Temizliği Bakım Giderleri", "Araç Düzensel Giderleri"]
+    },
+    {
+      id: "3",
+      name: "Yaşam",
+      types: ["Freight Forwarding Yaşam"]
+    },
+    {
+      id: "4",
+      name: "Taşıma Faturaları",
+      types: ["FULL TRUCK YÜKUMA", "Parsiyel Taşıma"]
+    },
+    {
+      id: "5",
+      name: "Kurumsal Giderler",
+      types: ["İş Takibi Güvenlik/Danışmanlık Masrafı", "Freight Forwarding Sigortas", "Taşıma Diğer Giderleri", "Broker Giderleri", "Elektrik"]
+    },
+    {
+      id: "6",
+      name: "Finansal",
+      types: ["Vakıfbank Yan Aziz Dijital Kredi", "Vakıfbank Yan Envar Saravas Kredi", "Vakıfbank Diğer Kredisi", "KFT", "Masrafı"]
+    },
+    {
+      id: "7",
+      name: "Denizden",
+      types: ["Debiyo", "CMA Belgesi", "Dönenem", "Terminiz"]
+    },
+    {
+      id: "8",
+      name: "Ulaşım/Konuklama",
+      types: ["Toplantı Yatanmış", "Kolaylıklar", "Araç Kiralama", "Dinmiyel Ovum", "Taleb"]
+    },
+    {
+      id: "9",
+      name: "Temel Giderler",
+      types: ["Kargo Ödemeleri", "Kasa", "Yemsal Harcamalar", "Muhasebe/Mali Müşavir", "Sponsor Gideri"]
+    },
+    {
+      id: "10",
+      name: "Vergi",
+      types: ["Mezuniyet Teknoloji", "Gerçek Üstünde Kararne Soğu Vergisi", "Kurumlar Vergisi", "ÖTV", "Stopaj"]
+    },
+    {
+      id: "11",
+      name: "Diğer",
+      types: ["Dizüner Freezer", "Müşteriye Bedelini Taşıma Yenr Organizasyon", "Maskes", "Kargo", "Reklam/Tanıtım"]
+    }
+  ]);
+
+  // Open Edit Category Modal
+  const handleEditCategory = (category: ExpenseCategory) => {
+    setCurrentCategory(category);
+    setEditedCategoryName(category.name);
+    setEditCategoryModal(true);
+  };
+
+  // Update Category Name
+  const handleUpdateCategory = () => {
+    if (!currentCategory || !editedCategoryName.trim()) {
+      toast({
+        title: "Hata",
+        description: "Kategori adı boş olamaz",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setExpenseCategories(prev => 
+      prev.map(cat => 
+        cat.id === currentCategory.id 
+          ? { ...cat, name: editedCategoryName.trim() }
+          : cat
+      )
+    );
+
+    toast({
+      title: "Başarılı",
+      description: "Kategori güncellendi",
+    });
+
+    setEditCategoryModal(false);
+    setCurrentCategory(null);
+    setEditedCategoryName("");
+  };
+
+  // Delete Category
+  const handleDeleteCategory = () => {
+    if (!currentCategory) return;
+
+    setExpenseCategories(prev => prev.filter(cat => cat.id !== currentCategory.id));
+
+    toast({
+      title: "Başarılı",
+      description: "Kategori silindi",
+    });
+
+    setEditCategoryModal(false);
+    setCurrentCategory(null);
+    setEditedCategoryName("");
+  };
+
+  // Close Modal
+  const handleCloseModal = () => {
+    setEditCategoryModal(false);
+    setCurrentCategory(null);
+    setEditedCategoryName("");
+  };
+
   // Veri state'leri
   const [salesInvoices, setSalesInvoices] = useState<Invoice[]>([]);
   const [purchaseInvoices, setPurchaseInvoices] = useState<Invoice[]>([]);
@@ -477,7 +596,7 @@ export function AccountingModule() {
                       <TableCell>₺{invoice.total?.toLocaleString('tr-TR')}</TableCell>
                       <TableCell>{getStatusBadge(invoice.status || 'pending')}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
                           <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -485,7 +604,7 @@ export function AccountingModule() {
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </TableCell>
@@ -563,454 +682,38 @@ export function AccountingModule() {
             <TabsContent value="expense-types" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
-                {/* Kategoriyle Genel Gider Tipleri */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Kategoriyle Genel Gider Tipleri</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Yiyecek</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
+                {expenseCategories.map((category) => (
+                  <Card key={category.id} className="p-6">
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">{category.name}</h3>
+                      <div className="space-y-2">
+                        {category.types.map((type, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span className="text-sm">{type}</span>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => handleEditCategory(category)}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Kategoriyi Düzenle
+                        </Button>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Yeni Tip Ekle
                         </Button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Araç Bakım Durumu */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Araç Bakım Durumu</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Araç Temizliği Bakım Giderleri</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Araç Düzensel Giderleri</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Yaşam */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Yaşam</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Freight Forwarding Yaşam</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Taşıma Faturaları */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Taşıma Faturaları</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>FULL TRUCK YÜKUMA</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Parsiyel Taşıma</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Kurumsal Giderler */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Kurumsal Giderler</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>İş Takibi Güvenlik/Danışmanlık Masrafı</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Freight Forwarding Sigortas</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Taşıma Diğer Giderleri</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Broker Giderleri</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Elektrik</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Finansal */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Finansal</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Vakıfbank Yan Aziz Dijital Kredi</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Vakıfbank Yan Envar Saravas Kredi</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Vakıfbank Diğer Kredisi</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>KFT</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Masrafı</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Denizden */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Denizden</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Debiyo</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>CMA Belgesi</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Dönenem</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Terminiz</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Ulaşım/Konuklama */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Ulaşım/Konuklama</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Toplantı Yatanmış</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Kolaylıklar</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Araç Kiralama</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Dinmiyel Ovum</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Taleb</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Temel Giderler */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Temel Giderler</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Kargo Ödemeleri</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Kasa</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Yemsal Harcamalar</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Muhasebe/Mali Müşavir</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Sponsor Gideri</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Vergi */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Vergi</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Mezuniyet Teknoloji</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Gerçek Üstünde Kararne Soğu Vergisi</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Kurumlar Vergisi</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>ÖTV</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Stopaj</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Diğer */}
-                <Card className="p-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Diğer</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Dizüner Freezer</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Müşteriye Bedelini Taşıma Yenr Organizasyon</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Maskes</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Kargo</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                        <span>Reklam/Tanıtım</span>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Kategoriyi Düzenle
-                      </Button>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
+                  </Card>
+                ))}
 
               </div>
             </TabsContent>
@@ -2093,6 +1796,55 @@ export function AccountingModule() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Category Edit Modal */}
+      <Dialog open={editCategoryModal} onOpenChange={setEditCategoryModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">
+              Kategori Düzenle
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="category-name">
+                Ad <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="category-name"
+                value={editedCategoryName}
+                onChange={(e) => setEditedCategoryName(e.target.value)}
+                placeholder="Kategori adı"
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex justify-center gap-3 sm:justify-center">
+            <Button
+              variant="outline"
+              onClick={handleCloseModal}
+              className="border-red-500 text-red-500 hover:bg-red-50"
+            >
+              Kapat
+            </Button>
+            <Button
+              onClick={handleUpdateCategory}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Güncelle
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteCategory}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Sil
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
