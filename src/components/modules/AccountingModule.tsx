@@ -42,8 +42,30 @@ import {
   Users,
   BarChart3,
   AlertCircle,
+  Info
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { accountingService } from "@/services/accountingService";
+
+interface Invoice {
+  id: string;
+  invoice_no: string;
+  customer_id: string;
+  status: string;
+  total: number;
+  created_at: string;
+  due_date?: string;
+}
+
+interface Customer {
+  id: string;
+  name: string;
+  company?: string;
+  account_type: string;
+  phone?: string;
+  status?: string;
+  tax_number?: string;
+}
 
 interface ExpenseCategory {
   id: string;
