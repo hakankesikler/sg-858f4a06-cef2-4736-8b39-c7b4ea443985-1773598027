@@ -70,7 +70,12 @@ interface Customer {
 interface ExpenseCategory {
   id: string;
   name: string;
-  types: string[];
+  types: Array<{ id: string; name: string }>;
+}
+
+interface ExpenseType {
+  id: string;
+  name: string;
 }
 
 export function AccountingModule() {
@@ -97,7 +102,11 @@ export function AccountingModule() {
 
   // Edit Type Modal State
   const [editTypeModal, setEditTypeModal] = useState(false);
-  const [currentTypeForEdit, setCurrentTypeForEdit] = useState<{ categoryId: string; typeName: string; typeIndex: number } | null>(null);
+  const [currentTypeForEdit, setCurrentTypeForEdit] = useState<{ 
+    categoryId: string; 
+    typeId: string; 
+    typeName: string; 
+  } | null>(null);
   const [editedTypeName, setEditedTypeName] = useState("");
 
   // Add New Category Modal State
@@ -105,63 +114,55 @@ export function AccountingModule() {
   const [newCategoryName, setNewCategoryName] = useState("");
 
   // Expense Categories State
-  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([
-    {
-      id: "1",
-      name: "Kategoriyle Genel Gider Tipleri",
-      types: ["Yiyecek"]
-    },
-    {
-      id: "2",
-      name: "Araç Bakım Durumu",
-      types: ["Araç Temizliği Bakım Giderleri", "Araç Düzensel Giderleri"]
-    },
-    {
-      id: "3",
-      name: "Yaşam",
-      types: ["Freight Forwarding Yaşam"]
-    },
-    {
-      id: "4",
-      name: "Taşıma Faturaları",
-      types: ["FULL TRUCK YÜKUMA", "Parsiyel Taşıma"]
-    },
-    {
-      id: "5",
-      name: "Kurumsal Giderler",
-      types: ["İş Takibi Güvenlik/Danışmanlık Masrafı", "Freight Forwarding Sigortas", "Taşıma Diğer Giderleri", "Broker Giderleri", "Elektrik"]
-    },
-    {
-      id: "6",
-      name: "Finansal",
-      types: ["Vakıfbank Yan Aziz Dijital Kredi", "Vakıfbank Yan Envar Saravas Kredi", "Vakıfbank Diğer Kredisi", "KFT", "Masrafı"]
-    },
-    {
-      id: "7",
-      name: "Denizden",
-      types: ["Debiyo", "CMA Belgesi", "Dönenem", "Terminiz"]
-    },
-    {
-      id: "8",
-      name: "Ulaşım/Konuklama",
-      types: ["Toplantı Yatanmış", "Kolaylıklar", "Araç Kiralama", "Dinmiyel Ovum", "Taleb"]
-    },
-    {
-      id: "9",
-      name: "Temel Giderler",
-      types: ["Kargo Ödemeleri", "Kasa", "Yemsal Harcamalar", "Muhasebe/Mali Müşavir", "Sponsor Gideri"]
-    },
-    {
-      id: "10",
-      name: "Vergi",
-      types: ["Mezuniyet Teknoloji", "Gerçek Üstünde Kararne Soğu Vergisi", "Kurumlar Vergisi", "ÖTV", "Stopaj"]
-    },
-    {
-      id: "11",
-      name: "Diğer",
-      types: ["Dizüner Freezer", "Müşteriye Bedelini Taşıma Yenr Organizasyon", "Maskes", "Kargo", "Reklam/Tanıtım"]
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
+
+  // Veri yükleme
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      // Load expense categories with types from database
+      const categories = await accountingService.getExpenseCategories();
+      
+      // Transform database format to component format
+      const transformedCategories: ExpenseCategory[] = categories.map((cat: any) => ({
+        id: cat.id,
+        name: cat.name,
+        types: cat.expense_types?.map((type: any) => ({
+          id: type.id,
+          name: type.name
+        })) || []
+      }));
+      
+      setExpenseCategories(transformedCategories);
+      
+      // Load other data
+      setSalesInvoices([]);
+      setPurchaseInvoices([]);
+      setCustomers([]);
+    } catch (error) {
+      console.error("Veri yükleme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Veriler yüklenirken bir hata oluştu",
+      });
+      
+      // Fallback to mock data if database fails
+      setExpenseCategories([
+        {
+          id: "1",
+          name: "Kategoriyle Genel Gider Tipleri",
+          types: [{ id: "t1", name: "Yiyecek" }]
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
 
   // Open Edit Category Modal
   const handleEditCategory = (category: ExpenseCategory) => {
@@ -171,7 +172,7 @@ export function AccountingModule() {
   };
 
   // Update Category Name
-  const handleUpdateCategory = () => {
+  const handleUpdateCategory = async () => {
     if (!currentCategory || !editedCategoryName.trim()) {
       toast({
         title: "Hata",
@@ -181,38 +182,60 @@ export function AccountingModule() {
       return;
     }
 
-    setExpenseCategories(prev => 
-      prev.map(cat => 
-        cat.id === currentCategory.id 
-          ? { ...cat, name: editedCategoryName.trim() }
-          : cat
-      )
-    );
+    try {
+      await accountingService.updateExpenseCategory(currentCategory.id, editedCategoryName.trim());
+      
+      setExpenseCategories(prev => 
+        prev.map(cat => 
+          cat.id === currentCategory.id 
+            ? { ...cat, name: editedCategoryName.trim() }
+            : cat
+        )
+      );
 
-    toast({
-      title: "Başarılı",
-      description: "Kategori güncellendi",
-    });
+      toast({
+        title: "Başarılı",
+        description: "Kategori güncellendi",
+      });
 
-    setEditCategoryModal(false);
-    setCurrentCategory(null);
-    setEditedCategoryName("");
+      setEditCategoryModal(false);
+      setCurrentCategory(null);
+      setEditedCategoryName("");
+    } catch (error) {
+      console.error("Kategori güncelleme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Kategori güncellenirken bir hata oluştu",
+      });
+    }
   };
 
   // Delete Category
-  const handleDeleteCategory = () => {
+  const handleDeleteCategory = async () => {
     if (!currentCategory) return;
 
-    setExpenseCategories(prev => prev.filter(cat => cat.id !== currentCategory.id));
+    try {
+      await accountingService.deleteExpenseCategory(currentCategory.id);
+      
+      setExpenseCategories(prev => prev.filter(cat => cat.id !== currentCategory.id));
 
-    toast({
-      title: "Başarılı",
-      description: "Kategori silindi",
-    });
+      toast({
+        title: "Başarılı",
+        description: "Kategori silindi",
+      });
 
-    setEditCategoryModal(false);
-    setCurrentCategory(null);
-    setEditedCategoryName("");
+      setEditCategoryModal(false);
+      setCurrentCategory(null);
+      setEditedCategoryName("");
+    } catch (error) {
+      console.error("Kategori silme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Kategori silinirken bir hata oluştu",
+      });
+    }
   };
 
   // Close Modal
@@ -230,7 +253,7 @@ export function AccountingModule() {
   };
 
   // Save New Type
-  const handleSaveNewType = () => {
+  const handleSaveNewType = async () => {
     if (!currentCategoryForType || !newTypeName.trim()) {
       toast({
         title: "Hata",
@@ -240,22 +263,122 @@ export function AccountingModule() {
       return;
     }
 
-    setExpenseCategories(prev => 
-      prev.map(cat => 
-        cat.id === currentCategoryForType.id 
-          ? { ...cat, types: [...cat.types, newTypeName.trim()] }
-          : cat
-      )
-    );
+    try {
+      const newType = await accountingService.createExpenseType(
+        currentCategoryForType.id,
+        newTypeName.trim()
+      );
+      
+      setExpenseCategories(prev => 
+        prev.map(cat => 
+          cat.id === currentCategoryForType.id 
+            ? { ...cat, types: [...cat.types, { id: newType.id, name: newType.name }] }
+            : cat
+        )
+      );
 
-    toast({
-      title: "Başarılı",
-      description: "Yeni gider tipi eklendi",
-    });
+      toast({
+        title: "Başarılı",
+        description: "Yeni gider tipi eklendi",
+      });
 
-    setAddTypeModal(false);
-    setCurrentCategoryForType(null);
-    setNewTypeName("");
+      setAddTypeModal(false);
+      setCurrentCategoryForType(null);
+      setNewTypeName("");
+    } catch (error) {
+      console.error("Gider tipi ekleme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Gider tipi eklenirken bir hata oluştu",
+      });
+    }
+  };
+
+  // Update Type Name
+  const handleUpdateType = async () => {
+    if (!currentTypeForEdit || !editedTypeName.trim()) {
+      toast({
+        title: "Hata",
+        description: "Gider tipi adı boş olamaz",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await accountingService.updateExpenseType(
+        currentTypeForEdit.typeId,
+        editedTypeName.trim()
+      );
+      
+      setExpenseCategories(prev => 
+        prev.map(cat => 
+          cat.id === currentTypeForEdit.categoryId 
+            ? { 
+                ...cat, 
+                types: cat.types.map(type => 
+                  type.id === currentTypeForEdit.typeId 
+                    ? { ...type, name: editedTypeName.trim() }
+                    : type
+                ) 
+              }
+            : cat
+        )
+      );
+
+      toast({
+        title: "Başarılı",
+        description: "Gider tipi güncellendi",
+      });
+
+      setEditTypeModal(false);
+      setCurrentTypeForEdit(null);
+      setEditedTypeName("");
+    } catch (error) {
+      console.error("Gider tipi güncelleme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Gider tipi güncellenirken bir hata oluştu",
+      });
+    }
+  };
+
+  // Delete Type
+  const handleDeleteType = async () => {
+    if (!currentTypeForEdit) return;
+
+    try {
+      await accountingService.deleteExpenseType(currentTypeForEdit.typeId);
+      
+      setExpenseCategories(prev => 
+        prev.map(cat => 
+          cat.id === currentTypeForEdit.categoryId 
+            ? { 
+                ...cat, 
+                types: cat.types.filter(type => type.id !== currentTypeForEdit.typeId) 
+              }
+            : cat
+        )
+      );
+
+      toast({
+        title: "Başarılı",
+        description: "Gider tipi silindi",
+      });
+
+      setEditTypeModal(false);
+      setCurrentTypeForEdit(null);
+      setEditedTypeName("");
+    } catch (error) {
+      console.error("Gider tipi silme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Gider tipi silinirken bir hata oluştu",
+      });
+    }
   };
 
   // Close Add Type Modal
@@ -266,70 +389,10 @@ export function AccountingModule() {
   };
 
   // Open Edit Type Modal
-  const handleEditType = (categoryId: string, typeName: string, typeIndex: number) => {
-    console.log("Edit Type Clicked:", { categoryId, typeName, typeIndex });
-    setCurrentTypeForEdit({ categoryId, typeName, typeIndex });
+  const handleEditType = (categoryId: string, typeId: string, typeName: string) => {
+    setCurrentTypeForEdit({ categoryId, typeId, typeName });
     setEditedTypeName(typeName);
     setEditTypeModal(true);
-  };
-
-  // Update Type Name
-  const handleUpdateType = () => {
-    if (!currentTypeForEdit || !editedTypeName.trim()) {
-      toast({
-        title: "Hata",
-        description: "Gider tipi adı boş olamaz",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setExpenseCategories(prev => 
-      prev.map(cat => 
-        cat.id === currentTypeForEdit.categoryId 
-          ? { 
-              ...cat, 
-              types: cat.types.map((type, idx) => 
-                idx === currentTypeForEdit.typeIndex ? editedTypeName.trim() : type
-              ) 
-            }
-          : cat
-      )
-    );
-
-    toast({
-      title: "Başarılı",
-      description: "Gider tipi güncellendi",
-    });
-
-    setEditTypeModal(false);
-    setCurrentTypeForEdit(null);
-    setEditedTypeName("");
-  };
-
-  // Delete Type
-  const handleDeleteType = () => {
-    if (!currentTypeForEdit) return;
-
-    setExpenseCategories(prev => 
-      prev.map(cat => 
-        cat.id === currentTypeForEdit.categoryId 
-          ? { 
-              ...cat, 
-              types: cat.types.filter((_, idx) => idx !== currentTypeForEdit.typeIndex) 
-            }
-          : cat
-      )
-    );
-
-    toast({
-      title: "Başarılı",
-      description: "Gider tipi silindi",
-    });
-
-    setEditTypeModal(false);
-    setCurrentTypeForEdit(null);
-    setEditedTypeName("");
   };
 
   // Close Edit Type Modal
@@ -346,7 +409,7 @@ export function AccountingModule() {
   };
 
   // Save New Category
-  const handleSaveNewCategory = () => {
+  const handleSaveNewCategory = async () => {
     if (!newCategoryName.trim()) {
       toast({
         title: "Hata",
@@ -356,21 +419,30 @@ export function AccountingModule() {
       return;
     }
 
-    const newCategory: ExpenseCategory = {
-      id: Date.now().toString(),
-      name: newCategoryName.trim(),
-      types: []
-    };
+    try {
+      const newCategory = await accountingService.createExpenseCategory(newCategoryName.trim());
+      
+      setExpenseCategories(prev => [...prev, {
+        id: newCategory.id,
+        name: newCategory.name,
+        types: []
+      }]);
 
-    setExpenseCategories(prev => [...prev, newCategory]);
+      toast({
+        title: "Başarılı",
+        description: "Yeni kategori eklendi",
+      });
 
-    toast({
-      title: "Başarılı",
-      description: "Yeni kategori eklendi",
-    });
-
-    setAddCategoryModal(false);
-    setNewCategoryName("");
+      setAddCategoryModal(false);
+      setNewCategoryName("");
+    } catch (error) {
+      console.error("Kategori ekleme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Kategori eklenirken bir hata oluştu",
+      });
+    }
   };
 
   // Close Add Category Modal
@@ -717,17 +789,16 @@ export function AccountingModule() {
                     <div className="space-y-4">
                       <h3 className="font-semibold text-lg">{category.name}</h3>
                       <div className="space-y-2">
-                        {category.types.map((type, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                            <span className="text-sm">{type}</span>
+                        {category.types.map((type) => (
+                          <div key={type.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span className="text-sm">{type.name}</span>
                             <Button 
                               variant="ghost" 
                               size="sm"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                console.log("Edit type clicked:", type);
-                                handleEditType(category.id, type, index);
+                                handleEditType(category.id, type.id, type.name);
                               }}
                             >
                               <Edit className="h-4 w-4" />
