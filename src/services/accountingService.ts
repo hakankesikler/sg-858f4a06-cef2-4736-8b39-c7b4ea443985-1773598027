@@ -110,8 +110,8 @@ export const accountingService = {
 
     if (filters?.startDate) query = query.gte("expense_date", filters.startDate);
     if (filters?.endDate) query = query.lte("expense_date", filters.endDate);
-    if (filters?.categoryId) query = query.eq("category_id", filters.categoryId);
-    if (filters?.typeId) query = query.eq("type_id", filters.typeId);
+    if (filters?.categoryId) query = query.eq("category_id" as any, filters.categoryId);
+    if (filters?.typeId) query = query.eq("type_id" as any, filters.typeId);
 
     const { data, error } = await query;
     if (error) throw error;

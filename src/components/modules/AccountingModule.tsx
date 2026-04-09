@@ -127,14 +127,16 @@ export function AccountingModule() {
       // Load expense categories with types from database
       const categories = await accountingService.getExpenseCategories();
       
-      // Transform database format to component format
-      const transformedCategories: ExpenseCategory[] = categories.map((cat: any) => ({
-        id: cat.id,
-        name: cat.name,
-        types: cat.expense_types?.map((type: any) => ({
-          id: type.id,
-          name: type.name
-        })) || []
+      // Transform database format to component format with type safety
+      const transformedCategories: ExpenseCategory[] = (categories || []).map((cat: any) => ({
+        id: cat?.id || '',
+        name: cat?.name || '',
+        types: Array.isArray(cat?.expense_types) 
+          ? cat.expense_types.map((type: any) => ({
+              id: type?.id || '',
+              name: type?.name || ''
+            }))
+          : []
       }));
       
       setExpenseCategories(transformedCategories);
@@ -789,16 +791,18 @@ export function AccountingModule() {
                     <div className="space-y-4">
                       <h3 className="font-semibold text-lg">{category.name}</h3>
                       <div className="space-y-2">
-                        {category.types.map((type) => (
-                          <div key={type.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                            <span className="text-sm">{type.name}</span>
+                        {Array.isArray(category.types) && category.types.map((type) => (
+                          <div key={type?.id || Math.random()} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span className="text-sm">{type?.name || ''}</span>
                             <Button 
                               variant="ghost" 
                               size="sm"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleEditType(category.id, type.id, type.name);
+                                if (type?.id && type?.name) {
+                                  handleEditType(category.id, type.id, type.name);
+                                }
                               }}
                             >
                               <Edit className="h-4 w-4" />
