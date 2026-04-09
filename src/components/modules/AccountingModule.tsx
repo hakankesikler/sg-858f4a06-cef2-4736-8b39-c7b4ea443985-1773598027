@@ -1531,6 +1531,286 @@ export function AccountingModule() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Customer Dialog - Comprehensive Form */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Yeni Cari Ekle</DialogTitle>
+          </DialogHeader>
+
+          <Tabs defaultValue="bilgiler" className="w-full">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="bilgiler" className="bg-green-100 data-[state=active]:bg-green-500 data-[state=active]:text-white">
+                ▶ Cari Bilgileri
+              </TabsTrigger>
+              <TabsTrigger value="detay" className="bg-gray-100 data-[state=active]:bg-green-500 data-[state=active]:text-white">
+                ▶ Cari Detay Bilgileri
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Cari Bilgileri Tab */}
+            <TabsContent value="bilgiler" className="space-y-6">
+              {/* Cari Türü */}
+              <div className="space-y-2">
+                <Label>Cari Türü</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="cariTuru"
+                      value="gercek"
+                      defaultChecked
+                      className="w-4 h-4"
+                    />
+                    <span>Gerçek/Şahıs Şirketi</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="cariTuru"
+                      value="tuzel"
+                      className="w-4 h-4"
+                    />
+                    <span>Tüzel</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Cari Bilgileri */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label>Cari Kodu</Label>
+                  <Input value="CAR001294" disabled className="bg-gray-50" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cari Adı *</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Cari adı"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cari Soyadı *</Label>
+                  <Input placeholder="Cari soyadı" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cari Tipi *</Label>
+                  <Select
+                    value={formData.account_type}
+                    onValueChange={(value) => setFormData({ ...formData, account_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seçiniz" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="musteri">Müşteri</SelectItem>
+                      <SelectItem value="tedarikci">Tedarikçi</SelectItem>
+                      <SelectItem value="personel">Personel</SelectItem>
+                      <SelectItem value="ortak">Ortak</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label>Cari Kısa Adı</Label>
+                  <Input placeholder="Kısa ad" />
+                </div>
+                <div className="space-y-2">
+                  <Label>İşlem Tarihi</Label>
+                  <Input type="date" defaultValue="2026-04-09" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Etiketler</Label>
+                  <Input placeholder="Etiket ekle" />
+                </div>
+                <div className="space-y-2">
+                  <Label>T.C. Kimlik No</Label>
+                  <Input placeholder="TC Kimlik No" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Vergi Dairesi</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seçiniz" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="kadikoy">Kadıköy</SelectItem>
+                      <SelectItem value="besiktas">Beşiktaş</SelectItem>
+                      <SelectItem value="uskudar">Üsküdar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Mersis No</Label>
+                  <Input placeholder="Mersis numarası" />
+                </div>
+              </div>
+
+              {/* İletişim Bilgileri */}
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-semibold mb-4 text-blue-600">İletişim Bilgileri</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Telefon No</Label>
+                    <div className="flex gap-2">
+                      <div className="w-16 flex items-center justify-center border rounded px-2 bg-gray-50">
+                        <span className="text-xl">🇹🇷</span>
+                        <ChevronDown className="w-3 h-3 ml-1" />
+                      </div>
+                      <Input
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="0501 234 5678"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>E-Posta</Label>
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="ornek@email.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Web Sitesi</Label>
+                    <Input placeholder="www.ornek.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Faks No</Label>
+                    <div className="flex gap-2">
+                      <div className="w-16 flex items-center justify-center border rounded px-2 bg-gray-50">
+                        <span className="text-xl">🇹🇷</span>
+                        <ChevronDown className="w-3 h-3 ml-1" />
+                      </div>
+                      <Input placeholder="0501 234 5678" className="flex-1" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Adres Bilgileri */}
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-semibold mb-4 text-blue-600">Adres Bilgileri</h3>
+                
+                <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <Checkbox id="yurtdisi" />
+                    <Label htmlFor="yurtdisi" className="cursor-pointer">Yurt Dışı Adresi</Label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Adres Tipi</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fatura">Fatura Adresi</SelectItem>
+                          <SelectItem value="sevkiyat">Sevkiyat Adresi</SelectItem>
+                          <SelectItem value="iade">İade Adresi</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2 md:col-span-3">
+                      <Label>Adres</Label>
+                      <textarea
+                        className="w-full min-h-[100px] p-2 border rounded-md"
+                        placeholder="Adres bilgisi giriniz..."
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>İl</Label>
+                      <Select
+                        value={formData.city}
+                        onValueChange={(value) => setFormData({ ...formData, city: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="İl seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Istanbul">İstanbul</SelectItem>
+                          <SelectItem value="Ankara">Ankara</SelectItem>
+                          <SelectItem value="Izmir">İzmir</SelectItem>
+                          <SelectItem value="Bursa">Bursa</SelectItem>
+                          <SelectItem value="Antalya">Antalya</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>İlçe</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="İlçe seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="kadikoy">Kadıköy</SelectItem>
+                          <SelectItem value="besiktas">Beşiktaş</SelectItem>
+                          <SelectItem value="uskudar">Üsküdar</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Posta Kodu</Label>
+                      <Input placeholder="34000" />
+                    </div>
+                    <div className="flex items-end">
+                      <Button variant="destructive" className="w-full">
+                        Sil
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <Button variant="outline" className="mt-4 text-blue-600 border-blue-600">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adres Ekle
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Cari Detay Bilgileri Tab */}
+            <TabsContent value="detay" className="space-y-6">
+              <div className="p-8 text-center text-gray-500">
+                <p>Cari detay bilgileri bölümü</p>
+                <p className="text-sm mt-2">Ek bilgiler burada görüntülenecek</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddDialogOpen(false)}
+              className="border-red-500 text-red-600 hover:bg-red-50"
+            >
+              Vazgeç
+            </Button>
+            <Button
+              onClick={handleAddCustomer}
+              disabled={isSubmitting}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
