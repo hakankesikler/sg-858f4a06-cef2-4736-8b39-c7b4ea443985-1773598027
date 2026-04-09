@@ -56,6 +56,13 @@ export function AccountingModule() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Geri Yüklenen State'ler
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [cariTab, setCariTab] = useState("genel");
+  const [salesInvoices, setSalesInvoices] = useState<Invoice[]>([]);
+  const [purchaseInvoices, setPurchaseInvoices] = useState<Invoice[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+
   // Category Edit Modal State
   const [editCategoryModal, setEditCategoryModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<ExpenseCategory | null>(null);
