@@ -156,6 +156,7 @@ export function AccountingModule() {
   const [cities, setCities] = useState<string[]>([]);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cariTuru, setCariTuru] = useState("gercek");
 
   // Load data
   const loadData = async () => {
@@ -228,6 +229,7 @@ export function AccountingModule() {
       notes: "",
       account_type: activeTab
     });
+    setCariTuru("gercek");
     setIsAddDialogOpen(true);
   };
 
@@ -897,7 +899,7 @@ export function AccountingModule() {
                 <Filter className="h-4 w-4" />
               </Button>
               <div className="relative w-48">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   placeholder="Ara"
                   value={searchTerm}
@@ -1560,7 +1562,8 @@ export function AccountingModule() {
                       type="radio"
                       name="cariTuru"
                       value="gercek"
-                      defaultChecked
+                      checked={cariTuru === "gercek"}
+                      onChange={(e) => setCariTuru(e.target.value)}
                       className="w-4 h-4"
                     />
                     <span>Gerçek/Şahıs Şirketi</span>
@@ -1570,6 +1573,8 @@ export function AccountingModule() {
                       type="radio"
                       name="cariTuru"
                       value="tuzel"
+                      checked={cariTuru === "tuzel"}
+                      onChange={(e) => setCariTuru(e.target.value)}
                       className="w-4 h-4"
                     />
                     <span>Tüzel</span>
@@ -1577,81 +1582,174 @@ export function AccountingModule() {
                 </div>
               </div>
 
-              {/* Cari Bilgileri */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label>Cari Kodu</Label>
-                  <Input value="CAR001294" disabled className="bg-gray-50" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cari Adı *</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Cari adı"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cari Soyadı *</Label>
-                  <Input placeholder="Cari soyadı" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cari Tipi *</Label>
-                  <Select
-                    value={formData.account_type}
-                    onValueChange={(value) => setFormData({ ...formData, account_type: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seçiniz" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="musteri">Müşteri</SelectItem>
-                      <SelectItem value="tedarikci">Tedarikçi</SelectItem>
-                      <SelectItem value="personel">Personel</SelectItem>
-                      <SelectItem value="ortak">Ortak</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              {/* Cari Bilgileri - GERÇEK/ŞAHIS */}
+              {cariTuru === "gercek" && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Cari Kodu</Label>
+                      <Input value="CAR001294" disabled className="bg-gray-50" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Cari Adı *</Label>
+                      <Input
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Cari adı"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Cari Soyadı *</Label>
+                      <Input placeholder="Cari soyadı" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Cari Tipi *</Label>
+                      <Select
+                        value={formData.account_type}
+                        onValueChange={(value) => setFormData({ ...formData, account_type: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="musteri">Müşteri</SelectItem>
+                          <SelectItem value="tedarikci">Tedarikçi</SelectItem>
+                          <SelectItem value="personel">Personel</SelectItem>
+                          <SelectItem value="ortak">Ortak</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label>Cari Kısa Adı</Label>
-                  <Input placeholder="Kısa ad" />
-                </div>
-                <div className="space-y-2">
-                  <Label>İşlem Tarihi</Label>
-                  <Input type="date" defaultValue="2026-04-09" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Etiketler</Label>
-                  <Input placeholder="Etiket ekle" />
-                </div>
-                <div className="space-y-2">
-                  <Label>T.C. Kimlik No</Label>
-                  <Input placeholder="TC Kimlik No" />
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Cari Kısa Adı</Label>
+                      <Input placeholder="Kısa ad" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>İşlem Tarihi</Label>
+                      <Input type="date" defaultValue="2026-04-09" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Etiketler</Label>
+                      <Input placeholder="Etiket ekle" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>T.C. Kimlik No</Label>
+                      <Input placeholder="TC Kimlik No" />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Vergi Dairesi</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seçiniz" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                      <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                      <SelectItem value="uskudar">Üsküdar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Mersis No</Label>
-                  <Input placeholder="Mersis numarası" />
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Vergi Dairesi</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="kadikoy">Kadıköy</SelectItem>
+                          <SelectItem value="besiktas">Beşiktaş</SelectItem>
+                          <SelectItem value="uskudar">Üsküdar</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Mersis No</Label>
+                      <Input placeholder="Mersis numarası" />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Cari Bilgileri - TÜZEL */}
+              {cariTuru === "tuzel" && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Cari Kodu</Label>
+                      <Input value="CAR001294" disabled className="bg-gray-50" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Cari Adı *</Label>
+                      <Input
+                        value={formData.company || formData.name}
+                        onChange={(e) => setFormData({ 
+                          ...formData, 
+                          name: e.target.value,
+                          company: e.target.value 
+                        })}
+                        placeholder="Şirket adı"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Cari Tipi *</Label>
+                      <Select
+                        value={formData.account_type}
+                        onValueChange={(value) => setFormData({ ...formData, account_type: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="musteri">Müşteri</SelectItem>
+                          <SelectItem value="tedarikci">Tedarikçi</SelectItem>
+                          <SelectItem value="personel">Personel</SelectItem>
+                          <SelectItem value="ortak">Ortak</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Cari Kısa Adı</Label>
+                      <Input placeholder="Kısa ad" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>İşlem Tarihi</Label>
+                      <Input type="date" defaultValue="2026-04-09" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Etiketler</Label>
+                      <Input placeholder="Etiket ekle" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Vergi No</Label>
+                      <Input 
+                        value={formData.tax_number}
+                        onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
+                        placeholder="Vergi numarası" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Vergi Dairesi</Label>
+                      <Select
+                        value={formData.tax_office}
+                        onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Kadıköy">Kadıköy</SelectItem>
+                          <SelectItem value="Beşiktaş">Beşiktaş</SelectItem>
+                          <SelectItem value="Üsküdar">Üsküdar</SelectItem>
+                          <SelectItem value="Şişli">Şişli</SelectItem>
+                          <SelectItem value="Bakırköy">Bakırköy</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <Label>Mersis No</Label>
+                      <Input placeholder="Mersis numarası" />
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* İletişim Bilgileri */}
               <div className="border-t pt-4">
