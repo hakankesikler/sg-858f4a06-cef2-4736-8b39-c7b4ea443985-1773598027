@@ -1053,6 +1053,7 @@ export function AccountingModule() {
               <TabsTrigger value="musteriler">Müşteriler</TabsTrigger>
               <TabsTrigger value="tedarikciler">Tedarikçiler</TabsTrigger>
               <TabsTrigger value="ortaklar">Ortaklar</TabsTrigger>
+              <TabsTrigger value="personel">Personel Carileri</TabsTrigger>
             </TabsList>
 
             {/* Genel Cari Hesaplar */}
@@ -1353,6 +1354,49 @@ export function AccountingModule() {
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                         Ortak hesabı bulunamadı. Yeni ortak eklemek için yukarıdaki butona tıklayın.
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+
+            {/* Personel Carileri */}
+            <TabsContent value="personel" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    placeholder="Personel ara..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Yeni Personel Ekle
+                </Button>
+              </div>
+
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Personel Adı</TableHead>
+                      <TableHead>Departman</TableHead>
+                      <TableHead>Pozisyon</TableHead>
+                      <TableHead>Telefon</TableHead>
+                      <TableHead>E-posta</TableHead>
+                      <TableHead>Maaş</TableHead>
+                      <TableHead>Bakiye</TableHead>
+                      <TableHead className="text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                        Personel carisi bulunamadı. Yeni personel eklemek için yukarıdaki butona tıklayın.
                       </TableCell>
                     </TableRow>
                   </TableBody>
