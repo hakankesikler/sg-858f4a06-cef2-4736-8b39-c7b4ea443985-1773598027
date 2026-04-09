@@ -71,6 +71,10 @@ export function AccountingModule() {
   const [currentTypeForEdit, setCurrentTypeForEdit] = useState<{ categoryId: string; typeName: string; typeIndex: number } | null>(null);
   const [editedTypeName, setEditedTypeName] = useState("");
 
+  // Add New Category Modal State
+  const [addCategoryModal, setAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
   // Expense Categories State
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([
     {
@@ -306,6 +310,46 @@ export function AccountingModule() {
     setEditedTypeName("");
   };
 
+  // Open Add Category Modal
+  const handleAddCategory = () => {
+    setNewCategoryName("");
+    setAddCategoryModal(true);
+  };
+
+  // Save New Category
+  const handleSaveNewCategory = () => {
+    if (!newCategoryName.trim()) {
+      toast({
+        title: "Hata",
+        description: "Kategori adı boş olamaz",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newCategory: ExpenseCategory = {
+      id: Date.now().toString(),
+      name: newCategoryName.trim(),
+      types: []
+    };
+
+    setExpenseCategories(prev => [...prev, newCategory]);
+
+    toast({
+      title: "Başarılı",
+      description: "Yeni kategori eklendi",
+    });
+
+    setAddCategoryModal(false);
+    setNewCategoryName("");
+  };
+
+  // Close Add Category Modal
+  const handleCloseAddCategoryModal = () => {
+    setAddCategoryModal(false);
+    setNewCategoryName("");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -415,7 +459,7 @@ export function AccountingModule() {
                       <h3 className="font-semibold text-lg">{category.name}</h3>
                       <div className="space-y-2">
                         {category.types.map((type, index) => (
-                          <div key={`${category.id}-${index}`} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                          <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
                             <span className="text-sm">{type}</span>
                             <Button 
                               variant="ghost" 
@@ -423,6 +467,7 @@ export function AccountingModule() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                console.log("Edit type clicked:", type);
                                 handleEditType(category.id, type, index);
                               }}
                             >
@@ -454,6 +499,17 @@ export function AccountingModule() {
                     </div>
                   </Card>
                 ))}
+
+                {/* Yeni Kategori Ekle Kartı */}
+                <Card 
+                  className="p-6 border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer transition-all"
+                  onClick={handleAddCategory}
+                >
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-8">
+                    <Plus className="h-16 w-16 text-blue-400" />
+                    <p className="text-xl font-semibold text-blue-600">Yeni Kategori Ekle</p>
+                  </div>
+                </Card>
 
               </div>
             </TabsContent>
@@ -618,6 +674,48 @@ export function AccountingModule() {
               className="bg-red-600 hover:bg-red-700"
             >
               Sil
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add New Category Modal */}
+      <Dialog open={addCategoryModal} onOpenChange={setAddCategoryModal}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">
+              Yeni Kategori Ekle
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-category-name" className="text-blue-600">
+                Kategori Adı <span className="text-blue-600">*</span>
+              </Label>
+              <Input
+                id="new-category-name"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Yeni kategori adı girin"
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex justify-center gap-3 sm:justify-center">
+            <Button
+              variant="outline"
+              onClick={handleCloseAddCategoryModal}
+              className="border-red-500 text-red-500 hover:bg-red-50 px-8"
+            >
+              Kapat
+            </Button>
+            <Button
+              onClick={handleSaveNewCategory}
+              className="bg-green-600 hover:bg-green-700 text-white px-8"
+            >
+              Kaydet
             </Button>
           </DialogFooter>
         </DialogContent>
