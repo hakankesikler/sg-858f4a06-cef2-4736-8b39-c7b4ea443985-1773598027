@@ -51,11 +51,7 @@ import {
   CheckSquare,
   Mail,
   Upload,
-  Receipt,
-  Clock,
-  Calendar,
-  Filter,
-  CheckCircle2
+  Receipt
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { accountingService } from "@/services/accountingService";
