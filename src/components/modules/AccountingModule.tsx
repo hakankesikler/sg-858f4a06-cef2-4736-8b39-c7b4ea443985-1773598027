@@ -1023,16 +1023,15 @@ export function AccountingModule() {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="flex items-center gap-2 mb-4">
-                <TabsList className="bg-transparent p-0 h-auto space-x-2">
-                  <TabsTrigger 
-                    value="musteri"
-                    className="bg-green-600 text-white data-[state=active]:bg-green-700 px-4 py-2 rounded"
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={openAddDialog}
+                    className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded"
                   >
                     Cari Oluştur
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="import"
-                    className="bg-blue-600 text-white data-[state=inactive]:bg-blue-500 px-4 py-2 rounded"
+                  </Button>
+                  <Button 
+                    variant="outline"
                     onClick={(e) => {
                       e.preventDefault();
                       toast({
@@ -1040,20 +1039,21 @@ export function AccountingModule() {
                         description: "İçe aktarma özelliği yakında eklenecek",
                       });
                     }}
+                    className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
                   >
                     İçe Aktar
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="export"
-                    className="bg-blue-600 text-white data-[state=inactive]:bg-blue-500 px-4 py-2 rounded"
+                  </Button>
+                  <Button 
+                    variant="outline"
                     onClick={(e) => {
                       e.preventDefault();
                       handleExportExcel();
                     }}
+                    className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
                   >
                     Dışarıya Aktar
-                  </TabsTrigger>
-                </TabsList>
+                  </Button>
+                </div>
                 
                 <Button 
                   variant="outline"
