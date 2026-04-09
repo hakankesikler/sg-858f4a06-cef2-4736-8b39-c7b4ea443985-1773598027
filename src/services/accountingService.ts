@@ -128,7 +128,7 @@ export const accountingService = {
     reference_no?: string;
   }): Promise<any> {
     const { data, error } = await supabase
-      .from("expenses")
+      .from("expenses" as any)
       .insert(expense)
       .select()
       .single();
@@ -137,9 +137,17 @@ export const accountingService = {
     return data;
   },
 
-  async updateExpense(id: string, expense: any): Promise<any> {
+  async updateExpense(id: string, expense: {
+    type_id?: string;
+    category_id?: string;
+    amount?: number;
+    description?: string;
+    expense_date?: string;
+    payment_method?: string;
+    reference_no?: string;
+  }): Promise<any> {
     const { data, error } = await supabase
-      .from("expenses")
+      .from("expenses" as any)
       .update({ ...expense, updated_at: new Date().toISOString() })
       .eq("id", id)
       .select()
