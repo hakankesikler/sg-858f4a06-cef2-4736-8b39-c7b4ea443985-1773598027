@@ -374,16 +374,246 @@ export function AccountingModule() {
         </TabsContent>
 
         {/* Satış */}
-        <TabsContent value="sales">
-          <Card className="p-6">
-            <p className="text-gray-500">Satış faturaları yakında eklenecek...</p>
+        <TabsContent value="sales" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Fatura ara..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Durum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tümü</SelectItem>
+                  <SelectItem value="paid">Ödendi</SelectItem>
+                  <SelectItem value="pending">Beklemede</SelectItem>
+                  <SelectItem value="overdue">Gecikmiş</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Yeni Fatura
+            </Button>
+          </div>
+
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fatura No</TableHead>
+                  <TableHead>Müşteri</TableHead>
+                  <TableHead>Tarih</TableHead>
+                  <TableHead>Vade</TableHead>
+                  <TableHead>Tutar</TableHead>
+                  <TableHead>Durum</TableHead>
+                  <TableHead className="text-right">İşlemler</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {salesInvoices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      Satış faturası bulunamadı. Yeni fatura eklemek için yukarıdaki butona tıklayın.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  salesInvoices
+                    .filter((invoice) => {
+                      const matchesSearch = invoice.invoice_no
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase());
+                      const matchesStatus =
+                        statusFilter === "all" || invoice.status === statusFilter;
+                      return matchesSearch && matchesStatus;
+                    })
+                    .map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">
+                          {invoice.invoice_no}
+                        </TableCell>
+                        <TableCell>{invoice.customer_id}</TableCell>
+                        <TableCell>
+                          {new Date(invoice.created_at).toLocaleDateString("tr-TR")}
+                        </TableCell>
+                        <TableCell>
+                          {invoice.due_date
+                            ? new Date(invoice.due_date).toLocaleDateString("tr-TR")
+                            : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {new Intl.NumberFormat("tr-TR", {
+                            style: "currency",
+                            currency: "TRY",
+                          }).format(invoice.total)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              invoice.status === "paid"
+                                ? "default"
+                                : invoice.status === "pending"
+                                ? "secondary"
+                                : "destructive"
+                            }
+                          >
+                            {invoice.status === "paid"
+                              ? "Ödendi"
+                              : invoice.status === "pending"
+                              ? "Beklemede"
+                              : "Gecikmiş"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                )}
+              </TableBody>
+            </Table>
           </Card>
         </TabsContent>
 
-        {/* Alış */}
-        <TabsContent value="purchase">
-          <Card className="p-6">
-            <p className="text-gray-500">Alış faturaları yakında eklenecek...</p>
+        {/* Alış Faturaları */}
+        <TabsContent value="purchase" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Fatura ara..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Durum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tümü</SelectItem>
+                  <SelectItem value="paid">Ödendi</SelectItem>
+                  <SelectItem value="pending">Beklemede</SelectItem>
+                  <SelectItem value="overdue">Gecikmiş</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Yeni Fatura
+            </Button>
+          </div>
+
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fatura No</TableHead>
+                  <TableHead>Tedarikçi</TableHead>
+                  <TableHead>Tarih</TableHead>
+                  <TableHead>Vade</TableHead>
+                  <TableHead>Tutar</TableHead>
+                  <TableHead>Durum</TableHead>
+                  <TableHead className="text-right">İşlemler</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {purchaseInvoices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      Alış faturası bulunamadı. Yeni fatura eklemek için yukarıdaki butona tıklayın.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  purchaseInvoices
+                    .filter((invoice) => {
+                      const matchesSearch = invoice.invoice_no
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase());
+                      const matchesStatus =
+                        statusFilter === "all" || invoice.status === statusFilter;
+                      return matchesSearch && matchesStatus;
+                    })
+                    .map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">
+                          {invoice.invoice_no}
+                        </TableCell>
+                        <TableCell>{invoice.customer_id}</TableCell>
+                        <TableCell>
+                          {new Date(invoice.created_at).toLocaleDateString("tr-TR")}
+                        </TableCell>
+                        <TableCell>
+                          {invoice.due_date
+                            ? new Date(invoice.due_date).toLocaleDateString("tr-TR")
+                            : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {new Intl.NumberFormat("tr-TR", {
+                            style: "currency",
+                            currency: "TRY",
+                          }).format(invoice.total)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              invoice.status === "paid"
+                                ? "default"
+                                : invoice.status === "pending"
+                                ? "secondary"
+                                : "destructive"
+                            }
+                          >
+                            {invoice.status === "paid"
+                              ? "Ödendi"
+                              : invoice.status === "pending"
+                              ? "Beklemede"
+                              : "Gecikmiş"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                )}
+              </TableBody>
+            </Table>
           </Card>
         </TabsContent>
 
@@ -525,10 +755,276 @@ export function AccountingModule() {
         </TabsContent>
 
         {/* Cari Hesaplar */}
-        <TabsContent value="cari">
-          <Card className="p-6">
-            <p className="text-gray-500">Cari hesaplar yakında eklenecek...</p>
-          </Card>
+        <TabsContent value="cari" className="space-y-4">
+          <Tabs value={cariTab} onValueChange={setCariTab} className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="genel">Genel</TabsTrigger>
+              <TabsTrigger value="musteriler">Müşteriler</TabsTrigger>
+              <TabsTrigger value="tedarikciler">Tedarikçiler</TabsTrigger>
+            </TabsList>
+
+            {/* Genel Cari Hesaplar */}
+            <TabsContent value="genel" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Input
+                      placeholder="Cari ara..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Hesap Tipi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tümü</SelectItem>
+                      <SelectItem value="customer">Müşteri</SelectItem>
+                      <SelectItem value="supplier">Tedarikçi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Yeni Cari Hesap
+                </Button>
+              </div>
+
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cari Adı</TableHead>
+                      <TableHead>Hesap Tipi</TableHead>
+                      <TableHead>Telefon</TableHead>
+                      <TableHead>Bakiye</TableHead>
+                      <TableHead>Durum</TableHead>
+                      <TableHead className="text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                          Cari hesap bulunamadı. Yeni cari hesap eklemek için yukarıdaki butona tıklayın.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      customers
+                        .filter((customer) =>
+                          customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((customer) => (
+                          <TableRow key={customer.id}>
+                            <TableCell className="font-medium">
+                              {customer.name}
+                              {customer.company && (
+                                <span className="block text-sm text-gray-500">
+                                  {customer.company}
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {customer.account_type === "customer"
+                                  ? "Müşteri"
+                                  : "Tedarikçi"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{customer.phone || "-"}</TableCell>
+                            <TableCell>
+                              {new Intl.NumberFormat("tr-TR", {
+                                style: "currency",
+                                currency: "TRY",
+                              }).format(0)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  customer.status === "active"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                              >
+                                {customer.status === "active" ? "Aktif" : "Pasif"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+
+            {/* Müşteriler */}
+            <TabsContent value="musteriler" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    placeholder="Müşteri ara..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Yeni Müşteri
+                </Button>
+              </div>
+
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Müşteri Adı</TableHead>
+                      <TableHead>Şirket</TableHead>
+                      <TableHead>Telefon</TableHead>
+                      <TableHead>Vergi No</TableHead>
+                      <TableHead>Bakiye</TableHead>
+                      <TableHead className="text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.filter((c) => c.account_type === "customer").length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                          Müşteri bulunamadı. Yeni müşteri eklemek için yukarıdaki butona tıklayın.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      customers
+                        .filter((c) => c.account_type === "customer")
+                        .filter((customer) =>
+                          customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((customer) => (
+                          <TableRow key={customer.id}>
+                            <TableCell className="font-medium">{customer.name}</TableCell>
+                            <TableCell>{customer.company || "-"}</TableCell>
+                            <TableCell>{customer.phone || "-"}</TableCell>
+                            <TableCell>{customer.tax_number || "-"}</TableCell>
+                            <TableCell>
+                              {new Intl.NumberFormat("tr-TR", {
+                                style: "currency",
+                                currency: "TRY",
+                              }).format(0)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+
+            {/* Tedarikçiler */}
+            <TabsContent value="tedarikciler" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    placeholder="Tedarikçi ara..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Yeni Tedarikçi
+                </Button>
+              </div>
+
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tedarikçi Adı</TableHead>
+                      <TableHead>Şirket</TableHead>
+                      <TableHead>Telefon</TableHead>
+                      <TableHead>Vergi No</TableHead>
+                      <TableHead>Bakiye</TableHead>
+                      <TableHead className="text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.filter((c) => c.account_type === "supplier").length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                          Tedarikçi bulunamadı. Yeni tedarikçi eklemek için yukarıdaki butona tıklayın.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      customers
+                        .filter((c) => c.account_type === "supplier")
+                        .filter((customer) =>
+                          customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((customer) => (
+                          <TableRow key={customer.id}>
+                            <TableCell className="font-medium">{customer.name}</TableCell>
+                            <TableCell>{customer.company || "-"}</TableCell>
+                            <TableCell>{customer.phone || "-"}</TableCell>
+                            <TableCell>{customer.tax_number || "-"}</TableCell>
+                            <TableCell>
+                              {new Intl.NumberFormat("tr-TR", {
+                                style: "currency",
+                                currency: "TRY",
+                              }).format(0)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         {/* Raporlar */}
