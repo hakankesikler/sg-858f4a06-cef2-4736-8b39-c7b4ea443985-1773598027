@@ -37,12 +37,20 @@ import {
   TrendingUp,
   TrendingDown,
   DollarSign,
+  CreditCard,
+  Package,
+  Users,
+  ShoppingCart,
   FileText,
   Calendar,
-  Users,
-  BarChart3,
+  Filter,
+  CheckCircle2,
+  Clock,
   AlertCircle,
-  Info
+  Info,
+  CheckSquare,
+  Mail,
+  Upload
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { accountingService } from "@/services/accountingService";
@@ -476,126 +484,169 @@ export function AccountingModule() {
           </Card>
         </TabsContent>
 
-        {/* Satış */}
+        {/* Satış Faturaları */}
         <TabsContent value="sales" className="space-y-4">
+          {/* İstatistik Kartları */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4 border-l-4 border-l-green-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Toplam Ciro</p>
+                  <p className="text-2xl font-bold text-green-600">₺0</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-green-500" />
+              </div>
+            </Card>
+
+            <Card className="p-4 border-l-4 border-l-blue-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Aylık Ciro</p>
+                  <p className="text-2xl font-bold text-blue-600">₺0</p>
+                </div>
+                <Calendar className="h-8 w-8 text-blue-500" />
+              </div>
+            </Card>
+
+            <Card className="p-4 border-l-4 border-l-green-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Ödenen Faturalar</p>
+                  <p className="text-2xl font-bold">0</p>
+                </div>
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+              </div>
+            </Card>
+
+            <Card className="p-4 border-l-4 border-l-orange-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Bekleyen</p>
+                  <p className="text-2xl font-bold text-orange-600">0</p>
+                </div>
+                <Clock className="h-8 w-8 text-orange-500" />
+              </div>
+            </Card>
+          </div>
+
+          {/* Satış Faturaları Başlık */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold">Satış Faturaları</h2>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <Search className="mr-2 h-4 w-4" />
+                Detaylı Arama
+              </Button>
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
-                  placeholder="Fatura ara..."
+                  placeholder="Ara..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Durum" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tümü</SelectItem>
-                  <SelectItem value="paid">Ödendi</SelectItem>
-                  <SelectItem value="pending">Beklemede</SelectItem>
-                  <SelectItem value="overdue">Gecikmiş</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Yeni Fatura
-            </Button>
           </div>
 
+          {/* Boş Liste Mesajı */}
+          <Card className="p-8">
+            <div className="text-center space-y-4">
+              <p className="text-gray-500">0 adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.</p>
+            </div>
+          </Card>
+
+          {/* Aksiyon Butonları */}
+          <div className="flex items-center justify-between">
+            <Button variant="outline" size="sm">
+              <CheckSquare className="mr-2 h-4 w-4" />
+              Toplu Seç
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <Button className="bg-green-600 hover:bg-green-700">
+                <Plus className="mr-2 h-4 w-4" />
+                Satış Faturası Oluştur
+              </Button>
+              <Button variant="outline">
+                <FileText className="mr-2 h-4 w-4" />
+                Alış İade Faturası Oluştur
+              </Button>
+              <Button variant="outline">
+                <Mail className="mr-2 h-4 w-4" />
+                e-Fatura Gelen Kutusu
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                İçe Aktar
+              </Button>
+              <Button variant="outline" size="sm">
+                <Upload className="mr-2 h-4 w-4" />
+                Dışarıya Aktar
+              </Button>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Fatura Tablosu */}
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fatura No</TableHead>
-                  <TableHead>Müşteri</TableHead>
-                  <TableHead>Tarih</TableHead>
-                  <TableHead>Vade</TableHead>
-                  <TableHead>Tutar</TableHead>
-                  <TableHead>Durum</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {salesInvoices.length === 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      Satış faturası bulunamadı. Yeni fatura eklemek için yukarıdaki butona tıklayın.
+                    <TableHead className="w-12">
+                      <input type="checkbox" className="rounded" />
+                    </TableHead>
+                    <TableHead>E-Fatura Durumu</TableHead>
+                    <TableHead>Belge Tipi</TableHead>
+                    <TableHead>Cari Bilgisi</TableHead>
+                    <TableHead>Proje</TableHead>
+                    <TableHead>Etiketler</TableHead>
+                    <TableHead>Seri No</TableHead>
+                    <TableHead>Durum</TableHead>
+                    <TableHead>Düzenlenme Tarihi</TableHead>
+                    <TableHead>Vade Tarihi</TableHead>
+                    <TableHead>Fatura Tutarı</TableHead>
+                    <TableHead>Takip Tutarı</TableHead>
+                    <TableHead>Bakiye</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={13} className="text-center py-8 text-gray-500">
+                      Toplam 0 kayıt gösteriliyor
                     </TableCell>
                   </TableRow>
-                ) : (
-                  salesInvoices
-                    .filter((invoice) => {
-                      const matchesSearch = invoice.invoice_no
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase());
-                      const matchesStatus =
-                        statusFilter === "all" || invoice.status === statusFilter;
-                      return matchesSearch && matchesStatus;
-                    })
-                    .map((invoice) => (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">
-                          {invoice.invoice_no}
-                        </TableCell>
-                        <TableCell>{invoice.customer_id}</TableCell>
-                        <TableCell>
-                          {new Date(invoice.created_at).toLocaleDateString("tr-TR")}
-                        </TableCell>
-                        <TableCell>
-                          {invoice.due_date
-                            ? new Date(invoice.due_date).toLocaleDateString("tr-TR")
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          {new Intl.NumberFormat("tr-TR", {
-                            style: "currency",
-                            currency: "TRY",
-                          }).format(invoice.total)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              invoice.status === "paid"
-                                ? "default"
-                                : invoice.status === "pending"
-                                ? "secondary"
-                                : "destructive"
-                            }
-                          >
-                            {invoice.status === "paid"
-                              ? "Ödendi"
-                              : invoice.status === "pending"
-                              ? "Beklemede"
-                              : "Gecikmiş"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                )}
-              </TableBody>
-            </Table>
+                </TableBody>
+              </Table>
+            </div>
           </Card>
+
+          {/* Sayfalama */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              Toplam 0 kayıt gösteriliyor
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" disabled>
+                Önceki
+              </Button>
+              <Button variant="default" size="sm">
+                1
+              </Button>
+              <Button variant="outline" size="sm">
+                2
+              </Button>
+              <Button variant="outline" size="sm">
+                3
+              </Button>
+              <Button variant="outline" size="sm">
+                Sonraki
+              </Button>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Alış Faturaları */}
