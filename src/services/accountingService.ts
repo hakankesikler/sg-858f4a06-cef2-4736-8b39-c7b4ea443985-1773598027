@@ -13,7 +13,7 @@ type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type Customer = Database["public"]["Tables"]["customers"]["Row"];
 
-const accountingService = {
+export const accountingService = {
   // ==================== EXPENSE CATEGORIES & TYPES ====================
   async getExpenseCategories() {
     const { data, error } = await supabase
@@ -92,6 +92,64 @@ const accountingService = {
     if (error) throw error;
   },
 
+  // ==================== EXPENSES ====================
+  async getExpenses(filters?: {
+    startDate?: string;
+    endDate?: string;
+    categoryId?: string;
+    typeId?: string;
+  }) {
+    let query = supabase
+      .from("expenses")
+      .select(`
+        *,
+        expense_categories (id, name),
+        expense_types (id, name)
+      `)
+      .order("expense_date", { ascending: false });
+
+    if (filters?.startDate) query = query.gte("expense_date", filters.startDate);
+    if (filters?.endDate) query = query.lte("expense_date", filters.endDate);
+    if (filters?.categoryId) query = query.eq("category_id", filters.categoryId);
+    if (filters?.typeId) query = query.eq("type_id", filters.typeId);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async createExpense(expense: any) {
+    const { data, error } = await supabase
+      .from("expenses")
+      .insert(expense)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateExpense(id: string, expense: any) {
+    const { data, error } = await supabase
+      .from("expenses")
+      .update({ ...expense, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteExpense(id: string) {
+    const { error } = await supabase
+      .from("expenses")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+  },
+
   // ==================== INVOICES (SALES) ====================
   async getInvoices() {
     const { data, error } = await supabase
@@ -99,10 +157,7 @@ const accountingService = {
       .select("*, customers(name, company)")
       .order("created_at", { ascending: false });
     
-    if (error) {
-      console.error("Error fetching invoices:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data || [];
   },
 
@@ -113,10 +168,7 @@ const accountingService = {
       .eq("id", id)
       .single();
     
-    if (error) {
-      console.error("Error fetching invoice:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -127,10 +179,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error creating invoice:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -142,10 +191,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error updating invoice:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -155,10 +201,7 @@ const accountingService = {
       .delete()
       .eq("id", id);
     
-    if (error) {
-      console.error("Error deleting invoice:", error);
-      throw error;
-    }
+    if (error) throw error;
   },
 
   // ==================== PAYMENTS ====================
@@ -168,10 +211,7 @@ const accountingService = {
       .select("*, invoices(invoice_no)")
       .order("payment_date", { ascending: false });
     
-    if (error) {
-      console.error("Error fetching payments:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data || [];
   },
 
@@ -182,10 +222,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error creating payment:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -196,10 +233,7 @@ const accountingService = {
       .select("*, customers!purchases_supplier_id_fkey(name, company)")
       .order("purchase_date", { ascending: false });
     
-    if (error) {
-      console.error("Error fetching purchases:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data || [];
   },
 
@@ -210,10 +244,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error creating purchase:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -225,10 +256,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error updating purchase:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -238,65 +266,7 @@ const accountingService = {
       .delete()
       .eq("id", id);
     
-    if (error) {
-      console.error("Error deleting purchase:", error);
-      throw error;
-    }
-  },
-
-  // ==================== EXPENSES ====================
-  async getExpenses() {
-    const { data, error } = await supabase
-      .from("expenses")
-      .select("*")
-      .order("expense_date", { ascending: false });
-    
-    if (error) {
-      console.error("Error fetching expenses:", error);
-      throw error;
-    }
-    return data || [];
-  },
-
-  async createExpense(expense: any) {
-    const { data, error } = await supabase
-      .from("expenses")
-      .insert(expense)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error creating expense:", error);
-      throw error;
-    }
-    return data;
-  },
-
-  async updateExpense(id: string, updates: any) {
-    const { data, error } = await supabase
-      .from("expenses")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error updating expense:", error);
-      throw error;
-    }
-    return data;
-  },
-
-  async deleteExpense(id: string) {
-    const { error } = await supabase
-      .from("expenses")
-      .delete()
-      .eq("id", id);
-    
-    if (error) {
-      console.error("Error deleting expense:", error);
-      throw error;
-    }
+    if (error) throw error;
   },
 
   // ==================== PRODUCTS & SERVICES ====================
@@ -306,10 +276,7 @@ const accountingService = {
       .select("*")
       .order("created_at", { ascending: false });
     
-    if (error) {
-      console.error("Error fetching products:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data || [];
   },
 
@@ -320,10 +287,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error creating product:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -335,10 +299,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error updating product:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -348,10 +309,7 @@ const accountingService = {
       .delete()
       .eq("id", id);
     
-    if (error) {
-      console.error("Error deleting product:", error);
-      throw error;
-    }
+    if (error) throw error;
   },
 
   // ==================== FINANCIAL ACCOUNTS ====================
@@ -362,10 +320,7 @@ const accountingService = {
       .eq("is_active", true)
       .order("account_name", { ascending: true });
     
-    if (error) {
-      console.error("Error fetching financial accounts:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data || [];
   },
 
@@ -376,10 +331,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error creating financial account:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -391,10 +343,7 @@ const accountingService = {
       .order("transaction_date", { ascending: false })
       .limit(50);
     
-    if (error) {
-      console.error("Error fetching transactions:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data || [];
   },
 
@@ -405,10 +354,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error creating transaction:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -419,10 +365,7 @@ const accountingService = {
       .select("*, customers(name, company)")
       .order("created_at", { ascending: false });
     
-    if (error) {
-      console.error("Error fetching projects:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data || [];
   },
 
@@ -433,10 +376,7 @@ const accountingService = {
       .eq("id", id)
       .single();
     
-    if (error) {
-      console.error("Error fetching project:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -447,10 +387,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error creating project:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -462,10 +399,7 @@ const accountingService = {
       .select()
       .single();
     
-    if (error) {
-      console.error("Error updating project:", error);
-      throw error;
-    }
+    if (error) throw error;
     return data;
   },
 
@@ -515,19 +449,14 @@ const accountingService = {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching customer accounts:", error);
-      throw error;
-    }
-
-    // Since we don't have balance on customers table, we could fetch invoices and calculate it, 
-    // but for now we'll return them with a pseudo balance for the UI to handle or fetch separately if needed.
+    if (error) throw error;
     return data?.map(c => ({ ...c, balance: 0 })) || [];
   },
 
   async getCustomerAccountStats() {
     const { data: customers } = await supabase.from("customers").select("id");
     const { data: invoices } = await supabase.from("invoices").select("amount, tax, status");
+    const { data: purchases } = await supabase.from("purchases").select("subtotal, tax, status");
 
     const totalReceivables = invoices?.reduce((sum, inv) => {
       if (inv.status === "Bekliyor" || inv.status === "Gecikmiş") {
@@ -536,8 +465,6 @@ const accountingService = {
       return sum;
     }, 0) || 0;
 
-    // For payables we would look at purchases from suppliers
-    const { data: purchases } = await supabase.from("purchases").select("subtotal, tax, status");
     const totalPayables = purchases?.reduce((sum, pur) => {
       if (pur.status === "Bekliyor" || pur.status === "Gecikmiş") {
         return sum + Number(pur.subtotal) + Number(pur.tax);
@@ -547,9 +474,8 @@ const accountingService = {
 
     const netPosition = totalReceivables - totalPayables;
     const total = customers?.length || 0;
-    const active = total; // Simplified active calculation
 
-    return { totalReceivables, totalPayables, netPosition, accountCount: total, activeAccounts: active };
+    return { totalReceivables, totalPayables, netPosition, accountCount: total, activeAccounts: total };
   },
 
   // ==================== EMPLOYEE ACCOUNTS (PERSONEL CARİLERİ) ====================
@@ -570,11 +496,7 @@ const accountingService = {
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching employee accounts:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data || [];
   },
 
@@ -596,11 +518,7 @@ const accountingService = {
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating employee account:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
   },
 
@@ -612,11 +530,7 @@ const accountingService = {
       .select()
       .single();
 
-    if (error) {
-      console.error("Error updating employee account:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
   },
 
@@ -628,11 +542,7 @@ const accountingService = {
       .eq("is_active", true)
       .order("share_percentage", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching partner accounts:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data || [];
   },
 
@@ -654,11 +564,7 @@ const accountingService = {
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating partner account:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
   },
 
@@ -670,11 +576,7 @@ const accountingService = {
       .select()
       .single();
 
-    if (error) {
-      console.error("Error updating partner account:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
   },
 
@@ -688,11 +590,7 @@ const accountingService = {
       .order("transaction_date", { ascending: false })
       .limit(limit);
 
-    if (error) {
-      console.error("Error fetching transactions:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data || [];
   },
 
@@ -708,8 +606,8 @@ const accountingService = {
           email,
           phone,
           address,
-          tax_id,
-          tax_office
+          tax_id:id,
+          tax_office:name
         ),
         sales_invoice_items (
           id,
@@ -727,11 +625,7 @@ const accountingService = {
       `)
       .order("invoice_date", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching sales invoices:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data || [];
   },
 
@@ -746,10 +640,10 @@ const accountingService = {
           email,
           phone,
           address,
-          tax_id,
-          tax_office,
-          city,
-          country
+          tax_id:id,
+          tax_office:name,
+          city:name,
+          country:name
         ),
         sales_invoice_items (
           id,
@@ -768,11 +662,7 @@ const accountingService = {
       .eq("id", id)
       .single();
 
-    if (error) {
-      console.error("Error fetching sales invoice:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
   },
 
@@ -784,10 +674,7 @@ const accountingService = {
       .select()
       .single();
 
-    if (invoiceError) {
-      console.error("Error creating sales invoice:", invoiceError);
-      throw invoiceError;
-    }
+    if (invoiceError) throw invoiceError;
 
     // Create invoice items
     const itemsWithInvoiceId = items.map(item => ({
@@ -799,10 +686,7 @@ const accountingService = {
       .from("sales_invoice_items")
       .insert(itemsWithInvoiceId);
 
-    if (itemsError) {
-      console.error("Error creating invoice items:", itemsError);
-      throw itemsError;
-    }
+    if (itemsError) throw itemsError;
 
     return invoice;
   },
@@ -816,10 +700,7 @@ const accountingService = {
       .select()
       .single();
 
-    if (invoiceError) {
-      console.error("Error updating sales invoice:", invoiceError);
-      throw invoiceError;
-    }
+    if (invoiceError) throw invoiceError;
 
     // If items provided, update them
     if (items && items.length > 0) {
@@ -836,27 +717,19 @@ const accountingService = {
         .from("sales_invoice_items")
         .insert(itemsWithInvoiceId);
 
-      if (itemsError) {
-        console.error("Error updating invoice items:", itemsError);
-        throw itemsError;
-      }
+      if (itemsError) throw itemsError;
     }
 
     return invoice;
   },
 
   async deleteSalesInvoice(id: string) {
-    // Items will be deleted automatically due to CASCADE
     const { error } = await supabase
       .from("sales_invoices")
       .delete()
       .eq("id", id);
 
-    if (error) {
-      console.error("Error deleting sales invoice:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return true;
   },
 
