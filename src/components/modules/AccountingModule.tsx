@@ -50,7 +50,12 @@ import {
   Info,
   CheckSquare,
   Mail,
-  Upload
+  Upload,
+  Receipt,
+  Clock,
+  Calendar,
+  Filter,
+  CheckCircle2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { accountingService } from "@/services/accountingService";
@@ -781,56 +786,159 @@ export function AccountingModule() {
             </TabsList>
 
             {/* Genel Giderler Alt Sekmesi */}
-            <TabsContent value="general-expenses" className="space-y-4">
+            <TabsContent value="general-expenses" className="space-y-6">
+              {/* İstatistik Kartları */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="p-4 border-l-4 border-l-orange-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Toplam Gider</p>
+                      <p className="text-2xl font-bold text-orange-600">₺40.200</p>
+                    </div>
+                    <Receipt className="h-8 w-8 text-orange-500" />
+                  </div>
+                </Card>
+
+                <Card className="p-4 border-l-4 border-l-orange-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Bu Ay</p>
+                      <p className="text-2xl font-bold text-orange-600">₺0</p>
+                    </div>
+                    <Calendar className="h-8 w-8 text-orange-500" />
+                  </div>
+                </Card>
+
+                <Card className="p-4 border-l-4 border-l-yellow-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Bekleyen Ödemeler</p>
+                      <p className="text-2xl font-bold">1</p>
+                    </div>
+                    <Clock className="h-8 w-8 text-yellow-500" />
+                  </div>
+                </Card>
+
+                <Card className="p-4 border-l-4 border-l-green-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Ödenen Giderler</p>
+                      <p className="text-2xl font-bold">6</p>
+                    </div>
+                    <CheckCircle2 className="h-8 w-8 text-green-500" />
+                  </div>
+                </Card>
+              </div>
+
+              {/* Genel Giderler Başlık */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <h2 className="text-xl font-semibold">Genel Giderler</h2>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm">
+                    <Search className="mr-2 h-4 w-4" />
+                    Detaylı Arama
+                  </Button>
                   <div className="relative w-64">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <Input
-                      placeholder="Gider ara..."
+                      placeholder="Ara..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
                     />
                   </div>
-                  <Select>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Kategori" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tümü</SelectItem>
-                      <SelectItem value="operational">Operasyonel</SelectItem>
-                      <SelectItem value="administrative">İdari</SelectItem>
-                      <SelectItem value="financial">Finansal</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Yeni Gider Ekle
-                </Button>
               </div>
 
+              {/* Kayıt Sayısı Mesajı */}
+              <div className="text-sm text-gray-600">
+                7 adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+              </div>
+
+              {/* Aksiyon Butonları */}
+              <div className="flex items-center justify-between">
+                <Button variant="outline" size="sm">
+                  <CheckSquare className="mr-2 h-4 w-4" />
+                  Toplu Seç
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button className="bg-green-600 hover:bg-green-700">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Genel Gider Oluştur
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    İçe Aktar
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Dışarıya Aktar
+                  </Button>
+                  <Button variant="outline" size="icon">
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Giderler Tablosu */}
               <Card>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tarih</TableHead>
-                      <TableHead>Açıklama</TableHead>
-                      <TableHead>Kategori</TableHead>
-                      <TableHead>Tutar</TableHead>
-                      <TableHead className="text-right">İşlemler</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                        Gider kaydı bulunamadı. Yeni gider eklemek için yukarıdaki butona tıklayın.
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input type="checkbox" className="rounded" />
+                        </TableHead>
+                        <TableHead>Cari Bilgisi</TableHead>
+                        <TableHead>Etiketler</TableHead>
+                        <TableHead>Gider Tipi</TableHead>
+                        <TableHead>Seri No</TableHead>
+                        <TableHead>Proje</TableHead>
+                        <TableHead>Durum</TableHead>
+                        <TableHead>Düzenlenme Tarihi</TableHead>
+                        <TableHead>Son Ödeme Tarihi</TableHead>
+                        <TableHead>Genel İskonto</TableHead>
+                        <TableHead>Fatura Tutarı</TableHead>
+                        <TableHead>Takip Tutarı</TableHead>
+                        <TableHead>Bakiye</TableHead>
+                        <TableHead>İşlemler</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell colSpan={14} className="text-center py-8 text-gray-500">
+                          Toplam 7 kayıt gösteriliyor
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
               </Card>
+
+              {/* Sayfalama */}
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-500">
+                  Toplam 7 kayıt gösteriliyor
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" disabled>
+                    Önceki
+                  </Button>
+                  <Button variant="default" size="sm">
+                    1
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    2
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    3
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Sonraki
+                  </Button>
+                </div>
+              </div>
             </TabsContent>
 
             {/* Genel Gider Tipleri Alt Sekmesi */}
