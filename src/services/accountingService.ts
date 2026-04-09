@@ -15,7 +15,7 @@ type Customer = Database["public"]["Tables"]["customers"]["Row"];
 
 export const accountingService = {
   // ==================== EXPENSE CATEGORIES & TYPES ====================
-  async getExpenseCategories() {
+  async getExpenseCategories(): Promise<any[]> {
     const { data, error } = await supabase
       .from("expense_categories" as any)
       .select(`
@@ -25,10 +25,10 @@ export const accountingService = {
       .order("name");
 
     if (error) throw error;
-    return data;
+    return data || [];
   },
 
-  async createExpenseCategory(name: string) {
+  async createExpenseCategory(name: string): Promise<any> {
     const { data, error } = await supabase
       .from("expense_categories" as any)
       .insert({ name })
@@ -39,7 +39,7 @@ export const accountingService = {
     return data;
   },
 
-  async updateExpenseCategory(id: string, name: string) {
+  async updateExpenseCategory(id: string, name: string): Promise<any> {
     const { data, error } = await supabase
       .from("expense_categories" as any)
       .update({ name, updated_at: new Date().toISOString() })
@@ -51,7 +51,7 @@ export const accountingService = {
     return data;
   },
 
-  async deleteExpenseCategory(id: string) {
+  async deleteExpenseCategory(id: string): Promise<void> {
     const { error } = await supabase
       .from("expense_categories" as any)
       .delete()
@@ -60,7 +60,7 @@ export const accountingService = {
     if (error) throw error;
   },
 
-  async createExpenseType(categoryId: string, name: string) {
+  async createExpenseType(categoryId: string, name: string): Promise<any> {
     const { data, error } = await supabase
       .from("expense_types" as any)
       .insert({ category_id: categoryId, name })
@@ -71,7 +71,7 @@ export const accountingService = {
     return data;
   },
 
-  async updateExpenseType(id: string, name: string) {
+  async updateExpenseType(id: string, name: string): Promise<any> {
     const { data, error } = await supabase
       .from("expense_types" as any)
       .update({ name, updated_at: new Date().toISOString() })
@@ -83,7 +83,7 @@ export const accountingService = {
     return data;
   },
 
-  async deleteExpenseType(id: string) {
+  async deleteExpenseType(id: string): Promise<void> {
     const { error } = await supabase
       .from("expense_types" as any)
       .delete()
@@ -98,9 +98,9 @@ export const accountingService = {
     endDate?: string;
     categoryId?: string;
     typeId?: string;
-  }) {
-    let query = supabase
-      .from("expenses")
+  }): Promise<any[]> {
+    let query: any = supabase
+      .from("expenses" as any)
       .select(`
         *,
         expense_categories (id, name),
@@ -110,15 +110,23 @@ export const accountingService = {
 
     if (filters?.startDate) query = query.gte("expense_date", filters.startDate);
     if (filters?.endDate) query = query.lte("expense_date", filters.endDate);
-    if (filters?.categoryId) query = query.eq("category_id" as any, filters.categoryId);
-    if (filters?.typeId) query = query.eq("type_id" as any, filters.typeId);
+    if (filters?.categoryId) query = query.eq("category_id", filters.categoryId);
+    if (filters?.typeId) query = query.eq("type_id", filters.typeId);
 
     const { data, error } = await query;
     if (error) throw error;
     return data || [];
   },
 
-  async createExpense(expense: any) {
+  async createExpense(expense: {
+    type_id?: string;
+    category_id?: string;
+    amount: number;
+    description?: string;
+    expense_date: string;
+    payment_method?: string;
+    reference_no?: string;
+  }): Promise<any> {
     const { data, error } = await supabase
       .from("expenses")
       .insert(expense)
@@ -129,7 +137,7 @@ export const accountingService = {
     return data;
   },
 
-  async updateExpense(id: string, expense: any) {
+  async updateExpense(id: string, expense: any): Promise<any> {
     const { data, error } = await supabase
       .from("expenses")
       .update({ ...expense, updated_at: new Date().toISOString() })
@@ -141,7 +149,7 @@ export const accountingService = {
     return data;
   },
 
-  async deleteExpense(id: string) {
+  async deleteExpense(id: string): Promise<void> {
     const { error } = await supabase
       .from("expenses")
       .delete()
@@ -151,7 +159,7 @@ export const accountingService = {
   },
 
   // ==================== INVOICES (SALES) ====================
-  async getInvoices() {
+  async getInvoices(): Promise<any[]> {
     const { data, error } = await supabase
       .from("invoices")
       .select("*, customers(name, company)")
@@ -161,7 +169,7 @@ export const accountingService = {
     return data || [];
   },
 
-  async getInvoiceById(id: string) {
+  async getInvoiceById(id: string): Promise<any> {
     const { data, error } = await supabase
       .from("invoices")
       .select("*, customers(*)")
@@ -172,7 +180,7 @@ export const accountingService = {
     return data;
   },
 
-  async createInvoice(invoice: InvoiceInsert) {
+  async createInvoice(invoice: InvoiceInsert): Promise<any> {
     const { data, error } = await supabase
       .from("invoices")
       .insert(invoice)
@@ -183,7 +191,7 @@ export const accountingService = {
     return data;
   },
 
-  async updateInvoice(id: string, updates: Partial<InvoiceInsert>) {
+  async updateInvoice(id: string, updates: Partial<InvoiceInsert>): Promise<any> {
     const { data, error } = await supabase
       .from("invoices")
       .update(updates)
@@ -195,7 +203,7 @@ export const accountingService = {
     return data;
   },
 
-  async deleteInvoice(id: string) {
+  async deleteInvoice(id: string): Promise<void> {
     const { error } = await supabase
       .from("invoices")
       .delete()
@@ -205,7 +213,7 @@ export const accountingService = {
   },
 
   // ==================== PAYMENTS ====================
-  async getPayments() {
+  async getPayments(): Promise<any[]> {
     const { data, error } = await supabase
       .from("payments")
       .select("*, invoices(invoice_no)")
@@ -215,7 +223,7 @@ export const accountingService = {
     return data || [];
   },
 
-  async createPayment(payment: PaymentInsert) {
+  async createPayment(payment: PaymentInsert): Promise<any> {
     const { data, error } = await supabase
       .from("payments")
       .insert(payment)
@@ -227,7 +235,7 @@ export const accountingService = {
   },
 
   // ==================== PURCHASES ====================
-  async getPurchases() {
+  async getPurchases(): Promise<any[]> {
     const { data, error } = await supabase
       .from("purchases")
       .select("*, customers!purchases_supplier_id_fkey(name, company)")
@@ -237,7 +245,7 @@ export const accountingService = {
     return data || [];
   },
 
-  async createPurchase(purchase: any) {
+  async createPurchase(purchase: any): Promise<any> {
     const { data, error } = await supabase
       .from("purchases")
       .insert(purchase)
@@ -248,7 +256,7 @@ export const accountingService = {
     return data;
   },
 
-  async updatePurchase(id: string, updates: any) {
+  async updatePurchase(id: string, updates: any): Promise<any> {
     const { data, error } = await supabase
       .from("purchases")
       .update(updates)
@@ -260,7 +268,7 @@ export const accountingService = {
     return data;
   },
 
-  async deletePurchase(id: string) {
+  async deletePurchase(id: string): Promise<void> {
     const { error } = await supabase
       .from("purchases")
       .delete()
@@ -270,7 +278,7 @@ export const accountingService = {
   },
 
   // ==================== PRODUCTS & SERVICES ====================
-  async getProducts() {
+  async getProducts(): Promise<any[]> {
     const { data, error } = await supabase
       .from("products_services")
       .select("*")
@@ -280,7 +288,7 @@ export const accountingService = {
     return data || [];
   },
 
-  async createProduct(product: any) {
+  async createProduct(product: any): Promise<any> {
     const { data, error } = await supabase
       .from("products_services")
       .insert(product)
@@ -291,7 +299,7 @@ export const accountingService = {
     return data;
   },
 
-  async updateProduct(id: string, updates: any) {
+  async updateProduct(id: string, updates: any): Promise<any> {
     const { data, error } = await supabase
       .from("products_services")
       .update(updates)
@@ -303,7 +311,7 @@ export const accountingService = {
     return data;
   },
 
-  async deleteProduct(id: string) {
+  async deleteProduct(id: string): Promise<void> {
     const { error } = await supabase
       .from("products_services")
       .delete()
@@ -313,7 +321,7 @@ export const accountingService = {
   },
 
   // ==================== FINANCIAL ACCOUNTS ====================
-  async getFinancialAccounts() {
+  async getFinancialAccounts(): Promise<any[]> {
     const { data, error } = await supabase
       .from("financial_accounts")
       .select("*")
@@ -324,7 +332,7 @@ export const accountingService = {
     return data || [];
   },
 
-  async createFinancialAccount(account: any) {
+  async createFinancialAccount(account: any): Promise<any> {
     const { data, error } = await supabase
       .from("financial_accounts")
       .insert(account)
@@ -336,7 +344,7 @@ export const accountingService = {
   },
 
   // ==================== TRANSACTIONS ====================
-  async getTransactions() {
+  async getTransactions(): Promise<any[]> {
     const { data, error } = await supabase
       .from("transactions")
       .select("*, financial_accounts(account_name, account_type)")
@@ -347,7 +355,7 @@ export const accountingService = {
     return data || [];
   },
 
-  async createTransaction(transaction: any) {
+  async createTransaction(transaction: any): Promise<any> {
     const { data, error } = await supabase
       .from("transactions")
       .insert(transaction)
@@ -359,7 +367,7 @@ export const accountingService = {
   },
 
   // ==================== PROJECTS ====================
-  async getProjects() {
+  async getProjects(): Promise<any[]> {
     const { data, error } = await supabase
       .from("projects")
       .select("*, customers(name, company)")
@@ -369,7 +377,7 @@ export const accountingService = {
     return data || [];
   },
 
-  async getProjectById(id: string) {
+  async getProjectById(id: string): Promise<any> {
     const { data, error } = await supabase
       .from("projects")
       .select("*, customers(*), project_costs(*)")
@@ -380,7 +388,7 @@ export const accountingService = {
     return data;
   },
 
-  async createProject(project: any) {
+  async createProject(project: any): Promise<any> {
     const { data, error } = await supabase
       .from("projects")
       .insert(project)
@@ -391,7 +399,7 @@ export const accountingService = {
     return data;
   },
 
-  async updateProject(id: string, updates: any) {
+  async updateProject(id: string, updates: any): Promise<any> {
     const { data, error } = await supabase
       .from("projects")
       .update(updates)
@@ -404,7 +412,7 @@ export const accountingService = {
   },
 
   // ==================== STATISTICS ====================
-  async getFinancialStats() {
+  async getFinancialStats(): Promise<any> {
     const { data: invoices } = await supabase.from("invoices").select("amount, tax, status");
     const { data: purchases } = await supabase.from("purchases").select("subtotal, tax");
     const { data: expenses } = await supabase.from("expenses").select("amount, tax");
@@ -420,7 +428,7 @@ export const accountingService = {
     return { totalRevenue, totalCosts, profit, paid, pending, overdue };
   },
 
-  async getDashboardStats() {
+  async getDashboardStats(): Promise<any> {
     const { data: invoices } = await supabase.from("invoices").select("amount, tax, status");
     const { data: purchases } = await supabase.from("purchases").select("subtotal, tax, status");
     const { data: expenses } = await supabase.from("expenses").select("amount, tax");
@@ -443,7 +451,7 @@ export const accountingService = {
   },
 
   // ==================== CARI ACCOUNTS (CUSTOMERS) ====================
-  async getCustomerAccounts() {
+  async getCustomerAccounts(): Promise<any[]> {
     const { data, error } = await supabase
       .from("customers")
       .select("*")
@@ -453,7 +461,7 @@ export const accountingService = {
     return data?.map(c => ({ ...c, balance: 0 })) || [];
   },
 
-  async getCustomerAccountStats() {
+  async getCustomerAccountStats(): Promise<any> {
     const { data: customers } = await supabase.from("customers").select("id");
     const { data: invoices } = await supabase.from("invoices").select("amount, tax, status");
     const { data: purchases } = await supabase.from("purchases").select("subtotal, tax, status");
@@ -479,7 +487,7 @@ export const accountingService = {
   },
 
   // ==================== EMPLOYEE ACCOUNTS (PERSONEL CARİLERİ) ====================
-  async getEmployeeAccounts() {
+  async getEmployeeAccounts(): Promise<any[]> {
     const { data, error } = await supabase
       .from("employee_accounts")
       .select(`
@@ -500,7 +508,7 @@ export const accountingService = {
     return data || [];
   },
 
-  async getEmployeeAccountStats() {
+  async getEmployeeAccountStats(): Promise<any> {
     const { data } = await supabase.from("employee_accounts").select("balance, advance_balance, salary");
 
     const totalOwed = data?.reduce((sum, acc) => sum + (Number(acc.balance) < 0 ? Math.abs(Number(acc.balance)) : 0), 0) || 0;
@@ -511,7 +519,7 @@ export const accountingService = {
     return { totalOwed, totalAdvances, monthlySalaryBudget, accountCount };
   },
 
-  async createEmployeeAccount(accountData: any) {
+  async createEmployeeAccount(accountData: any): Promise<any> {
     const { data, error } = await supabase
       .from("employee_accounts")
       .insert([accountData])
@@ -522,7 +530,7 @@ export const accountingService = {
     return data;
   },
 
-  async updateEmployeeAccount(id: string, accountData: any) {
+  async updateEmployeeAccount(id: string, accountData: any): Promise<any> {
     const { data, error } = await supabase
       .from("employee_accounts")
       .update({ ...accountData, updated_at: new Date().toISOString() })
@@ -535,7 +543,7 @@ export const accountingService = {
   },
 
   // ==================== PARTNER ACCOUNTS (ORTAKLAR CARİLERİ) ====================
-  async getPartnerAccounts() {
+  async getPartnerAccounts(): Promise<any[]> {
     const { data, error } = await supabase
       .from("partner_accounts")
       .select("*")
@@ -546,7 +554,7 @@ export const accountingService = {
     return data || [];
   },
 
-  async getPartnerAccountStats() {
+  async getPartnerAccountStats(): Promise<any> {
     const { data } = await supabase.from("partner_accounts").select("capital_contribution, balance, share_percentage");
 
     const totalCapital = data?.reduce((sum, acc) => sum + Number(acc.capital_contribution), 0) || 0;
@@ -557,7 +565,7 @@ export const accountingService = {
     return { totalCapital, totalBalance, partnerCount, totalShares };
   },
 
-  async createPartnerAccount(accountData: any) {
+  async createPartnerAccount(accountData: any): Promise<any> {
     const { data, error } = await supabase
       .from("partner_accounts")
       .insert([accountData])
@@ -568,7 +576,7 @@ export const accountingService = {
     return data;
   },
 
-  async updatePartnerAccount(id: string, accountData: any) {
+  async updatePartnerAccount(id: string, accountData: any): Promise<any> {
     const { data, error } = await supabase
       .from("partner_accounts")
       .update({ ...accountData, updated_at: new Date().toISOString() })
@@ -581,7 +589,7 @@ export const accountingService = {
   },
 
   // ==================== ACCOUNT TRANSACTIONS ====================
-  async getAccountTransactions(accountType: string, accountId: string, limit = 10) {
+  async getAccountTransactions(accountType: string, accountId: string, limit = 10): Promise<any[]> {
     const { data, error } = await supabase
       .from("account_transactions")
       .select("*")
@@ -595,7 +603,7 @@ export const accountingService = {
   },
 
   // ==================== SALES INVOICES (DETAILED) ====================
-  async getSalesInvoices() {
+  async getSalesInvoices(): Promise<any[]> {
     const { data, error } = await supabase
       .from("sales_invoices")
       .select(`
@@ -629,7 +637,7 @@ export const accountingService = {
     return data || [];
   },
 
-  async getSalesInvoiceById(id: string) {
+  async getSalesInvoiceById(id: string): Promise<any> {
     const { data, error } = await supabase
       .from("sales_invoices")
       .select(`
@@ -666,7 +674,7 @@ export const accountingService = {
     return data;
   },
 
-  async createSalesInvoice(invoiceData: any, items: any[]) {
+  async createSalesInvoice(invoiceData: any, items: any[]): Promise<any> {
     // Create invoice header
     const { data: invoice, error: invoiceError } = await supabase
       .from("sales_invoices")
@@ -691,7 +699,7 @@ export const accountingService = {
     return invoice;
   },
 
-  async updateSalesInvoice(id: string, invoiceData: any, items?: any[]) {
+  async updateSalesInvoice(id: string, invoiceData: any, items?: any[]): Promise<any> {
     // Update invoice header
     const { data: invoice, error: invoiceError } = await supabase
       .from("sales_invoices")
@@ -723,7 +731,7 @@ export const accountingService = {
     return invoice;
   },
 
-  async deleteSalesInvoice(id: string) {
+  async deleteSalesInvoice(id: string): Promise<boolean> {
     const { error } = await supabase
       .from("sales_invoices")
       .delete()
@@ -733,7 +741,7 @@ export const accountingService = {
     return true;
   },
 
-  async getSalesInvoiceStats() {
+  async getSalesInvoiceStats(): Promise<any> {
     const { data } = await supabase.from("sales_invoices").select("grand_total, payment_status, invoice_date");
 
     const today = new Date();
