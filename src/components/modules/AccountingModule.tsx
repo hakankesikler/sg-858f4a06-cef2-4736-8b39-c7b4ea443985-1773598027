@@ -1643,14 +1643,72 @@ export function AccountingModule() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Vergi Dairesi</Label>
-                      <Select>
+                      <Select
+                        value={formData.tax_office}
+                        onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
+                      >
                         <SelectTrigger>
-                          <SelectValue placeholder="Seçiniz" />
+                          <SelectValue placeholder="Vergi dairesi seçiniz" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                          <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                          <SelectItem value="uskudar">Üsküdar</SelectItem>
+                        <SelectContent className="max-h-[300px]">
+                          <SelectItem value="4. Levent">4. Levent</SelectItem>
+                          <SelectItem value="19 Mayıs">19 Mayıs</SelectItem>
+                          <SelectItem value="Acıbadem">Acıbadem</SelectItem>
+                          <SelectItem value="Adalar">Adalar</SelectItem>
+                          <SelectItem value="Alibeyköy">Alibeyköy</SelectItem>
+                          <SelectItem value="Altunizade">Altunizade</SelectItem>
+                          <SelectItem value="Anadolu">Anadolu</SelectItem>
+                          <SelectItem value="Arnavutköy">Arnavutköy</SelectItem>
+                          <SelectItem value="Ataşehir">Ataşehir</SelectItem>
+                          <SelectItem value="Avcılar">Avcılar</SelectItem>
+                          <SelectItem value="Bağcılar">Bağcılar</SelectItem>
+                          <SelectItem value="Bahçelievler">Bahçelievler</SelectItem>
+                          <SelectItem value="Bakırköy">Bakırköy</SelectItem>
+                          <SelectItem value="Başakşehir">Başakşehir</SelectItem>
+                          <SelectItem value="Bayrampaşa">Bayrampaşa</SelectItem>
+                          <SelectItem value="Beşiktaş">Beşiktaş</SelectItem>
+                          <SelectItem value="Beykoz">Beykoz</SelectItem>
+                          <SelectItem value="Beylikdüzü">Beylikdüzü</SelectItem>
+                          <SelectItem value="Beyoğlu">Beyoğlu</SelectItem>
+                          <SelectItem value="Büyükçekmece">Büyükçekmece</SelectItem>
+                          <SelectItem value="Büyük Mükellefler">Büyük Mükellefler</SelectItem>
+                          <SelectItem value="Çatalca">Çatalca</SelectItem>
+                          <SelectItem value="Çekmeköy">Çekmeköy</SelectItem>
+                          <SelectItem value="Davutpaşa">Davutpaşa</SelectItem>
+                          <SelectItem value="Erenköy">Erenköy</SelectItem>
+                          <SelectItem value="Esenyurt">Esenyurt</SelectItem>
+                          <SelectItem value="Eyüpsultan">Eyüpsultan</SelectItem>
+                          <SelectItem value="Fatih">Fatih</SelectItem>
+                          <SelectItem value="Gaziosmanpaşa">Gaziosmanpaşa</SelectItem>
+                          <SelectItem value="Güngören">Güngören</SelectItem>
+                          <SelectItem value="Gürsel">Gürsel</SelectItem>
+                          <SelectItem value="Hadımköy">Hadımköy</SelectItem>
+                          <SelectItem value="Halkalı">Halkalı</SelectItem>
+                          <SelectItem value="İkitelli">İkitelli</SelectItem>
+                          <SelectItem value="İstanbul İhtisas">İstanbul İhtisas</SelectItem>
+                          <SelectItem value="İstinye">İstinye</SelectItem>
+                          <SelectItem value="Kadıköy">Kadıköy</SelectItem>
+                          <SelectItem value="Kağıthane">Kağıthane</SelectItem>
+                          <SelectItem value="Kartal">Kartal</SelectItem>
+                          <SelectItem value="Küçükçekmece">Küçükçekmece</SelectItem>
+                          <SelectItem value="Küçükyalı">Küçükyalı</SelectItem>
+                          <SelectItem value="Maltepe">Maltepe</SelectItem>
+                          <SelectItem value="Mecidiyeköy">Mecidiyeköy</SelectItem>
+                          <SelectItem value="Merter">Merter</SelectItem>
+                          <SelectItem value="Pendik">Pendik</SelectItem>
+                          <SelectItem value="Sancaktepe">Sancaktepe</SelectItem>
+                          <SelectItem value="Sarıyer">Sarıyer</SelectItem>
+                          <SelectItem value="Silivri">Silivri</SelectItem>
+                          <SelectItem value="Sultanbeyli">Sultanbeyli</SelectItem>
+                          <SelectItem value="Sultangazi">Sultangazi</SelectItem>
+                          <SelectItem value="Şile">Şile</SelectItem>
+                          <SelectItem value="Şişli">Şişli</SelectItem>
+                          <SelectItem value="Taksim">Taksim</SelectItem>
+                          <SelectItem value="Tuzla">Tuzla</SelectItem>
+                          <SelectItem value="Ümraniye">Ümraniye</SelectItem>
+                          <SelectItem value="Üsküdar">Üsküdar</SelectItem>
+                          <SelectItem value="Yakacık">Yakacık</SelectItem>
+                          <SelectItem value="Zeytinburnu">Zeytinburnu</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1729,23 +1787,69 @@ export function AccountingModule() {
                         onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Seçiniz" />
+                          <SelectValue placeholder="Vergi dairesi seçiniz" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Kadıköy">Kadıköy</SelectItem>
-                          <SelectItem value="Beşiktaş">Beşiktaş</SelectItem>
-                          <SelectItem value="Üsküdar">Üsküdar</SelectItem>
-                          <SelectItem value="Şişli">Şişli</SelectItem>
+                        <SelectContent className="max-h-[300px]">
+                          <SelectItem value="4. Levent">4. Levent</SelectItem>
+                          <SelectItem value="19 Mayıs">19 Mayıs</SelectItem>
+                          <SelectItem value="Acıbadem">Acıbadem</SelectItem>
+                          <SelectItem value="Adalar">Adalar</SelectItem>
+                          <SelectItem value="Alibeyköy">Alibeyköy</SelectItem>
+                          <SelectItem value="Altunizade">Altunizade</SelectItem>
+                          <SelectItem value="Anadolu">Anadolu</SelectItem>
+                          <SelectItem value="Arnavutköy">Arnavutköy</SelectItem>
+                          <SelectItem value="Ataşehir">Ataşehir</SelectItem>
+                          <SelectItem value="Avcılar">Avcılar</SelectItem>
+                          <SelectItem value="Bağcılar">Bağcılar</SelectItem>
+                          <SelectItem value="Bahçelievler">Bahçelievler</SelectItem>
                           <SelectItem value="Bakırköy">Bakırköy</SelectItem>
+                          <SelectItem value="Başakşehir">Başakşehir</SelectItem>
+                          <SelectItem value="Bayrampaşa">Bayrampaşa</SelectItem>
+                          <SelectItem value="Beşiktaş">Beşiktaş</SelectItem>
+                          <SelectItem value="Beykoz">Beykoz</SelectItem>
+                          <SelectItem value="Beylikdüzü">Beylikdüzü</SelectItem>
+                          <SelectItem value="Beyoğlu">Beyoğlu</SelectItem>
+                          <SelectItem value="Büyükçekmece">Büyükçekmece</SelectItem>
+                          <SelectItem value="Büyük Mükellefler">Büyük Mükellefler</SelectItem>
+                          <SelectItem value="Çatalca">Çatalca</SelectItem>
+                          <SelectItem value="Çekmeköy">Çekmeköy</SelectItem>
+                          <SelectItem value="Davutpaşa">Davutpaşa</SelectItem>
+                          <SelectItem value="Erenköy">Erenköy</SelectItem>
+                          <SelectItem value="Esenyurt">Esenyurt</SelectItem>
+                          <SelectItem value="Eyüpsultan">Eyüpsultan</SelectItem>
+                          <SelectItem value="Fatih">Fatih</SelectItem>
+                          <SelectItem value="Gaziosmanpaşa">Gaziosmanpaşa</SelectItem>
+                          <SelectItem value="Güngören">Güngören</SelectItem>
+                          <SelectItem value="Gürsel">Gürsel</SelectItem>
+                          <SelectItem value="Hadımköy">Hadımköy</SelectItem>
+                          <SelectItem value="Halkalı">Halkalı</SelectItem>
+                          <SelectItem value="İkitelli">İkitelli</SelectItem>
+                          <SelectItem value="İstanbul İhtisas">İstanbul İhtisas</SelectItem>
+                          <SelectItem value="İstinye">İstinye</SelectItem>
+                          <SelectItem value="Kadıköy">Kadıköy</SelectItem>
+                          <SelectItem value="Kağıthane">Kağıthane</SelectItem>
+                          <SelectItem value="Kartal">Kartal</SelectItem>
+                          <SelectItem value="Küçükçekmece">Küçükçekmece</SelectItem>
+                          <SelectItem value="Küçükyalı">Küçükyalı</SelectItem>
+                          <SelectItem value="Maltepe">Maltepe</SelectItem>
+                          <SelectItem value="Mecidiyeköy">Mecidiyeköy</SelectItem>
+                          <SelectItem value="Merter">Merter</SelectItem>
+                          <SelectItem value="Pendik">Pendik</SelectItem>
+                          <SelectItem value="Sancaktepe">Sancaktepe</SelectItem>
+                          <SelectItem value="Sarıyer">Sarıyer</SelectItem>
+                          <SelectItem value="Silivri">Silivri</SelectItem>
+                          <SelectItem value="Sultanbeyli">Sultanbeyli</SelectItem>
+                          <SelectItem value="Sultangazi">Sultangazi</SelectItem>
+                          <SelectItem value="Şile">Şile</SelectItem>
+                          <SelectItem value="Şişli">Şişli</SelectItem>
+                          <SelectItem value="Taksim">Taksim</SelectItem>
+                          <SelectItem value="Tuzla">Tuzla</SelectItem>
+                          <SelectItem value="Ümraniye">Ümraniye</SelectItem>
+                          <SelectItem value="Üsküdar">Üsküdar</SelectItem>
+                          <SelectItem value="Yakacık">Yakacık</SelectItem>
+                          <SelectItem value="Zeytinburnu">Zeytinburnu</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                    <div className="space-y-2">
-                      <Label>Mersis No</Label>
-                      <Input placeholder="Mersis numarası" />
                     </div>
                   </div>
                 </>
