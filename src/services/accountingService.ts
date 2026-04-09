@@ -13,167 +13,85 @@ type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type Customer = Database["public"]["Tables"]["customers"]["Row"];
 
-// Expense Category & Type Management
-export async function getExpenseCategories() {
-  const { data, error } = await supabase
-    .from("expense_categories")
-    .select(`
-      *,
-      expense_types (*)
-    `)
-    .order("name");
+const accountingService = {
+  // ==================== EXPENSE CATEGORIES & TYPES ====================
+  async getExpenseCategories() {
+    const { data, error } = await supabase
+      .from("expense_categories" as any)
+      .select(`
+        *,
+        expense_types (*)
+      `)
+      .order("name");
 
-  if (error) throw error;
-  return data;
-}
+    if (error) throw error;
+    return data;
+  },
 
-export async function createExpenseCategory(name: string) {
-  const { data, error } = await supabase
-    .from("expense_categories")
-    .insert({ name })
-    .select()
-    .single();
+  async createExpenseCategory(name: string) {
+    const { data, error } = await supabase
+      .from("expense_categories" as any)
+      .insert({ name })
+      .select()
+      .single();
 
-  if (error) throw error;
-  return data;
-}
+    if (error) throw error;
+    return data;
+  },
 
-export async function updateExpenseCategory(id: string, name: string) {
-  const { data, error } = await supabase
-    .from("expense_categories")
-    .update({ name, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select()
-    .single();
+  async updateExpenseCategory(id: string, name: string) {
+    const { data, error } = await supabase
+      .from("expense_categories" as any)
+      .update({ name, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
 
-  if (error) throw error;
-  return data;
-}
+    if (error) throw error;
+    return data;
+  },
 
-export async function deleteExpenseCategory(id: string) {
-  const { error } = await supabase
-    .from("expense_categories")
-    .delete()
-    .eq("id", id);
+  async deleteExpenseCategory(id: string) {
+    const { error } = await supabase
+      .from("expense_categories" as any)
+      .delete()
+      .eq("id", id);
 
-  if (error) throw error;
-}
+    if (error) throw error;
+  },
 
-export async function createExpenseType(categoryId: string, name: string) {
-  const { data, error } = await supabase
-    .from("expense_types")
-    .insert({ category_id: categoryId, name })
-    .select()
-    .single();
+  async createExpenseType(categoryId: string, name: string) {
+    const { data, error } = await supabase
+      .from("expense_types" as any)
+      .insert({ category_id: categoryId, name })
+      .select()
+      .single();
 
-  if (error) throw error;
-  return data;
-}
+    if (error) throw error;
+    return data;
+  },
 
-export async function updateExpenseType(id: string, name: string) {
-  const { data, error } = await supabase
-    .from("expense_types")
-    .update({ name, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select()
-    .single();
+  async updateExpenseType(id: string, name: string) {
+    const { data, error } = await supabase
+      .from("expense_types" as any)
+      .update({ name, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single();
 
-  if (error) throw error;
-  return data;
-}
+    if (error) throw error;
+    return data;
+  },
 
-export async function deleteExpenseType(id: string) {
-  const { error } = await supabase
-    .from("expense_types")
-    .delete()
-    .eq("id", id);
+  async deleteExpenseType(id: string) {
+    const { error } = await supabase
+      .from("expense_types" as any)
+      .delete()
+      .eq("id", id);
 
-  if (error) throw error;
-}
+    if (error) throw error;
+  },
 
-// Expense Management
-export async function getExpenses(filters?: {
-  startDate?: string;
-  endDate?: string;
-  categoryId?: string;
-  typeId?: string;
-}) {
-  let query = supabase
-    .from("expenses")
-    .select(`
-      *,
-      expense_categories (id, name),
-      expense_types (id, name)
-    `)
-    .order("expense_date", { ascending: false });
-
-  if (filters?.startDate) {
-    query = query.gte("expense_date", filters.startDate);
-  }
-  if (filters?.endDate) {
-    query = query.lte("expense_date", filters.endDate);
-  }
-  if (filters?.categoryId) {
-    query = query.eq("category_id", filters.categoryId);
-  }
-  if (filters?.typeId) {
-    query = query.eq("type_id", filters.typeId);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
-}
-
-export async function createExpense(expense: {
-  type_id?: string;
-  category_id?: string;
-  amount: number;
-  description?: string;
-  expense_date: string;
-  payment_method?: string;
-  reference_no?: string;
-}) {
-  const { data, error } = await supabase
-    .from("expenses")
-    .insert(expense)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function updateExpense(id: string, expense: {
-  type_id?: string;
-  category_id?: string;
-  amount?: number;
-  description?: string;
-  expense_date?: string;
-  payment_method?: string;
-  reference_no?: string;
-}) {
-  const { data, error } = await supabase
-    .from("expenses")
-    .update({ ...expense, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function deleteExpense(id: string) {
-  const { error } = await supabase
-    .from("expenses")
-    .delete()
-    .eq("id", id);
-
-  if (error) throw error;
-}
-
-export const accountingService = {
   // ==================== INVOICES (SALES) ====================
   async getInvoices() {
     const { data, error } = await supabase
