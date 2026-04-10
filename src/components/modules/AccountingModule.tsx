@@ -2331,28 +2331,210 @@ export function AccountingModule() {
 
               {/* Cari Detay Bilgileri Tab */}
               <TabsContent value="detay" className="space-y-6">
-                <div className="p-8 text-center text-gray-500">
-                  <p>Cari detay bilgileri bölümü</p>
-                  <p className="text-sm mt-2">Ek bilgiler burada görüntülenecek</p>
+                {/* Vade Bilgileri */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-blue-600">Vade Bilgileri</h3>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Vade Günü</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="vadeGunu"
+                          value="yok"
+                          defaultChecked
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-gray-700">Yok</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="vadeGunu"
+                          value="var"
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-gray-700">Var</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 border-dashed my-4"></div>
+
+                {/* Diğer Bilgiler */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-blue-600">Diğer Bilgiler</h3>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Sabit İskonto</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="sabitIskonto"
+                          value="yok"
+                          defaultChecked
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-gray-700">Yok</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="sabitIskonto"
+                          value="var"
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-gray-700">Var</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 border-dashed my-4"></div>
+
+                {/* Açılış Bakiyesi */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-blue-600">Açılış Bakiyesi</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-blue-500 font-normal">Tutar</Label>
+                      <Input type="text" defaultValue="0,00" className="text-right font-medium" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-blue-500 font-normal">Para Birimi *</Label>
+                      <Select defaultValue="TRY">
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="TRY">TRY</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                          <SelectItem value="GBP">GBP</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-blue-500 font-normal">Durumu</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder=" " />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="borc">Borç</SelectItem>
+                          <SelectItem value="alacak">Alacak</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-blue-500 font-normal">Proje</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder=" " />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="proje1">Proje 1</SelectItem>
+                          <SelectItem value="proje2">Proje 2</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <Info className="w-3 h-3" /> Ayarlar sayfasından Proje Takip seçeneğini kapatabilirsiniz.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-4">
+                    <div className="space-y-2">
+                      <Label className="text-blue-500 font-normal">İşlem Tarihi</Label>
+                      <Input type="date" defaultValue="2026-04-10" />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2 mt-4">
+                    <Label className="text-blue-500 font-normal">Vade Tarihi Var Mı?</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="vadeTarihiSecim"
+                          value="yok"
+                          defaultChecked
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-gray-700">Yok</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="vadeTarihiSecim"
+                          value="var"
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-gray-700">Var</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 border-dashed my-4"></div>
+
+                {/* Borç Alacak Bilgileri */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-blue-600">Borç Alacak Bilgileri</h3>
+                  <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 font-normal">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Borç Alacak Ekle
+                  </Button>
+                </div>
+
+                <div className="border-t border-gray-100 border-dashed my-4"></div>
+
+                {/* Banka Bilgileri */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-blue-600">Banka Bilgileri</h3>
+                  <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 font-normal">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Banka Ekle
+                  </Button>
+                </div>
+
+                <div className="border-t border-gray-100 border-dashed my-4"></div>
+
+                {/* Yetkili İletişim Bilgileri */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-blue-600">Yetkili İletişim Bilgileri</h3>
+                  <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 font-normal">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Yetkili Ekle
+                  </Button>
                 </div>
               </TabsContent>
             </Tabs>
 
-            <DialogFooter className="flex gap-2 mt-6">
+            <DialogFooter className="flex justify-end gap-2 mt-6 pt-4 border-t">
               <Button
                 variant="outline"
                 onClick={() => setIsAddDialogOpen(false)}
-                className="border-gray-400 text-gray-700 hover:bg-gray-50"
+                className="bg-red-500 text-white hover:bg-red-600 hover:text-white border-0"
               >
-                Geri
+                Vazgeç
               </Button>
-              <Button
-                onClick={handleAddCustomer}
-                disabled={isSubmitting}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
-              </Button>
+              <div className="flex">
+                <Button
+                  onClick={handleAddCustomer}
+                  disabled={isSubmitting}
+                  className="bg-green-600 hover:bg-green-700 text-white rounded-r-none"
+                >
+                  {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
+                </Button>
+                <Button 
+                  className="bg-green-600 hover:bg-green-700 text-white rounded-l-none border-l border-green-700 px-2"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
