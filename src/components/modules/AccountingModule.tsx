@@ -1886,10 +1886,6 @@ export function AccountingModule() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Mersis No</Label>
-                      <Input placeholder="Mersis numarası" />
-                    </div>
                   </div>
                 </>
               )}
