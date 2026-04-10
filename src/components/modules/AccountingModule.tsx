@@ -11,37 +11,20 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Filter, Plus, Edit, Trash2, Eye, ChevronDown, Info, Building2, Package, Users, UserCircle } from "lucide-react";
-import { 
-  createCustomer, 
-  updateCustomer, 
-  deleteCustomer, 
-  getCustomers,
-  getFilteredCustomers,
-  type Customer 
-} from "@/services/crmService";
-import {
-  createSalesInvoice,
-  createPurchaseInvoice,
-  createExpense,
-  getSalesInvoices,
-  getPurchaseInvoices,
-  getExpenses,
-  type SalesInvoice,
-  type PurchaseInvoice,
-  type Expense
-} from "@/services/accountingService";
+import { crmService } from "@/services/crmService";
+import { accountingService } from "@/services/accountingService";
 
 export function AccountingModule() {
   const [activeMainTab, setActiveMainTab] = useState("panel");
   const [activeTab, setActiveTab] = useState("musteri");
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [salesInvoices, setSalesInvoices] = useState<SalesInvoice[]>([]);
-  const [purchaseInvoices, setPurchaseInvoices] = useState<PurchaseInvoice[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [salesInvoices, setSalesInvoices] = useState<any[]>([]);
+  const [purchaseInvoices, setPurchaseInvoices] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -81,7 +64,7 @@ export function AccountingModule() {
 
   const loadCustomers = async () => {
     try {
-      const data = await getCustomers();
+      const data = await crmService.getCustomers();
       setCustomers(data);
     } catch (error) {
       console.error("Error loading customers:", error);
@@ -95,7 +78,7 @@ export function AccountingModule() {
 
   const loadSalesInvoices = async () => {
     try {
-      const data = await getSalesInvoices();
+      const data = await accountingService.getSalesInvoices();
       setSalesInvoices(data);
     } catch (error) {
       console.error("Error loading sales invoices:", error);
@@ -104,7 +87,7 @@ export function AccountingModule() {
 
   const loadPurchaseInvoices = async () => {
     try {
-      const data = await getPurchaseInvoices();
+      const data = await accountingService.getPurchases();
       setPurchaseInvoices(data);
     } catch (error) {
       console.error("Error loading purchase invoices:", error);
@@ -113,7 +96,7 @@ export function AccountingModule() {
 
   const loadExpenses = async () => {
     try {
-      const data = await getExpenses();
+      const data = await accountingService.getExpenses();
       setExpenses(data);
     } catch (error) {
       console.error("Error loading expenses:", error);
@@ -150,7 +133,7 @@ export function AccountingModule() {
 
     setIsSubmitting(true);
     try {
-      await createCustomer(formData);
+      await crmService.createCustomer(formData as any);
       toast({
         title: "Başarılı",
         description: "Cari hesap başarıyla oluşturuldu",
@@ -175,7 +158,7 @@ export function AccountingModule() {
     }
 
     try {
-      await deleteCustomer(id);
+      await crmService.deleteCustomer(id);
       toast({
         title: "Başarılı",
         description: "Cari hesap silindi",
