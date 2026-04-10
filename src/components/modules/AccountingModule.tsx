@@ -2332,35 +2332,35 @@ export function AccountingModule() {
                   Adres Ekle
                 </Button>
               </div>
-            </TabsContent>
 
-            {/* Cari Detay Bilgileri Tab */}
-            <TabsContent value="detay" className="space-y-6">
-              <div className="p-8 text-center text-gray-500">
-                <p>Cari detay bilgileri bölümü</p>
-                <p className="text-sm mt-2">Ek bilgiler burada görüntülenecek</p>
-              </div>
-            </TabsContent>
-          </Tabs>
+              {/* Cari Detay Bilgileri Tab */}
+              <TabsContent value="detay" className="space-y-6">
+                <div className="p-8 text-center text-gray-500">
+                  <p>Cari detay bilgileri bölümü</p>
+                  <p className="text-sm mt-2">Ek bilgiler burada görüntülenecek</p>
+                </div>
+              </TabsContent>
+            </Tabs>
 
-          <DialogFooter className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsAddDialogOpen(false)}
-              className="border-red-500 text-red-600 hover:bg-red-50"
-            >
-              Vazgeç
-            </Button>
-            <Button
-              onClick={handleAddCustomer}
-              disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter className="flex gap-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setIsAddDialogOpen(false)}
+                className="border-gray-400 text-gray-700 hover:bg-gray-50"
+              >
+                Geri
+              </Button>
+              <Button
+                onClick={handleAddCustomer}
+                disabled={isSubmitting}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </Tabs>
     </div>
   );
 }
