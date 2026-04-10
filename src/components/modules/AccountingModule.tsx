@@ -1770,18 +1770,20 @@ export function AccountingModule() {
                     </label>
                     
                     {sabitIskontoVar && (
-                      <div className="flex items-center gap-2 ml-4">
+                      <div className="flex items-center gap-0">
                         <Input
                           type="number"
                           value={sabitIskontoYuzde}
                           onChange={(e) => setSabitIskontoYuzde(e.target.value)}
-                          placeholder="İskonto oranı"
-                          className="w-32"
+                          placeholder=""
+                          className="rounded-r-none border-r-0"
                           min="0"
                           max="100"
                           step="0.01"
                         />
-                        <span className="text-gray-600 text-sm">%</span>
+                        <div className="flex items-center justify-center bg-gray-100 border border-l-0 border-gray-300 px-3 h-10 rounded-r-md text-gray-600">
+                          %
+                        </div>
                       </div>
                     )}
                   </div>
