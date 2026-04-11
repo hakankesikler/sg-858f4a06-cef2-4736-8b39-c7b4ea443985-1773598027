@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { crmService } from "@/services/crmService";
+import { useToast } from "@/hooks/use-toast";
 import {
   Building2,
   Users,
@@ -15,20 +28,11 @@ import {
   Trash2,
   Eye,
   RefreshCw,
+  ChevronDown,
+  Edit,
+  Briefcase,
+  UserCircle2
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { crmService } from "@/services/crmService";
-import { useToast } from "@/components/ui/use-toast";
 
 export function CRMModule() {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -260,7 +264,7 @@ export function CRMModule() {
       personel: "Personel",
       ortak: "Ortak"
     };
-    return types[type as keyof typeof types] || "Müşteri";
+    return types[type as keyof typeof types] || types["musteri"];
   };
 
   const getAccountTypeIcon = (type: string) => {
