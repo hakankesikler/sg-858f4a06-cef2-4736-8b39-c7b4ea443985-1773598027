@@ -22,16 +22,19 @@ const formSchema = z.object({
   serviceType: z.enum(["domestic", "international"], { required_error: "Lütfen bir hizmet türü seçin." }),
   transportMode: z.string().min(1, { message: "Lütfen taşıma türünü seçin." }),
   transportDetail: z.string().optional(),
-  pickupCity: z.string().min(1, { message: "Lütfen çıkış noktasını belirtin." }),
-  deliveryCity: z.string().min(1, { message: "Lütfen varış noktasını belirtin." }),
-  goodsType: z.string().min(1, { message: "Lütfen yük cinsini belirtin." }),
+  senderCountry: z.string().optional(),
+  senderCity: z.string().min(1, { message: "Lütfen çıkış noktasını belirtin." }),
+  receiverCountry: z.string().optional(),
+  receiverCity: z.string().min(1, { message: "Lütfen varış noktasını belirtin." }),
+  cargoType: z.string().min(1, { message: "Lütfen yük cinsini belirtin." }),
   weight: z.string().optional(),
   volume: z.string().optional(),
+  pieces: z.string().optional(),
   containerType: z.string().optional(),
   value: z.string().optional(),
   readyDate: z.string().optional(),
   targetPrice: z.string().optional(),
-  customsClearance: z.boolean().default(false),
+  customs: z.boolean().default(false),
   insurance: z.boolean().default(false),
   warehousing: z.boolean().default(false),
   message: z.string().optional(),
@@ -51,21 +54,22 @@ export function QuoteForm() {
       email: "",
       phone: "",
       serviceType: "domestic",
-      transportMode: "road",
+      transportMode: "",
+      transportDetail: "",
       senderCountry: "Türkiye",
       senderCity: "",
       receiverCountry: "Türkiye",
       receiverCity: "",
-      senderAddress: "",
-      receiverAddress: "",
       cargoType: "",
       weight: "",
       volume: "",
       pieces: "",
+      containerType: "",
       value: "",
       readyDate: "",
-      insurance: false,
+      targetPrice: "",
       customs: false,
+      insurance: false,
       warehousing: false,
       message: "",
     },
@@ -98,9 +102,9 @@ export function QuoteForm() {
       console.log("💾 Supabase'e lead kaydediliyor...");
 
       // Form alanlarını database tablosuna eşleştir
-      const originStr = data.pickupCity;
-      const destStr = data.deliveryCity;
-      let cargoTypeStr = data.goodsType;
+      const originStr = data.senderCountry ? `${data.senderCity}, ${data.senderCountry}` : data.senderCity;
+      const destStr = data.receiverCountry ? `${data.receiverCity}, ${data.receiverCountry}` : data.receiverCity;
+      let cargoTypeStr = data.cargoType;
       if (data.transportDetail) {
         cargoTypeStr += ` (${data.transportDetail})`;
       }
@@ -110,7 +114,7 @@ export function QuoteForm() {
 
       // Ek hizmetler notu
       let reqStr = "";
-      if (data.customsClearance) reqStr += "Gümrükleme, ";
+      if (data.customs) reqStr += "Gümrükleme, ";
       if (data.insurance) reqStr += "Sigorta, ";
       if (data.warehousing) reqStr += "Depolama, ";
       if (data.targetPrice) reqStr += `Hedef Fiyat: ${data.targetPrice}, `;
@@ -125,8 +129,9 @@ export function QuoteForm() {
         origin: originStr,
         destination: destStr,
         cargo_type: cargoTypeStr,
-        weight: data.weight ? parseFloat(data.weight) : null,
-        volume: data.volume ? parseFloat(data.volume) : null,
+        weight: data.weight || null, // Convert to string as database expects
+        volume: data.volume || null, // Convert to string as database expects
+        package_count: data.pieces || null, // Convert to string as database expects
         special_requirements: reqStr || null,
         message: data.message || null,
         status: "yeni",
@@ -481,41 +486,40 @@ export function QuoteForm() {
             </div>
           </div>
 
-          {/* Ek Hizmetler ve Notlar */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-800 border-b pb-2">Ek Hizmetler ve Notlar</h3>
-            
-            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          {/* Ek Hizmetler */}
+          <div className="space-y-4 pt-4 border-t">
+            <h3 className="text-lg font-medium">Ek Hizmetler</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
-                name="insurance"
+                name="customs"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                     <FormControl>
                       <Checkbox
-                        checked={field.value}
+                        checked={!!field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Emtia Sigortası İstiyorum</FormLabel>
+                      <FormLabel>Gümrükleme</FormLabel>
                     </div>
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="customs"
+                name="insurance"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                     <FormControl>
                       <Checkbox
-                        checked={field.value}
+                        checked={!!field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Gümrükleme İstiyorum</FormLabel>
+                      <FormLabel>Sigorta</FormLabel>
                     </div>
                   </FormItem>
                 )}
@@ -524,38 +528,20 @@ export function QuoteForm() {
                 control={form.control}
                 name="warehousing"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                     <FormControl>
                       <Checkbox
-                        checked={field.value}
+                        checked={!!field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Depolama İstiyorum</FormLabel>
+                      <FormLabel>Depolama</FormLabel>
                     </div>
                   </FormItem>
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="message"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ek Notlarınız</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Belirtmek istediğiniz diğer detaylar..." 
-                      className="min-h-[100px]"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
 
           <div className="pt-4 border-t flex items-center justify-end">
