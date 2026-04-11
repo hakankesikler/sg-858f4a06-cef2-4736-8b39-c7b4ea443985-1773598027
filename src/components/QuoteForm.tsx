@@ -14,51 +14,37 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
-const quoteFormSchema = z.object({
-  fullName: z.string().min(2, { message: "Ad Soyad en az 2 karakter olmalıdır." }),
+const formSchema = z.object({
+  fullName: z.string().min(2, { message: "Lütfen geçerli bir ad soyad girin." }),
   companyName: z.string().optional(),
-  email: z.string().email({ message: "Geçerli bir e-posta adresi giriniz." }),
-  phone: z.string().min(10, { message: "Geçerli bir telefon numarası giriniz." }),
-  
-  // Transport details
-  serviceType: z.enum(["domestic", "international"], {
-    required_error: "Lütfen hizmet türü seçiniz.",
-  }),
-  transportMode: z.string({ required_error: "Lütfen taşıma şekli seçiniz." }),
+  email: z.string().email({ message: "Lütfen geçerli bir e-posta adresi girin." }),
+  phone: z.string().min(10, { message: "Lütfen geçerli bir telefon numarası girin." }),
+  serviceType: z.enum(["domestic", "international"], { required_error: "Lütfen bir hizmet türü seçin." }),
+  transportMode: z.string().min(1, { message: "Lütfen taşıma türünü seçin." }),
   transportDetail: z.string().optional(),
-  
-  // Location
-  senderCountry: z.string({ required_error: "Gönderici ülke seçiniz." }),
-  senderCity: z.string({ required_error: "Gönderici şehir seçiniz." }),
-  receiverCountry: z.string({ required_error: "Alıcı ülke seçiniz." }),
-  receiverCity: z.string({ required_error: "Alıcı şehir seçiniz." }),
-  senderAddress: z.string().optional(),
-  receiverAddress: z.string().optional(),
-  
-  // Cargo Details
-  cargoType: z.string({ required_error: "Lütfen yük tipi seçiniz." }),
-  weight: z.string({ required_error: "Lütfen ağırlık giriniz." }),
+  pickupCity: z.string().min(1, { message: "Lütfen çıkış noktasını belirtin." }),
+  deliveryCity: z.string().min(1, { message: "Lütfen varış noktasını belirtin." }),
+  goodsType: z.string().min(1, { message: "Lütfen yük cinsini belirtin." }),
+  weight: z.string().optional(),
   volume: z.string().optional(),
-  pieces: z.string().optional(),
+  containerType: z.string().optional(),
   value: z.string().optional(),
   readyDate: z.string().optional(),
-  
-  // Extra Services
+  targetPrice: z.string().optional(),
+  customsClearance: z.boolean().default(false),
   insurance: z.boolean().default(false),
-  customs: z.boolean().default(false),
   warehousing: z.boolean().default(false),
-  
   message: z.string().optional(),
 });
 
-type QuoteFormValues = z.infer<typeof quoteFormSchema>;
+type QuoteFormValues = z.infer<typeof formSchema>;
 
 export function QuoteForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<QuoteFormValues>({
-    resolver: zodResolver(quoteFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
       companyName: "",
@@ -110,58 +96,56 @@ export function QuoteForm() {
 
       // ✅ CRM'e lead olarak kaydet
       console.log("💾 Supabase'e lead kaydediliyor...");
-      console.log("📋 Lead verisi:", {
-        company_name: data.companyName,
+
+      // Form alanlarını database tablosuna eşleştir
+      const originStr = data.pickupCity;
+      const destStr = data.deliveryCity;
+      let cargoTypeStr = data.goodsType;
+      if (data.transportDetail) {
+        cargoTypeStr += ` (${data.transportDetail})`;
+      }
+      if (data.containerType) {
+        cargoTypeStr += ` - Konteyner: ${data.containerType}`;
+      }
+
+      // Ek hizmetler notu
+      let reqStr = "";
+      if (data.customsClearance) reqStr += "Gümrükleme, ";
+      if (data.insurance) reqStr += "Sigorta, ";
+      if (data.warehousing) reqStr += "Depolama, ";
+      if (data.targetPrice) reqStr += `Hedef Fiyat: ${data.targetPrice}, `;
+      if (data.readyDate) reqStr += `Hazır Tarih: ${data.readyDate}`;
+
+      const insertData = {
+        company_name: data.companyName || "Belirtilmedi",
         contact_name: data.fullName,
         email: data.email,
         phone: data.phone,
-        service_type: data.transportMode,
-        origin: `${data.senderCity}, ${data.senderCountry}`,
-        destination: `${data.receiverCity}, ${data.receiverCountry}`,
-        cargo_type: data.cargoType,
-        weight: data.weight,
-        volume: data.volume,
-        package_count: data.pieces,
-        pickup_date: data.readyDate || null,
-        special_requirements: [
-          data.insurance ? "Sigorta" : null,
-          data.customs ? "Gümrük" : null,
-          data.warehousing ? "Depolama" : null
-        ].filter(Boolean).join(", "),
-        message: data.message,
+        service_type: data.transportMode, // Kara, Hava, Deniz vb.
+        origin: originStr,
+        destination: destStr,
+        cargo_type: cargoTypeStr,
+        weight: data.weight ? parseFloat(data.weight) : null,
+        volume: data.volume ? parseFloat(data.volume) : null,
+        special_requirements: reqStr || null,
+        message: data.message || null,
         status: "yeni",
         source: "website",
         priority: "normal",
-      });
+      };
 
-      const { data: leadData, error: leadError } = await supabase.from("leads").insert([
-        {
-          company_name: data.companyName || "Belirtilmedi",
-          contact_name: data.name,
-          email: data.email,
-          phone: data.phone,
-          service_type: data.shippingMethod, // ← FIX: shippingMethod kullan
-          origin: data.origin,
-          destination: data.destination,
-          cargo_type: data.cargoType || null,
-          weight: data.weight || null,
-          volume: data.volume || null,
-          package_count: data.packageCount || null,
-          pickup_date: data.pickupDate || null,
-          delivery_date: data.deliveryDate || null,
-          special_requirements: data.specialRequirements || null,
-          message: data.message || null,
-          status: "yeni",
-          source: "website",
-          priority: "normal",
-        },
-      ]).select();
+      console.log("📋 Lead verisi:", insertData);
+
+      const { data: leadData, error: leadError } = await supabase
+        .from("leads")
+        .insert([insertData])
+        .select();
 
       if (leadError) {
         console.error("❌ Lead kayıt hatası:", leadError);
         console.error("Hata detayı:", JSON.stringify(leadError, null, 2));
       } else {
-        console.log("✅ Lead başarıyla kaydedildi");
+        console.log("✅ Lead başarıyla kaydedildi:", leadData);
       }
 
       toast({
