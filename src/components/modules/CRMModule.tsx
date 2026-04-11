@@ -338,421 +338,416 @@ export function CRMModule() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Genel Cari Hesapları</h2>
-          <p className="text-gray-600 mt-1">Müşteri, tedarikçi, personel ve ortak cari hesaplarını yönetin</p>
+          <h1 className="text-3xl font-bold text-blue-600">CRM - Müşteri Yönetimi</h1>
+          <p className="text-gray-600 mt-1">Müşterilerinizi ve cari hesaplarınızı yönetin</p>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-2 flex-wrap">
-        <Button 
-          variant="outline"
-          onClick={() => setIsAdvancedSearchOpen(!isAdvancedSearchOpen)}
-          className="bg-blue-600 text-white hover:bg-blue-700"
-        >
-          Detaylı Arama
-          <ChevronDown className="w-4 h-4 ml-2" />
-        </Button>
-        
-        {selectedCustomers.length > 0 && (
-          <Button 
-            variant="outline"
-            onClick={toggleSelectAll}
-            className="bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Toplu Seç ({selectedCustomers.length})
-          </Button>
-        )}
-      </div>
-
-      {/* Advanced Search Panel */}
-      {isAdvancedSearchOpen && (
-        <Card className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Durum</Label>
-              <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tümü</SelectItem>
-                  <SelectItem value="Aktif">Aktif</SelectItem>
-                  <SelectItem value="Potansiyel">Potansiyel</SelectItem>
-                  <SelectItem value="Eski Müşteri">Eski Müşteri</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Şehir</Label>
-              <Select value={filters.city} onValueChange={(value) => setFilters({...filters, city: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tüm Şehirler</SelectItem>
-                  {cities.map(city => (
-                    <SelectItem key={city} value={city}>{city}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Tarih Aralığı</Label>
-              <div className="flex gap-2">
-                <Input 
-                  type="date" 
-                  value={filters.dateFrom}
-                  onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
-                  className="w-full"
-                />
-                <Input 
-                  type="date" 
-                  value={filters.dateTo}
-                  onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
-                  className="w-full"
-                />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600">Toplam Müşteri</p>
+                <h3 className="text-3xl font-bold text-blue-900 mt-2">
+                  {customers.length}
+                </h3>
+                <p className="text-xs text-blue-600 mt-1">↑ 12% bu ay</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
               </div>
             </div>
-          </div>
+          </CardContent>
         </Card>
-      )}
 
-      {/* Tabs */}
-      <Tabs defaultValue="leads" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-2">
-          <TabsTrigger value="leads">
-            <UserPlus className="w-4 h-4 mr-2" />
-            Potansiyel Müşteriler
-          </TabsTrigger>
-          <TabsTrigger value="musteriler">
-            <Users className="w-4 h-4 mr-2" />
-            Müşteriler
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Potansiyel Müşteriler (Leads) Tab */}
-        <TabsContent value="leads" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-blue-600">Potansiyel Müşteriler</h2>
-              <p className="text-sm text-gray-500 mt-1">Website teklif formundan gelen talepler</p>
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600">Aktif Müşteri</p>
+                <h3 className="text-3xl font-bold text-green-900 mt-2">
+                  {customers.filter((c: any) => c.status === "active").length}
+                </h3>
+                <p className="text-xs text-green-600 mt-1">86% aktif oran</p>
+              </div>
+              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-white" />
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={loadLeads}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Yenile
-              </Button>
-            </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              {leads.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  Henüz potansiyel müşteri kaydı bulunmamaktadır
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600">Potansiyel</p>
+                <h3 className="text-3xl font-bold text-orange-900 mt-2">
+                  {leads.length}
+                </h3>
+                <p className="text-xs text-orange-600 mt-1">Takipte</p>
+              </div>
+              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
+                <UserPlus className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600">Toplam Ciro</p>
+                <h3 className="text-3xl font-bold text-purple-900 mt-2">₺8.2M</h3>
+                <p className="text-xs text-purple-600 mt-1">Bu yıl</p>
+              </div>
+              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
+                <Briefcase className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs Section */}
+      <Card>
+        <CardContent className="p-6">
+          <Tabs defaultValue="leads" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="leads" className="flex items-center gap-2">
+                <UserPlus className="w-4 h-4" />
+                Potansiyel Müşteriler
+              </TabsTrigger>
+              <TabsTrigger value="musteriler" className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Müşteriler
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Potansiyel Müşteriler (Leads) Tab */}
+            <TabsContent value="leads" className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-blue-600">Potansiyel Müşteriler</h2>
+                  <p className="text-sm text-gray-500 mt-1">Website teklif formundan gelen talepler</p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {leads.map((lead) => (
-                    <div
-                      key={lead.id}
-                      className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="text-lg font-semibold text-blue-600">
-                            {lead.company_name}
-                          </h3>
-                          <p className="text-sm text-gray-600">{lead.contact_name}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              lead.status === "yeni"
-                                ? "bg-blue-100 text-blue-700"
-                                : lead.status === "inceleniyor"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : lead.status === "teklif_verildi"
-                                ? "bg-purple-100 text-purple-700"
-                                : lead.status === "kazanildi"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {lead.status === "yeni"
-                              ? "🆕 Yeni"
-                              : lead.status === "inceleniyor"
-                              ? "🔍 İnceleniyor"
-                              : lead.status === "teklif_verildi"
-                              ? "📋 Teklif Verildi"
-                              : lead.status === "kazanildi"
-                              ? "✅ Kazanıldı"
-                              : "❌ Kaybedildi"}
-                          </span>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              lead.priority === "acil"
-                                ? "bg-red-100 text-red-700"
-                                : lead.priority === "yüksek"
-                                ? "bg-orange-100 text-orange-700"
-                                : lead.priority === "normal"
-                                ? "bg-gray-100 text-gray-700"
-                                : "bg-blue-100 text-blue-700"
-                            }`}
-                          >
-                            {lead.priority === "acil"
-                              ? "🔥 Acil"
-                              : lead.priority === "yüksek"
-                              ? "⚡ Yüksek"
-                              : lead.priority === "normal"
-                              ? "📌 Normal"
-                              : "📍 Düşük"}
-                          </span>
-                        </div>
-                      </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={loadLeads}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Yenile
+                  </Button>
+                </div>
+              </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                        <div>
-                          <p className="text-xs text-gray-500">Telefon</p>
-                          <p className="text-sm font-medium">{lead.phone}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">E-posta</p>
-                          <p className="text-sm font-medium">{lead.email}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Hizmet</p>
-                          <p className="text-sm font-medium">
-                            {lead.service_type === "kara"
-                              ? "🚛 Kara Yolu"
-                              : lead.service_type === "deniz"
-                              ? "🚢 Deniz Yolu"
-                              : lead.service_type === "hava"
-                              ? "✈️ Hava Yolu"
-                              : lead.service_type === "depolama"
-                              ? "📦 Depolama"
-                              : "🌍 Uluslararası"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Talep Tarihi</p>
-                          <p className="text-sm font-medium">
-                            {new Date(lead.created_at).toLocaleDateString("tr-TR")}
-                          </p>
-                        </div>
-                      </div>
-
-                      {(lead.origin || lead.destination) && (
-                        <div className="grid grid-cols-2 gap-4 mb-3">
-                          {lead.origin && (
-                            <div>
-                              <p className="text-xs text-gray-500">Nereden</p>
-                              <p className="text-sm font-medium">{lead.origin}</p>
-                            </div>
-                          )}
-                          {lead.destination && (
-                            <div>
-                              <p className="text-xs text-gray-500">Nereye</p>
-                              <p className="text-sm font-medium">{lead.destination}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {lead.message && (
-                        <div className="mb-3">
-                          <p className="text-xs text-gray-500 mb-1">Mesaj</p>
-                          <p className="text-sm bg-gray-50 p-2 rounded">{lead.message}</p>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 mt-3 pt-3 border-t">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            // Durumu güncelle
-                            supabase
-                              .from("leads")
-                              .update({ status: "inceleniyor" })
-                              .eq("id", lead.id)
-                              .then(() => loadLeads());
-                          }}
-                        >
-                          İncele
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            // Durumu güncelle
-                            supabase
-                              .from("leads")
-                              .update({ status: "teklif_verildi" })
-                              .eq("id", lead.id)
-                              .then(() => loadLeads());
-                          }}
-                        >
-                          Teklif Ver
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                          onClick={() => {
-                            // Durumu güncelle
-                            supabase
-                              .from("leads")
-                              .update({
-                                status: "kazanildi",
-                                converted_to_customer: true,
-                                converted_at: new Date().toISOString(),
-                              })
-                              .eq("id", lead.id)
-                              .then(() => {
-                                loadLeads();
-                                toast({
-                                  title: "Başarılı",
-                                  description: "Lead müşteriye dönüştürüldü",
-                                });
-                              });
-                          }}
-                        >
-                          Müşteriye Dönüştür
-                        </Button>
-                      </div>
+              <Card>
+                <CardContent className="p-6">
+                  {leads.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Henüz potansiyel müşteri kaydı bulunmamaktadır
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  ) : (
+                    <div className="space-y-4">
+                      {leads.map((lead) => (
+                        <div
+                          key={lead.id}
+                          className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h3 className="text-lg font-semibold text-blue-600">
+                                {lead.company_name}
+                              </h3>
+                              <p className="text-sm text-gray-600">{lead.contact_name}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                  lead.status === "yeni"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : lead.status === "inceleniyor"
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : lead.status === "teklif_verildi"
+                                    ? "bg-purple-100 text-purple-700"
+                                    : lead.status === "kazanildi"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                }`}
+                              >
+                                {lead.status === "yeni"
+                                  ? "🆕 Yeni"
+                                  : lead.status === "inceleniyor"
+                                  ? "🔍 İnceleniyor"
+                                  : lead.status === "teklif_verildi"
+                                  ? "📋 Teklif Verildi"
+                                  : lead.status === "kazanildi"
+                                  ? "✅ Kazanıldı"
+                                  : "❌ Kaybedildi"}
+                              </span>
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                  lead.priority === "acil"
+                                    ? "bg-red-100 text-red-700"
+                                    : lead.priority === "yüksek"
+                                    ? "bg-orange-100 text-orange-700"
+                                    : lead.priority === "normal"
+                                    ? "bg-gray-100 text-gray-700"
+                                    : "bg-blue-100 text-blue-700"
+                                }`}
+                              >
+                                {lead.priority === "acil"
+                                  ? "🔥 Acil"
+                                  : lead.priority === "yüksek"
+                                  ? "⚡ Yüksek"
+                                  : lead.priority === "normal"
+                                  ? "📌 Normal"
+                                  : "📍 Düşük"}
+                              </span>
+                            </div>
+                          </div>
 
-        {/* Müşteriler Tab */}
-        <TabsContent value="musteriler" className="mt-0">
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
-                      onCheckedChange={toggleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Kod</TableHead>
-                  <TableHead>Unvan</TableHead>
-                  <TableHead>Cari Tipi</TableHead>
-                  <TableHead>Telefon Numarası</TableHead>
-                  <TableHead>Etiketler</TableHead>
-                  <TableHead>VKN/TCKN</TableHead>
-                  <TableHead>Yerel Bakiye</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCustomers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-12 text-gray-500">
-                      <div className="flex flex-col items-center gap-2">
-                        <Search className="w-12 h-12 opacity-50" />
-                        <p>Kayıt bulunamadı</p>
-                        <Button onClick={openAddDialog} className="mt-2">
-                          <Plus className="w-4 h-4 mr-2" />
-                          Yeni {getAccountTypeLabel(activeTab)} Ekle
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredCustomers.map((customer) => {
-                    const AccountIcon = getAccountTypeIcon(customer.account_type || "musteri");
-                    return (
-                      <TableRow key={customer.id} className="hover:bg-gray-50">
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedCustomers.includes(customer.id)}
-                            onCheckedChange={() => toggleCustomerSelection(customer.id)}
-                          />
-                        </TableCell>
-                        <TableCell className="font-mono text-sm text-gray-600">
-                          {customer.id.substring(0, 8)}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-semibold">{customer.company || customer.name}</p>
-                            {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                            <div>
+                              <p className="text-xs text-gray-500">Telefon</p>
+                              <p className="text-sm font-medium">{lead.phone}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">E-posta</p>
+                              <p className="text-sm font-medium">{lead.email}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Hizmet</p>
+                              <p className="text-sm font-medium">
+                                {lead.service_type === "kara"
+                                  ? "🚛 Kara Yolu"
+                                  : lead.service_type === "deniz"
+                                  ? "🚢 Deniz Yolu"
+                                  : lead.service_type === "hava"
+                                  ? "✈️ Hava Yolu"
+                                  : lead.service_type === "depolama"
+                                  ? "📦 Depolama"
+                                  : "🌍 Uluslararası"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Talep Tarihi</p>
+                              <p className="text-sm font-medium">
+                                {new Date(lead.created_at).toLocaleDateString("tr-TR")}
+                              </p>
+                            </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <AccountIcon className="w-4 h-4 text-gray-600" />
-                            <span>{getAccountTypeLabel(customer.account_type || "musteri")}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{customer.phone || "-"}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusBadge(customer.status)}>
-                            {customer.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {customer.tax_number || "-"}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          ₺0,00
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button 
-                              variant="ghost" 
+
+                          {(lead.origin || lead.destination) && (
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                              {lead.origin && (
+                                <div>
+                                  <p className="text-xs text-gray-500">Nereden</p>
+                                  <p className="text-sm font-medium">{lead.origin}</p>
+                                </div>
+                              )}
+                              {lead.destination && (
+                                <div>
+                                  <p className="text-xs text-gray-500">Nereye</p>
+                                  <p className="text-sm font-medium">{lead.destination}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {lead.message && (
+                            <div className="mb-3">
+                              <p className="text-xs text-gray-500 mb-1">Mesaj</p>
+                              <p className="text-sm bg-gray-50 p-2 rounded">{lead.message}</p>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2 mt-3 pt-3 border-t">
+                            <Button
                               size="sm"
-                              onClick={() => openDetailDialog(customer)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => openEditDialog(customer)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
+                              variant="outline"
+                              className="flex-1"
                               onClick={() => {
-                                setDeletingCustomer(customer);
-                                setIsDeleteDialogOpen(true);
+                                // Durumu güncelle
+                                supabase
+                                  .from("leads")
+                                  .update({ status: "inceleniyor" })
+                                  .eq("id", lead.id)
+                                  .then(() => loadLeads());
                               }}
                             >
-                              <Trash2 className="w-4 h-4 text-red-600" />
+                              İncele
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => {
+                                // Durumu güncelle
+                                supabase
+                                  .from("leads")
+                                  .update({ status: "teklif_verildi" })
+                                  .eq("id", lead.id)
+                                  .then(() => loadLeads());
+                              }}
+                            >
+                              Teklif Ver
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                              onClick={() => {
+                                // Durumu güncelle
+                                supabase
+                                  .from("leads")
+                                  .update({
+                                    status: "kazanildi",
+                                    converted_to_customer: true,
+                                    converted_at: new Date().toISOString(),
+                                  })
+                                  .eq("id", lead.id)
+                                  .then(() => {
+                                    loadLeads();
+                                    toast({
+                                      title: "Başarılı",
+                                      description: "Lead müşteriye dönüştürüldü",
+                                    });
+                                  });
+                              }}
+                            >
+                              Müşteriye Dönüştür
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Müşteriler Tab */}
+            <TabsContent value="musteriler" className="mt-0">
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
+                      <TableHead>Kod</TableHead>
+                      <TableHead>Unvan</TableHead>
+                      <TableHead>Cari Tipi</TableHead>
+                      <TableHead>Telefon Numarası</TableHead>
+                      <TableHead>Etiketler</TableHead>
+                      <TableHead>VKN/TCKN</TableHead>
+                      <TableHead>Yerel Bakiye</TableHead>
+                      <TableHead className="text-right">İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCustomers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-12 text-gray-500">
+                          <div className="flex flex-col items-center gap-2">
+                            <Search className="w-12 h-12 opacity-50" />
+                            <p>Kayıt bulunamadı</p>
+                            <Button onClick={openAddDialog} className="mt-2">
+                              <Plus className="w-4 h-4 mr-2" />
+                              Yeni {getAccountTypeLabel(activeTab)} Ekle
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </Card>
+                    ) : (
+                      filteredCustomers.map((customer) => {
+                        const AccountIcon = getAccountTypeIcon(customer.account_type || "musteri");
+                        return (
+                          <TableRow key={customer.id} className="hover:bg-gray-50">
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedCustomers.includes(customer.id)}
+                                onCheckedChange={() => toggleCustomerSelection(customer.id)}
+                              />
+                            </TableCell>
+                            <TableCell className="font-mono text-sm text-gray-600">
+                              {customer.id.substring(0, 8)}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-semibold">{customer.company || customer.name}</p>
+                                {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <AccountIcon className="w-4 h-4 text-gray-600" />
+                                <span>{getAccountTypeLabel(customer.account_type || "musteri")}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>{customer.phone || "-"}</TableCell>
+                            <TableCell>
+                              <Badge className={getStatusBadge(customer.status)}>
+                                {customer.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {customer.tax_number || "-"}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              ₺0,00
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => openDetailDialog(customer)}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => openEditDialog(customer)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setDeletingCustomer(customer);
+                                    setIsDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-600" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
 
-          {filteredCustomers.length > 0 && (
-            <div className="mt-4 text-sm text-gray-600">
-              Toplam {filteredCustomers.length} kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+              {filteredCustomers.length > 0 && (
+                <div className="mt-4 text-sm text-gray-600">
+                  Toplam {filteredCustomers.length} kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Add Customer Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
