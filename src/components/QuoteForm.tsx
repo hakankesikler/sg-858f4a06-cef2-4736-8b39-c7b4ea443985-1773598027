@@ -134,31 +134,28 @@ export function QuoteForm() {
         priority: "normal",
       });
 
-      const { error: leadError } = await supabase.from("leads").insert([
+      const { data: leadData, error: leadError } = await supabase.from("leads").insert([
         {
-          company_name: data.companyName || data.fullName,
-          contact_name: data.fullName,
+          company_name: data.companyName || "Belirtilmedi",
+          contact_name: data.name,
           email: data.email,
           phone: data.phone,
-          service_type: data.transportMode,
-          origin: `${data.senderCity}, ${data.senderCountry}`,
-          destination: `${data.receiverCity}, ${data.receiverCountry}`,
-          cargo_type: data.cargoType,
-          weight: data.weight,
-          volume: data.volume,
-          package_count: data.pieces,
-          pickup_date: data.readyDate || null,
-          special_requirements: [
-            data.insurance ? "Sigorta" : null,
-            data.customs ? "Gümrük" : null,
-            data.warehousing ? "Depolama" : null
-          ].filter(Boolean).join(", "),
-          message: data.message,
+          service_type: data.shippingMethod, // ← FIX: shippingMethod kullan
+          origin: data.origin,
+          destination: data.destination,
+          cargo_type: data.cargoType || null,
+          weight: data.weight || null,
+          volume: data.volume || null,
+          package_count: data.packageCount || null,
+          pickup_date: data.pickupDate || null,
+          delivery_date: data.deliveryDate || null,
+          special_requirements: data.specialRequirements || null,
+          message: data.message || null,
           status: "yeni",
           source: "website",
           priority: "normal",
         },
-      ]);
+      ]).select();
 
       if (leadError) {
         console.error("❌ Lead kayıt hatası:", leadError);
