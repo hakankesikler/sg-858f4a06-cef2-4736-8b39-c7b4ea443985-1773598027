@@ -90,9 +90,11 @@ export function QuoteForm() {
 
   const onSubmit = async (data: QuoteFormValues) => {
     setIsSubmitting(true);
-    
+    console.log("🔵 Form gönderimi başladı:", data);
+
     try {
-      // 1. E-posta Gönderimi (Mevcut API)
+      // E-posta gönderme
+      console.log("📧 E-posta API'sine istek gönderiliyor...");
       const response = await fetch("/api/send-quote", {
         method: "POST",
         headers: {
@@ -102,10 +104,36 @@ export function QuoteForm() {
       });
 
       if (!response.ok) {
-        throw new Error("Teklif talebi gönderilemedi.");
+        throw new Error("E-posta gönderilemedi");
       }
+      console.log("✅ E-posta başarıyla gönderildi");
 
-      // 2. Supabase CRM Leads Tablosuna Kayıt
+      // ✅ CRM'e lead olarak kaydet
+      console.log("💾 Supabase'e lead kaydediliyor...");
+      console.log("📋 Lead verisi:", {
+        company_name: data.companyName,
+        contact_name: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        service_type: data.transportMode,
+        origin: `${data.senderCity}, ${data.senderCountry}`,
+        destination: `${data.receiverCity}, ${data.receiverCountry}`,
+        cargo_type: data.cargoType,
+        weight: data.weight,
+        volume: data.volume,
+        package_count: data.pieces,
+        pickup_date: data.readyDate || null,
+        special_requirements: [
+          data.insurance ? "Sigorta" : null,
+          data.customs ? "Gümrük" : null,
+          data.warehousing ? "Depolama" : null
+        ].filter(Boolean).join(", "),
+        message: data.message,
+        status: "yeni",
+        source: "website",
+        priority: "normal",
+      });
+
       const { error: leadError } = await supabase.from("leads").insert([
         {
           company_name: data.companyName || data.fullName,
@@ -133,7 +161,10 @@ export function QuoteForm() {
       ]);
 
       if (leadError) {
-        console.error("Lead kayıt hatası:", leadError);
+        console.error("❌ Lead kayıt hatası:", leadError);
+        console.error("Hata detayı:", JSON.stringify(leadError, null, 2));
+      } else {
+        console.log("✅ Lead başarıyla kaydedildi");
       }
 
       toast({
@@ -143,7 +174,7 @@ export function QuoteForm() {
       
       form.reset();
     } catch (error) {
-      console.error("Form submit error:", error);
+      console.error("❌ Form gönderim hatası:", error);
       toast({
         title: "Bir hata oluştu",
         description: "Lütfen daha sonra tekrar deneyiniz.",
