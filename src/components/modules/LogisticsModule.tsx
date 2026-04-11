@@ -33,13 +33,14 @@ import {
 } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Edit, Trash2, Truck, FileText, Upload, ChevronDown } from "lucide-react";
+import { Search, Plus, Edit, Trash2, Truck, FileText, Upload, ChevronDown, Package, Ship, Settings, Save } from "lucide-react";
 import { logisticsService } from "@/services/logisticsService";
 
 export function LogisticsModule() {
   const [shipments, setShipments] = useState<any[]>([]);
   const [carriers, setCarriers] = useState<any[]>([]);
   const [isAddCarrierDialogOpen, setIsAddCarrierDialogOpen] = useState(false);
+  const [isAddForwarderDialogOpen, setIsAddForwarderDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("shipments");
   const [firmaTuru, setFirmaTuru] = useState("gercek");
@@ -266,6 +267,45 @@ export function LogisticsModule() {
     ehliyet_file: null as File | null,
   });
 
+  const [forwarderFormData, setForwarderFormData] = useState({
+    firma_adi: "",
+    firma_turu: "acenta",
+    vergi_dairesi: "",
+    vergi_no: "",
+    mersis_no: "",
+    sicil_no: "",
+    merkez_adres: "",
+    sube_adres: "",
+    firma_tel: "",
+    firma_email: "",
+    fatura_email: "",
+    yetkili_adi: "",
+    yetkili_telefon: "",
+    yetkili_email: "",
+    tasima_turu: [] as string[],
+    acenta_rolu: [] as string[],
+    iata_kod: "",
+    fiata_no: "",
+    scac: "",
+    imo_ism_no: "",
+    airline_prefix: "",
+    hizmet_turleri: [] as string[],
+    calisma_bolgeleri: [] as string[],
+    ekipman_deniz: [] as string[],
+    servis_hava: [] as string[],
+    anlasmali_vade: "",
+    sozlesme_durumu: "yok",
+    sozlesme_file: null as File | null,
+    sigorta_turu: "",
+    police_no: "",
+    belgeler: [] as string[],
+    banka_adi: "",
+    iban: "",
+    hesap_sahibi: "",
+    vergi_unvani_uyum: "evet",
+    ek_notlar: "",
+  });
+
   // VERGİ DAİRELERİ LİSTESİ (240+ vergi dairesi - Cari karttan aynı liste)
   const vergiDaireleri = [
     "ADANA / ALADAĞ VERGİ DAİRESİ MÜDÜRLÜĞÜ",
@@ -315,7 +355,7 @@ export function LogisticsModule() {
     "ANKARA / ELMADAĞ VERGİ DAİRESİ MÜDÜRLÜĞÜ",
     "ANKARA / KALECIK VERGİ DAİRESİ MÜDÜRLÜĞÜ",
     "ANKARA / POLATLI VERGİ DAİRESİ MÜDÜRLÜĞÜ",
-    "ANKARA / ŞEREFLİKOÇHİSAR VERGİ DAİRESİ MÜDÜRLÜĞÜ",
+    "ANKARA / ŞEREflİKOÇHİSAR VERGİ DAİRESİ MÜDÜRLÜĞÜ",
     "ANTALYA / AKSEKI VERGİ DAİRESİ MÜDÜRLÜĞÜ",
     "ANTALYA / ALANYA VERGİ DAİRESİ MÜDÜRLÜĞÜ",
     "ANTALYA / ELMALI VERGİ DAİRESİ MÜDÜRLÜĞÜ",
@@ -441,7 +481,7 @@ export function LogisticsModule() {
     "GÜMÜŞHANE / MERKEZ VERgİ daİresi MÜDÜRLÜĞÜ",
     "HAKKARİ / MERKEZ VERgİ daİresi MÜDÜRLÜĞÜ",
     "HAKKARİ / YÜKSEKOVA VERgİ daİresi MÜDÜRLÜĞÜ",
-    "HATAY / ALTINÖZÜ VERgİ daİresi MÜDÜRLÜĞÜ",
+    "HATAY / ALTINÖZÜ Vergİ daİresi MÜDÜRLÜĞÜ",
     "HATAY / ANTAKYA VERgİ daİresi MÜDÜRLÜĞÜ",
     "HATAY / DÖRTYOL VERgİ daİresi MÜDÜRLÜĞÜ",
     "HATAY / ERZİN VERgİ daİresi MÜDÜRLÜĞÜ",
@@ -633,7 +673,7 @@ export function LogisticsModule() {
     "ORDU / KORGAN VERgİ daİresi MÜDÜRLÜĞÜ",
     "ORDU / KUMRU VERgİ daİresi MÜDÜRLÜĞÜ",
     "ORDU / MESUDIYE VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ORDU / PERŞEMBE VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ORDU / PERŞEMbe VERgİ daİresi MÜDÜRLÜĞÜ",
     "ORDU / ÜNYE VERgİ daİresi MÜDÜRLÜĞÜ",
     "OSMANİYE / MERKEZ VERgİ daİresi MÜDÜRLÜĞÜ",
     "OSMANİYE / BAHÇE VERgİ daİresi MÜDÜRLÜĞÜ",
@@ -672,24 +712,24 @@ export function LogisticsModule() {
     "SİVAS / GEMEREK VERgİ daİresi MÜDÜRLÜĞÜ",
     "SİVAS / GÜRÜN VERgİ daİresi MÜDÜRLÜĞÜ",
     "SİVAS / HAFIK VERgİ daİresi MÜDÜRLÜĞÜ",
-    "SİVAS / İMRANLI VERgİ daİresi MÜDÜRLÜĞÜ",
+    "SİVAS / İMRANli VERgİ daİresi MÜDÜRLÜĞÜ",
     "SİVAS / KANGAL VERgİ daİresi MÜDÜRLÜĞÜ",
-    "SİVAS / ŞARKIŞla VERgİ daİresi MÜDÜRLÜĞÜ",
+    "SİVAS / ŞARKIŞla Vergİ daİresi MÜDÜRLÜĞÜ",
     "SİVAS / SUŞEHRI VERgİ daİresi MÜDÜRLÜĞÜ",
-    "SİVAS / YILDIZELİ VERgİ daİresi MÜDÜRLÜĞÜ",
+    "SİVAS / YILDIZELİ Vergİ daİresi MÜDÜRLÜĞÜ",
     "SİVAS / ZARA VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞANLIURFA / AKÇAKALE VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞANliURFA / BİRECİK VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞANLIURFA / BOZOVA VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ŞANLIURFA / CEYLANPINAR VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ŞANLIURFA / EYYÜBİYE VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ŞANLIURFA / HALFETİ VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ŞANLIURFA / HALİLİYE VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ŞANLIURFA / HARRAN VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ŞANLIURFA / KARAKÖPRÜ VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ŞANLIURFA / SİVEREK VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ŞANLIURFA / SURUÇ VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ŞANLIURFA / VİRANŞEHİR VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ŞANliURFA / CEYLANPINAR VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ŞANliURFA / EYYÜBİYE VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ŞANliURFA / HALFETİ VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ŞANliURFA / HALİLİYE VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ŞANliURFA / HARRAN VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ŞANliURFA / KARAKÖPRÜ VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ŞANliURFA / SİVEREK VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ŞANliURFA / SURUÇ VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ŞANliURFA / VİRANŞEHİR VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞIRNAK / MERKEZ VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞIRNAK / CİZRE VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞIRNAK / SİLOPİ VERgİ daİresi MÜDÜRLÜĞÜ",
@@ -719,7 +759,7 @@ export function LogisticsModule() {
     "TUNCELİ / MERKEZ VERgİ daİresi MÜDÜRLÜĞÜ",
     "UŞAK / MERKEZ VERgİ daİresi MÜDÜRLÜĞÜ",
     "UŞAK / BANAZ VERgİ daİresi MÜDÜRLÜĞÜ",
-    "UŞAK / EŞME VERgİ daİresi MÜDÜRLÜĞÜ",
+    "UŞAK / EŞME Vergİ daİresi MÜDÜRLÜĞÜ",
     "VAN / MERKEZ VERgİ daİresi MÜDÜRLÜĞÜ",
     "VAN / BAŞKALE VERgİ daİresi MÜDÜRLÜĞÜ",
     "VAN / ERCİŞ VERgİ daİresi MÜDÜRLÜĞÜ",
@@ -793,13 +833,27 @@ export function LogisticsModule() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="shipments">Sevkiyatlar</TabsTrigger>
-          <TabsTrigger value="carriers">Nakliyeciler</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-4">
+          <TabsTrigger value="sevkiyatlar">
+            <Package className="w-4 h-4 mr-2" />
+            Sevkiyatlar
+          </TabsTrigger>
+          <TabsTrigger value="nakliyeciler">
+            <Truck className="w-4 h-4 mr-2" />
+            Nakliyeciler
+          </TabsTrigger>
+          <TabsTrigger value="forwarder">
+            <Ship className="w-4 h-4 mr-2" />
+            Forwarder/Acente
+          </TabsTrigger>
+          <TabsTrigger value="ayarlar">
+            <Settings className="w-4 h-4 mr-2" />
+            Ayarlar
+          </TabsTrigger>
         </TabsList>
 
         {/* Sevkiyatlar Tab */}
-        <TabsContent value="shipments">
+        <TabsContent value="sevkiyatlar">
           <Card className="p-6">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
@@ -868,7 +922,7 @@ export function LogisticsModule() {
         </TabsContent>
 
         {/* Nakliyeciler Tab */}
-        <TabsContent value="carriers">
+        <TabsContent value="nakliyeciler">
           <Card className="p-6">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
@@ -932,6 +986,43 @@ export function LogisticsModule() {
             </div>
           </Card>
         </TabsContent>
+
+        {/* Forwarder/Acente Tab */}
+        <TabsContent value="forwarder" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-blue-600">Taşıyıcı / Acente Yönetimi</h2>
+            <Button onClick={() => setIsAddForwarderDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Forwarder/Acente Ekle
+            </Button>
+          </div>
+
+          <Card>
+            <CardContent className="p-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Firma Adı</TableHead>
+                    <TableHead>Tür</TableHead>
+                    <TableHead>Vergi No</TableHead>
+                    <TableHead>IATA/FIATA</TableHead>
+                    <TableHead>Telefon</TableHead>
+                    <TableHead>İşlemler</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                      Henüz forwarder/acente kaydı bulunmamaktadır
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Ayarlar Tab */}
       </Tabs>
 
       {/* Nakliyeci Tanımlama Dialog */}
@@ -1539,6 +1630,635 @@ export function LogisticsModule() {
                 <ChevronDown className="w-4 h-4" />
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Forwarder/Acente Ekleme Dialog */}
+      <Dialog open={isAddForwarderDialogOpen} onOpenChange={setIsAddForwarderDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-blue-600">📋 Taşıyıcı / Acente Tanımlama</DialogTitle>
+          </DialogHeader>
+
+          <Tabs defaultValue="firma" className="w-full">
+            <TabsList className="grid w-full grid-cols-7 mb-6">
+              <TabsTrigger value="firma">Firma</TabsTrigger>
+              <TabsTrigger value="yetkili">Yetkili</TabsTrigger>
+              <TabsTrigger value="kodlar">Kodlar</TabsTrigger>
+              <TabsTrigger value="operasyon">Operasyon</TabsTrigger>
+              <TabsTrigger value="sozlesme">Sözleşme</TabsTrigger>
+              <TabsTrigger value="banka">Banka</TabsTrigger>
+              <TabsTrigger value="notlar">Notlar</TabsTrigger>
+            </TabsList>
+
+            {/* SECTION 1 - FİRMA BİLGİLERİ */}
+            <TabsContent value="firma" className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-blue-600 border-b pb-2">Firma Bilgileri</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Firma Adı *</Label>
+                    <Input
+                      value={forwarderFormData.firma_adi}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, firma_adi: e.target.value })}
+                      placeholder="Firma adı"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Firma Türü *</Label>
+                    <Select
+                      value={forwarderFormData.firma_turu}
+                      onValueChange={(value) => setForwarderFormData({ ...forwarderFormData, firma_turu: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="acenta">Acenta</SelectItem>
+                        <SelectItem value="forwarder">Forwarder</SelectItem>
+                        <SelectItem value="nvocc">NVOCC</SelectItem>
+                        <SelectItem value="gsa">GSA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Vergi Dairesi *</Label>
+                    <Select
+                      value={forwarderFormData.vergi_dairesi}
+                      onValueChange={(value) => setForwarderFormData({ ...forwarderFormData, vergi_dairesi: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Vergi dairesi seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {vergiDaireleri.map((vd) => (
+                          <SelectItem key={vd} value={vd}>
+                            {vd}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Vergi No *</Label>
+                    <Input
+                      value={forwarderFormData.vergi_no}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, vergi_no: e.target.value })}
+                      placeholder="Vergi numarası"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Mersis No</Label>
+                    <Input
+                      value={forwarderFormData.mersis_no}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, mersis_no: e.target.value })}
+                      placeholder="Mersis numarası"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Sicil No</Label>
+                    <Input
+                      value={forwarderFormData.sicil_no}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, sicil_no: e.target.value })}
+                      placeholder="Sicil numarası"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Merkez Adres</Label>
+                    <textarea
+                      className="w-full min-h-[80px] p-2 border rounded-md"
+                      value={forwarderFormData.merkez_adres}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, merkez_adres: e.target.value })}
+                      placeholder="Merkez adres"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Şube Adresi</Label>
+                    <textarea
+                      className="w-full min-h-[80px] p-2 border rounded-md"
+                      value={forwarderFormData.sube_adres}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, sube_adres: e.target.value })}
+                      placeholder="Şube adresi"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Firma Tel *</Label>
+                    <Input
+                      value={forwarderFormData.firma_tel}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, firma_tel: e.target.value })}
+                      placeholder="Telefon"
+                      type="tel"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Firma E-posta</Label>
+                    <Input
+                      value={forwarderFormData.firma_email}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, firma_email: e.target.value })}
+                      placeholder="E-posta"
+                      type="email"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Fatura / E-Fatura E-posta</Label>
+                    <Input
+                      value={forwarderFormData.fatura_email}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, fatura_email: e.target.value })}
+                      placeholder="Fatura e-posta"
+                      type="email"
+                    />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* SECTION 2 - YETKİLİ BİLGİLERİ */}
+            <TabsContent value="yetkili" className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-blue-600 border-b pb-2">Yetkili Bilgileri</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Yetkili Adı Soyadı *</Label>
+                    <Input
+                      value={forwarderFormData.yetkili_adi}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, yetkili_adi: e.target.value })}
+                      placeholder="Ad Soyad"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Yetkili Telefonu *</Label>
+                    <Input
+                      value={forwarderFormData.yetkili_telefon}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, yetkili_telefon: e.target.value })}
+                      placeholder="Telefon"
+                      type="tel"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Yetkili E-posta</Label>
+                    <Input
+                      value={forwarderFormData.yetkili_email}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, yetkili_email: e.target.value })}
+                      placeholder="E-posta"
+                      type="email"
+                    />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* SECTION 3 - TAŞIYICI TÜRÜ / KODLAR */}
+            <TabsContent value="kodlar" className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-blue-600 border-b pb-2">Taşıyıcı Türü & Kodlar</h3>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Taşıma Türü</Label>
+                    <div className="flex flex-wrap gap-4">
+                      {["Denizyolu", "Havayolu", "Multimodal"].map((tur) => (
+                        <label key={tur} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={forwarderFormData.tasima_turu.includes(tur)}
+                            onChange={(e) => {
+                              const newList = e.target.checked
+                                ? [...forwarderFormData.tasima_turu, tur]
+                                : forwarderFormData.tasima_turu.filter((t) => t !== tur);
+                              setForwarderFormData({ ...forwarderFormData, tasima_turu: newList });
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span>{tur}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Acenta Rolü</Label>
+                    <div className="flex flex-wrap gap-4">
+                      {["Export", "Import", "Consol", "Co-load"].map((rol) => (
+                        <label key={rol} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={forwarderFormData.acenta_rolu.includes(rol)}
+                            onChange={(e) => {
+                              const newList = e.target.checked
+                                ? [...forwarderFormData.acenta_rolu, rol]
+                                : forwarderFormData.acenta_rolu.filter((r) => r !== rol);
+                              setForwarderFormData({ ...forwarderFormData, acenta_rolu: newList });
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span>{rol}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 border-dashed my-4"></div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">IATA Kodu</Label>
+                    <Input
+                      value={forwarderFormData.iata_kod}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, iata_kod: e.target.value })}
+                      placeholder="IATA kodu"
+                      maxLength={6}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">FIATA No</Label>
+                    <Input
+                      value={forwarderFormData.fiata_no}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, fiata_no: e.target.value })}
+                      placeholder="FIATA numarası"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">SCAC</Label>
+                    <Input
+                      value={forwarderFormData.scac}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, scac: e.target.value })}
+                      placeholder="SCAC kodu"
+                      maxLength={4}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">IMO/ISM No</Label>
+                    <Input
+                      value={forwarderFormData.imo_ism_no}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, imo_ism_no: e.target.value })}
+                      placeholder="IMO/ISM numarası"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Airline Prefix</Label>
+                    <Input
+                      value={forwarderFormData.airline_prefix}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, airline_prefix: e.target.value })}
+                      placeholder="Prefix"
+                      maxLength={3}
+                    />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* SECTION 4 - OPERASYONEL BİLGİLER */}
+            <TabsContent value="operasyon" className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-blue-600 border-b pb-2">Operasyonel Bilgiler</h3>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Hizmet Türleri</Label>
+                    <div className="flex flex-wrap gap-3">
+                      {["FCL", "LCL", "AIR Export", "AIR Import", "Transit", "Depolama", "Terminal Handling", "Gümrükleme"].map((hizmet) => (
+                        <label key={hizmet} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={forwarderFormData.hizmet_turleri.includes(hizmet)}
+                            onChange={(e) => {
+                              const newList = e.target.checked
+                                ? [...forwarderFormData.hizmet_turleri, hizmet]
+                                : forwarderFormData.hizmet_turleri.filter((h) => h !== hizmet);
+                              setForwarderFormData({ ...forwarderFormData, hizmet_turleri: newList });
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">{hizmet}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Çalışma Bölgeleri</Label>
+                    <div className="flex flex-wrap gap-3">
+                      {["Avrupa", "Uzakdoğu", "Amerika", "Ortadoğu", "Afrika", "Türkiye içi"].map((bolge) => (
+                        <label key={bolge} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={forwarderFormData.calisma_bolgeleri.includes(bolge)}
+                            onChange={(e) => {
+                              const newList = e.target.checked
+                                ? [...forwarderFormData.calisma_bolgeleri, bolge]
+                                : forwarderFormData.calisma_bolgeleri.filter((b) => b !== bolge);
+                              setForwarderFormData({ ...forwarderFormData, calisma_bolgeleri: newList });
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">{bolge}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-100 border-dashed my-4"></div>
+
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Ekipman (Denizyolu)</Label>
+                    <div className="flex flex-wrap gap-3">
+                      {["20DC", "40DC", "40HC", "OT", "FR", "Reefer"].map((ekipman) => (
+                        <label key={ekipman} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={forwarderFormData.ekipman_deniz.includes(ekipman)}
+                            onChange={(e) => {
+                              const newList = e.target.checked
+                                ? [...forwarderFormData.ekipman_deniz, ekipman]
+                                : forwarderFormData.ekipman_deniz.filter((ek) => ek !== ekipman);
+                              setForwarderFormData({ ...forwarderFormData, ekipman_deniz: newList });
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">{ekipman}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Servis (Havayolu)</Label>
+                    <div className="flex flex-wrap gap-3">
+                      {["General", "DG", "Perishable", "Pharma", "Express"].map((servis) => (
+                        <label key={servis} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={forwarderFormData.servis_hava.includes(servis)}
+                            onChange={(e) => {
+                              const newList = e.target.checked
+                                ? [...forwarderFormData.servis_hava, servis]
+                                : forwarderFormData.servis_hava.filter((s) => s !== servis);
+                              setForwarderFormData({ ...forwarderFormData, servis_hava: newList });
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">{servis}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-100 border-dashed my-4"></div>
+
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Anlaşılan Vade</Label>
+                    <Select
+                      value={forwarderFormData.anlasmali_vade}
+                      onValueChange={(value) => setForwarderFormData({ ...forwarderFormData, anlasmali_vade: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Vade seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7">7 gün</SelectItem>
+                        <SelectItem value="15">15 gün</SelectItem>
+                        <SelectItem value="30">30 gün</SelectItem>
+                        <SelectItem value="ozel">Özel</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* SECTION 5 - SÖZLEŞME & UYUM */}
+            <TabsContent value="sozlesme" className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-blue-600 border-b pb-2">Sözleşme & Uyum</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Sözleşme Durumu</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="sozlesme"
+                          value="var"
+                          checked={forwarderFormData.sozlesme_durumu === "var"}
+                          onChange={(e) => setForwarderFormData({ ...forwarderFormData, sozlesme_durumu: e.target.value })}
+                          className="w-4 h-4"
+                        />
+                        <span>Var</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="sozlesme"
+                          value="yok"
+                          checked={forwarderFormData.sozlesme_durumu === "yok"}
+                          onChange={(e) => setForwarderFormData({ ...forwarderFormData, sozlesme_durumu: e.target.value })}
+                          className="w-4 h-4"
+                        />
+                        <span>Yok</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Sözleşme Dosyası</Label>
+                    <Input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, sozlesme_file: e.target.files?.[0] || null })}
+                      disabled={forwarderFormData.sozlesme_durumu === "yok"}
+                    />
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 border-dashed my-4"></div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Sigorta Türü</Label>
+                    <Select
+                      value={forwarderFormData.sigorta_turu}
+                      onValueChange={(value) => setForwarderFormData({ ...forwarderFormData, sigorta_turu: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sigorta türü seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="forwarder">Forwarder</SelectItem>
+                        <SelectItem value="cmr">CMR</SelectItem>
+                        <SelectItem value="airline">Airline</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Poliçe No</Label>
+                    <Input
+                      value={forwarderFormData.police_no}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, police_no: e.target.value })}
+                      placeholder="Poliçe numarası"
+                    />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* SECTION 6 - BANKA BİLGİLERİ */}
+            <TabsContent value="banka" className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-blue-600 border-b pb-2">Banka Bilgileri</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Banka Adı</Label>
+                    <Input
+                      value={forwarderFormData.banka_adi}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, banka_adi: e.target.value })}
+                      placeholder="Banka adı"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">IBAN</Label>
+                    <Input
+                      value={forwarderFormData.iban}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, iban: e.target.value })}
+                      placeholder="TR00 0000 0000 0000 0000 0000 00"
+                      maxLength={26}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Hesap Sahibi</Label>
+                    <Input
+                      value={forwarderFormData.hesap_sahibi}
+                      onChange={(e) => setForwarderFormData({ ...forwarderFormData, hesap_sahibi: e.target.value })}
+                      placeholder="Hesap sahibi adı"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Vergi Ünvanı ile Uyum</Label>
+                    <div className="flex gap-4 pt-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="vergi_uyum"
+                          value="evet"
+                          checked={forwarderFormData.vergi_unvani_uyum === "evet"}
+                          onChange={(e) => setForwarderFormData({ ...forwarderFormData, vergi_unvani_uyum: e.target.value })}
+                          className="w-4 h-4"
+                        />
+                        <span>Evet</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="vergi_uyum"
+                          value="hayir"
+                          checked={forwarderFormData.vergi_unvani_uyum === "hayir"}
+                          onChange={(e) => setForwarderFormData({ ...forwarderFormData, vergi_unvani_uyum: e.target.value })}
+                          className="w-4 h-4"
+                        />
+                        <span>Hayır</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* SECTION 7 - EK NOTLAR */}
+            <TabsContent value="notlar" className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-blue-600 border-b pb-2">Ek Notlar</h3>
+
+                <div className="space-y-2">
+                  <textarea
+                    className="w-full min-h-[200px] p-3 border rounded-md"
+                    value={forwarderFormData.ek_notlar}
+                    onChange={(e) => setForwarderFormData({ ...forwarderFormData, ek_notlar: e.target.value })}
+                    placeholder="Ek bilgiler, özel notlar, uyarılar..."
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsAddForwarderDialogOpen(false)}>
+              Geri / Kapat
+            </Button>
+            <Button variant="outline" onClick={() => {
+              setForwarderFormData({
+                firma_adi: "",
+                firma_turu: "acenta",
+                vergi_dairesi: "",
+                vergi_no: "",
+                mersis_no: "",
+                sicil_no: "",
+                merkez_adres: "",
+                sube_adres: "",
+                firma_tel: "",
+                firma_email: "",
+                fatura_email: "",
+                yetkili_adi: "",
+                yetkili_telefon: "",
+                yetkili_email: "",
+                tasima_turu: [],
+                acenta_rolu: [],
+                iata_kod: "",
+                fiata_no: "",
+                scac: "",
+                imo_ism_no: "",
+                airline_prefix: "",
+                hizmet_turleri: [],
+                calisma_bolgeleri: [],
+                ekipman_deniz: [],
+                servis_hava: [],
+                anlasmali_vade: "",
+                sozlesme_durumu: "yok",
+                sozlesme_file: null,
+                sigorta_turu: "",
+                police_no: "",
+                belgeler: [],
+                banka_adi: "",
+                iban: "",
+                hesap_sahibi: "",
+                vergi_unvani_uyum: "evet",
+                ek_notlar: "",
+              });
+            }}>
+              Temizle
+            </Button>
+            <Button className="bg-green-600 hover:bg-green-700">
+              <Save className="w-4 h-4 mr-2" />
+              Kaydet
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
