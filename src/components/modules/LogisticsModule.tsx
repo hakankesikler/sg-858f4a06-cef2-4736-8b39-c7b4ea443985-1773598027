@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -720,7 +720,7 @@ export function LogisticsModule() {
     "SİVAS / ZARA VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞANLIURFA / AKÇAKALE VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞANliURFA / BİRECİK VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ŞANLIURFA / BOZOVA VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ŞANliURFA / BOZOVA VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞANliURFA / CEYLANPINAR VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞANliURFA / EYYÜBİYE VERgİ daİresi MÜDÜRLÜĞÜ",
     "ŞANliURFA / HALFETİ VERgİ daİresi MÜDÜRLÜĞÜ",
@@ -740,6 +740,7 @@ export function LogisticsModule() {
     "TEKİRDAĞ / MURATLI VERgİ daİresi MÜDÜRLÜĞÜ",
     "TEKİRDAĞ / SARAY VERgİ daİresi MÜDÜRLÜĞÜ",
     "TEKİRDAĞ / SÜLEYMANPAŞA VERgİ daİresi MÜDÜRLÜĞÜ",
+    "TEKİRDAĞ / ZİLE VERgİ daİresi MÜDÜRLÜĞÜ",
     "TOKAT / MERKEZ VERgİ daİresi MÜDÜRLÜĞÜ",
     "TOKAT / ALMUS VERgİ daİresi MÜDÜRLÜĞÜ",
     "TOKAT / ERBAA VERgİ daİresi MÜDÜRLÜĞÜ",
@@ -750,7 +751,7 @@ export function LogisticsModule() {
     "TRABZON / AKÇAABAT VERgİ daİresi MÜDÜRLÜĞÜ",
     "TRABZON / ARAKLIVERgİ daİresi MÜDÜRLÜĞÜ",
     "TRABZON / ARSİN VERgİ daİresi MÜDÜRLÜĞÜ",
-    "TRABZON / BEŞİKDÜZÜ VERgİ daİresi MÜDÜRLÜĞÜ",
+    "TRABZON / BEŞİKDÜZÜ Vergİ daİresi MÜDÜRLÜĞÜ",
     "TRABZON / OF VERgİ daİresi MÜDÜRLÜĞÜ",
     "TRABZON / ORTAHİSAR VERgİ daİresi MÜDÜRLÜĞÜ",
     "TRABZON / SÜRMENE VERgİ daİresi MÜDÜRLÜĞÜ",
@@ -1549,9 +1550,9 @@ export function LogisticsModule() {
               <Card className="p-6 bg-gray-50">
                 <h3 className="text-lg font-semibold mb-4 text-blue-600">Banka Bilgileri</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label>Banka Adı</Label>
+                    <Label className="text-blue-500 font-normal">Banka Adı</Label>
                     <Input
                       value={formData.banka_adi}
                       onChange={(e) => setFormData({ ...formData, banka_adi: e.target.value })}
@@ -1559,7 +1560,7 @@ export function LogisticsModule() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>IBAN</Label>
+                    <Label className="text-blue-500 font-normal">IBAN</Label>
                     <Input
                       value={formData.iban}
                       onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
@@ -1567,41 +1568,43 @@ export function LogisticsModule() {
                       maxLength={32}
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label>Hesap Sahibi</Label>
+                    <Label className="text-blue-500 font-normal">Hesap Sahibi</Label>
                     <Input
                       value={formData.hesap_sahibi}
                       onChange={(e) => setFormData({ ...formData, hesap_sahibi: e.target.value })}
-                      placeholder="Ad Soyad / Firma Adı"
+                      placeholder="Hesap sahibi adı"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Vergi Ünvanı ile Uyum</Label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="vergiUyum"
-                        value="evet"
-                        checked={formData.vergi_uyum === "evet"}
-                        onChange={() => setFormData({ ...formData, vergi_uyum: "evet" })}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span>Evet</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="vergiUyum"
-                        value="hayir"
-                        checked={formData.vergi_uyum === "hayir"}
-                        onChange={() => setFormData({ ...formData, vergi_uyum: "hayir" })}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span>Hayır</span>
-                    </label>
+                  <div className="space-y-2">
+                    <Label className="text-blue-500 font-normal">Vergi Ünvanı ile Uyum</Label>
+                    <div className="flex gap-4 pt-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="vergi_uyum"
+                          value="evet"
+                          checked={formData.vergi_uyum === "evet"}
+                          onChange={() => setFormData({ ...formData, vergi_uyum: "evet" })}
+                          className="w-4 h-4"
+                        />
+                        <span>Evet</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="vergi_uyum"
+                          value="hayir"
+                          checked={formData.vergi_uyum === "hayir"}
+                          onChange={() => setFormData({ ...formData, vergi_uyum: "hayir" })}
+                          className="w-4 h-4"
+                        />
+                        <span>Hayır</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </Card>
