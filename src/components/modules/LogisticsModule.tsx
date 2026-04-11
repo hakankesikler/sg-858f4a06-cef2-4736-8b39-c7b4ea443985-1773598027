@@ -42,6 +42,9 @@ import {
   Settings,
   Save,
   X,
+  Edit,
+  Trash2,
+  ChevronDown,
 } from "lucide-react";
 
 export function LogisticsModule() {
@@ -780,8 +783,8 @@ export function LogisticsModule() {
     "YOZGAT / AKDAĞMADEN VERgİ daİresi MÜDÜRLÜĞÜ",
     "YOZGAT / BOĞAZLIYAN VERgİ daİresi MÜDÜRLÜĞÜ",
     "YOZGAT / SORGUN VERgİ daİresi MÜDÜRLÜĞÜ",
-    "YOZGAT / ŞEFAATLİ VERgİ daİresi MÜDÜRLÜĞÜ",
-    "YOZGAT / YERKÖY VERgİ daİresi MÜDÜRLÜĞÜ",
+    "YOZGAT / ŞEFAATLİ Vergİ daİresi MÜDÜRLÜĞÜ",
+    "YOZGAT / YERKÖY Vergİ daİresi MÜDÜRLÜĞÜ",
     "ZONGULDAK / ALAPLI VERgİ daİresi MÜDÜRLÜĞÜ",
     "ZONGULDAK / ÇAYCUMA VERgİ daİresi MÜDÜRLÜĞÜ",
     "ZONGULDAK / EREĞLİ Vergİ daİresi MÜDÜRLÜĞÜ",
