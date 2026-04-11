@@ -555,6 +555,90 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          cargo_type: string | null
+          company_name: string
+          contact_name: string
+          converted_at: string | null
+          converted_to_customer: boolean | null
+          created_at: string | null
+          delivery_date: string | null
+          destination: string | null
+          email: string
+          id: string
+          message: string | null
+          notes: string | null
+          origin: string | null
+          package_count: string | null
+          phone: string
+          pickup_date: string | null
+          priority: string | null
+          service_type: string
+          source: string | null
+          special_requirements: string | null
+          status: string | null
+          updated_at: string | null
+          volume: string | null
+          weight: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          cargo_type?: string | null
+          company_name: string
+          contact_name: string
+          converted_at?: string | null
+          converted_to_customer?: boolean | null
+          created_at?: string | null
+          delivery_date?: string | null
+          destination?: string | null
+          email: string
+          id?: string
+          message?: string | null
+          notes?: string | null
+          origin?: string | null
+          package_count?: string | null
+          phone: string
+          pickup_date?: string | null
+          priority?: string | null
+          service_type: string
+          source?: string | null
+          special_requirements?: string | null
+          status?: string | null
+          updated_at?: string | null
+          volume?: string | null
+          weight?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          cargo_type?: string | null
+          company_name?: string
+          contact_name?: string
+          converted_at?: string | null
+          converted_to_customer?: boolean | null
+          created_at?: string | null
+          delivery_date?: string | null
+          destination?: string | null
+          email?: string
+          id?: string
+          message?: string | null
+          notes?: string | null
+          origin?: string | null
+          package_count?: string | null
+          phone?: string
+          pickup_date?: string | null
+          priority?: string | null
+          service_type?: string
+          source?: string | null
+          special_requirements?: string | null
+          status?: string | null
+          updated_at?: string | null
+          volume?: string | null
+          weight?: string | null
+        }
+        Relationships: []
+      }
       leaves: {
         Row: {
           approved_by: string | null

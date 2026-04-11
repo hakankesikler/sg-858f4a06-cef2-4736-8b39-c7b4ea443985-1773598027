@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Send, Plus, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const cargoSchema = z.object({
   width: z.string().min(1, "En giriniz"),
@@ -243,8 +244,70 @@ export function QuoteForm() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // E-posta gönderme
+      const response = await fetch("/api/send-quote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("E-posta gönderilemedi");
+      }
+
+      // ✅ CRM'e lead olarak kaydet
+      const { error: leadError } = await supabase.from("leads").insert([
+        {
+          company_name: data.companyName,
+          contact_name: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          service_type: data.serviceType,
+          origin: data.senderCity,
+          destination: data.receiverCity,
+          cargo_type: data.transportMode,
+          weight: data.weight,
+          volume: data.volume,
+          package_count: data.packageCount,
+          pickup_date: data.pickupDate || null,
+          delivery_date: data.deliveryDate || null,
+          special_requirements: data.specialRequirements,
+          message: data.message,
+          status: "yeni",
+          source: "website",
+          priority: "normal",
+        },
+      ]);
+
+      if (leadError) {
+        console.error("Lead kayıt hatası:", leadError);
+        // E-posta gönderildi ama CRM'e kaydedilemedi - kullanıcıya bildirme
+      }
+
+      setSubmitSuccess(true);
+      reset();
+      setCargos([{ width: "", length: "", height: "", weight: "", quantity: "" }]);
+      setCargoErrors([{}]);
+      
+      setTimeout(() => setSubmitSuccess(false), 5000);
+    } catch (error) {
+      console.error("Form gönderim hatası:", error);
+      setSubmitError(error instanceof Error ? error.message : "Form gönderilirken bir hata oluştu. Lütfen tekrar deneyin.");
+      setTimeout(() => setSubmitError(""), 5000);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Kişisel Bilgiler */}
       <div className="space-y-4">
         <h3 className="font-heading font-semibold text-xl text-white mb-4">Kişisel Bilgiler</h3>
