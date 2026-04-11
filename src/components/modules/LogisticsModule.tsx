@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -18,23 +26,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Edit, Trash2, Truck, FileText, Upload, ChevronDown, Package, Ship, Settings, Save } from "lucide-react";
 import { logisticsService } from "@/services/logisticsService";
+import {
+  Package,
+  Truck,
+  Ship,
+  MapPin,
+  Calendar,
+  Plus,
+  Search,
+  Filter,
+  Download,
+  Eye,
+  Settings,
+  Save,
+  X,
+} from "lucide-react";
 
 export function LogisticsModule() {
   const [shipments, setShipments] = useState<any[]>([]);
@@ -448,7 +456,7 @@ export function LogisticsModule() {
     "DİYARBAKIR / KAYAPINAR VERgİ daİresi MÜDÜRLÜĞÜ",
     "DİYARBAKIR / SİLVAN VERgİ daİresi MÜDÜRLÜĞÜ",
     "DİYARBAKIR / SUR VERgİ daİresi MÜDÜRLÜĞÜ",
-    "DİYARBAKIR / YENİŞEHİR VERgİ daİresi MÜDÜRLÜĞÜ",
+    "DİYARBAKIR / YENİMAHALLE VERgİ daİresi MÜDÜRLÜĞÜ",
     "EDİRNE / MERKEZ VERgİ daİresi MÜDÜRLÜĞÜ",
     "EDİRNE / KEŞAN VERgİ daİresi MÜDÜRLÜĞÜ",
     "EDİRNE / UZUNKÖPRÜ VERgİ daİresi MÜDÜRLÜĞÜ",
@@ -648,7 +656,7 @@ export function LogisticsModule() {
     "MERSİN / SİLİFKE VERgİ daİresi MÜDÜRLÜĞÜ",
     "MERSİN / TARSUS VERgİ daİresi MÜDÜRLÜĞÜ",
     "MERSİN / TOROSLAR VERgİ daİresi MÜDÜRLÜĞÜ",
-    "MERSİN / YENİŞEHİR VERgİ daİresi MÜDÜRLÜĞÜ",
+    "MERSİN / YENİMAHALLE VERgİ daİresi MÜDÜRLÜĞÜ",
     "MUĞLA / BODRUM VERgİ daİresi MÜDÜRLÜĞÜ",
     "MUĞLA / DALAMAN VERgİ daİresi MÜDÜRLÜĞÜ",
     "MUĞLA / FETHİYE VERgİ daİresi MÜDÜRLÜĞÜ",
@@ -776,7 +784,7 @@ export function LogisticsModule() {
     "YOZGAT / YERKÖY VERgİ daİresi MÜDÜRLÜĞÜ",
     "ZONGULDAK / ALAPLI VERgİ daİresi MÜDÜRLÜĞÜ",
     "ZONGULDAK / ÇAYCUMA VERgİ daİresi MÜDÜRLÜĞÜ",
-    "ZONGULDAK / EREĞLİ VERgİ daİresi MÜDÜRLÜĞÜ",
+    "ZONGULDAK / EREĞLİ Vergİ daİresi MÜDÜRLÜĞÜ",
     "ZONGULDAK / MERKEZ VERgİ daİresi MÜDÜRLÜĞÜ",
   ];
 
