@@ -1,41 +1,132 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Download,
+  Eye,
+  TrendingUp,
+  Calendar,
+  Filter,
+  CheckCircle2,
+  Clock,
+  Info,
+  CheckSquare,
+  Mail,
+  Upload,
+  Receipt,
+  Building2,
+  Briefcase,
+  UserCircle2,
+  ChevronDown
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Filter, Plus, Edit, Trash2, Eye, ChevronDown, Info, Building2, Package, Users, UserCircle } from "lucide-react";
-import { crmService } from "@/services/crmService";
 import { accountingService } from "@/services/accountingService";
+import { crmService } from "@/services/crmService";
+
+type Invoice = {
+  id: string;
+  invoice_no: string;
+  customer_id: string;
+  total: number;
+  status: string;
+  created_at: string;
+  due_date?: string;
+};
+
+type Customer = {
+  id: string;
+  name: string;
+  email: string;
+  company?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  tax_number?: string;
+  tax_office?: string;
+  status: string;
+  notes?: string;
+  account_type?: string;
+  created_at: string;
+};
+
+interface ExpenseCategory {
+  id: string;
+  name: string;
+  types: Array<{ id: string; name: string }>;
+}
 
 export function AccountingModule() {
-  const [activeMainTab, setActiveMainTab] = useState("panel");
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [cariTab, setCariTab] = useState("genel");
+  const [salesInvoices, setSalesInvoices] = useState<Invoice[]>([]);
+  const [purchaseInvoices, setPurchaseInvoices] = useState<Invoice[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+
+  // Category Edit Modal State
+  const [editCategoryModal, setEditCategoryModal] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState<ExpenseCategory | null>(null);
+  const [editedCategoryName, setEditedCategoryName] = useState("");
+
+  // Add New Type Modal State
+  const [addTypeModal, setAddTypeModal] = useState(false);
+  const [currentCategoryForType, setCurrentCategoryForType] = useState<ExpenseCategory | null>(null);
+  const [newTypeName, setNewTypeName] = useState("");
+
+  // Edit Type Modal State
+  const [editTypeModal, setEditTypeModal] = useState(false);
+  const [currentTypeForEdit, setCurrentTypeForEdit] = useState<{ 
+    categoryId: string; 
+    typeId: string; 
+    typeName: string; 
+  } | null>(null);
+  const [editedTypeName, setEditedTypeName] = useState("");
+
+  // Add New Category Modal State
+  const [addCategoryModal, setAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  // Expense Categories State
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
+
+  // CRM-specific states
   const [activeTab, setActiveTab] = useState("musteri");
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [salesInvoices, setSalesInvoices] = useState<any[]>([]);
-  const [purchaseInvoices, setPurchaseInvoices] = useState<any[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterCity, setFilterCity] = useState<string>("all");
-  const [filterStartDate, setFilterStartDate] = useState("");
-  const [filterEndDate, setFilterEndDate] = useState("");
-  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [cariTuru, setCariTuru] = useState("gercek");
-  const { toast } = useToast();
-
+  const [editingCustomer, setEditingCustomer] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: "",
     company: "",
@@ -45,64 +136,85 @@ export function AccountingModule() {
     city: "",
     tax_number: "",
     tax_office: "",
-    status: "Potansiyel",
+    status: "Potansiyel" as const,
     notes: "",
-    account_type: activeTab
+    account_type: "musteri"
   });
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingCustomer, setDeletingCustomer] = useState<any>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [detailCustomer, setDetailCustomer] = useState<any>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    status: "all",
+    city: "all",
+    dateFrom: "",
+    dateTo: ""
+  });
+  const [cities, setCities] = useState<string[]>([]);
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cariTuru, setCariTuru] = useState("gercek");
+
+  // Load data
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const categories = await accountingService.getExpenseCategories();
+      
+      const transformedCategories: ExpenseCategory[] = (categories || []).map((cat: any) => ({
+        id: cat?.id || '',
+        name: cat?.name || '',
+        types: Array.isArray(cat?.expense_types) 
+          ? cat.expense_types.map((type: any) => ({
+              id: type?.id || '',
+              name: type?.name || ''
+            }))
+          : []
+      }));
+      
+      setExpenseCategories(transformedCategories);
+      
+      const [customerData] = await Promise.all([
+        crmService.getCustomers()
+      ]);
+      setCustomers(customerData);
+      
+      setSalesInvoices([]);
+      setPurchaseInvoices([]);
+    } catch (error) {
+      console.error("Veri yükleme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Veriler yüklenirken bir hata oluştu",
+      });
+      
+      setExpenseCategories([
+        {
+          id: "1",
+          name: "Kategoriyle Genel Gider Tipleri",
+          types: [{ id: "t1", name: "Yiyecek" }]
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadCities = async () => {
+    const cityList = await crmService.getCities();
+    setCities(cityList);
+  };
 
   useEffect(() => {
-    if (activeMainTab === "cari-hesaplar") {
-      loadCustomers();
-    } else if (activeMainTab === "satis") {
-      loadSalesInvoices();
-    } else if (activeMainTab === "alis") {
-      loadPurchaseInvoices();
-    } else if (activeMainTab === "giderler") {
-      loadExpenses();
-    }
-  }, [activeMainTab, activeTab]);
+    loadData();
+    loadCities();
+  }, []);
 
-  const loadCustomers = async () => {
-    try {
-      const data = await crmService.getCustomers();
-      setCustomers(data);
-    } catch (error) {
-      console.error("Error loading customers:", error);
-      toast({
-        title: "Hata",
-        description: "Cari hesaplar yüklenirken bir hata oluştu",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const loadSalesInvoices = async () => {
-    try {
-      const data = await accountingService.getSalesInvoices();
-      setSalesInvoices(data);
-    } catch (error) {
-      console.error("Error loading sales invoices:", error);
-    }
-  };
-
-  const loadPurchaseInvoices = async () => {
-    try {
-      const data = await accountingService.getPurchases();
-      setPurchaseInvoices(data);
-    } catch (error) {
-      console.error("Error loading purchase invoices:", error);
-    }
-  };
-
-  const loadExpenses = async () => {
-    try {
-      const data = await accountingService.getExpenses();
-      setExpenses(data);
-    } catch (error) {
-      console.error("Error loading expenses:", error);
-    }
-  };
-
+  // CRM Helper Functions
   const openAddDialog = () => {
     setFormData({
       name: "",
@@ -121,509 +233,895 @@ export function AccountingModule() {
     setIsAddDialogOpen(true);
   };
 
+  const openEditDialog = (customer: any) => {
+    setEditingCustomer(customer);
+    setFormData({
+      name: customer.name,
+      company: customer.company || "",
+      email: customer.email,
+      phone: customer.phone || "",
+      address: customer.address || "",
+      city: customer.city || "",
+      tax_number: customer.tax_number || "",
+      tax_office: customer.tax_office || "",
+      status: customer.status,
+      notes: customer.notes || "",
+      account_type: customer.account_type || "musteri"
+    });
+    setIsEditDialogOpen(true);
+  };
+
   const handleAddCustomer = async () => {
-    if (!formData.name) {
+    if (!formData.name || !formData.email) {
       toast({
-        title: "Hata",
-        description: "Lütfen cari adını giriniz",
         variant: "destructive",
+        title: "Hata",
+        description: "Lütfen en az isim ve email giriniz!",
       });
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      await crmService.createCustomer(formData as any);
+      setIsSubmitting(true);
+      await crmService.createCustomer(formData);
+      setIsAddDialogOpen(false);
+      await loadData();
       toast({
         title: "Başarılı",
-        description: "Cari hesap başarıyla oluşturuldu",
+        description: "Cari başarıyla eklendi!",
       });
-      setIsAddDialogOpen(false);
-      loadCustomers();
     } catch (error) {
       console.error("Error creating customer:", error);
       toast({
-        title: "Hata",
-        description: "Cari hesap oluşturulurken bir hata oluştu",
         variant: "destructive",
+        title: "Hata",
+        description: "Cari eklenirken hata oluştu!",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDeleteCustomer = async (id: string) => {
-    if (!confirm("Bu cari hesabı silmek istediğinizden emin misiniz?")) {
+  const handleUpdateCustomer = async () => {
+    if (!formData.name || !formData.email) {
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Lütfen en az isim ve email giriniz!",
+      });
       return;
     }
 
     try {
-      await crmService.deleteCustomer(id);
+      setIsSubmitting(true);
+      await crmService.updateCustomer(editingCustomer.id, formData);
+      setIsEditDialogOpen(false);
+      await loadData();
       toast({
         title: "Başarılı",
-        description: "Cari hesap silindi",
+        description: "Cari başarıyla güncellendi!",
       });
-      loadCustomers();
+    } catch (error) {
+      console.error("Error updating customer:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Cari güncellenirken hata oluştu!",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteCustomer = async () => {
+    try {
+      setIsSubmitting(true);
+      await crmService.deleteCustomer(deletingCustomer.id);
+      setIsDeleteDialogOpen(false);
+      await loadData();
+      toast({
+        title: "Başarılı",
+        description: "Cari başarıyla silindi!",
+      });
     } catch (error) {
       console.error("Error deleting customer:", error);
       toast({
-        title: "Hata",
-        description: "Cari hesap silinirken bir hata oluştu",
         variant: "destructive",
+        title: "Hata",
+        description: "Cari silinirken hata oluştu!",
       });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openDetailDialog = async (customer: any) => {
+    setDetailCustomer(customer);
+    setIsDetailDialogOpen(true);
+    setLoadingDetail(true);
+    
+    try {
+      const detailedData = await crmService.getCustomerById(customer.id);
+      setDetailCustomer(detailedData);
+    } catch (error) {
+      console.error("Error loading customer details:", error);
+    } finally {
+      setLoadingDetail(false);
     }
   };
 
   const handleExportExcel = () => {
-    const filteredCustomers = getFilteredCustomersList();
-    
     const csvContent = [
-      ["Kod", "Unvan", "Cari Tipi", "Telefon", "Email", "Durum", "VKN/TCKN", "Yerel Bakiye"].join(","),
-      ...filteredCustomers.map(customer => [
-        customer.customer_code || "",
-        customer.company || customer.name || "",
-        customer.account_type || "",
-        customer.phone || "",
-        customer.email || "",
-        customer.status || "",
-        customer.tax_number || "",
-        "₺0,00"
+      ["Kod", "Unvan", "Cari Tipi", "Email", "Telefon", "Şehir", "VKN/TCKN", "Durum"].join(","),
+      ...filteredCustomers.map(c => [
+        c.id.substring(0, 8),
+        c.company || c.name,
+        getAccountTypeLabel(c.account_type || "musteri"),
+        c.email,
+        c.phone || "",
+        c.city || "",
+        c.tax_number || "",
+        c.status
       ].join(","))
     ].join("\n");
 
-    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `cari-hesaplar-${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `cari_listesi_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-
     toast({
       title: "Başarılı",
-      description: `${filteredCustomers.length} kayıt Excel'e aktarıldı`,
+      description: "Excel dosyası indirildi!",
     });
   };
 
-  const getFilteredCustomersList = () => {
-    return customers.filter(customer => {
-      const matchesType = customer.account_type === activeTab;
-      const matchesSearch = !searchTerm || 
-        (customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         customer.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         customer.email?.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      const matchesStatus = filterStatus === "all" || customer.status === filterStatus;
-      const matchesCity = filterCity === "all" || customer.city === filterCity;
-
-      return matchesType && matchesSearch && matchesStatus && matchesCity;
-    });
+  const toggleCustomerSelection = (customerId: string) => {
+    setSelectedCustomers(prev => 
+      prev.includes(customerId) 
+        ? prev.filter(id => id !== customerId)
+        : [...prev, customerId]
+    );
   };
 
-  const filteredCustomers = getFilteredCustomersList();
-  const uniqueCities = Array.from(new Set(customers.map(c => c.city).filter(Boolean)));
-
-  const getAccountTypeIcon = (type: string) => {
-    switch (type) {
-      case "musteri": return <Building2 className="w-4 h-4 text-blue-600" />;
-      case "tedarikci": return <Package className="w-4 h-4 text-purple-600" />;
-      case "personel": return <UserCircle className="w-4 h-4 text-green-600" />;
-      case "ortak": return <Users className="w-4 h-4 text-orange-600" />;
-      default: return null;
+  const toggleSelectAll = () => {
+    if (selectedCustomers.length === filteredCustomers.length) {
+      setSelectedCustomers([]);
+    } else {
+      setSelectedCustomers(filteredCustomers.map(c => c.id));
     }
   };
 
   const getAccountTypeLabel = (type: string) => {
-    switch (type) {
-      case "musteri": return "Müşteri";
-      case "tedarikci": return "Tedarikçi";
-      case "personel": return "Personel";
-      case "ortak": return "Ortak";
-      default: return type;
+    const types = {
+      musteri: "Müşteri",
+      tedarikci: "Tedarikçi",
+      personel: "Personel",
+      ortak: "Ortak"
+    };
+    return types[type as keyof typeof types] || "Müşteri";
+  };
+
+  const getAccountTypeIcon = (type: string) => {
+    const icons = {
+      musteri: Building2,
+      tedarikci: Briefcase,
+      personel: UserCircle2,
+      ortak: UserCircle2
+    };
+    return icons[type as keyof typeof icons] || Building2;
+  };
+
+  const getStatusBadge = (status: string) => {
+    const configs = {
+      "Aktif": "bg-green-100 text-green-700 border-green-200",
+      "Potansiyel": "bg-blue-100 text-blue-700 border-blue-200",
+      "Eski Müşteri": "bg-gray-100 text-gray-700 border-gray-200"
+    };
+    return configs[status as keyof typeof configs] || configs["Potansiyel"];
+  };
+
+  // Apply filters
+  let filteredCustomers = customers.filter(customer => {
+    const accountType = customer.account_type || "musteri";
+    if (accountType !== activeTab) return false;
+
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = 
+      customer.name?.toLowerCase().includes(searchLower) ||
+      customer.company?.toLowerCase().includes(searchLower) ||
+      customer.email?.toLowerCase().includes(searchLower) ||
+      customer.phone?.includes(searchTerm) ||
+      customer.city?.toLowerCase().includes(searchLower) ||
+      customer.tax_number?.includes(searchTerm);
+
+    return matchesSearch;
+  });
+
+  if (filters.status !== "all") {
+    filteredCustomers = filteredCustomers.filter(c => c.status === filters.status);
+  }
+
+  if (filters.city !== "all") {
+    filteredCustomers = filteredCustomers.filter(c => c.city === filters.city);
+  }
+
+  if (filters.dateFrom) {
+    filteredCustomers = filteredCustomers.filter(c => 
+      new Date(c.created_at) >= new Date(filters.dateFrom)
+    );
+  }
+
+  if (filters.dateTo) {
+    filteredCustomers = filteredCustomers.filter(c => 
+      new Date(c.created_at) <= new Date(filters.dateTo)
+    );
+  }
+
+  // Category handlers
+  const handleUpdateCategory = async () => {
+    if (!currentCategory || !editedCategoryName.trim()) {
+      toast({
+        title: "Hata",
+        description: "Kategori adı boş olamaz",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await accountingService.updateExpenseCategory(currentCategory.id, editedCategoryName.trim());
+      
+      setExpenseCategories(prev => 
+        prev.map(cat => 
+          cat.id === currentCategory.id 
+            ? { ...cat, name: editedCategoryName.trim() }
+            : cat
+        )
+      );
+
+      toast({
+        title: "Başarılı",
+        description: "Kategori güncellendi",
+      });
+
+      setEditCategoryModal(false);
+      setCurrentCategory(null);
+      setEditedCategoryName("");
+    } catch (error) {
+      console.error("Kategori güncelleme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Kategori güncellenirken bir hata oluştu",
+      });
     }
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedCustomers(filteredCustomers.map(c => c.id));
-    } else {
-      setSelectedCustomers([]);
+  const handleDeleteCategory = async () => {
+    if (!currentCategory) return;
+
+    try {
+      await accountingService.deleteExpenseCategory(currentCategory.id);
+      
+      setExpenseCategories(prev => prev.filter(cat => cat.id !== currentCategory.id));
+
+      toast({
+        title: "Başarılı",
+        description: "Kategori silindi",
+      });
+
+      setEditCategoryModal(false);
+      setCurrentCategory(null);
+      setEditedCategoryName("");
+    } catch (error) {
+      console.error("Kategori silme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Kategori silinirken bir hata oluştu",
+      });
     }
   };
 
-  const handleSelectCustomer = (customerId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedCustomers([...selectedCustomers, customerId]);
-    } else {
-      setSelectedCustomers(selectedCustomers.filter(id => id !== customerId));
+  const handleSaveNewType = async () => {
+    if (!currentCategoryForType || !newTypeName.trim()) {
+      toast({
+        title: "Hata",
+        description: "Genel gider adı boş olamaz",
+        variant: "destructive",
+      });
+      return;
     }
+
+    try {
+      const newType = await accountingService.createExpenseType(
+        currentCategoryForType.id,
+        newTypeName.trim()
+      );
+      
+      setExpenseCategories(prev => 
+        prev.map(cat => 
+          cat.id === currentCategoryForType.id 
+            ? { ...cat, types: [...cat.types, { id: newType.id, name: newType.name }] }
+            : cat
+        )
+      );
+
+      toast({
+        title: "Başarılı",
+        description: "Yeni gider tipi eklendi",
+      });
+
+      setAddTypeModal(false);
+      setCurrentCategoryForType(null);
+      setNewTypeName("");
+    } catch (error) {
+      console.error("Gider tipi ekleme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Gider tipi eklenirken bir hata oluştu",
+      });
+    }
+  };
+
+  const handleUpdateType = async () => {
+    if (!currentTypeForEdit || !editedTypeName.trim()) {
+      toast({
+        title: "Hata",
+        description: "Gider tipi adı boş olamaz",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await accountingService.updateExpenseType(
+        currentTypeForEdit.typeId,
+        editedTypeName.trim()
+      );
+      
+      setExpenseCategories(prev => 
+        prev.map(cat => 
+          cat.id === currentTypeForEdit.categoryId 
+            ? { 
+                ...cat, 
+                types: cat.types.map(type => 
+                  type.id === currentTypeForEdit.typeId 
+                    ? { ...type, name: editedTypeName.trim() }
+                    : type
+                ) 
+              }
+            : cat
+        )
+      );
+
+      toast({
+        title: "Başarılı",
+        description: "Gider tipi güncellendi",
+      });
+
+      setEditTypeModal(false);
+      setCurrentTypeForEdit(null);
+      setEditedTypeName("");
+    } catch (error) {
+      console.error("Gider tipi güncelleme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Gider tipi güncellenirken bir hata oluştu",
+      });
+    }
+  };
+
+  const handleDeleteType = async () => {
+    if (!currentTypeForEdit) return;
+
+    try {
+      await accountingService.deleteExpenseType(currentTypeForEdit.typeId);
+      
+      setExpenseCategories(prev => 
+        prev.map(cat => 
+          cat.id === currentTypeForEdit.categoryId 
+            ? { 
+                ...cat, 
+                types: cat.types.filter(type => type.id !== currentTypeForEdit.typeId) 
+              }
+            : cat
+        )
+      );
+
+      toast({
+        title: "Başarılı",
+        description: "Gider tipi silindi",
+      });
+
+      setEditTypeModal(false);
+      setCurrentTypeForEdit(null);
+      setEditedTypeName("");
+    } catch (error) {
+      console.error("Gider tipi silme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Gider tipi silinirken bir hata oluştu",
+      });
+    }
+  };
+
+  const handleSaveNewCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast({
+        title: "Hata",
+        description: "Kategori adı boş olamaz",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const newCategory = await accountingService.createExpenseCategory(newCategoryName.trim());
+      
+      setExpenseCategories(prev => [...prev, {
+        id: newCategory.id,
+        name: newCategory.name,
+        types: []
+      }]);
+
+      toast({
+        title: "Başarılı",
+        description: "Yeni kategori eklendi",
+      });
+
+      setAddCategoryModal(false);
+      setNewCategoryName("");
+    } catch (error) {
+      console.error("Kategori ekleme hatası:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Kategori eklenirken bir hata oluştu",
+      });
+    }
+  };
+
+  const handleEditType = (categoryId: string, typeId: string, typeName: string) => {
+    setCurrentTypeForEdit({ categoryId, typeId, typeName });
+    setEditedTypeName(typeName);
+    setEditTypeModal(true);
   };
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Muhasebe</h2>
-          <p className="text-gray-500">Finansal işlemlerinizi yönetin</p>
-        </div>
-      </div>
-
-      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 bg-gray-100">
+      <Tabs defaultValue="panel" className="w-full">
+        <TabsList>
           <TabsTrigger value="panel">Panel</TabsTrigger>
-          <TabsTrigger value="satis">Satış</TabsTrigger>
-          <TabsTrigger value="alis">Alış</TabsTrigger>
-          <TabsTrigger value="cari-hesaplar">Cari Hesaplar</TabsTrigger>
-          <TabsTrigger value="giderler">Giderler</TabsTrigger>
-          <TabsTrigger value="hesaplar">Hesaplar</TabsTrigger>
+          <TabsTrigger value="sales">Satış</TabsTrigger>
+          <TabsTrigger value="purchase">Alış</TabsTrigger>
+          <TabsTrigger value="cari">Cari Hesaplar</TabsTrigger>
+          <TabsTrigger value="expenses">Giderler</TabsTrigger>
+          <TabsTrigger value="accounts">Hesaplar</TabsTrigger>
         </TabsList>
 
-        {/* Panel Tab */}
-        <TabsContent value="panel" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Panel - Dashboard */}
+        <TabsContent value="panel" className="space-y-4">
+          <h2 className="text-2xl font-bold">Muhasebe Paneli</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Toplam Satış</p>
-                  <h3 className="text-2xl font-bold">₺0</h3>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
+              <h3 className="font-semibold mb-2">Toplam Satış</h3>
+              <p className="text-3xl font-bold text-green-600">₺0</p>
             </Card>
-
             <Card className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Toplam Alış</p>
-                  <h3 className="text-2xl font-bold">₺0</h3>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Package className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
+              <h3 className="font-semibold mb-2">Toplam Alış</h3>
+              <p className="text-3xl font-bold text-red-600">₺0</p>
             </Card>
-
             <Card className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Toplam Gider</p>
-                  <h3 className="text-2xl font-bold">₺0</h3>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <Trash2 className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Net Kar/Zarar</p>
-                  <h3 className="text-2xl font-bold">₺0</h3>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Users className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
+              <h3 className="font-semibold mb-2">Kar/Zarar</h3>
+              <p className="text-3xl font-bold">₺0</p>
             </Card>
           </div>
         </TabsContent>
 
-        {/* Satış Tab */}
-        <TabsContent value="satis" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
+        {/* Satış Faturaları */}
+        <TabsContent value="sales" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 border-l-4 border-l-green-500">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Toplam Satış Faturası</p>
-                  <h3 className="text-2xl font-bold">{salesInvoices.length}</h3>
+                  <p className="text-sm text-gray-500">Toplam Ciro</p>
+                  <p className="text-2xl font-bold text-green-600">₺0</p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-green-600" />
-                </div>
+                <TrendingUp className="h-8 w-8 text-green-500" />
               </div>
             </Card>
 
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
+            <Card className="p-4 border-l-4 border-l-blue-500">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Toplam Tutar</p>
-                  <h3 className="text-2xl font-bold">
-                    ₺{salesInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0).toFixed(2)}
-                  </h3>
+                  <p className="text-sm text-gray-500">Aylık Ciro</p>
+                  <p className="text-2xl font-bold text-blue-600">₺0</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Package className="w-6 h-6 text-blue-600" />
-                </div>
+                <Calendar className="h-8 w-8 text-blue-500" />
               </div>
             </Card>
           </div>
 
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Satış Faturaları</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fatura No</TableHead>
-                    <TableHead>Müşteri</TableHead>
-                    <TableHead>Tarih</TableHead>
-                    <TableHead>Tutar</TableHead>
-                    <TableHead>Durum</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {salesInvoices.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-gray-500 py-8">
-                        Henüz satış faturası bulunmuyor
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    salesInvoices.map((invoice) => (
-                      <TableRow key={invoice.id}>
-                        <TableCell>{invoice.invoice_number}</TableCell>
-                        <TableCell>{invoice.customer_name}</TableCell>
-                        <TableCell>{new Date(invoice.invoice_date).toLocaleDateString("tr-TR")}</TableCell>
-                        <TableCell>₺{invoice.total_amount?.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Badge variant={invoice.status === "paid" ? "default" : "secondary"}>
-                            {invoice.status === "paid" ? "Ödendi" : "Beklemede"}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Satış Faturaları</h2>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <Search className="mr-2 h-4 w-4" />
+                Detaylı Arama
+              </Button>
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Ara..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
+          </div>
+
+          <Card className="p-8">
+            <div className="text-center space-y-4">
+              <p className="text-gray-500">0 adet kayıt listelenmektedir.</p>
+            </div>
+          </Card>
+
+          <div className="flex items-center justify-between">
+            <Button variant="outline" size="sm">
+              <CheckSquare className="mr-2 h-4 w-4" />
+              Toplu Seç
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <Button className="bg-green-600 hover:bg-green-700">
+                <Plus className="mr-2 h-4 w-4" />
+                Satış Faturası Oluştur
+              </Button>
+              <Button variant="outline">
+                <Mail className="mr-2 h-4 w-4" />
+                e-Fatura Gelen Kutusu
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                İçe Aktar
+              </Button>
+              <Button variant="outline" size="sm">
+                <Upload className="mr-2 h-4 w-4" />
+                Dışarıya Aktar
+              </Button>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
+                    <input type="checkbox" className="rounded" />
+                  </TableHead>
+                  <TableHead>E-Fatura Durumu</TableHead>
+                  <TableHead>Belge Tipi</TableHead>
+                  <TableHead>Cari Bilgisi</TableHead>
+                  <TableHead>Proje</TableHead>
+                  <TableHead>Etiketler</TableHead>
+                  <TableHead>Seri No</TableHead>
+                  <TableHead>Durum</TableHead>
+                  <TableHead>Düzenlenme Tarihi</TableHead>
+                  <TableHead>Vade Tarihi</TableHead>
+                  <TableHead>Fatura Tutarı</TableHead>
+                  <TableHead>Takip Tutarı</TableHead>
+                  <TableHead>Bakiye</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={13} className="text-center py-8 text-gray-500">
+                    Toplam 0 kayıt gösteriliyor
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </Card>
         </TabsContent>
 
-        {/* Alış Tab */}
-        <TabsContent value="alis" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
+        {/* Alış Faturaları */}
+        <TabsContent value="purchase" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 border-l-4 border-l-green-500">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Toplam Alış Faturası</p>
-                  <h3 className="text-2xl font-bold">{purchaseInvoices.length}</h3>
+                  <p className="text-sm text-gray-500">Ödenen Faturalar</p>
+                  <p className="text-2xl font-bold">0</p>
                 </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Package className="w-6 h-6 text-purple-600" />
-                </div>
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
               </div>
             </Card>
 
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
+            <Card className="p-4 border-l-4 border-l-orange-500">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Toplam Tutar</p>
-                  <h3 className="text-2xl font-bold">
-                    ₺{purchaseInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0).toFixed(2)}
-                  </h3>
+                  <p className="text-sm text-gray-500">Bekleyen</p>
+                  <p className="text-2xl font-bold text-orange-600">0</p>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-orange-600" />
-                </div>
+                <Clock className="h-8 w-8 text-orange-500" />
               </div>
             </Card>
           </div>
 
-          <Card>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Alış Faturaları</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fatura No</TableHead>
-                    <TableHead>Tedarikçi</TableHead>
-                    <TableHead>Tarih</TableHead>
-                    <TableHead>Tutar</TableHead>
-                    <TableHead>Durum</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {purchaseInvoices.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-gray-500 py-8">
-                        Henüz alış faturası bulunmuyor
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    purchaseInvoices.map((invoice) => (
-                      <TableRow key={invoice.id}>
-                        <TableCell>{invoice.invoice_number}</TableCell>
-                        <TableCell>{invoice.supplier_name}</TableCell>
-                        <TableCell>{new Date(invoice.invoice_date).toLocaleDateString("tr-TR")}</TableCell>
-                        <TableCell>₺{invoice.total_amount?.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Badge variant={invoice.status === "paid" ? "default" : "secondary"}>
-                            {invoice.status === "paid" ? "Ödendi" : "Beklemede"}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+          <div className="border-b border-gray-200 pb-2">
+            <h2 className="text-2xl font-semibold border-b-4 border-blue-500 inline-block pb-2">
+              Alış Faturaları
+            </h2>
+          </div>
+
+          <div>
+            <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
+              Detaylı Arama
+            </Button>
+          </div>
+
+          <div className="text-sm text-gray-600 italic">
+            1000 adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
+              <Info className="mr-2 h-4 w-4" />
+              Toplu Seç
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <Button className="bg-green-600 hover:bg-green-700">
+                Alış Faturası Oluştur
+              </Button>
+              <Button className="bg-green-600 hover:bg-green-700">
+                Satış İade Faturası Oluştur
+              </Button>
+              <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
+                e-Fatura Gelen Kutusu
+              </Button>
+              <Button variant="outline">
+                İçe Aktar
+              </Button>
+              <Button variant="outline">
+                Dışarıya Aktar
+              </Button>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+              </Button>
+              <div className="relative w-48">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Ara"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
+          </div>
+
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead>e-Fatura Durumu</TableHead>
+                  <TableHead>Belge Tipi</TableHead>
+                  <TableHead>Cari Bilgisi</TableHead>
+                  <TableHead>Proje</TableHead>
+                  <TableHead>Etiketler</TableHead>
+                  <TableHead>Seri No</TableHead>
+                  <TableHead>Durum</TableHead>
+                  <TableHead>Düzenlenme Tarihi</TableHead>
+                  <TableHead>Vade Tarihi</TableHead>
+                  <TableHead>Fatura Tutarı</TableHead>
+                  <TableHead>Bakiye</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                    Toplam 0 kayıt gösteriliyor
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </Card>
         </TabsContent>
 
-        {/* Cari Hesaplar Tab */}
-        <TabsContent value="cari-hesaplar" className="space-y-6">
-          <Card>
-            <div className="p-6">
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-1">Genel Cari Hesapları</h3>
-                <p className="text-sm text-gray-500">Müşteri, tedarikçi, personel ve ortak cari hesaplarını yönetin</p>
+        {/* Cari Hesaplar - EXACTLY THE SAME AS CRM */}
+        <TabsContent value="cari" className="space-y-4">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Genel Cari Hesapları</h2>
+                <p className="text-gray-600 mt-1">Müşteri, tedarikçi, personel ve ortak cari hesaplarını yönetin</p>
               </div>
+            </div>
 
-              {/* Filtre Paneli */}
-              {isFilterOpen && (
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>Durum</Label>
-                      <Select value={filterStatus} onValueChange={setFilterStatus}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Tümü</SelectItem>
-                          <SelectItem value="Aktif">Aktif</SelectItem>
-                          <SelectItem value="Potansiyel">Potansiyel</SelectItem>
-                          <SelectItem value="Eski Müşteri">Eski Müşteri</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Şehir</Label>
-                      <Select value={filterCity} onValueChange={setFilterCity}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Tüm Şehirler</SelectItem>
-                          {uniqueCities.map(city => (
-                            <SelectItem key={city} value={city}>{city}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Başlangıç Tarihi</Label>
-                      <Input
-                        type="date"
-                        value={filterStartDate}
-                        onChange={(e) => setFilterStartDate(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Bitiş Tarihi</Label>
-                      <Input
-                        type="date"
-                        value={filterEndDate}
-                        onChange={(e) => setFilterEndDate(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Toplu Seçim Butonu */}
+            <div className="flex gap-2 flex-wrap">
+              <Button 
+                variant="outline"
+                onClick={() => setIsAdvancedSearchOpen(!isAdvancedSearchOpen)}
+                className="bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Detaylı Arama
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </Button>
+              
               {selectedCustomers.length > 0 && (
-                <div className="mb-4">
-                  <Button variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
-                    Toplu Seç ({selectedCustomers.length})
-                  </Button>
-                </div>
+                <Button 
+                  variant="outline"
+                  onClick={toggleSelectAll}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Toplu Seç ({selectedCustomers.length})
+                </Button>
               )}
+            </div>
 
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={openAddDialog}
-                      className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded"
-                    >
-                      Cari Oluştur
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toast({
-                          title: "Bilgi",
-                          description: "İçe aktarma özelliği yakında eklenecek",
-                        });
-                      }}
-                      className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
-                    >
-                      İçe Aktar
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleExportExcel();
-                      }}
-                      className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
-                    >
-                      Dışarıya Aktar
-                    </Button>
+            {isAdvancedSearchOpen && (
+              <Card className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Durum</Label>
+                    <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tümü</SelectItem>
+                        <SelectItem value="Aktif">Aktif</SelectItem>
+                        <SelectItem value="Potansiyel">Potansiyel</SelectItem>
+                        <SelectItem value="Eski Müşteri">Eski Müşteri</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  
+
+                  <div className="space-y-2">
+                    <Label>Şehir</Label>
+                    <Select value={filters.city} onValueChange={(value) => setFilters({...filters, city: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tüm Şehirler</SelectItem>
+                        {cities.map(city => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Tarih Aralığı</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        type="date" 
+                        value={filters.dateFrom}
+                        onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                        className="w-full"
+                      />
+                      <Input 
+                        type="date" 
+                        value={filters.dateTo}
+                        onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={openAddDialog}
+                    className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded"
+                  >
+                    Cari Oluştur
+                  </Button>
                   <Button 
                     variant="outline"
-                    onClick={() => setIsFilterOpen(!isFilterOpen)}
-                    className="ml-auto"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toast({
+                        title: "Bilgi",
+                        description: "İçe aktarma özelliği yakında eklenecek",
+                      });
+                    }}
+                    className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
                   >
-                    <Filter className="w-4 h-4" />
+                    İçe Aktar
                   </Button>
-
-                  <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      placeholder="Ara"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
+                  <Button 
+                    variant="outline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleExportExcel();
+                    }}
+                    className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
+                  >
+                    Dışarıya Aktar
+                  </Button>
                 </div>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="ml-auto"
+                >
+                  <Filter className="w-4 h-4" />
+                </Button>
 
-                <TabsList className="grid w-full grid-cols-4 mb-4">
-                  <TabsTrigger value="musteri" className="flex items-center gap-2">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Ara"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                <div className="flex gap-2">
+                  <Button
+                    variant={activeTab === "musteri" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("musteri")}
+                    className="flex items-center gap-2"
+                  >
                     <Building2 className="w-4 h-4" />
                     Müşteri Cari
-                  </TabsTrigger>
-                  <TabsTrigger value="tedarikci" className="flex items-center gap-2">
-                    <Package className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={activeTab === "tedarikci" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("tedarikci")}
+                    className="flex items-center gap-2"
+                  >
+                    <Briefcase className="w-4 h-4" />
                     Tedarikçi Cari
-                  </TabsTrigger>
-                  <TabsTrigger value="personel" className="flex items-center gap-2">
-                    <UserCircle className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={activeTab === "personel" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("personel")}
+                    className="flex items-center gap-2"
+                  >
+                    <UserCircle2 className="w-4 h-4" />
                     Personel Cari
-                  </TabsTrigger>
-                  <TabsTrigger value="ortak" className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={activeTab === "ortak" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("ortak")}
+                    className="flex items-center gap-2"
+                  >
+                    <UserCircle2 className="w-4 h-4" />
                     Ortak Cari
-                  </TabsTrigger>
-                </TabsList>
+                  </Button>
+                </div>
+              </div>
 
-                <TabsContent value={activeTab} className="space-y-4">
+              <TabsContent value={activeTab} className="mt-0">
+                <Card>
                   <Table>
                     <TableHeader>
-                      <TableRow>
+                      <TableRow className="bg-gray-50">
                         <TableHead className="w-12">
-                          <Checkbox 
+                          <Checkbox
                             checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
-                            onCheckedChange={handleSelectAll}
+                            onCheckedChange={toggleSelectAll}
                           />
                         </TableHead>
                         <TableHead>Kod</TableHead>
@@ -633,247 +1131,408 @@ export function AccountingModule() {
                         <TableHead>Etiketler</TableHead>
                         <TableHead>VKN/TCKN</TableHead>
                         <TableHead>Yerel Bakiye</TableHead>
-                        <TableHead>İşlemler</TableHead>
+                        <TableHead className="text-right">İşlemler</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredCustomers.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={9} className="text-center text-gray-500 py-8">
-                            {searchTerm ? "Arama kriterlerine uygun kayıt bulunamadı" : "Henüz cari kaydı bulunmuyor"}
+                          <TableCell colSpan={9} className="text-center py-12 text-gray-500">
+                            <div className="flex flex-col items-center gap-2">
+                              <Search className="w-12 h-12 opacity-50" />
+                              <p>Kayıt bulunamadı</p>
+                              <Button onClick={openAddDialog} className="mt-2">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Yeni {getAccountTypeLabel(activeTab)} Ekle
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ) : (
-                        filteredCustomers.map((customer) => (
-                          <TableRow key={customer.id}>
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedCustomers.includes(customer.id)}
-                                onCheckedChange={(checked) => handleSelectCustomer(customer.id, checked as boolean)}
-                              />
-                            </TableCell>
-                            <TableCell className="font-mono text-sm">
-                              {customer.customer_code || "N/A"}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {customer.company || customer.name}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                {getAccountTypeIcon(customer.account_type)}
-                                <span className="text-sm">{getAccountTypeLabel(customer.account_type)}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>{customer.phone || "-"}</TableCell>
-                            <TableCell>
-                              <Badge variant={customer.status === "Aktif" ? "default" : "secondary"}>
-                                {customer.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="font-mono text-sm">
-                              {customer.tax_number || "-"}
-                            </TableCell>
-                            <TableCell className="font-semibold text-right">₺0,00</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedCustomer(customer);
-                                    setIsViewDialogOpen(true);
-                                  }}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedCustomer(customer);
-                                    setFormData({
-                                      name: customer.name || "",
-                                      company: customer.company || "",
-                                      email: customer.email || "",
-                                      phone: customer.phone || "",
-                                      address: customer.address || "",
-                                      city: customer.city || "",
-                                      tax_number: customer.tax_number || "",
-                                      tax_office: customer.tax_office || "",
-                                      status: customer.status || "Potansiyel",
-                                      notes: customer.notes || "",
-                                      account_type: customer.account_type || activeTab
-                                    });
-                                    setIsEditDialogOpen(true);
-                                  }}
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteCustomer(customer.id)}
-                                >
-                                  <Trash2 className="w-4 h-4 text-red-600" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                        filteredCustomers.map((customer) => {
+                          const AccountIcon = getAccountTypeIcon(customer.account_type || "musteri");
+                          return (
+                            <TableRow key={customer.id} className="hover:bg-gray-50">
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedCustomers.includes(customer.id)}
+                                  onCheckedChange={() => toggleCustomerSelection(customer.id)}
+                                />
+                              </TableCell>
+                              <TableCell className="font-mono text-sm text-gray-600">
+                                {customer.id.substring(0, 8)}
+                              </TableCell>
+                              <TableCell>
+                                <div>
+                                  <p className="font-semibold">{customer.company || customer.name}</p>
+                                  {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <AccountIcon className="w-4 h-4 text-gray-600" />
+                                  <span>{getAccountTypeLabel(customer.account_type || "musteri")}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>{customer.phone || "-"}</TableCell>
+                              <TableCell>
+                                <Badge className={getStatusBadge(customer.status)}>
+                                  {customer.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-mono text-sm">
+                                {customer.tax_number || "-"}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold">
+                                ₺0,00
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => openDetailDialog(customer)}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => openEditDialog(customer)}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setDeletingCustomer(customer);
+                                      setIsDeleteDialogOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
                       )}
                     </TableBody>
                   </Table>
+                </Card>
 
-                  <div className="text-sm text-gray-500 mt-4">
+                {filteredCustomers.length > 0 && (
+                  <div className="mt-4 text-sm text-gray-600">
                     Toplam {filteredCustomers.length} kayıt listelenmektedir.
                   </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </Card>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
         </TabsContent>
 
-        {/* Giderler Tab */}
-        <TabsContent value="giderler" className="space-y-6">
-          <Card>
-            <div className="p-6">
-              <Tabs defaultValue="genel-giderler" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="genel-giderler">Genel Giderler</TabsTrigger>
-                  <TabsTrigger value="gider-tipleri">Genel Gider Tipleri</TabsTrigger>
-                  <TabsTrigger value="tekrarli-giderler">Tekrarlı Genel Giderler</TabsTrigger>
-                </TabsList>
+        {/* Giderler */}
+        <TabsContent value="expenses" className="space-y-4">
+          <Tabs defaultValue="expenses">
+            <TabsList>
+              <TabsTrigger value="expenses">Genel Giderler</TabsTrigger>
+              <TabsTrigger value="types">Genel Gider Tipleri</TabsTrigger>
+              <TabsTrigger value="recurring">Tekrarlı Genel Giderler</TabsTrigger>
+            </TabsList>
 
-                <TabsContent value="genel-giderler" className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <Card className="p-6">
+            <TabsContent value="expenses" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="p-4 border-l-4 border-l-orange-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Toplam Gider</p>
+                      <p className="text-2xl font-bold text-orange-600">₺40.200</p>
+                    </div>
+                    <Receipt className="h-8 w-8 text-orange-500" />
+                  </div>
+                </Card>
+
+                <Card className="p-4 border-l-4 border-l-orange-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Bu Ay</p>
+                      <p className="text-2xl font-bold text-orange-600">₺0</p>
+                    </div>
+                    <Calendar className="h-8 w-8 text-orange-500" />
+                  </div>
+                </Card>
+
+                <Card className="p-4 border-l-4 border-l-yellow-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Bekleyen Ödemeler</p>
+                      <p className="text-2xl font-bold">1</p>
+                    </div>
+                    <Clock className="h-8 w-8 text-yellow-500" />
+                  </div>
+                </Card>
+
+                <Card className="p-4 border-l-4 border-l-green-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">Ödenen Giderler</p>
+                      <p className="text-2xl font-bold">6</p>
+                    </div>
+                    <CheckCircle2 className="h-8 w-8 text-green-500" />
+                  </div>
+                </Card>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Genel Giderler</h2>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm">
+                    <Search className="mr-2 h-4 w-4" />
+                    Detaylı Arama
+                  </Button>
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Input
+                      placeholder="Ara..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-sm text-gray-600">
+                7 adet kayıt listelenmektedir.
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Button variant="outline" size="sm">
+                  <CheckSquare className="mr-2 h-4 w-4" />
+                  Toplu Seç
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button className="bg-green-600 hover:bg-green-700">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Genel Gider Oluştur
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    İçe Aktar
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Dışarıya Aktar
+                  </Button>
+                  <Button variant="outline" size="icon">
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
+                        <input type="checkbox" className="rounded" />
+                      </TableHead>
+                      <TableHead>Cari Bilgisi</TableHead>
+                      <TableHead>Etiketler</TableHead>
+                      <TableHead>Gider Tipi</TableHead>
+                      <TableHead>Seri No</TableHead>
+                      <TableHead>Proje</TableHead>
+                      <TableHead>Durum</TableHead>
+                      <TableHead>Düzenlenme Tarihi</TableHead>
+                      <TableHead>Son Ödeme Tarihi</TableHead>
+                      <TableHead>Genel İskonto</TableHead>
+                      <TableHead>Fatura Tutarı</TableHead>
+                      <TableHead>Takip Tutarı</TableHead>
+                      <TableHead>Bakiye</TableHead>
+                      <TableHead>İşlemler</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell colSpan={14} className="text-center py-8 text-gray-500">
+                        Toplam 7 kayıt gösteriliyor
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="types" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Genel Gider Tipleri</h2>
+                <Button onClick={() => setAddCategoryModal(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Yeni Kategori Ekle
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {expenseCategories.map((category) => (
+                  <Card key={category.id} className="p-6">
+                    <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-500">Toplam Gider</p>
-                          <h3 className="text-2xl font-bold">{expenses.length}</h3>
-                        </div>
-                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                          <Trash2 className="w-6 h-6 text-red-600" />
+                        <h3 className="font-semibold text-lg">{category.name}</h3>
+                        <div className="flex gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setCurrentCategory(category);
+                              setEditedCategoryName(category.name);
+                              setEditCategoryModal(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                    </Card>
-
-                    <Card className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-500">Toplam Tutar</p>
-                          <h3 className="text-2xl font-bold">
-                            ₺{expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0).toFixed(2)}
-                          </h3>
-                        </div>
-                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                          <Package className="w-6 h-6 text-orange-600" />
-                        </div>
+                      <div className="space-y-2">
+                        {Array.isArray(category.types) && category.types.map((type) => (
+                          <div key={type?.id || Math.random()} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span className="text-sm">{type?.name || ''}</span>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (type?.id && type?.name) {
+                                  handleEditType(category.id, type.id, type.name);
+                                }
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
-                    </Card>
-
-                    <Card className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-500">Bu Ay</p>
-                          <h3 className="text-2xl font-bold">
-                            ₺{expenses.filter(e => {
-                              const date = new Date(e.expense_date);
-                              const now = new Date();
-                              return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-                            }).reduce((sum, exp) => sum + (exp.amount || 0), 0).toFixed(2)}
-                          </h3>
-                        </div>
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Building2 className="w-6 h-6 text-blue-600" />
-                        </div>
-                      </div>
-                    </Card>
-
-                    <Card className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-500">Bu Yıl</p>
-                          <h3 className="text-2xl font-bold">
-                            ₺{expenses.filter(e => {
-                              const date = new Date(e.expense_date);
-                              const now = new Date();
-                              return date.getFullYear() === now.getFullYear();
-                            }).reduce((sum, exp) => sum + (exp.amount || 0), 0).toFixed(2)}
-                          </h3>
-                        </div>
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                          <Users className="w-6 h-6 text-green-600" />
-                        </div>
-                      </div>
-                    </Card>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Gider Listesi</h3>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Tarih</TableHead>
-                          <TableHead>Açıklama</TableHead>
-                          <TableHead>Kategori</TableHead>
-                          <TableHead>Tutar</TableHead>
-                          <TableHead>Durum</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {expenses.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center text-gray-500 py-8">
-                              Henüz gider kaydı bulunmuyor
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          expenses.map((expense) => (
-                            <TableRow key={expense.id}>
-                              <TableCell>{new Date(expense.expense_date).toLocaleDateString("tr-TR")}</TableCell>
-                              <TableCell>{expense.description}</TableCell>
-                              <TableCell>{expense.category}</TableCell>
-                              <TableCell>₺{expense.amount?.toFixed(2)}</TableCell>
-                              <TableCell>
-                                <Badge variant={expense.status === "paid" ? "default" : "secondary"}>
-                                  {expense.status === "paid" ? "Ödendi" : "Beklemede"}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="gider-tipleri" className="space-y-6">
-                  <div className="text-center py-8 text-gray-500">
-                    Gider tipleri yönetimi yakında eklenecek
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="tekrarli-giderler" className="space-y-6">
-                  <div className="text-center py-8 text-gray-500">
-                    Tekrarlı gider yönetimi yakında eklenecek
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </Card>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => {
+                          setCurrentCategoryForType(category);
+                          setAddTypeModal(true);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Yeni Tip Ekle
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
-        {/* Hesaplar Tab */}
-        <TabsContent value="hesaplar" className="space-y-6">
+        {/* Hesaplar */}
+        <TabsContent value="accounts" className="space-y-4">
+          <h2 className="text-2xl font-bold">Hesap Hareketleri</h2>
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Hesap Hareketleri</h3>
-            <div className="text-center py-8 text-gray-500">
-              Hesap hareketleri yakında eklenecek
-            </div>
+            <p className="text-gray-500">Hesap hareketleri yakında eklenecek...</p>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modals */}
+      <Dialog open={editCategoryModal} onOpenChange={setEditCategoryModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Kategoriyi Düzenle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Kategori Adı</Label>
+              <Input
+                value={editedCategoryName}
+                onChange={(e) => setEditedCategoryName(e.target.value)}
+                placeholder="Kategori adını girin"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditCategoryModal(false)}>İptal</Button>
+            <Button variant="destructive" onClick={handleDeleteCategory}>Sil</Button>
+            <Button onClick={handleUpdateCategory}>Güncelle</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addTypeModal} onOpenChange={setAddTypeModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Yeni Gider Tipi Ekle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Gider Tipi Adı</Label>
+              <Input
+                value={newTypeName}
+                onChange={(e) => setNewTypeName(e.target.value)}
+                placeholder="Gider tipi adını girin"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddTypeModal(false)}>İptal</Button>
+            <Button onClick={handleSaveNewType}>Kaydet</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editTypeModal} onOpenChange={setEditTypeModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gider Tipini Düzenle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Gider Tipi Adı</Label>
+              <Input
+                value={editedTypeName}
+                onChange={(e) => setEditedTypeName(e.target.value)}
+                placeholder="Gider tipi adını girin"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTypeModal(false)}>İptal</Button>
+            <Button variant="destructive" onClick={handleDeleteType}>Sil</Button>
+            <Button onClick={handleUpdateType}>Güncelle</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addCategoryModal} onOpenChange={setAddCategoryModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Yeni Kategori Ekle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Kategori Adı</Label>
+              <Input
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Kategori adını girin"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddCategoryModal(false)}>İptal</Button>
+            <Button onClick={handleSaveNewCategory}>Kaydet</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Customer Dialog - Comprehensive Form */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -1541,13 +2200,6 @@ export function AccountingModule() {
                       </Select>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                    <div className="space-y-2">
-                      <Label>Mersis No</Label>
-                      <Input placeholder="Mersis numarası" />
-                    </div>
-                  </div>
                 </>
               )}
 
@@ -1684,210 +2336,28 @@ export function AccountingModule() {
 
             {/* Cari Detay Bilgileri Tab */}
             <TabsContent value="detay" className="space-y-6">
-              {/* Vade Bilgileri */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-blue-600">Vade Bilgileri</h3>
-                <div className="space-y-2">
-                  <Label className="text-blue-500 font-normal">Vade Günü</Label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="vadeGunu"
-                        value="yok"
-                        defaultChecked
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-gray-700">Yok</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="vadeGunu"
-                        value="var"
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-gray-700">Var</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-100 border-dashed my-4"></div>
-
-              {/* Diğer Bilgiler */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-blue-600">Diğer Bilgiler</h3>
-                <div className="space-y-2">
-                  <Label className="text-blue-500 font-normal">Sabit İskonto</Label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="sabitIskonto"
-                        value="yok"
-                        defaultChecked
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-gray-700">Yok</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="sabitIskonto"
-                        value="var"
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-gray-700">Var</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-100 border-dashed my-4"></div>
-
-              {/* Açılış Bakiyesi */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-blue-600">Açılış Bakiyesi</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-blue-500 font-normal">Tutar</Label>
-                    <Input type="text" defaultValue="0,00" className="text-right font-medium" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-blue-500 font-normal">Para Birimi *</Label>
-                    <Select defaultValue="TRY">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="TRY">TRY</SelectItem>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                        <SelectItem value="GBP">GBP</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-blue-500 font-normal">Durumu</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder=" " />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="borc">Borç</SelectItem>
-                        <SelectItem value="alacak">Alacak</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-blue-500 font-normal">Proje</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder=" " />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="proje1">Proje 1</SelectItem>
-                        <SelectItem value="proje2">Proje 2</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                      <Info className="w-3 h-3" /> Ayarlar sayfasından Proje Takip seçeneğini kapatabilirsiniz.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-4">
-                  <div className="space-y-2">
-                    <Label className="text-blue-500 font-normal">İşlem Tarihi</Label>
-                    <Input type="date" defaultValue="2026-04-10" />
-                  </div>
-                </div>
-                
-                <div className="space-y-2 mt-4">
-                  <Label className="text-blue-500 font-normal">Vade Tarihi Var Mı?</Label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="vadeTarihiSecim"
-                        value="yok"
-                        defaultChecked
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-gray-700">Yok</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="vadeTarihiSecim"
-                        value="var"
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-gray-700">Var</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-100 border-dashed my-4"></div>
-
-              {/* Borç Alacak Bilgileri */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-blue-600">Borç Alacak Bilgileri</h3>
-                <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 font-normal">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Borç Alacak Ekle
-                </Button>
-              </div>
-
-              <div className="border-t border-gray-100 border-dashed my-4"></div>
-
-              {/* Banka Bilgileri */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-blue-600">Banka Bilgileri</h3>
-                <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 font-normal">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Banka Ekle
-                </Button>
-              </div>
-
-              <div className="border-t border-gray-100 border-dashed my-4"></div>
-
-              {/* Yetkili İletişim Bilgileri */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-blue-600">Yetkili İletişim Bilgileri</h3>
-                <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50 font-normal">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Yetkili Ekle
-                </Button>
+              <div className="p-8 text-center text-gray-500">
+                <p>Cari detay bilgileri bölümü</p>
+                <p className="text-sm mt-2">Ek bilgiler burada görüntülenecek</p>
               </div>
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="flex justify-end gap-2 mt-6 pt-4 border-t">
+          <DialogFooter className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => setIsAddDialogOpen(false)}
-              className="bg-red-500 text-white hover:bg-red-600 hover:text-white border-0"
+              className="border-red-500 text-red-600 hover:bg-red-50"
             >
               Vazgeç
             </Button>
-            <div className="flex">
-              <Button
-                onClick={handleAddCustomer}
-                disabled={isSubmitting}
-                className="bg-green-600 hover:bg-green-700 text-white rounded-r-none"
-              >
-                {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
-              </Button>
-              <Button 
-                className="bg-green-600 hover:bg-green-700 text-white rounded-l-none border-l border-green-700 px-2"
-              >
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-            </div>
+            <Button
+              onClick={handleAddCustomer}
+              disabled={isSubmitting}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
