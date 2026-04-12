@@ -2491,6 +2491,39 @@ export function AccountingModule() {
                   Ayarlar sayfasından Proje Takip seçeneğini kapatabilirsiniz.
                 </div>
               </div>
+
+              {/* Borç Alacak Bilgileri */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="text-lg font-semibold">Borç Alacak Bilgileri</h3>
+                  <Button variant="outline" size="sm">
+                    + Borç Alacak Ekle
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">Henüz borç alacak bilgisi eklenmedi.</p>
+              </div>
+
+              {/* Banka Bilgileri */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="text-lg font-semibold">Banka Bilgileri</h3>
+                  <Button variant="outline" size="sm">
+                    + Banka Ekle
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">Henüz banka bilgisi eklenmedi.</p>
+              </div>
+
+              {/* Yetkili İletişim Bilgileri */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="text-lg font-semibold">Yetkili İletişim Bilgileri</h3>
+                  <Button variant="outline" size="sm">
+                    + Yetkili Ekle
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">Henüz yetkili bilgisi eklenmedi.</p>
+              </div>
             </TabsContent>
           </Tabs>
 
