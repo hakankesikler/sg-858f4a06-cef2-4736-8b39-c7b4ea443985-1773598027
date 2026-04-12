@@ -400,7 +400,7 @@ export function CRMModule() {
                     <input type="checkbox" className="rounded" />
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    {customer.id.substring(0, 8)}
+                    {customer.customer_code || customer.id}
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{customer.name}</div>
