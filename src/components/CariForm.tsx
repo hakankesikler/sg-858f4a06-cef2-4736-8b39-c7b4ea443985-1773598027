@@ -430,10 +430,11 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                             placeholder="Vergi dairesi ara..."
                             value={vergiDairesiSearch}
                             onChange={(e) => setVergiDairesiSearch(e.target.value)}
-                            className="w-full"
+                            className="w-full border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 px-3 py-2"
+                            autoFocus
                           />
-                          <ScrollArea className="h-[200px] mt-2">
-                            <div className="space-y-1">
+                          <ScrollArea className="h-[200px] mt-0">
+                            <div className="space-y-1 p-1">
                               {vergiDaireleri
                                 .filter((vd) => vd.toLowerCase().includes(vergiDairesiSearch.toLowerCase()))
                                 .map((vd) => (
@@ -458,6 +459,11 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                                     {vd}
                                   </div>
                                 ))}
+                              {vergiDaireleri.filter((vd) => vd.toLowerCase().includes(vergiDairesiSearch.toLowerCase())).length === 0 && (
+                                <div className="text-center text-sm text-gray-500 py-4">
+                                  Bulunamadı.
+                                </div>
+                              )}
                             </div>
                           </ScrollArea>
                         </div>
