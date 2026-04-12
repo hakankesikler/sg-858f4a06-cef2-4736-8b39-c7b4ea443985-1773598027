@@ -348,6 +348,10 @@ export type Database = {
         Row: {
           account_type: string | null
           address: string | null
+          authorized_person_email: string | null
+          authorized_person_name: string | null
+          authorized_person_phone: string | null
+          branch_address: string | null
           city: string | null
           company: string | null
           created_at: string | null
@@ -356,27 +360,37 @@ export type Database = {
           email: string | null
           fax: string | null
           id: string
+          invoice_email: string | null
           last_contact: string | null
           mersis: string | null
           name: string
           notes: string | null
+          payment_day: number | null
+          payment_method: string | null
           phone: string | null
           postal_code: string | null
           sabit_iskonto: number | null
           short_name: string | null
+          specialty: string[] | null
           status: string | null
           supplier_category: string | null
           tags: string | null
           tax_office: string | null
           tc_no: string | null
+          ticaret_sicil_no: string | null
           updated_at: string | null
           vade_gunu: number | null
           vergi_no: string | null
           website: string | null
+          work_area: string | null
         }
         Insert: {
           account_type?: string | null
           address?: string | null
+          authorized_person_email?: string | null
+          authorized_person_name?: string | null
+          authorized_person_phone?: string | null
+          branch_address?: string | null
           city?: string | null
           company?: string | null
           created_at?: string | null
@@ -385,27 +399,37 @@ export type Database = {
           email?: string | null
           fax?: string | null
           id?: string
+          invoice_email?: string | null
           last_contact?: string | null
           mersis?: string | null
           name: string
           notes?: string | null
+          payment_day?: number | null
+          payment_method?: string | null
           phone?: string | null
           postal_code?: string | null
           sabit_iskonto?: number | null
           short_name?: string | null
+          specialty?: string[] | null
           status?: string | null
           supplier_category?: string | null
           tags?: string | null
           tax_office?: string | null
           tc_no?: string | null
+          ticaret_sicil_no?: string | null
           updated_at?: string | null
           vade_gunu?: number | null
           vergi_no?: string | null
           website?: string | null
+          work_area?: string | null
         }
         Update: {
           account_type?: string | null
           address?: string | null
+          authorized_person_email?: string | null
+          authorized_person_name?: string | null
+          authorized_person_phone?: string | null
+          branch_address?: string | null
           city?: string | null
           company?: string | null
           created_at?: string | null
@@ -414,23 +438,29 @@ export type Database = {
           email?: string | null
           fax?: string | null
           id?: string
+          invoice_email?: string | null
           last_contact?: string | null
           mersis?: string | null
           name?: string
           notes?: string | null
+          payment_day?: number | null
+          payment_method?: string | null
           phone?: string | null
           postal_code?: string | null
           sabit_iskonto?: number | null
           short_name?: string | null
+          specialty?: string[] | null
           status?: string | null
           supplier_category?: string | null
           tags?: string | null
           tax_office?: string | null
           tc_no?: string | null
+          ticaret_sicil_no?: string | null
           updated_at?: string | null
           vade_gunu?: number | null
           vergi_no?: string | null
           website?: string | null
+          work_area?: string | null
         }
         Relationships: []
       }
