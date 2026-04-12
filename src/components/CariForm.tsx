@@ -162,7 +162,12 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
         sabit_iskonto: sabitIskontoVar && sabitIskontoYuzde ? parseFloat(sabitIskontoYuzde) : null
       };
 
-      console.log("Submitting customer data:", submitData);
+      console.log("=== CARİ FORM SUBMIT DATA ===");
+      console.log("Cari Türü:", cariTuru);
+      console.log("Form Data:", formData);
+      console.log("Submit Data:", submitData);
+      console.log("Vergi No:", submitData.vergi_no);
+      console.log("TC No:", submitData.tc_no);
 
       await crmService.createCustomer(submitData as any);
 
