@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Search, Plus, Phone, Mail, MapPin, Calendar, TrendingUp, Filter, ExternalLink, Edit, Trash2, Eye, Download, Send, Upload, ChevronDown, Building2, Users, UserCircle2, Briefcase } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,31 +12,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { crmService } from "@/services/crmService";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Building2,
-  Users,
-  UserPlus,
-  Phone,
-  Mail,
-  MapPin,
-  Plus,
-  Search,
-  Filter,
-  Download,
-  Pencil,
-  Trash2,
-  Eye,
-  RefreshCw,
-  ChevronDown,
-  Edit,
-  Briefcase,
-  UserCircle2
-} from "lucide-react";
 
 export function CRMModule() {
   const [customers, setCustomers] = useState<any[]>([]);
-  const [leads, setLeads] = useState<any[]>([]);
   const [stats, setStats] = useState({ total: 0, active: 0, potential: 0, old: 0 });
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -83,34 +61,31 @@ export function CRMModule() {
   // Bulk Selection State
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
-    loadCustomers();
-    loadLeads();
+    loadData();
+    loadCities();
   }, []);
 
-  const loadCustomers = async () => {
+  const loadData = async () => {
     try {
-      const data = await crmService.getCustomers();
-      setCustomers(data);
+      setLoading(true);
+      const [customerData, statsData] = await Promise.all([
+        crmService.getCustomers(),
+        crmService.getCustomerStats()
+      ]);
+      setCustomers(customerData);
+      setStats(statsData);
     } catch (error) {
-      console.error("Error loading customers:", error);
+      console.error("Error loading CRM data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const loadLeads = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setLeads(data || []);
-    } catch (error) {
-      console.error("Error loading leads:", error);
-    }
+  const loadCities = async () => {
+    const cityList = await crmService.getCities();
+    setCities(cityList);
   };
 
   const openAddDialog = () => {
@@ -158,7 +133,7 @@ export function CRMModule() {
       setIsSubmitting(true);
       await crmService.createCustomer(formData);
       setIsAddDialogOpen(false);
-      await loadCustomers();
+      await loadData();
       alert("✅ Cari başarıyla eklendi!");
     } catch (error) {
       console.error("Error creating customer:", error);
@@ -178,7 +153,7 @@ export function CRMModule() {
       setIsSubmitting(true);
       await crmService.updateCustomer(editingCustomer.id, formData);
       setIsEditDialogOpen(false);
-      await loadCustomers();
+      await loadData();
       alert("✅ Cari başarıyla güncellendi!");
     } catch (error) {
       console.error("Error updating customer:", error);
@@ -193,7 +168,7 @@ export function CRMModule() {
       setIsSubmitting(true);
       await crmService.deleteCustomer(deletingCustomer.id);
       setIsDeleteDialogOpen(false);
-      await loadCustomers();
+      await loadData();
       alert("✅ Cari başarıyla silindi!");
     } catch (error) {
       console.error("Error deleting customer:", error);
@@ -264,7 +239,7 @@ export function CRMModule() {
       personel: "Personel",
       ortak: "Ortak"
     };
-    return types[type as keyof typeof types] || types["musteri"];
+    return types[type as keyof typeof types] || "Müşteri";
   };
 
   const getAccountTypeIcon = (type: string) => {
@@ -424,220 +399,95 @@ export function CRMModule() {
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="leads" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-2">
-          <TabsTrigger value="leads">
-            <UserPlus className="w-4 h-4 mr-2" />
-            Potansiyel Müşteriler
-          </TabsTrigger>
-          <TabsTrigger value="musteriler">
-            <Users className="w-4 h-4 mr-2" />
-            Müşteriler
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex items-center gap-2 mb-4">
+          <TabsList className="bg-transparent p-0 h-auto space-x-2">
+            <TabsTrigger 
+              value="musteri"
+              className="bg-green-600 text-white data-[state=active]:bg-green-700 px-4 py-2 rounded"
+            >
+              Cari Oluştur
+            </TabsTrigger>
+            <TabsTrigger 
+              value="import"
+              className="bg-blue-600 text-white data-[state=inactive]:bg-blue-500 px-4 py-2 rounded"
+              onClick={(e) => {
+                e.preventDefault();
+                alert("İçe aktarma özelliği yakında eklenecek");
+              }}
+            >
+              İçe Aktar
+            </TabsTrigger>
+            <TabsTrigger 
+              value="export"
+              className="bg-blue-600 text-white data-[state=inactive]:bg-blue-500 px-4 py-2 rounded"
+              onClick={(e) => {
+                e.preventDefault();
+                handleExportExcel();
+              }}
+            >
+              Dışarıya Aktar
+            </TabsTrigger>
+          </TabsList>
+          
+          <Button 
+            variant="outline"
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className="ml-auto"
+          >
+            <Filter className="w-4 h-4" />
+          </Button>
 
-        {/* Potansiyel Müşteriler (Leads) Tab */}
-        <TabsContent value="leads" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-blue-600">Potansiyel Müşteriler</h2>
-              <p className="text-sm text-gray-500 mt-1">Website teklif formundan gelen talepler</p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={loadLeads}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Yenile
-              </Button>
-            </div>
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Ara"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
+        </div>
 
-          <Card>
-            <CardContent className="p-6">
-              {leads.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  Henüz potansiyel müşteri kaydı bulunmamaktadır
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {leads.map((lead) => (
-                    <div
-                      key={lead.id}
-                      className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="text-lg font-semibold text-blue-600">
-                            {lead.company_name}
-                          </h3>
-                          <p className="text-sm text-gray-600">{lead.contact_name}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              lead.status === "yeni"
-                                ? "bg-blue-100 text-blue-700"
-                                : lead.status === "inceleniyor"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : lead.status === "teklif_verildi"
-                                ? "bg-purple-100 text-purple-700"
-                                : lead.status === "kazanildi"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {lead.status === "yeni"
-                              ? "🆕 Yeni"
-                              : lead.status === "inceleniyor"
-                              ? "🔍 İnceleniyor"
-                              : lead.status === "teklif_verildi"
-                              ? "📋 Teklif Verildi"
-                              : lead.status === "kazanildi"
-                              ? "✅ Kazanıldı"
-                              : "❌ Kaybedildi"}
-                          </span>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              lead.priority === "acil"
-                                ? "bg-red-100 text-red-700"
-                                : lead.priority === "yüksek"
-                                ? "bg-orange-100 text-orange-700"
-                                : lead.priority === "normal"
-                                ? "bg-gray-100 text-gray-700"
-                                : "bg-blue-100 text-blue-700"
-                            }`}
-                          >
-                            {lead.priority === "acil"
-                              ? "🔥 Acil"
-                              : lead.priority === "yüksek"
-                              ? "⚡ Yüksek"
-                              : lead.priority === "normal"
-                              ? "📌 Normal"
-                              : "📍 Düşük"}
-                          </span>
-                        </div>
-                      </div>
+        {/* Tab Content Filters */}
+        <div className="bg-gray-50 p-3 rounded-lg mb-4">
+          <div className="flex gap-2">
+            <Button
+              variant={activeTab === "musteri" ? "default" : "ghost"}
+              onClick={() => setActiveTab("musteri")}
+              className="flex items-center gap-2"
+            >
+              <Building2 className="w-4 h-4" />
+              Müşteri Cari
+            </Button>
+            <Button
+              variant={activeTab === "tedarikci" ? "default" : "ghost"}
+              onClick={() => setActiveTab("tedarikci")}
+              className="flex items-center gap-2"
+            >
+              <Briefcase className="w-4 h-4" />
+              Tedarikçi Cari
+            </Button>
+            <Button
+              variant={activeTab === "personel" ? "default" : "ghost"}
+              onClick={() => setActiveTab("personel")}
+              className="flex items-center gap-2"
+            >
+              <UserCircle2 className="w-4 h-4" />
+              Personel Cari
+            </Button>
+            <Button
+              variant={activeTab === "ortak" ? "default" : "ghost"}
+              onClick={() => setActiveTab("ortak")}
+              className="flex items-center gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Ortak Cari
+            </Button>
+          </div>
+        </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                        <div>
-                          <p className="text-xs text-gray-500">Telefon</p>
-                          <p className="text-sm font-medium">{lead.phone}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">E-posta</p>
-                          <p className="text-sm font-medium">{lead.email}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Hizmet</p>
-                          <p className="text-sm font-medium">
-                            {lead.service_type === "kara"
-                              ? "🚛 Kara Yolu"
-                              : lead.service_type === "deniz"
-                              ? "🚢 Deniz Yolu"
-                              : lead.service_type === "hava"
-                              ? "✈️ Hava Yolu"
-                              : lead.service_type === "depolama"
-                              ? "📦 Depolama"
-                              : "🌍 Uluslararası"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Talep Tarihi</p>
-                          <p className="text-sm font-medium">
-                            {new Date(lead.created_at).toLocaleDateString("tr-TR")}
-                          </p>
-                        </div>
-                      </div>
-
-                      {(lead.origin || lead.destination) && (
-                        <div className="grid grid-cols-2 gap-4 mb-3">
-                          {lead.origin && (
-                            <div>
-                              <p className="text-xs text-gray-500">Nereden</p>
-                              <p className="text-sm font-medium">{lead.origin}</p>
-                            </div>
-                          )}
-                          {lead.destination && (
-                            <div>
-                              <p className="text-xs text-gray-500">Nereye</p>
-                              <p className="text-sm font-medium">{lead.destination}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {lead.message && (
-                        <div className="mb-3">
-                          <p className="text-xs text-gray-500 mb-1">Mesaj</p>
-                          <p className="text-sm bg-gray-50 p-2 rounded">{lead.message}</p>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 mt-3 pt-3 border-t">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            // Durumu güncelle
-                            supabase
-                              .from("leads")
-                              .update({ status: "inceleniyor" })
-                              .eq("id", lead.id)
-                              .then(() => loadLeads());
-                          }}
-                        >
-                          İncele
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            // Durumu güncelle
-                            supabase
-                              .from("leads")
-                              .update({ status: "teklif_verildi" })
-                              .eq("id", lead.id)
-                              .then(() => loadLeads());
-                          }}
-                        >
-                          Teklif Ver
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                          onClick={() => {
-                            // Durumu güncelle
-                            supabase
-                              .from("leads")
-                              .update({
-                                status: "kazanildi",
-                                converted_to_customer: true,
-                                converted_at: new Date().toISOString(),
-                              })
-                              .eq("id", lead.id)
-                              .then(() => {
-                                loadLeads();
-                                toast({
-                                  title: "Başarılı",
-                                  description: "Lead müşteriye dönüştürüldü",
-                                });
-                              });
-                          }}
-                        >
-                          Müşteriye Dönüştür
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Müşteriler Tab */}
-        <TabsContent value="musteriler" className="mt-0">
+        <TabsContent value={activeTab} className="mt-0">
           <Card>
             <Table>
               <TableHeader>
