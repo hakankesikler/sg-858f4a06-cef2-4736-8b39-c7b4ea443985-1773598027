@@ -28,13 +28,13 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shipmentCode, setShipmentCode] = useState("SHP-000001");
-  const [pickupDate, setPickupDate] = useState<Date>();
-  const [deliveryDate, setDeliveryDate] = useState<Date>();
-  const [estimatedDeliveryDate, setEstimatedDeliveryDate] = useState<Date>();
+  const [pickupDate, setPickupDate] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [estimatedDeliveryDate, setEstimatedDeliveryDate] = useState("");
   
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     driver_id: "",
@@ -81,9 +81,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         status: initialData.status || "beklemede",
         notes: initialData.notes || ""
       });
-      if (initialData.pickup_date) setPickupDate(new Date(initialData.pickup_date));
-      if (initialData.delivery_date) setDeliveryDate(new Date(initialData.delivery_date));
-      if (initialData.estimated_delivery_date) setEstimatedDeliveryDate(new Date(initialData.estimated_delivery_date));
+      if (initialData.pickup_date) {
+        setPickupDate(initialData.pickup_date);
+      }
+      if (initialData.delivery_date) {
+        setDeliveryDate(initialData.delivery_date);
+      }
+      if (initialData.estimated_delivery_date) {
+        setEstimatedDeliveryDate(initialData.estimated_delivery_date);
+      }
     } else if (!editMode && isOpen) {
       resetForm();
     }
@@ -129,16 +135,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     try {
       setIsSubmitting(true);
       
-      const submitData: Shipment = {
+      const submitData = {
         shipment_code: shipmentCode,
         driver_id: formData.driver_id || null,
         vehicle_id: formData.vehicle_id || null,
         customer_id: formData.customer_id || null,
         origin: formData.origin,
         destination: formData.destination,
-        pickup_date: pickupDate ? format(pickupDate, "yyyy-MM-dd") : null,
-        delivery_date: deliveryDate ? format(deliveryDate, "yyyy-MM-dd") : null,
-        estimated_delivery_date: estimatedDeliveryDate ? format(estimatedDeliveryDate, "yyyy-MM-dd") : null,
+        pickup_date: pickupDate || null,
+        delivery_date: deliveryDate || null,
+        estimated_delivery_date: estimatedDeliveryDate || null,
         cargo_type: formData.cargo_type || null,
         cargo_weight: formData.cargo_weight ? parseFloat(formData.cargo_weight) : null,
         cargo_volume: formData.cargo_volume ? parseFloat(formData.cargo_volume) : null,
@@ -196,9 +202,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       status: "beklemede",
       notes: ""
     });
-    setPickupDate(undefined);
-    setDeliveryDate(undefined);
-    setEstimatedDeliveryDate(undefined);
+    setPickupDate("");
+    setDeliveryDate("");
+    setEstimatedDeliveryDate("");
     setShipmentCode("SHP-000001");
   };
 
@@ -294,69 +300,30 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Yükleme Tarihi</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {pickupDate ? format(pickupDate, "PPP", { locale: tr }) : "Tarih seçin"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar 
-                    mode="single" 
-                    selected={pickupDate} 
-                    onSelect={setPickupDate} 
-                    locale={tr}
-                    captionLayout="dropdown-buttons"
-                    fromYear={2020}
-                    toYear={2035}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={pickupDate}
+                onChange={(e) => setPickupDate(e.target.value)}
+                className="w-full"
+              />
             </div>
             <div className="space-y-2">
               <Label>Tahmini Teslim</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {estimatedDeliveryDate ? format(estimatedDeliveryDate, "PPP", { locale: tr }) : "Tarih seçin"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar 
-                    mode="single" 
-                    selected={estimatedDeliveryDate} 
-                    onSelect={setEstimatedDeliveryDate} 
-                    locale={tr}
-                    captionLayout="dropdown-buttons"
-                    fromYear={2020}
-                    toYear={2035}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={estimatedDeliveryDate}
+                onChange={(e) => setEstimatedDeliveryDate(e.target.value)}
+                className="w-full"
+              />
             </div>
             <div className="space-y-2">
               <Label>Teslim Tarihi</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deliveryDate ? format(deliveryDate, "PPP", { locale: tr }) : "Tarih seçin"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar 
-                    mode="single" 
-                    selected={deliveryDate} 
-                    onSelect={setDeliveryDate} 
-                    locale={tr}
-                    captionLayout="dropdown-buttons"
-                    fromYear={2020}
-                    toYear={2035}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={deliveryDate}
+                onChange={(e) => setDeliveryDate(e.target.value)}
+                className="w-full"
+              />
             </div>
           </div>
 

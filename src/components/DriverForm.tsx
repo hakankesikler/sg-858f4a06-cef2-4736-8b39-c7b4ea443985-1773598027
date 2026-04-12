@@ -4,14 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Upload } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { driverService, Driver } from "@/services/driverService";
-import { cn } from "@/lib/utils";
 
 interface DriverFormProps {
   isOpen: boolean;
@@ -25,7 +19,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [driverCode, setDriverCode] = useState("DRV-000001");
-  const [ehliyetGecerlilikTarihi, setEhliyetGecerlilikTarihi] = useState<Date>();
+  const [ehliyetGecerlilikTarihi, setEhliyetGecerlilikTarihi] = useState("");
   const [ehliyetFile, setEhliyetFile] = useState<File | null>(null);
   
   const [formData, setFormData] = useState({
@@ -60,7 +54,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         status: initialData.status || "Aktif"
       });
       if (initialData.ehliyet_gecerlilik_tarihi) {
-        setEhliyetGecerlilikTarihi(new Date(initialData.ehliyet_gecerlilik_tarihi));
+        setEhliyetGecerlilikTarihi(initialData.ehliyet_gecerlilik_tarihi);
       }
     }
   }, [editMode, initialData, isOpen]);
@@ -105,7 +99,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         src_belge_no: formData.src_belge_no || null,
         psikoteknik_belge_no: formData.psikoteknik_belge_no || null,
         ehliyet_sinifi: formData.ehliyet_sinifi || null,
-        ehliyet_gecerlilik_tarihi: ehliyetGecerlilikTarihi ? format(ehliyetGecerlilikTarihi, "yyyy-MM-dd") : null,
+        ehliyet_gecerlilik_tarihi: ehliyetGecerlilikTarihi || null,
         status: formData.status
       };
 
@@ -167,7 +161,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
       ehliyet_sinifi: "",
       status: "Aktif"
     });
-    setEhliyetGecerlilikTarihi(undefined);
+    setEhliyetGecerlilikTarihi("");
     setEhliyetFile(null);
     setDriverCode("DRV-000001");
   };
@@ -269,31 +263,12 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
             </div>
             <div className="space-y-2">
               <Label>Ehliyet Geçerlilik Tarihi</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !ehliyetGecerlilikTarihi && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {ehliyetGecerlilikTarihi ? format(ehliyetGecerlilikTarihi, "PPP", { locale: tr }) : "Tarih seçin"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={ehliyetGecerlilikTarihi}
-                    onSelect={setEhliyetGecerlilikTarihi}
-                    locale={tr}
-                    captionLayout="dropdown-buttons"
-                    fromYear={2020}
-                    toYear={2035}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={ehliyetGecerlilikTarihi}
+                onChange={(e) => setEhliyetGecerlilikTarihi(e.target.value)}
+                className="w-full"
+              />
             </div>
           </div>
 

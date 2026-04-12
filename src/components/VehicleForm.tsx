@@ -6,12 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Upload } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 
 interface VehicleFormProps {
   isOpen: boolean;
@@ -25,40 +19,45 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [vehicleCode, setVehicleCode] = useState("VHC-000001");
-  const [kaskoBitisTarihi, setKaskoBitisTarihi] = useState<Date>();
-  const [trafikSigortasiBitisTarihi, setTrafikSigortasiBitisTarihi] = useState<Date>();
+  const [kaskoBitisTarihi, setKaskoBitisTarihi] = useState("");
+  const [trafikSigortasiBitisTarihi, setTrafikSigortasiBitisTarihi] = useState("");
   const [ruhsatFile, setRuhsatFile] = useState<File | null>(null);
-  
+
   const [formData, setFormData] = useState({
-    arac_tipi: "kamyonet",
+    arac_tipi: "",
     cekici_plakasi: "",
     dorse_plakasi: "",
-    kasa_tipi: "kapali",
+    kasa_tipi: "",
     tasima_kapasitesi_kg: "",
     yetki_belgesi: "",
+    status: "Aktif"
   });
+
+  useEffect(() => {
+    if (isOpen && !editMode) {
+      loadNextVehicleCode();
+      resetForm();
+    }
+  }, [isOpen, editMode]);
 
   useEffect(() => {
     if (editMode && initialData && isOpen) {
       setVehicleCode(initialData.vehicle_code || "VHC-000001");
       setFormData({
-        arac_tipi: initialData.arac_tipi || "kamyonet",
+        arac_tipi: initialData.arac_tipi || "",
         cekici_plakasi: initialData.cekici_plakasi || "",
         dorse_plakasi: initialData.dorse_plakasi || "",
-        kasa_tipi: initialData.kasa_tipi || "kapali",
+        kasa_tipi: initialData.kasa_tipi || "",
         tasima_kapasitesi_kg: initialData.tasima_kapasitesi_kg?.toString() || "",
         yetki_belgesi: initialData.yetki_belgesi || "",
+        status: initialData.status || "Aktif"
       });
       if (initialData.kasko_bitis_tarihi) {
-        setKaskoBitisTarihi(new Date(initialData.kasko_bitis_tarihi));
+        setKaskoBitisTarihi(initialData.kasko_bitis_tarihi);
       }
       if (initialData.trafik_sigortasi_bitis_tarihi) {
-        setTrafikSigortasiBitisTarihi(new Date(initialData.trafik_sigortasi_bitis_tarihi));
+        setTrafikSigortasiBitisTarihi(initialData.trafik_sigortasi_bitis_tarihi);
       }
-    } else if (isOpen && !editMode) {
-      loadNextVehicleCode();
-    } else if (!isOpen) {
-      resetForm();
     }
   }, [editMode, initialData, isOpen]);
 
@@ -80,11 +79,11 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.cekici_plakasi) {
+
+    if (!formData.arac_tipi || !formData.cekici_plakasi || !formData.kasa_tipi) {
       toast({
         title: "Hata",
-        description: "Lütfen çekici plakasını girin",
+        description: "Lütfen zorunlu alanları doldurun",
         variant: "destructive",
       });
       return;
@@ -92,40 +91,50 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
 
     try {
       setIsSubmitting(true);
-      
-      let ruhsatUrl = initialData?.ruhsat_dosyasi_url;
-      
-      if (ruhsatFile) {
-        const tempId = editMode && initialData ? initialData.id : crypto.randomUUID();
-        ruhsatUrl = await vehicleService.uploadRuhsatFile(ruhsatFile, tempId!);
-      }
 
-      const submitData: Vehicle = {
+      const submitData = {
         vehicle_code: vehicleCode,
         arac_tipi: formData.arac_tipi,
         cekici_plakasi: formData.cekici_plakasi,
-        dorse_plakasi: formData.dorse_plakasi || undefined,
+        dorse_plakasi: formData.dorse_plakasi || null,
         kasa_tipi: formData.kasa_tipi,
-        tasima_kapasitesi_kg: formData.tasima_kapasitesi_kg ? parseInt(formData.tasima_kapasitesi_kg) : undefined,
-        kasko_bitis_tarihi: kaskoBitisTarihi ? format(kaskoBitisTarihi, "yyyy-MM-dd") : undefined,
-        trafik_sigortasi_bitis_tarihi: trafikSigortasiBitisTarihi ? format(trafikSigortasiBitisTarihi, "yyyy-MM-dd") : undefined,
-        yetki_belgesi: formData.yetki_belgesi || undefined,
-        ruhsat_dosyasi_url: ruhsatUrl,
-        status: "Aktif"
+        tasima_kapasitesi_kg: formData.tasima_kapasitesi_kg ? parseInt(formData.tasima_kapasitesi_kg) : null,
+        kasko_bitis_tarihi: kaskoBitisTarihi || null,
+        trafik_sigortasi_bitis_tarihi: trafikSigortasiBitisTarihi || null,
+        yetki_belgesi: formData.yetki_belgesi || null,
+        status: formData.status
       };
 
+      let vehicleId: string;
+
       if (editMode && initialData) {
-        await vehicleService.updateVehicle(initialData.id!, submitData);
+        const updated = await vehicleService.updateVehicle(initialData.id!, submitData);
+        vehicleId = updated.id;
         toast({
           title: "Başarılı",
           description: "Araç başarıyla güncellendi",
         });
       } else {
-        await vehicleService.createVehicle(submitData);
+        const created = await vehicleService.createVehicle(submitData);
+        vehicleId = created.id;
         toast({
           title: "Başarılı",
           description: "Araç başarıyla oluşturuldu",
         });
+      }
+
+      // Upload file if exists
+      if (ruhsatFile) {
+        try {
+          await vehicleService.uploadRuhsatFile(ruhsatFile, vehicleId);
+        } catch (error) {
+          console.error("Error uploading file:", error);
+          toast({
+            title: "Uyarı",
+            description: "Araç kaydedildi ancak dosya yüklenirken hata oluştu",
+            variant: "destructive",
+          });
+        }
       }
 
       onSuccess();
@@ -145,15 +154,16 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
 
   const resetForm = () => {
     setFormData({
-      arac_tipi: "kamyonet",
+      arac_tipi: "",
       cekici_plakasi: "",
       dorse_plakasi: "",
-      kasa_tipi: "kapali",
+      kasa_tipi: "",
       tasima_kapasitesi_kg: "",
       yetki_belgesi: "",
+      status: "Aktif"
     });
-    setKaskoBitisTarihi(undefined);
-    setTrafikSigortasiBitisTarihi(undefined);
+    setKaskoBitisTarihi("");
+    setTrafikSigortasiBitisTarihi("");
     setRuhsatFile(null);
     setVehicleCode("VHC-000001");
   };
@@ -162,39 +172,39 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editMode ? "Araç Düzenle" : "Yeni Araç Ekle"}</DialogTitle>
+          <DialogTitle>{editMode ? "Araç Düzenle" : "Yeni Araç Oluştur"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Row 1: Araç Kodu, Araç Tipi */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Araç Kodu</Label>
-              <Input value={vehicleCode} disabled className="bg-gray-50" />
-            </div>
-            <div className="space-y-2">
-              <Label>Araç Tipi *</Label>
-              <Select value={formData.arac_tipi} onValueChange={(value) => setFormData({ ...formData, arac_tipi: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="panelvan">Panelvan</SelectItem>
-                  <SelectItem value="kamyonet">Kamyonet</SelectItem>
-                  <SelectItem value="kamyon">Kamyon</SelectItem>
-                  <SelectItem value="tir">Tır</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Araç Kodu */}
+          <div className="space-y-2">
+            <Label>Araç Kodu</Label>
+            <Input value={vehicleCode} disabled className="bg-gray-50" />
           </div>
 
-          {/* Row 2: Çekici & Dorse Plakası */}
+          {/* Araç Tipi */}
+          <div className="space-y-2">
+            <Label>Araç Tipi *</Label>
+            <Select value={formData.arac_tipi} onValueChange={(value) => setFormData({ ...formData, arac_tipi: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Araç tipi seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="panelvan">Panelvan</SelectItem>
+                <SelectItem value="kamyonet">Kamyonet</SelectItem>
+                <SelectItem value="kamyon">Kamyon</SelectItem>
+                <SelectItem value="tir">Tır</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Plakalar */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Çekici Plakası *</Label>
               <Input
                 value={formData.cekici_plakasi}
-                onChange={(e) => setFormData({ ...formData, cekici_plakasi: e.target.value.toUpperCase() })}
+                onChange={(e) => setFormData({ ...formData, cekici_plakasi: e.target.value })}
                 placeholder="34 ABC 123"
                 required
               />
@@ -203,19 +213,19 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               <Label>Dorse Plakası</Label>
               <Input
                 value={formData.dorse_plakasi}
-                onChange={(e) => setFormData({ ...formData, dorse_plakasi: e.target.value.toUpperCase() })}
+                onChange={(e) => setFormData({ ...formData, dorse_plakasi: e.target.value })}
                 placeholder="34 XYZ 456"
               />
             </div>
           </div>
 
-          {/* Row 3: Kasa Tipi & Taşıma Kapasitesi */}
+          {/* Kasa Tipi ve Kapasite */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Kasa Tipi *</Label>
               <Select value={formData.kasa_tipi} onValueChange={(value) => setFormData({ ...formData, kasa_tipi: value })}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Kasa tipi seçin" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="kapali">Kapalı</SelectItem>
@@ -231,7 +241,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
                 type="number"
                 value={formData.tasima_kapasitesi_kg}
                 onChange={(e) => setFormData({ ...formData, tasima_kapasitesi_kg: e.target.value })}
-                placeholder="15000"
+                placeholder="24000"
               />
             </div>
           </div>
@@ -240,73 +250,35 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Kasko Bitiş Tarihi</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !kaskoBitisTarihi && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {kaskoBitisTarihi ? format(kaskoBitisTarihi, "PPP", { locale: tr }) : "Tarih seçin"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={kaskoBitisTarihi}
-                    onSelect={setKaskoBitisTarihi}
-                    locale={tr}
-                    captionLayout="dropdown-buttons"
-                    fromYear={2020}
-                    toYear={2035}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={kaskoBitisTarihi}
+                onChange={(e) => setKaskoBitisTarihi(e.target.value)}
+                className="w-full"
+              />
             </div>
             <div className="space-y-2">
               <Label>Trafik Sigortası Bitiş Tarihi</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !trafikSigortasiBitisTarihi && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {trafikSigortasiBitisTarihi ? format(trafikSigortasiBitisTarihi, "PPP", { locale: tr }) : "Tarih seçin"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={trafikSigortasiBitisTarihi}
-                    onSelect={setTrafikSigortasiBitisTarihi}
-                    locale={tr}
-                    captionLayout="dropdown-buttons"
-                    fromYear={2020}
-                    toYear={2035}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={trafikSigortasiBitisTarihi}
+                onChange={(e) => setTrafikSigortasiBitisTarihi(e.target.value)}
+                className="w-full"
+              />
             </div>
           </div>
 
-          {/* Row 5: Yetki Belgesi */}
+          {/* Yetki Belgesi */}
           <div className="space-y-2">
             <Label>Yetki Belgesi (K1/K2)</Label>
             <Input
               value={formData.yetki_belgesi}
               onChange={(e) => setFormData({ ...formData, yetki_belgesi: e.target.value })}
-              placeholder="K1 veya K2"
+              placeholder="K1, K2 veya K1/K2"
             />
           </div>
 
-          {/* Row 6: Ruhsat Dosyası */}
+          {/* Ruhsat Dosyası */}
           <div className="space-y-2">
             <Label>Ruhsat Dosyası</Label>
             <div className="flex items-center gap-2">
@@ -316,21 +288,25 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
                 onChange={handleFileChange}
                 className="flex-1"
               />
-              <Upload className="h-4 w-4 text-gray-400" />
+              {ruhsatFile && (
+                <span className="text-sm text-gray-600">{ruhsatFile.name}</span>
+              )}
             </div>
-            {ruhsatFile && (
-              <p className="text-sm text-gray-600">Seçili: {ruhsatFile.name}</p>
-            )}
-            {initialData?.ruhsat_dosyasi_url && !ruhsatFile && (
-              <a 
-                href={initialData.ruhsat_dosyasi_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Mevcut dosyayı görüntüle
-              </a>
-            )}
+            <p className="text-xs text-gray-500">PDF, JPG veya PNG formatında yükleyebilirsiniz</p>
+          </div>
+
+          {/* Durum */}
+          <div className="space-y-2">
+            <Label>Durum</Label>
+            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Aktif">Aktif</SelectItem>
+                <SelectItem value="Pasif">Pasif</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter>
