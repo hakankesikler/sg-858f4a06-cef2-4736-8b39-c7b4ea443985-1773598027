@@ -32,25 +32,23 @@ export function AccountingModule() {
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
-  const [cariTuru, setCariTuru] = useState("gercek");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<any>({
-    account_type: "musteri",
-    person_type: "individual",
+  const [cariTuru, setCariTuru] = useState("gercek");
+  const { toast } = useToast();
+
+  const [formData, setFormData] = useState({
     name: "",
+    company: "",
     email: "",
     phone: "",
-    tax_number: "",
-    tax_office: "",
     address: "",
     city: "",
-    company: "",
+    tax_number: "",
+    tax_office: "",
+    status: "Potansiyel",
+    notes: "",
+    account_type: activeTab
   });
-  const [vadeGunuVar, setVadeGunuVar] = useState(false);
-  const [vadeGunuSayisi, setVadeGunuSayisi] = useState("");
-  const [sabitIskontoVar, setSabitIskontoVar] = useState(false);
-  const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
-  const { toast } = useToast();
 
   useEffect(() => {
     if (activeMainTab === "cari-hesaplar") {
@@ -1691,17 +1689,13 @@ export function AccountingModule() {
                 <h3 className="text-lg font-medium text-blue-600">Vade Bilgileri</h3>
                 <div className="space-y-2">
                   <Label className="text-blue-500 font-normal">Vade Günü</Label>
-                  <div className="flex gap-4 items-center">
+                  <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="vadeGunu"
                         value="yok"
-                        checked={!vadeGunuVar}
-                        onChange={() => {
-                          setVadeGunuVar(false);
-                          setVadeGunuSayisi("");
-                        }}
+                        defaultChecked
                         className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="text-gray-700">Yok</span>
@@ -1711,48 +1705,28 @@ export function AccountingModule() {
                         type="radio"
                         name="vadeGunu"
                         value="var"
-                        checked={vadeGunuVar}
-                        onChange={() => setVadeGunuVar(true)}
                         className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="text-gray-700">Var</span>
                     </label>
-                    
-                    {vadeGunuVar && (
-                      <div className="flex items-center gap-2 ml-4">
-                        <Input
-                          type="number"
-                          value={vadeGunuSayisi}
-                          onChange={(e) => setVadeGunuSayisi(e.target.value)}
-                          placeholder="Gün sayısı"
-                          className="w-32"
-                          min="0"
-                        />
-                        <span className="text-gray-600 text-sm">gün</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
 
               <div className="border-t border-gray-100 border-dashed my-4"></div>
 
-              {/* Sabit İskonto */}
+              {/* Diğer Bilgiler */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-blue-600">Sabit İskonto</h3>
+                <h3 className="text-lg font-medium text-blue-600">Diğer Bilgiler</h3>
                 <div className="space-y-2">
                   <Label className="text-blue-500 font-normal">Sabit İskonto</Label>
-                  <div className="flex gap-4 items-center">
+                  <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="sabitIskonto"
                         value="yok"
-                        checked={!sabitIskontoVar}
-                        onChange={() => {
-                          setSabitIskontoVar(false);
-                          setSabitIskontoYuzde("");
-                        }}
+                        defaultChecked
                         className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="text-gray-700">Yok</span>
@@ -1762,30 +1736,10 @@ export function AccountingModule() {
                         type="radio"
                         name="sabitIskonto"
                         value="var"
-                        checked={sabitIskontoVar}
-                        onChange={() => setSabitIskontoVar(true)}
                         className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="text-gray-700">Var</span>
                     </label>
-                    
-                    {sabitIskontoVar && (
-                      <div className="flex items-center gap-0">
-                        <Input
-                          type="number"
-                          value={sabitIskontoYuzde}
-                          onChange={(e) => setSabitIskontoYuzde(e.target.value)}
-                          placeholder=""
-                          className="rounded-r-none border-r-0"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                        />
-                        <div className="flex items-center justify-center bg-gray-100 border border-l-0 border-gray-300 px-3 h-10 rounded-r-md text-gray-600">
-                          %
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
