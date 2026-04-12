@@ -8,22 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { crmService } from "@/services/crmService";
 import { CariForm } from "@/components/CariForm";
-import { Building2, Eye, Edit, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { crmService } from "@/services/crmService";
-import { useToast } from "@/components/ui/use-toast";
 
 export function CRMModule() {
   const { toast } = useToast();
@@ -33,32 +21,21 @@ export function CRMModule() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("musteri");
   
-  // Add/Edit Dialog States
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    company: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    tax_number: "",
-    tax_office: "",
-    status: "Potansiyel" as const,
-    notes: "",
-    account_type: "musteri"
-  });
-  
-  // Delete Dialog State
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deletingCustomer, setDeletingCustomer] = useState<any>(null);
+  // States
+  const [isFormOpen, setIsFormOpen] = useState(false);
   
   // Detail Dialog State
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [detailCustomer, setDetailCustomer] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+
+  // Edit Dialog State
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  
+  // Delete Dialog State
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingCustomer, setDeletingCustomer] = useState<any>(null);
   
   // Filter States
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -101,93 +78,19 @@ export function CRMModule() {
     setCities(cityList);
   };
 
-  const openAddDialog = () => {
-    setFormData({
-      name: "",
-      company: "",
-      email: "",
-      phone: "",
-      address: "",
-      city: "",
-      tax_number: "",
-      tax_office: "",
-      status: "Potansiyel",
-      notes: "",
-      account_type: activeTab
-    });
-    setIsAddDialogOpen(true);
-  };
-
-  const openEditDialog = (customer: any) => {
-    setEditingCustomer(customer);
-    setFormData({
-      name: customer.name,
-      company: customer.company || "",
-      email: customer.email,
-      phone: customer.phone || "",
-      address: customer.address || "",
-      city: customer.city || "",
-      tax_number: customer.tax_number || "",
-      tax_office: customer.tax_office || "",
-      status: customer.status,
-      notes: customer.notes || "",
-      account_type: customer.account_type || "musteri"
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleAddCustomer = async () => {
-    if (!formData.name || !formData.email) {
-      alert("Lütfen en az isim ve email giriniz!");
-      return;
-    }
+  const handleDeleteCustomer = async () => {
+    if (!deletingCustomer) return;
 
     try {
       setIsSubmitting(true);
-      await crmService.createCustomer(formData);
-      setIsAddDialogOpen(false);
-      await loadData();
-      alert("✅ Cari başarıyla eklendi!");
-    } catch (error) {
-      console.error("Error creating customer:", error);
-      alert("❌ Cari eklenirken hata oluştu!");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleUpdateCustomer = async () => {
-    if (!formData.name || !formData.email) {
-      alert("Lütfen en az isim ve email giriniz!");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      await crmService.updateCustomer(editingCustomer.id, formData);
-      setIsEditDialogOpen(false);
-      await loadData();
-      alert("✅ Cari başarıyla güncellendi!");
-    } catch (error) {
-      console.error("Error updating customer:", error);
-      alert("❌ Cari güncellenirken hata oluştu!");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDeleteCustomer = async (id: string) => {
-    if (!confirm("Bu cariyi silmek istediğinizden emin misiniz?")) {
-      return;
-    }
-
-    try {
-      await crmService.deleteCustomer(id);
+      await crmService.deleteCustomer(deletingCustomer.id);
       toast({
         title: "Başarılı",
         description: "Cari başarıyla silindi",
       });
-      loadCustomers();
+      setIsDeleteDialogOpen(false);
+      setDeletingCustomer(null);
+      loadData();
     } catch (error) {
       console.error("Error deleting customer:", error);
       toast({
@@ -195,6 +98,8 @@ export function CRMModule() {
         description: "Cari silinirken bir hata oluştu",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -223,7 +128,7 @@ export function CRMModule() {
         c.email,
         c.phone || "",
         c.city || "",
-        c.tax_number || "",
+        c.tax_number || c.vergi_no || c.tc_no || "",
         c.status
       ].join(","))
     ].join("\n");
@@ -233,7 +138,7 @@ export function CRMModule() {
     link.href = URL.createObjectURL(blob);
     link.download = `cari_listesi_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    alert("✅ Excel dosyası indirildi!");
+    toast({ title: "Başarılı", description: "Excel dosyası indirildi" });
   };
 
   const toggleCustomerSelection = (customerId: string) => {
@@ -269,7 +174,8 @@ export function CRMModule() {
       personel: UserCircle2,
       ortak: Users
     };
-    return icons[type as keyof typeof icons] || Building2;
+    const IconComponent = icons[type as keyof typeof icons] || Building2;
+    return <IconComponent className="h-4 w-4" />;
   };
 
   // Apply filters
@@ -286,7 +192,9 @@ export function CRMModule() {
       customer.email?.toLowerCase().includes(searchLower) ||
       customer.phone?.includes(searchTerm) ||
       customer.city?.toLowerCase().includes(searchLower) ||
-      customer.tax_number?.includes(searchTerm);
+      customer.tax_number?.includes(searchTerm) ||
+      customer.vergi_no?.includes(searchTerm) ||
+      customer.tc_no?.includes(searchTerm);
 
     return matchesSearch;
   });
@@ -424,6 +332,10 @@ export function CRMModule() {
           <TabsList className="bg-transparent p-0 h-auto space-x-2">
             <TabsTrigger 
               value="musteri"
+              onClick={(e) => {
+                e.preventDefault();
+                setIsFormOpen(true);
+              }}
               className="bg-green-600 text-white data-[state=active]:bg-green-700 px-4 py-2 rounded"
             >
               Cari Oluştur
@@ -535,43 +447,27 @@ export function CRMModule() {
                         {customer.id.substring(0, 8)}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{customer.company || customer.name}</div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center gap-1 text-sm text-gray-700">
-                          <Building2 className="h-4 w-4" />
-                          {customer.account_type === "musteri" ? "Müşteri" : 
-                           customer.account_type === "tedarikci" ? "Tedarikçi" :
-                           customer.account_type === "personel" ? "Personel" :
-                           customer.account_type === "ortak" ? "Ortak" : "Müşteri"}
+                          {getAccountTypeIcon(customer.account_type || "musteri")}
+                          {getAccountTypeLabel(customer.account_type || "musteri")}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">{customer.phone}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded">
+                        <span className={`px-2 py-1 rounded ${getStatusBadge(customer.status)}`}>
                           {customer.status || "Aktif"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {customer.vergi_no || customer.tc_no || "-"}
+                        {customer.vergi_no || customer.tc_no || customer.tax_number || "-"}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <button 
-                            onClick={() => {
-                              setDetailCustomer(customer);
-                              setIsDetailDialogOpen(true);
-                              setLoadingDetail(true);
-                              
-                              try {
-                                const detailedData = crmService.getCustomerById(customer.id);
-                                setDetailCustomer(detailedData);
-                              } catch (error) {
-                                console.error("Error loading customer details:", error);
-                              } finally {
-                                setLoadingDetail(false);
-                              }
-                            }}
+                            onClick={() => openDetailDialog(customer)}
                             className="p-1 hover:bg-gray-100 rounded"
                             title="Görüntüle"
                           >
@@ -580,19 +476,6 @@ export function CRMModule() {
                           <button 
                             onClick={() => {
                               setEditingCustomer(customer);
-                              setFormData({
-                                name: customer.name,
-                                company: customer.company || "",
-                                email: customer.email,
-                                phone: customer.phone || "",
-                                address: customer.address || "",
-                                city: customer.city || "",
-                                tax_number: customer.tax_number || "",
-                                tax_office: customer.tax_office || "",
-                                status: customer.status,
-                                notes: customer.notes || "",
-                                account_type: customer.account_type || "musteri"
-                              });
                               setIsEditDialogOpen(true);
                             }}
                             className="p-1 hover:bg-gray-100 rounded"
@@ -627,267 +510,103 @@ export function CRMModule() {
         </TabsContent>
       </Tabs>
 
-      {/* Add Customer Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      {/* Add CariForm for creating new customers */}
+      <CariForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSuccess={loadData}
+      />
+
+      {/* View Detail Modal */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Yeni {getAccountTypeLabel(activeTab)} Ekle</DialogTitle>
+            <DialogTitle>Cari Detayları</DialogTitle>
           </DialogHeader>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Ad Soyad *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ahmet Yılmaz"
-              />
+          {loadingDetail ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="company">Şirket/Unvan</Label>
-              <Input
-                id="company"
-                value={formData.company}
-                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                placeholder="ABC Lojistik A.Ş."
-              />
+          ) : detailCustomer && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-500">Ünvan/Ad Soyad</Label>
+                  <p className="font-medium">{detailCustomer.company || detailCustomer.name}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Cari Tipi</Label>
+                  <p className="font-medium">
+                    {getAccountTypeLabel(detailCustomer.account_type || "musteri")}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Email</Label>
+                  <p className="font-medium">{detailCustomer.email}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Telefon</Label>
+                  <p className="font-medium">{detailCustomer.phone}</p>
+                </div>
+                {detailCustomer.vergi_no && (
+                  <div>
+                    <Label className="text-gray-500">Vergi No</Label>
+                    <p className="font-medium">{detailCustomer.vergi_no}</p>
+                  </div>
+                )}
+                {detailCustomer.tc_no && (
+                  <div>
+                    <Label className="text-gray-500">TC No</Label>
+                    <p className="font-medium">{detailCustomer.tc_no}</p>
+                  </div>
+                )}
+                {detailCustomer.tax_office && (
+                  <div>
+                    <Label className="text-gray-500">Vergi Dairesi</Label>
+                    <p className="font-medium">{detailCustomer.tax_office}</p>
+                  </div>
+                )}
+                {detailCustomer.city && (
+                  <div>
+                    <Label className="text-gray-500">İl</Label>
+                    <p className="font-medium">{detailCustomer.city}</p>
+                  </div>
+                )}
+                {detailCustomer.district && (
+                  <div>
+                    <Label className="text-gray-500">İlçe</Label>
+                    <p className="font-medium">{detailCustomer.district}</p>
+                  </div>
+                )}
+                {detailCustomer.address && (
+                  <div className="col-span-2">
+                    <Label className="text-gray-500">Adres</Label>
+                    <p className="font-medium">{detailCustomer.address}</p>
+                  </div>
+                )}
+                {detailCustomer.notes && (
+                  <div className="col-span-2">
+                    <Label className="text-gray-500">Notlar</Label>
+                    <p className="font-medium">{detailCustomer.notes}</p>
+                  </div>
+                )}
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="ahmet@example.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefon</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="0532 123 45 67"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tax_number">VKN/TCKN</Label>
-              <Input
-                id="tax_number"
-                value={formData.tax_number}
-                onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
-                placeholder="1234567890"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tax_office">Vergi Dairesi</Label>
-              <Input
-                id="tax_office"
-                value={formData.tax_office}
-                onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
-                placeholder="Kadıköy"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="city">Şehir</Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                placeholder="İstanbul"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Durum</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value: any) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Aktif">Aktif</SelectItem>
-                  <SelectItem value="Potansiyel">Potansiyel</SelectItem>
-                  <SelectItem value="Eski Müşteri">Eski Müşteri</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="address">Adres</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Büyükdere Cad. No:123 Şişli"
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="notes">Notlar</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Cari hakkında notlar..."
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsAddDialogOpen(false)}
-              disabled={isSubmitting}
-            >
-              İptal
-            </Button>
-            <Button
-              onClick={handleAddCustomer}
-              disabled={isSubmitting}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {isSubmitting ? "Ekleniyor..." : "Cari Ekle"}
-            </Button>
-          </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
 
-      {/* Edit Customer Dialog */}
+      {/* Edit Modal */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Cari Düzenle</DialogTitle>
+            <DialogTitle>Cari Düzenle</DialogTitle>
           </DialogHeader>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Ad Soyad *</Label>
-              <Input
-                id="edit-name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-company">Şirket/Unvan</Label>
-              <Input
-                id="edit-company"
-                value={formData.company}
-                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-email">Email *</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-phone">Telefon</Label>
-              <Input
-                id="edit-phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-tax_number">VKN/TCKN</Label>
-              <Input
-                id="edit-tax_number"
-                value={formData.tax_number}
-                onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-tax_office">Vergi Dairesi</Label>
-              <Input
-                id="edit-tax_office"
-                value={formData.tax_office}
-                onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-city">Şehir</Label>
-              <Input
-                id="edit-city"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-status">Durum</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value: any) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Aktif">Aktif</SelectItem>
-                  <SelectItem value="Potansiyel">Potansiyel</SelectItem>
-                  <SelectItem value="Eski Müşteri">Eski Müşteri</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="edit-address">Adres</Label>
-              <Input
-                id="edit-address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="edit-notes">Notlar</Label>
-              <Textarea
-                id="edit-notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={3}
-              />
-            </div>
-          </div>
-
+          <p className="text-sm text-gray-500">
+            Düzenleme özelliği detaylı Cari Formu üzerinden yakında eklenecek.
+          </p>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-              disabled={isSubmitting}
-            >
-              İptal
-            </Button>
-            <Button
-              onClick={handleUpdateCustomer}
-              disabled={isSubmitting}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {isSubmitting ? "Güncelleniyor..." : "Kaydet"}
-            </Button>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Kapat</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -920,213 +639,6 @@ export function CRMModule() {
         </DialogContent>
       </Dialog>
 
-      {/* Customer Detail Dialog */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">
-              {detailCustomer?.company || detailCustomer?.name}
-            </DialogTitle>
-          </DialogHeader>
-
-          {loadingDetail ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-            </div>
-          ) : detailCustomer && (
-            <div className="space-y-6">
-              {/* Customer Info */}
-              <Card className="p-6">
-                <h3 className="font-bold text-lg mb-4">Cari Bilgileri</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-600">Ad Soyad</p>
-                    <p className="font-semibold">{detailCustomer.name}</p>
-                  </div>
-                  {detailCustomer.company && (
-                    <div>
-                      <p className="text-gray-600">Şirket</p>
-                      <p className="font-semibold">{detailCustomer.company}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-gray-600">Email</p>
-                    <p className="font-semibold">{detailCustomer.email}</p>
-                  </div>
-                  {detailCustomer.phone && (
-                    <div>
-                      <p className="text-gray-600">Telefon</p>
-                      <p className="font-semibold">{detailCustomer.phone}</p>
-                    </div>
-                  )}
-                  {detailCustomer.tax_number && (
-                    <div>
-                      <p className="text-gray-600">VKN/TCKN</p>
-                      <p className="font-semibold">{detailCustomer.tax_number}</p>
-                    </div>
-                  )}
-                  {detailCustomer.tax_office && (
-                    <div>
-                      <p className="text-gray-600">Vergi Dairesi</p>
-                      <p className="font-semibold">{detailCustomer.tax_office}</p>
-                    </div>
-                  )}
-                  {detailCustomer.city && (
-                    <div>
-                      <p className="text-gray-600">Şehir</p>
-                      <p className="font-semibold">{detailCustomer.city}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-gray-600">Durum</p>
-                    <Badge className={getStatusBadge(detailCustomer.status)}>
-                      {detailCustomer.status}
-                    </Badge>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Shipments */}
-              <Card className="p-6">
-                <h3 className="font-bold text-lg mb-4">Sevkiyatlar ({detailCustomer.shipments?.length || 0})</h3>
-                {detailCustomer.shipments?.length > 0 ? (
-                  <div className="space-y-2">
-                    {detailCustomer.shipments.slice(0, 5).map((shipment: any) => (
-                      <div key={shipment.id} className="flex justify-between items-center py-2 border-b">
-                        <div>
-                          <p className="font-semibold">{shipment.tracking_no}</p>
-                          <p className="text-sm text-gray-600">{shipment.origin} → {shipment.destination}</p>
-                        </div>
-                        <Badge>{shipment.status}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">Henüz sevkiyat kaydı yok.</p>
-                )}
-              </Card>
-
-              {/* Invoices */}
-              <Card className="p-6">
-                <h3 className="font-bold text-lg mb-4">Faturalar ({detailCustomer.invoices?.length || 0})</h3>
-                {detailCustomer.invoices?.length > 0 ? (
-                  <div className="space-y-2">
-                    {detailCustomer.invoices.slice(0, 5).map((invoice: any) => (
-                      <div key={invoice.id} className="flex justify-between items-center py-2 border-b">
-                        <div>
-                          <p className="font-semibold">{invoice.invoice_no}</p>
-                          <p className="text-sm text-gray-600">
-                            {new Date(invoice.created_at).toLocaleDateString("tr-TR")}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">₺{Number(invoice.amount).toLocaleString("tr-TR")}</p>
-                          <Badge>{invoice.status}</Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">Henüz fatura kaydı yok.</p>
-                )}
-              </Card>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Add CariForm for creating new customers */}
-      <CariForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSuccess={loadCustomers}
-      />
-
-      {/* View Modal */}
-      {viewModalOpen && selectedCustomer && (
-        <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Cari Detayları</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-500">Ünvan</Label>
-                  <p className="font-medium">{selectedCustomer.name}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Cari Tipi</Label>
-                  <p className="font-medium">
-                    {selectedCustomer.account_type === "musteri" ? "Müşteri" : 
-                     selectedCustomer.account_type === "tedarikci" ? "Tedarikçi" :
-                     selectedCustomer.account_type === "personel" ? "Personel" :
-                     selectedCustomer.account_type === "ortak" ? "Ortak" : "Müşteri"}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Email</Label>
-                  <p className="font-medium">{selectedCustomer.email}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Telefon</Label>
-                  <p className="font-medium">{selectedCustomer.phone}</p>
-                </div>
-                {selectedCustomer.vergi_no && (
-                  <div>
-                    <Label className="text-gray-500">Vergi No</Label>
-                    <p className="font-medium">{selectedCustomer.vergi_no}</p>
-                  </div>
-                )}
-                {selectedCustomer.tc_no && (
-                  <div>
-                    <Label className="text-gray-500">TC No</Label>
-                    <p className="font-medium">{selectedCustomer.tc_no}</p>
-                  </div>
-                )}
-                {selectedCustomer.tax_office && (
-                  <div>
-                    <Label className="text-gray-500">Vergi Dairesi</Label>
-                    <p className="font-medium">{selectedCustomer.tax_office}</p>
-                  </div>
-                )}
-                {selectedCustomer.city && (
-                  <div>
-                    <Label className="text-gray-500">İl</Label>
-                    <p className="font-medium">{selectedCustomer.city}</p>
-                  </div>
-                )}
-                {selectedCustomer.district && (
-                  <div>
-                    <Label className="text-gray-500">İlçe</Label>
-                    <p className="font-medium">{selectedCustomer.district}</p>
-                  </div>
-                )}
-                {selectedCustomer.address && (
-                  <div className="col-span-2">
-                    <Label className="text-gray-500">Adres</Label>
-                    <p className="font-medium">{selectedCustomer.address}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Edit Modal - You can use CariForm or create a separate edit form */}
-      {editModalOpen && selectedCustomer && (
-        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Cari Düzenle</DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-gray-500">
-              Düzenleme özelliği yakında eklenecek. Şu anda sadece görüntüleme ve silme desteklenmektedir.
-            </p>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }
