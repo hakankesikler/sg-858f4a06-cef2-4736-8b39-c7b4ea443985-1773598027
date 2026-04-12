@@ -235,6 +235,7 @@ export function LogisticsModule() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
+                              console.log("Editing shipment:", shipment);
                               setEditingShipment(shipment);
                               setIsShipmentFormOpen(true);
                             }}
@@ -306,6 +307,7 @@ export function LogisticsModule() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
+                              console.log("Editing driver:", driver);
                               setEditingDriver(driver);
                               setIsDriverFormOpen(true);
                             }}
@@ -379,6 +381,7 @@ export function LogisticsModule() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
+                              console.log("Editing vehicle:", vehicle);
                               setEditingVehicle(vehicle);
                               setIsVehicleFormOpen(true);
                             }}
