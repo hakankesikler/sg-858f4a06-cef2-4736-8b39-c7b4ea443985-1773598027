@@ -2422,19 +2422,19 @@ export function AccountingModule() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label>Tutar</Label>
-                    <Input type="number" placeholder="0.00" step="0.01" />
+                    <Input type="text" placeholder="0,00" />
                   </div>
                   <div className="space-y-2">
                     <Label>Para Birimi *</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
+                        <SelectValue placeholder="TRY" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="TRY">TRY (₺)</SelectItem>
-                        <SelectItem value="USD">USD ($)</SelectItem>
-                        <SelectItem value="EUR">EUR (€)</SelectItem>
-                        <SelectItem value="GBP">GBP (£)</SelectItem>
+                        <SelectItem value="TRY">TRY</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -2466,10 +2466,14 @@ export function AccountingModule() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
+                    <Label>İşlem Tarihi</Label>
+                    <Input type="date" defaultValue="2026-04-10" />
+                  </div>
+                  <div className="space-y-2">
                     <Label>Vade Tarihi Var Mı?</Label>
                     <div className="flex items-center gap-4 pt-2">
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="vadeTarihi" className="w-4 h-4" />
+                        <input type="radio" name="vadeTarihi" className="w-4 h-4" defaultChecked />
                         <span>Yok</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -2479,26 +2483,26 @@ export function AccountingModule() {
                     </div>
                   </div>
                 </div>
+                
+                <div className="text-sm text-gray-500">
+                  <svg className="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  Ayarlar sayfasından Proje Takip seçeneğini kapatabilirsiniz.
+                </div>
               </div>
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="flex justify-end gap-2 mt-6">
+          <DialogFooter className="flex justify-between gap-2 mt-6">
             <Button
               type="button"
               variant="outline"
               onClick={() => {
-                // Switch to Cari Detay Bilgileri tab
+                // Go back to Cari Bilgileri tab logic here
               }}
             >
-              Cari Detay Bilgileri
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => setIsAddDialogOpen(false)}
-            >
-              Vazgeç
+              Geri
             </Button>
             <Button
               type="submit"
