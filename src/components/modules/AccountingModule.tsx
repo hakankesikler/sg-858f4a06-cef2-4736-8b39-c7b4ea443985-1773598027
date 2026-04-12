@@ -2054,7 +2054,7 @@ export function AccountingModule() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <Label>Etiketler</Label>
                       <Input placeholder="Etiket ekle" />
@@ -2065,9 +2065,6 @@ export function AccountingModule() {
                         <Input type="date" defaultValue="2026-04-10" />
                       </div>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>T.C. Kimlik No</Label>
                       <Input 
@@ -2077,9 +2074,6 @@ export function AccountingModule() {
                     </div>
                     <div className="space-y-2">
                       <Label>Vergi Dairesi</Label>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Mersis No</Label>
                     </div>
                   </div>
                 </>
@@ -2136,14 +2130,6 @@ export function AccountingModule() {
                       <Input type="date" defaultValue="2026-04-10" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Etiketler</Label>
-                      <Input placeholder="Etiket ekle" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>İşlem Tarihi</Label>
-                      <Input type="date" defaultValue="2026-04-10" />
-                    </div>
-                    <div className="space-y-2">
                       <Label>Para Birimi *</Label>
                       <Select>
                         <SelectTrigger>
@@ -2156,13 +2142,6 @@ export function AccountingModule() {
                           <SelectItem value="GBP">GBP (£)</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>İşlem Tarihi</Label>
-                      <Input type="date" defaultValue="2026-04-10" />
                     </div>
                     <div className="space-y-2">
                       <Label>Para Birimi *</Label>
@@ -2244,79 +2223,6 @@ export function AccountingModule() {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Adres Bilgileri</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" className="rounded" />
-                    <span className="text-sm">Yurt Dışı Adresi</span>
-                  </label>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Adres Tipi</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="fatura">Fatura Adresi</SelectItem>
-                        <SelectItem value="teslimat">Teslimat Adresi</SelectItem>
-                        <SelectItem value="merkez">Merkez Adresi</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Adres</Label>
-                    <textarea 
-                      className="w-full min-h-[80px] px-3 py-2 border rounded-md"
-                      placeholder="Adres"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>İl</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="istanbul">İstanbul</SelectItem>
-                        <SelectItem value="ankara">Ankara</SelectItem>
-                        <SelectItem value="izmir">İzmir</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>İlçe</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                        <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                        <SelectItem value="sisli">Şişli</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Posta Kodu</Label>
-                    <Input placeholder="Posta kodu" />
-                  </div>
-                  <div className="space-y-2 flex items-end">
-                    <Button variant="destructive" size="sm">Sil</Button>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Adres Ekle
-                </Button>
               </div>
             </TabsContent>
 
@@ -2429,24 +2335,10 @@ export function AccountingModule() {
               {/* Açılış Bakiyesi */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold border-b pb-2">Açılış Bakiyesi</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Tutar</Label>
                     <Input type="number" placeholder="0.00" step="0.01" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Para Birimi *</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="TRY">TRY (₺)</SelectItem>
-                        <SelectItem value="USD">USD ($)</SelectItem>
-                        <SelectItem value="EUR">EUR (€)</SelectItem>
-                        <SelectItem value="GBP">GBP (£)</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Durumu</Label>
@@ -2474,11 +2366,7 @@ export function AccountingModule() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>İşlem Tarihi</Label>
-                    <Input type="date" />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Vade Tarihi Var Mı?</Label>
                     <div className="flex items-center gap-4 pt-2">
