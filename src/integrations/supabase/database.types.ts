@@ -178,46 +178,85 @@ export type Database = {
       }
       customers: {
         Row: {
+          account_type: string | null
           address: string | null
           city: string | null
           company: string | null
           created_at: string | null
+          district: string | null
           email: string | null
+          fax: string | null
           id: string
           last_contact: string | null
+          mersis: string | null
           name: string
           notes: string | null
           phone: string | null
+          postal_code: string | null
+          sabit_iskonto: number | null
+          short_name: string | null
           status: string | null
+          tags: string | null
+          tax_office: string | null
+          tc_no: string | null
           updated_at: string | null
+          vade_gunu: number | null
+          vergi_no: string | null
+          website: string | null
         }
         Insert: {
+          account_type?: string | null
           address?: string | null
           city?: string | null
           company?: string | null
           created_at?: string | null
+          district?: string | null
           email?: string | null
+          fax?: string | null
           id?: string
           last_contact?: string | null
+          mersis?: string | null
           name: string
           notes?: string | null
           phone?: string | null
+          postal_code?: string | null
+          sabit_iskonto?: number | null
+          short_name?: string | null
           status?: string | null
+          tags?: string | null
+          tax_office?: string | null
+          tc_no?: string | null
           updated_at?: string | null
+          vade_gunu?: number | null
+          vergi_no?: string | null
+          website?: string | null
         }
         Update: {
+          account_type?: string | null
           address?: string | null
           city?: string | null
           company?: string | null
           created_at?: string | null
+          district?: string | null
           email?: string | null
+          fax?: string | null
           id?: string
           last_contact?: string | null
+          mersis?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
+          postal_code?: string | null
+          sabit_iskonto?: number | null
+          short_name?: string | null
           status?: string | null
+          tags?: string | null
+          tax_office?: string | null
+          tc_no?: string | null
           updated_at?: string | null
+          vade_gunu?: number | null
+          vergi_no?: string | null
+          website?: string | null
         }
         Relationships: []
       }
@@ -554,6 +593,90 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          cargo_type: string | null
+          company_name: string
+          contact_name: string
+          converted_at: string | null
+          converted_to_customer: boolean | null
+          created_at: string | null
+          delivery_date: string | null
+          destination: string | null
+          email: string
+          id: string
+          message: string | null
+          notes: string | null
+          origin: string | null
+          package_count: string | null
+          phone: string
+          pickup_date: string | null
+          priority: string | null
+          service_type: string
+          source: string | null
+          special_requirements: string | null
+          status: string | null
+          updated_at: string | null
+          volume: string | null
+          weight: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          cargo_type?: string | null
+          company_name: string
+          contact_name: string
+          converted_at?: string | null
+          converted_to_customer?: boolean | null
+          created_at?: string | null
+          delivery_date?: string | null
+          destination?: string | null
+          email: string
+          id?: string
+          message?: string | null
+          notes?: string | null
+          origin?: string | null
+          package_count?: string | null
+          phone: string
+          pickup_date?: string | null
+          priority?: string | null
+          service_type: string
+          source?: string | null
+          special_requirements?: string | null
+          status?: string | null
+          updated_at?: string | null
+          volume?: string | null
+          weight?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          cargo_type?: string | null
+          company_name?: string
+          contact_name?: string
+          converted_at?: string | null
+          converted_to_customer?: boolean | null
+          created_at?: string | null
+          delivery_date?: string | null
+          destination?: string | null
+          email?: string
+          id?: string
+          message?: string | null
+          notes?: string | null
+          origin?: string | null
+          package_count?: string | null
+          phone?: string
+          pickup_date?: string | null
+          priority?: string | null
+          service_type?: string
+          source?: string | null
+          special_requirements?: string | null
+          status?: string | null
+          updated_at?: string | null
+          volume?: string | null
+          weight?: string | null
+        }
+        Relationships: []
       }
       leaves: {
         Row: {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Plus, Phone, Mail, MapPin, Calendar, TrendingUp, Filter, ExternalLink, Edit, Trash2, Eye, Download, Send, Upload, ChevronDown, Building2, Users, UserCircle2, Briefcase } from "lucide-react";
+import { Search, Plus, Phone, Mail, MapPin, Calendar, TrendingUp, Filter, ExternalLink, Eye, Edit, Trash2, Download, Send, Upload, ChevronDown, Building2, Users, UserCircle2, Briefcase } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 import { crmService } from "@/services/crmService";
+import { CariForm } from "@/components/CariForm";
+import { Building2, Eye, Edit, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { crmService } from "@/services/crmService";
+import { useToast } from "@/components/ui/use-toast";
 
 export function CRMModule() {
+  const { toast } = useToast();
   const [customers, setCustomers] = useState<any[]>([]);
   const [stats, setStats] = useState({ total: 0, active: 0, potential: 0, old: 0 });
   const [searchTerm, setSearchTerm] = useState("");
@@ -163,18 +176,25 @@ export function CRMModule() {
     }
   };
 
-  const handleDeleteCustomer = async () => {
+  const handleDeleteCustomer = async (id: string) => {
+    if (!confirm("Bu cariyi silmek istediğinizden emin misiniz?")) {
+      return;
+    }
+
     try {
-      setIsSubmitting(true);
-      await crmService.deleteCustomer(deletingCustomer.id);
-      setIsDeleteDialogOpen(false);
-      await loadData();
-      alert("✅ Cari başarıyla silindi!");
+      await crmService.deleteCustomer(id);
+      toast({
+        title: "Başarılı",
+        description: "Cari başarıyla silindi",
+      });
+      loadCustomers();
     } catch (error) {
       console.error("Error deleting customer:", error);
-      alert("❌ Cari silinirken hata oluştu!");
-    } finally {
-      setIsSubmitting(false);
+      toast({
+        title: "Hata",
+        description: "Cari silinirken bir hata oluştu",
+        variant: "destructive",
+      });
     }
   };
 
@@ -312,7 +332,7 @@ export function CRMModule() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -489,111 +509,114 @@ export function CRMModule() {
 
         <TabsContent value={activeTab} className="mt-0">
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
-                      onCheckedChange={toggleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Kod</TableHead>
-                  <TableHead>Unvan</TableHead>
-                  <TableHead>Cari Tipi</TableHead>
-                  <TableHead>Telefon Numarası</TableHead>
-                  <TableHead>Etiketler</TableHead>
-                  <TableHead>VKN/TCKN</TableHead>
-                  <TableHead>Yerel Bakiye</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCustomers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-12 text-gray-500">
-                      <div className="flex flex-col items-center gap-2">
-                        <Search className="w-12 h-12 opacity-50" />
-                        <p>Kayıt bulunamadı</p>
-                        <Button onClick={openAddDialog} className="mt-2">
-                          <Plus className="w-4 h-4 mr-2" />
-                          Yeni {getAccountTypeLabel(activeTab)} Ekle
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredCustomers.map((customer) => {
-                    const AccountIcon = getAccountTypeIcon(customer.account_type || "musteri");
-                    return (
-                      <TableRow key={customer.id} className="hover:bg-gray-50">
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedCustomers.includes(customer.id)}
-                            onCheckedChange={() => toggleCustomerSelection(customer.id)}
-                          />
-                        </TableCell>
-                        <TableCell className="font-mono text-sm text-gray-600">
-                          {customer.id.substring(0, 8)}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-semibold">{customer.company || customer.name}</p>
-                            {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <AccountIcon className="w-4 h-4 text-gray-600" />
-                            <span>{getAccountTypeLabel(customer.account_type || "musteri")}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{customer.phone || "-"}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusBadge(customer.status)}>
-                            {customer.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {customer.tax_number || "-"}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          ₺0,00
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => openDetailDialog(customer)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => openEditDialog(customer)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => {
-                                setDeletingCustomer(customer);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4 text-red-600" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="w-12 px-6 py-3">
+                      <input type="checkbox" className="rounded" />
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kod</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ünvan</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cari Tipi</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Telefon Numarası</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Etiketler</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">VKN/TCKN</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredCustomers.map((customer) => (
+                    <tr key={customer.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <input type="checkbox" className="rounded" />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {customer.id.substring(0, 8)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1 text-sm text-gray-700">
+                          <Building2 className="h-4 w-4" />
+                          {customer.account_type === "musteri" ? "Müşteri" : 
+                           customer.account_type === "tedarikci" ? "Tedarikçi" :
+                           customer.account_type === "personel" ? "Personel" :
+                           customer.account_type === "ortak" ? "Ortak" : "Müşteri"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{customer.phone}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded">
+                          {customer.status || "Aktif"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {customer.vergi_no || customer.tc_no || "-"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => {
+                              setDetailCustomer(customer);
+                              setIsDetailDialogOpen(true);
+                              setLoadingDetail(true);
+                              
+                              try {
+                                const detailedData = crmService.getCustomerById(customer.id);
+                                setDetailCustomer(detailedData);
+                              } catch (error) {
+                                console.error("Error loading customer details:", error);
+                              } finally {
+                                setLoadingDetail(false);
+                              }
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Görüntüle"
+                          >
+                            <Eye className="h-4 w-4 text-gray-600" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setEditingCustomer(customer);
+                              setFormData({
+                                name: customer.name,
+                                company: customer.company || "",
+                                email: customer.email,
+                                phone: customer.phone || "",
+                                address: customer.address || "",
+                                city: customer.city || "",
+                                tax_number: customer.tax_number || "",
+                                tax_office: customer.tax_office || "",
+                                status: customer.status,
+                                notes: customer.notes || "",
+                                account_type: customer.account_type || "musteri"
+                              });
+                              setIsEditDialogOpen(true);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Düzenle"
+                          >
+                            <Edit className="h-4 w-4 text-gray-600" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setDeletingCustomer(customer);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Sil"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Card>
 
           {filteredCustomers.length > 0 && (
@@ -1011,6 +1034,99 @@ export function CRMModule() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Add CariForm for creating new customers */}
+      <CariForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSuccess={loadCustomers}
+      />
+
+      {/* View Modal */}
+      {viewModalOpen && selectedCustomer && (
+        <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Cari Detayları</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-500">Ünvan</Label>
+                  <p className="font-medium">{selectedCustomer.name}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Cari Tipi</Label>
+                  <p className="font-medium">
+                    {selectedCustomer.account_type === "musteri" ? "Müşteri" : 
+                     selectedCustomer.account_type === "tedarikci" ? "Tedarikçi" :
+                     selectedCustomer.account_type === "personel" ? "Personel" :
+                     selectedCustomer.account_type === "ortak" ? "Ortak" : "Müşteri"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Email</Label>
+                  <p className="font-medium">{selectedCustomer.email}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Telefon</Label>
+                  <p className="font-medium">{selectedCustomer.phone}</p>
+                </div>
+                {selectedCustomer.vergi_no && (
+                  <div>
+                    <Label className="text-gray-500">Vergi No</Label>
+                    <p className="font-medium">{selectedCustomer.vergi_no}</p>
+                  </div>
+                )}
+                {selectedCustomer.tc_no && (
+                  <div>
+                    <Label className="text-gray-500">TC No</Label>
+                    <p className="font-medium">{selectedCustomer.tc_no}</p>
+                  </div>
+                )}
+                {selectedCustomer.tax_office && (
+                  <div>
+                    <Label className="text-gray-500">Vergi Dairesi</Label>
+                    <p className="font-medium">{selectedCustomer.tax_office}</p>
+                  </div>
+                )}
+                {selectedCustomer.city && (
+                  <div>
+                    <Label className="text-gray-500">İl</Label>
+                    <p className="font-medium">{selectedCustomer.city}</p>
+                  </div>
+                )}
+                {selectedCustomer.district && (
+                  <div>
+                    <Label className="text-gray-500">İlçe</Label>
+                    <p className="font-medium">{selectedCustomer.district}</p>
+                  </div>
+                )}
+                {selectedCustomer.address && (
+                  <div className="col-span-2">
+                    <Label className="text-gray-500">Adres</Label>
+                    <p className="font-medium">{selectedCustomer.address}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Modal - You can use CariForm or create a separate edit form */}
+      {editModalOpen && selectedCustomer && (
+        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cari Düzenle</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-gray-500">
+              Düzenleme özelliği yakında eklenecek. Şu anda sadece görüntüleme ve silme desteklenmektedir.
+            </p>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
