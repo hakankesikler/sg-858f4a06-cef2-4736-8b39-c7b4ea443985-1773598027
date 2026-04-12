@@ -3,13 +3,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { driverService, Driver } from "@/services/driverService";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
+import { driverService, Driver } from "@/services/driverService";
+import { cn } from "@/lib/utils";
 
 interface DriverFormProps {
   isOpen: boolean;
@@ -34,7 +36,15 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     src_belge_no: "",
     psikoteknik_belge_no: "",
     ehliyet_sinifi: "",
+    status: "Aktif"
   });
+
+  useEffect(() => {
+    if (isOpen && !editMode) {
+      loadNextDriverCode();
+      resetForm();
+    }
+  }, [isOpen, editMode]);
 
   useEffect(() => {
     if (editMode && initialData && isOpen) {
@@ -47,14 +57,11 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         src_belge_no: initialData.src_belge_no || "",
         psikoteknik_belge_no: initialData.psikoteknik_belge_no || "",
         ehliyet_sinifi: initialData.ehliyet_sinifi || "",
+        status: initialData.status || "Aktif"
       });
       if (initialData.ehliyet_gecerlilik_tarihi) {
         setEhliyetGecerlilikTarihi(new Date(initialData.ehliyet_gecerlilik_tarihi));
       }
-    } else if (isOpen && !editMode) {
-      loadNextDriverCode();
-    } else if (!isOpen) {
-      resetForm();
     }
   }, [editMode, initialData, isOpen]);
 
@@ -89,39 +96,49 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     try {
       setIsSubmitting(true);
       
-      let ehliyetUrl = initialData?.ehliyet_dosyasi_url;
-      
-      if (ehliyetFile) {
-        const tempId = editMode && initialData ? initialData.id : crypto.randomUUID();
-        ehliyetUrl = await driverService.uploadEhliyetFile(ehliyetFile, tempId!);
-      }
-
-      const submitData: Driver = {
+      const submitData = {
         driver_code: driverCode,
         full_name: formData.full_name,
         tc_no: formData.tc_no,
         phone_1: formData.phone_1,
-        phone_2: formData.phone_2 || undefined,
-        src_belge_no: formData.src_belge_no || undefined,
-        psikoteknik_belge_no: formData.psikoteknik_belge_no || undefined,
-        ehliyet_sinifi: formData.ehliyet_sinifi || undefined,
-        ehliyet_gecerlilik_tarihi: ehliyetGecerlilikTarihi ? format(ehliyetGecerlilikTarihi, "yyyy-MM-dd") : undefined,
-        ehliyet_dosyasi_url: ehliyetUrl,
-        status: "Aktif"
+        phone_2: formData.phone_2 || null,
+        src_belge_no: formData.src_belge_no || null,
+        psikoteknik_belge_no: formData.psikoteknik_belge_no || null,
+        ehliyet_sinifi: formData.ehliyet_sinifi || null,
+        ehliyet_gecerlilik_tarihi: ehliyetGecerlilikTarihi ? format(ehliyetGecerlilikTarihi, "yyyy-MM-dd") : null,
+        status: formData.status
       };
 
+      let driverId: string;
+      
       if (editMode && initialData) {
-        await driverService.updateDriver(initialData.id!, submitData);
+        const updated = await driverService.updateDriver(initialData.id!, submitData);
+        driverId = updated.id;
         toast({
           title: "Başarılı",
           description: "Sürücü başarıyla güncellendi",
         });
       } else {
-        await driverService.createDriver(submitData);
+        const created = await driverService.createDriver(submitData);
+        driverId = created.id;
         toast({
           title: "Başarılı",
           description: "Sürücü başarıyla oluşturuldu",
         });
+      }
+
+      // Upload file if exists
+      if (ehliyetFile) {
+        try {
+          await driverService.uploadDriverDocument(driverId, ehliyetFile);
+        } catch (error) {
+          console.error("Error uploading file:", error);
+          toast({
+            title: "Uyarı",
+            description: "Sürücü kaydedildi ancak dosya yüklenirken hata oluştu",
+            variant: "destructive",
+          });
+        }
       }
 
       onSuccess();
@@ -148,6 +165,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
       src_belge_no: "",
       psikoteknik_belge_no: "",
       ehliyet_sinifi: "",
+      status: "Aktif"
     });
     setEhliyetGecerlilikTarihi(undefined);
     setEhliyetFile(null);
@@ -158,44 +176,47 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editMode ? "Sürücü Düzenle" : "Yeni Sürücü Ekle"}</DialogTitle>
+          <DialogTitle>{editMode ? "Sürücü Düzenle" : "Yeni Sürücü Oluştur"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Row 1: Sürücü Kodu, Ad Soyad */}
+          {/* Sürücü Kodu */}
+          <div className="space-y-2">
+            <Label>Sürücü Kodu</Label>
+            <Input value={driverCode} disabled className="bg-gray-50" />
+          </div>
+
+          {/* Temel Bilgiler */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Sürücü Kodu</Label>
-              <Input value={driverCode} disabled className="bg-gray-50" />
-            </div>
             <div className="space-y-2">
               <Label>Ad Soyad *</Label>
               <Input
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                placeholder="Ahmet Yılmaz"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>T.C. Kimlik No *</Label>
+              <Input
+                value={formData.tc_no}
+                onChange={(e) => setFormData({ ...formData, tc_no: e.target.value })}
+                placeholder="12345678901"
+                maxLength={11}
                 required
               />
             </div>
           </div>
 
-          {/* Row 2: TC Kimlik No */}
-          <div className="space-y-2">
-            <Label>T.C. Kimlik No *</Label>
-            <Input
-              value={formData.tc_no}
-              onChange={(e) => setFormData({ ...formData, tc_no: e.target.value })}
-              maxLength={11}
-              required
-            />
-          </div>
-
-          {/* Row 3: Telefon 1 & 2 */}
+          {/* İletişim Bilgileri */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Telefon 1 *</Label>
               <Input
                 value={formData.phone_1}
                 onChange={(e) => setFormData({ ...formData, phone_1: e.target.value })}
+                placeholder="0532 123 4567"
                 required
               />
             </div>
@@ -204,17 +225,19 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               <Input
                 value={formData.phone_2}
                 onChange={(e) => setFormData({ ...formData, phone_2: e.target.value })}
+                placeholder="0532 987 6543"
               />
             </div>
           </div>
 
-          {/* Row 4: SRC & Psikoteknik */}
+          {/* Belgeler */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>SRC Belge No</Label>
               <Input
                 value={formData.src_belge_no}
                 onChange={(e) => setFormData({ ...formData, src_belge_no: e.target.value })}
+                placeholder="SRC123456"
               />
             </div>
             <div className="space-y-2">
@@ -222,42 +245,59 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               <Input
                 value={formData.psikoteknik_belge_no}
                 onChange={(e) => setFormData({ ...formData, psikoteknik_belge_no: e.target.value })}
+                placeholder="PSK123456"
               />
             </div>
           </div>
 
-          {/* Row 5: Ehliyet Sınıfı & Geçerlilik */}
+          {/* Ehliyet Bilgileri */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Ehliyet Sınıfı</Label>
-              <Input
-                value={formData.ehliyet_sinifi}
-                onChange={(e) => setFormData({ ...formData, ehliyet_sinifi: e.target.value })}
-                placeholder="Örn: B, C, CE"
-              />
+              <Select value={formData.ehliyet_sinifi} onValueChange={(value) => setFormData({ ...formData, ehliyet_sinifi: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ehliyet sınıfı seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="B">B</SelectItem>
+                  <SelectItem value="C">C</SelectItem>
+                  <SelectItem value="CE">CE</SelectItem>
+                  <SelectItem value="D">D</SelectItem>
+                  <SelectItem value="DE">DE</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Ehliyet Geçerlilik Tarihi</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !ehliyetGecerlilikTarihi && "text-muted-foreground"
+                    )}
+                  >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {ehliyetGecerlilikTarihi ? format(ehliyetGecerlilikTarihi, "PPP", { locale: tr }) : "Tarih seçin"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={ehliyetGecerlilikTarihi}
                     onSelect={setEhliyetGecerlilikTarihi}
                     locale={tr}
+                    captionLayout="dropdown-buttons"
+                    fromYear={2020}
+                    toYear={2035}
                   />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
 
-          {/* Row 6: Ehliyet Dosyası */}
+          {/* Ehliyet Dosyası */}
           <div className="space-y-2">
             <Label>Ehliyet Dosyası</Label>
             <div className="flex items-center gap-2">
@@ -267,21 +307,25 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
                 onChange={handleFileChange}
                 className="flex-1"
               />
-              <Upload className="h-4 w-4 text-gray-400" />
+              {ehliyetFile && (
+                <span className="text-sm text-gray-600">{ehliyetFile.name}</span>
+              )}
             </div>
-            {ehliyetFile && (
-              <p className="text-sm text-gray-600">Seçili: {ehliyetFile.name}</p>
-            )}
-            {initialData?.ehliyet_dosyasi_url && !ehliyetFile && (
-              <a 
-                href={initialData.ehliyet_dosyasi_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Mevcut dosyayı görüntüle
-              </a>
-            )}
+            <p className="text-xs text-gray-500">PDF, JPG veya PNG formatında yükleyebilirsiniz</p>
+          </div>
+
+          {/* Durum */}
+          <div className="space-y-2">
+            <Label>Durum</Label>
+            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Aktif">Aktif</SelectItem>
+                <SelectItem value="Pasif">Pasif</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter>

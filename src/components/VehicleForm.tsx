@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface VehicleFormProps {
   isOpen: boolean;
@@ -235,23 +236,32 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
             </div>
           </div>
 
-          {/* Row 4: Kasko & Trafik Sigortası Bitiş Tarihleri */}
+          {/* Sigorta Tarihleri */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Kasko Bitiş Tarihi</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !kaskoBitisTarihi && "text-muted-foreground"
+                    )}
+                  >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {kaskoBitisTarihi ? format(kaskoBitisTarihi, "PPP", { locale: tr }) : "Tarih seçin"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={kaskoBitisTarihi}
                     onSelect={setKaskoBitisTarihi}
                     locale={tr}
+                    captionLayout="dropdown-buttons"
+                    fromYear={2020}
+                    toYear={2035}
                   />
                 </PopoverContent>
               </Popover>
@@ -260,17 +270,26 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               <Label>Trafik Sigortası Bitiş Tarihi</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !trafikSigortasiBitisTarihi && "text-muted-foreground"
+                    )}
+                  >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {trafikSigortasiBitisTarihi ? format(trafikSigortasiBitisTarihi, "PPP", { locale: tr }) : "Tarih seçin"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={trafikSigortasiBitisTarihi}
                     onSelect={setTrafikSigortasiBitisTarihi}
                     locale={tr}
+                    captionLayout="dropdown-buttons"
+                    fromYear={2020}
+                    toYear={2035}
                   />
                 </PopoverContent>
               </Popover>

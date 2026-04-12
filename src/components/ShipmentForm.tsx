@@ -302,7 +302,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={pickupDate} onSelect={setPickupDate} locale={tr} />
+                  <Calendar 
+                    mode="single" 
+                    selected={pickupDate} 
+                    onSelect={setPickupDate} 
+                    locale={tr}
+                    captionLayout="dropdown-buttons"
+                    fromYear={2020}
+                    toYear={2035}
+                  />
                 </PopoverContent>
               </Popover>
             </div>
@@ -316,7 +324,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={estimatedDeliveryDate} onSelect={setEstimatedDeliveryDate} locale={tr} />
+                  <Calendar 
+                    mode="single" 
+                    selected={estimatedDeliveryDate} 
+                    onSelect={setEstimatedDeliveryDate} 
+                    locale={tr}
+                    captionLayout="dropdown-buttons"
+                    fromYear={2020}
+                    toYear={2035}
+                  />
                 </PopoverContent>
               </Popover>
             </div>
@@ -330,7 +346,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={deliveryDate} onSelect={setDeliveryDate} locale={tr} />
+                  <Calendar 
+                    mode="single" 
+                    selected={deliveryDate} 
+                    onSelect={setDeliveryDate} 
+                    locale={tr}
+                    captionLayout="dropdown-buttons"
+                    fromYear={2020}
+                    toYear={2035}
+                  />
                 </PopoverContent>
               </Popover>
             </div>

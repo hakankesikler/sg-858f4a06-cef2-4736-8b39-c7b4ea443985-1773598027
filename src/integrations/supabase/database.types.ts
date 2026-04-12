@@ -1623,55 +1623,73 @@ export type Database = {
       }
       shipments: {
         Row: {
+          cargo_description: string | null
           cargo_type: string | null
+          cargo_volume: number | null
+          cargo_weight: number | null
           created_at: string | null
+          currency: string | null
           customer_id: string | null
           delivery_date: string | null
           destination: string
-          eta: string | null
+          driver_id: string | null
+          estimated_delivery_date: string | null
           id: string
           notes: string | null
           origin: string
+          payment_status: string | null
+          pickup_date: string | null
+          price: number | null
+          shipment_code: string
           status: string | null
-          tracking_no: string
           updated_at: string | null
           vehicle_id: string | null
-          warehouse_id: string | null
-          weight: number | null
         }
         Insert: {
+          cargo_description?: string | null
           cargo_type?: string | null
+          cargo_volume?: number | null
+          cargo_weight?: number | null
           created_at?: string | null
+          currency?: string | null
           customer_id?: string | null
           delivery_date?: string | null
           destination: string
-          eta?: string | null
+          driver_id?: string | null
+          estimated_delivery_date?: string | null
           id?: string
           notes?: string | null
           origin: string
+          payment_status?: string | null
+          pickup_date?: string | null
+          price?: number | null
+          shipment_code: string
           status?: string | null
-          tracking_no: string
           updated_at?: string | null
           vehicle_id?: string | null
-          warehouse_id?: string | null
-          weight?: number | null
         }
         Update: {
+          cargo_description?: string | null
           cargo_type?: string | null
+          cargo_volume?: number | null
+          cargo_weight?: number | null
           created_at?: string | null
+          currency?: string | null
           customer_id?: string | null
           delivery_date?: string | null
           destination?: string
-          eta?: string | null
+          driver_id?: string | null
+          estimated_delivery_date?: string | null
           id?: string
           notes?: string | null
           origin?: string
+          payment_status?: string | null
+          pickup_date?: string | null
+          price?: number | null
+          shipment_code?: string
           status?: string | null
-          tracking_no?: string
           updated_at?: string | null
           vehicle_id?: string | null
-          warehouse_id?: string | null
-          weight?: number | null
         }
         Relationships: [
           {
@@ -1682,17 +1700,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "shipments_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "shipments_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shipments_warehouse_id_fkey"
-            columns: ["warehouse_id"]
-            isOneToOne: false
-            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
         ]
