@@ -23,9 +23,29 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
   // Form states
   const [formData, setFormData] = useState({
     name: "",
+    surname: "",
+    company_name: "",
     email: "",
     phone: "",
-    account_type: "",
+    account_type: "musteri",
+    tc_no: "",
+    vergi_no: "",
+    tax_office: "",
+    mersis: "",
+    short_name: "",
+    tags: "",
+    website: "",
+    fax: "",
+    address_type: "",
+    address: "",
+    city: "",
+    district: "",
+    postal_code: "",
+    vade_gunu: "",
+    tutar: "",
+    para_birimi: "TRY",
+    durumu: "",
+    proje: ""
   });
 
   // Vade states
@@ -37,19 +57,114 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
   const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
 
   const handleSubmit = async () => {
+    // Validasyon
+    if (cariTuru === "gercek") {
+      if (!formData.name.trim()) {
+        toast({ title: "Hata", description: "Lütfen cari adını giriniz", variant: "destructive" });
+        return;
+      }
+      if (!formData.surname?.trim()) {
+        toast({ title: "Hata", description: "Lütfen cari soyadını giriniz", variant: "destructive" });
+        return;
+      }
+      if (!formData.tc_no || formData.tc_no.length !== 11) {
+        toast({ title: "Hata", description: "Lütfen geçerli bir TC Kimlik No giriniz (11 hane)", variant: "destructive" });
+        return;
+      }
+      if (formData.tc_no[0] === "0") {
+        toast({ title: "Hata", description: "TC Kimlik No'nun ilk rakamı 0 olamaz", variant: "destructive" });
+        return;
+      }
+    } else {
+      if (!formData.company_name?.trim()) {
+        toast({ title: "Hata", description: "Lütfen firma ünvanını giriniz", variant: "destructive" });
+        return;
+      }
+      if (!formData.vergi_no || formData.vergi_no.length !== 10) {
+        toast({ title: "Hata", description: "Lütfen geçerli bir Vergi No giriniz (10 hane)", variant: "destructive" });
+        return;
+      }
+    }
+
+    if (!formData.account_type) {
+      toast({ title: "Hata", description: "Lütfen cari tipini seçiniz", variant: "destructive" });
+      return;
+    }
+
+    if (!formData.phone?.trim()) {
+      toast({ title: "Hata", description: "Lütfen telefon numarası giriniz", variant: "destructive" });
+      return;
+    }
+
+    if (!formData.email?.trim()) {
+      toast({ title: "Hata", description: "Lütfen e-posta adresi giriniz", variant: "destructive" });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({ title: "Hata", description: "Lütfen geçerli bir e-posta adresi giriniz", variant: "destructive" });
+      return;
+    }
+
+    // Vade Günü validasyonu
+    if (vadeGunuVar && vadeGunuSayisi) {
+      const vade = parseInt(vadeGunuSayisi);
+      if (vade < 1 || vade > 999) {
+        toast({ title: "Hata", description: "Vade günü 1-999 arasında olmalıdır", variant: "destructive" });
+        return;
+      }
+    }
+
+    // Sabit İskonto validasyonu
+    if (sabitIskontoVar && sabitIskontoYuzde) {
+      const iskonto = parseFloat(sabitIskontoYuzde);
+      if (iskonto < 0 || iskonto > 100) {
+        toast({ title: "Hata", description: "Sabit iskonto 0-100 arasında olmalıdır", variant: "destructive" });
+        return;
+      }
+    }
+
+    // Tutar validasyonu
+    if (formData.tutar) {
+      const tutar = parseFloat(formData.tutar);
+      if (tutar < 0) {
+        toast({ title: "Hata", description: "Tutar negatif olamaz", variant: "destructive" });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      await crmService.createCustomer({
-        name: formData.name || "Yeni Cari",
-        email: formData.email || "info@cari.com",
+      const submitData = {
+        name: cariTuru === "gercek" 
+          ? `${formData.name} ${formData.surname}`.trim() 
+          : formData.company_name,
+        email: formData.email,
         phone: formData.phone,
-        account_type: formData.account_type || "musteri",
-        status: "Aktif"
-      } as any);
+        account_type: formData.account_type,
+        status: "Aktif",
+        tc_no: cariTuru === "gercek" ? formData.tc_no : null,
+        vergi_no: cariTuru === "tuzel" ? formData.vergi_no : null,
+        tax_office: formData.tax_office || null,
+        mersis: formData.mersis || null,
+        short_name: formData.short_name || null,
+        tags: formData.tags || null,
+        website: formData.website || null,
+        fax: formData.fax || null,
+        address: formData.address || null,
+        city: formData.city || null,
+        district: formData.district || null,
+        postal_code: formData.postal_code || null,
+        vade_gunu: vadeGunuVar && vadeGunuSayisi ? parseInt(vadeGunuSayisi) : null,
+        sabit_iskonto: sabitIskontoVar && sabitIskontoYuzde ? parseFloat(sabitIskontoYuzde) : null
+      };
+
+      await crmService.createCustomer(submitData as any);
 
       toast({
         title: "Başarılı",
-        description: "Cari başarıyla oluşturuldu",
+        description: "Cari hesap başarıyla oluşturuldu",
       });
 
       onSuccess?.();
@@ -146,22 +261,29 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                     <Input value="CAR001295" disabled className="bg-gray-50" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Cari Adı</Label>
+                    <Label>Cari Adı *</Label>
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder=""
+                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Cari Soyadı</Label>
-                    <Input placeholder="" />
+                    <Label>Cari Soyadı *</Label>
+                    <Input 
+                      placeholder=""
+                      value={formData.surname}
+                      onChange={(e) => setFormData({ ...formData, surname: e.target.value })}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>Cari Tipi</Label>
+                    <Label>Cari Tipi *</Label>
                     <Select
                       value={formData.account_type}
                       onValueChange={(value) => setFormData({ ...formData, account_type: value })}
+                      required
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seçiniz" />
@@ -176,7 +298,11 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Cari Kısa Adı</Label>
-                    <Input placeholder="" />
+                    <Input 
+                      placeholder=""
+                      value={formData.short_name}
+                      onChange={(e) => setFormData({ ...formData, short_name: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>İşlem Tarihi</Label>
@@ -188,20 +314,30 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label>Etiketler</Label>
-                    <Input placeholder="" />
+                    <Input 
+                      placeholder=""
+                      value={formData.tags}
+                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>T.C. Kimlik No</Label>
+                    <Label>T.C. Kimlik No *</Label>
                     <Input 
                       placeholder="" 
                       maxLength={11}
                       pattern="[1-9][0-9]{10}"
                       title="11 haneli TC Kimlik No (ilk rakam 0 olamaz)"
+                      value={formData.tc_no}
+                      onChange={(e) => setFormData({ ...formData, tc_no: e.target.value })}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
-                    <Select>
+                    <Select
+                      value={formData.tax_office}
+                      onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Seçiniz" />
                       </SelectTrigger>
@@ -214,7 +350,11 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Mersis No</Label>
-                    <Input placeholder="" />
+                    <Input 
+                      placeholder=""
+                      value={formData.mersis}
+                      onChange={(e) => setFormData({ ...formData, mersis: e.target.value })}
+                    />
                   </div>
                 </div>
               </>
@@ -228,18 +368,20 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                     <Input value="CAR001295" disabled className="bg-gray-50" />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Firma Ünvanı</Label>
+                    <Label>Firma Ünvanı *</Label>
                     <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      value={formData.company_name}
+                      onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                       placeholder="Şirket ünvanını giriniz"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Cari Tipi</Label>
+                    <Label>Cari Tipi *</Label>
                     <Select
                       value={formData.account_type}
                       onValueChange={(value) => setFormData({ ...formData, account_type: value })}
+                      required
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seçiniz" />
@@ -254,7 +396,11 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Cari Kısa Adı</Label>
-                    <Input placeholder="" />
+                    <Input 
+                      placeholder=""
+                      value={formData.short_name}
+                      onChange={(e) => setFormData({ ...formData, short_name: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>İşlem Tarihi</Label>
@@ -266,20 +412,30 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label>Etiketler</Label>
-                    <Input placeholder="" />
+                    <Input 
+                      placeholder=""
+                      value={formData.tags}
+                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>Vergi Numarası</Label>
+                    <Label>Vergi Numarası *</Label>
                     <Input 
                       placeholder="" 
                       maxLength={10}
                       pattern="[0-9]{10}"
                       title="10 haneli Vergi Numarası"
+                      value={formData.vergi_no}
+                      onChange={(e) => setFormData({ ...formData, vergi_no: e.target.value })}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
-                    <Select>
+                    <Select
+                      value={formData.tax_office}
+                      onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Seçiniz" />
                       </SelectTrigger>
@@ -292,7 +448,11 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Mersis No</Label>
-                    <Input placeholder="" />
+                    <Input 
+                      placeholder=""
+                      value={formData.mersis}
+                      onChange={(e) => setFormData({ ...formData, mersis: e.target.value })}
+                    />
                   </div>
                 </div>
               </>
@@ -303,7 +463,7 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
               <h3 className="text-lg font-semibold border-b pb-2">İletişim Bilgileri</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label>Telefon No</Label>
+                  <Label>Telefon No *</Label>
                   <div className="flex gap-2">
                     <Select defaultValue="+90">
                       <SelectTrigger className="w-20">
@@ -321,21 +481,27 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="0501 234 5678"
                       className="flex-1"
+                      required
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>E-Posta</Label>
+                  <Label>E-Posta *</Label>
                   <Input 
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder=""
+                    required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Web Sitesi</Label>
-                  <Input placeholder="" />
+                  <Input 
+                    placeholder=""
+                    value={formData.website}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Faks No</Label>
@@ -354,6 +520,8 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                     <Input 
                       placeholder="0501 234 5678"
                       className="flex-1"
+                      value={formData.fax}
+                      onChange={(e) => setFormData({ ...formData, fax: e.target.value })}
                     />
                   </div>
                 </div>
@@ -499,34 +667,6 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Sabit İskonto</Label>
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="sabitIskonto"
-                        checked={!sabitIskontoVar}
-                        onChange={() => {
-                          setSabitIskontoVar(false);
-                          setSabitIskontoYuzde("");
-                        }}
-                        className="w-4 h-4"
-                      />
-                      <span>Yok</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="sabitIskonto"
-                        checked={sabitIskontoVar}
-                        onChange={() => setSabitIskontoVar(true)}
-                        className="w-4 h-4"
-                      />
-                      <span>Var</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Sabit İskonto</Label>
                   <div className="flex">
                     <Input
                       type="number"
@@ -553,11 +693,21 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label>Tutar</Label>
-                  <Input type="text" placeholder="0,00" />
+                  <Input 
+                    type="number" 
+                    placeholder="0,00"
+                    min="0"
+                    step="0.01"
+                    value={formData.tutar}
+                    onChange={(e) => setFormData({ ...formData, tutar: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Para Birimi *</Label>
-                  <Select>
+                  <Select
+                    value={formData.para_birimi}
+                    onValueChange={(value) => setFormData({ ...formData, para_birimi: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="TRY" />
                     </SelectTrigger>
@@ -571,7 +721,10 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                 </div>
                 <div className="space-y-2">
                   <Label>Durumu</Label>
-                  <Select>
+                  <Select
+                    value={formData.durumu}
+                    onValueChange={(value) => setFormData({ ...formData, durumu: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Seçiniz" />
                     </SelectTrigger>
@@ -583,7 +736,10 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                 </div>
                 <div className="space-y-2">
                   <Label>Proje</Label>
-                  <Select>
+                  <Select
+                    value={formData.proje}
+                    onValueChange={(value) => setFormData({ ...formData, proje: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Seçiniz" />
                     </SelectTrigger>
