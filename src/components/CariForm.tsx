@@ -7,6 +7,57 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { crmService } from "@/services/crmService";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const vergiDaireleri = [
+  "15 Temmuz Mahallesi (Bolu)", "Acıpayam", "Adalar", "Adana İhtisas", "Adapazarı", "Adıyaman",
+  "Afyon", "Ağrı", "Ahlat", "Aksaray", "Akseki", "Akşehir", "Akyazı", "Akyurt", "Alaca",
+  "Alaçam", "Alanya", "Alaşehir", "Alifuatpaşa", "Aliağa", "Altıeylül", "Altınordu", "Amasya",
+  "Anamur", "Ankara İhtisas", "Antalya İhtisas", "Ardeşen", "Ardahan", "Arifiye", "Artvin",
+  "Ataşehir", "Atakum", "Avanos", "Avcılar", "Aydın", "Ayvalık", "Bafra", "Bağcılar",
+  "Bahçelievler", "Bakırköy", "Balıkesir", "Bandırma", "Bartın", "Batman", "Bayburt", "Belek",
+  "Bergama", "Beşiktaş", "Beylikdüzü", "Beyoğlu", "Beypazarı", "Beşiri", "Bigadiç", "Bilecik",
+  "Bingöl", "Birecik", "Bitlis", "Bodrum", "Bolu", "Bor", "Bornova", "Boyabat", "Bozüyük",
+  "Buca", "Bucak", "Bulancak", "Burdur", "Bursa İhtisas", "Büyükçekmece", "Ceyhan", "Cide",
+  "Cihanbeyli", "Cizre", "Çan", "Çanakkale", "Çankaya", "Çankırı", "Çarşamba", "Çatalca",
+  "Çavdarhisar", "Çay", "Çayırova", "Çekerek", "Çerkeş", "Çerkezköy", "Çeşme", "Çiftlikköy",
+  "Çınar", "Çınarcık", "Çiğli", "Çivril", "Çorlu", "Çorum", "Çubuk", "Çukurova", "Darıca",
+  "Datça", "Defne", "Denizli", "Derince", "Develi", "Didim", "Divriği", "Diyarbakır",
+  "Doğankent", "Doğubayazıt", "Düzce", "Eber Gölü", "Edirne", "Edremit", "Efeler", "Eflani",
+  "Elbistan", "Elazığ", "Emirdağ", "Erbaa", "Erciş", "Erdek", "Erenköy", "Ergani", "Ermenek",
+  "Erzincan", "Erzurum", "Esenler", "Esenyurt", "Eskişehir", "Espiye", "Etimesgut", "Eyüp",
+  "Fatih", "Fatsa", "Fethiye", "Finike", "Foça", "ガzağaç", "Gaziantep İhtisas", "Gazipaşa",
+  "Gebze", "Gediz", "Gelibolu", "Gemerek", "Gemlik", "Gerede", "Giresun", "Gölbaşı (Ankara)",
+  "Gölcük", "Gölmarmara", "Gönen", "Görele", "Görükle", "Güngören", "Gürsu", "Güzelyurt",
+  "Hadım", "Hakkari", "Halfeti", "Hatay", "Havran", "Havza", "Hendek", "Hınıs", "Hopa",
+  "Horasan", "Iğdır", "Ilgın", "Inegöl", "Isparta", "İnönü", "İpekyolu", "İskenderun",
+  "İslahiye", "İskilip", "İstanbul Başakşehir", "İstanbul Boğaziçi", "İstanbul İhtisas",
+  "İzmir İhtisas", "İzmit", "İznik", "Kahta", "Kandıra", "Karabağlar", "Karabük",
+  "Karacabey", "Karadeniz Ereğli", "Karaman", "Karamürsel", "Karapınar", "Karasu",
+  "Karatay", "Kars", "Karşıyaka", "Kartal", "Kastamonu", "Kayseri İhtisas", "Keçiören",
+  "Kemer", "Kemalpaşa", "Kepez", "Kilis", "Kırıkkale", "Kırklareli", "Kırşehir", "Kızılcahamam",
+  "Kızıltepe", "Kocaeli", "Konak", "Konya İhtisas", "Korkuteli", "Körfez", "Korkuteli",
+  "Kulu", "Kumluca", "Kurtalan", "Kurtuluş", "Kuşadası", "Kütahya", "Küçükçekmece",
+  "Lüleburgaz", "Malatya", "Malazgirt", "Maltepe", "Manisa", "Maraş Dulkadiroğlu",
+  "Mardin", "Marmaris", "Mecidiyeköy", "Menemen", "Menteşe", "Merkezefendi", "Merzifon",
+  "Mersin İhtisas", "Mesudiye", "Mezitli", "Midyat", "Milas", "Mudanya", "Mudurnu",
+  "Muğla", "Muradiye", "Muş", "Mustafakemalpaşa", "Nazilli", "Nevşehir", "Niğde",
+  "Niksar", "Nilüfer", "Nusaybin", "Odunpazarı", "Ofis", "Oltu", "Ordu", "Orhangazi",
+  "Ortahisar", "Osmancık", "Osmangazi", "Osmaniye", "Ostim", "Palandöken", "Pamukkale",
+  "Patnos", "Pendik", "Polatlı", "Reşadiye", "Rize", "Safranbolu", "Salihli", "Samsun İhtisas",
+  "Sandıklı", "Sapanca", "Sarıkamış", "Sarıyer", "Seferihisar", "Selçuklu", "Şanlıurfa",
+  "Şarkışla", "Şehitkamil", "Şehzadeler", "Şereflikochisar", "Siirt", "Silifke", "Silopi",
+  "Simav", "Sincan", "Sinop", "Sivas", "Sivrihisar", "Söğüt", "Söke", "Sultangazi",
+  "Suluova", "Suruç", "Susurluk", "Şırnak", "Tarsus", "Taşköprü", "Taşova", "Tatvan",
+  "Tavşanlı", "Tekirdağ", "Tokat", "Torbalı", "Torul", "Tosya", "Trabzon İhtisas",
+  "Turgutlu", "Turhal", "Tuşba", "Tuzla", "Üç Şubat", "Ümraniye", "Ünye", "Ürgüp",
+  "Urla", "Uşak", "Uskudar", "Van", "Vezirköprü", "Viranşehir", "Yakuplu", "Yalova",
+  "Yalvaç", "Yatağan", "Yenimahalle", "Yeşilova", "Yıldırım", "Yıldızeli", "Yomra",
+  "Yozgat", "Yunusemre", "Yunus Emre", "Yüreğir", "Zile", "Zonguldak"
+].sort();
 
 interface CariFormProps {
   isOpen: boolean;
@@ -51,10 +102,12 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
   // Vade states
   const [vadeGunuVar, setVadeGunuVar] = useState(false);
   const [vadeGunuSayisi, setVadeGunuSayisi] = useState("");
-
-  // İskonto states
   const [sabitIskontoVar, setSabitIskontoVar] = useState(false);
   const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
+  const [vergiDairesiOpen, setVergiDairesiOpen] = useState(false);
+
+  useEffect(() => {
+  }, [formData]);
 
   const handleSubmit = async () => {
     // Validasyon
@@ -214,6 +267,7 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
     setVadeGunuSayisi("");
     setSabitIskontoVar(false);
     setSabitIskontoYuzde("");
+    setVergiDairesiOpen(false);
     onClose();
   };
 
@@ -354,19 +408,47 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
-                    <Select
-                      value={formData.tax_office}
-                      onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                        <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                        <SelectItem value="sisli">Şişli</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Popover open={vergiDairesiOpen} onOpenChange={setVergiDairesiOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={vergiDairesiOpen}
+                          className="w-full justify-between"
+                        >
+                          {formData.tax_office
+                            ? vergiDaireleri.find((vd) => vd.toLowerCase() === formData.tax_office.toLowerCase())
+                            : "Seçiniz"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Vergi dairesi ara..." />
+                          <CommandEmpty>Vergi dairesi bulunamadı.</CommandEmpty>
+                          <CommandGroup className="max-h-[300px] overflow-auto">
+                            {vergiDaireleri.map((vd) => (
+                              <CommandItem
+                                key={vd}
+                                value={vd}
+                                onSelect={(currentValue) => {
+                                  setFormData({ ...formData, tax_office: currentValue === formData.tax_office ? "" : currentValue });
+                                  setVergiDairesiOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.tax_office === vd ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {vd}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label>Mersis No</Label>
@@ -452,19 +534,45 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
-                    <Select
-                      value={formData.tax_office}
-                      onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                        <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                        <SelectItem value="sisli">Şişli</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Select
+                          value={formData.tax_office}
+                          onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seçiniz" />
+                          </SelectTrigger>
+                        </Select>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80">
+                        <Command>
+                          <CommandInput placeholder="Vergi dairesi ara..." />
+                          <CommandEmpty>
+                            Hiçbir sonuç bulunamadı.
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {vergiDaireleri.map((item) => (
+                              <CommandItem
+                                key={item}
+                                value={item}
+                                onSelect={(currentValue) => {
+                                  setFormData({ ...formData, tax_office: currentValue });
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.tax_office === item ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {item}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label>Mersis No</Label>
@@ -681,9 +789,9 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
               </div>
             </div>
 
-            {/* Diğer Bilgiler - Sabit İskonto */}
+            {/* Sabit İskonto */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b pb-2">Diğer Bilgiler</h3>
+              <h3 className="text-lg font-semibold border-b pb-2">Sabit İskonto</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Sabit İskonto</Label>
