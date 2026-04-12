@@ -69,6 +69,8 @@ type Customer = {
   address?: string;
   city?: string;
   tax_number?: string;
+  vergi_no?: string | null;
+  tc_no?: string | null;
   tax_office?: string;
   status: string;
   notes?: string;
@@ -147,7 +149,7 @@ export function AccountingModule() {
 
   const loadData = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const customersData = await crmService.getCustomers();
       console.log("=== ACCOUNTING MODULE - LOADED CUSTOMERS ===");
       console.log("Total customers:", customersData.length);
@@ -163,7 +165,7 @@ export function AccountingModule() {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
