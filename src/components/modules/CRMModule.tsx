@@ -78,6 +78,11 @@ export function CRMModule() {
     setCities(cityList);
   };
 
+  const handleDeleteClick = (customer: any) => {
+    setDeletingCustomer(customer);
+    setIsDeleteDialogOpen(true);
+  };
+
   const handleDeleteCustomer = async () => {
     if (!deletingCustomer) return;
 
@@ -90,7 +95,7 @@ export function CRMModule() {
       });
       setIsDeleteDialogOpen(false);
       setDeletingCustomer(null);
-      loadData();
+      loadCustomers();
     } catch (error) {
       console.error("Error deleting customer:", error);
       toast({
@@ -462,21 +467,36 @@ export function CRMModule() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {customer.vergi_no || customer.tc_no || customer.tax_number || "-"}
+                        {(() => {
+                          const vkn = customer.vergi_no || customer.tc_no;
+                          console.log("Customer VKN/TCKN:", customer.id, vkn, customer);
+                          return vkn || "-";
+                        })()}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <button 
-                            onClick={() => openDetailDialog(customer)}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log("View clicked for:", customer);
+                              setSelectedCustomer(customer);
+                              setViewModalOpen(true);
+                            }}
                             className="p-1 hover:bg-gray-100 rounded"
                             title="Görüntüle"
                           >
                             <Eye className="h-4 w-4 text-gray-600" />
                           </button>
                           <button 
-                            onClick={() => {
-                              setEditingCustomer(customer);
-                              setIsEditDialogOpen(true);
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log("Edit clicked for:", customer);
+                              setSelectedCustomer(customer);
+                              setEditModalOpen(true);
                             }}
                             className="p-1 hover:bg-gray-100 rounded"
                             title="Düzenle"
@@ -484,9 +504,12 @@ export function CRMModule() {
                             <Edit className="h-4 w-4 text-gray-600" />
                           </button>
                           <button 
-                            onClick={() => {
-                              setDeletingCustomer(customer);
-                              setIsDeleteDialogOpen(true);
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log("Delete clicked for:", customer);
+                              handleDeleteClick(customer);
                             }}
                             className="p-1 hover:bg-gray-100 rounded"
                             title="Sil"
