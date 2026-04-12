@@ -2335,10 +2335,24 @@ export function AccountingModule() {
               {/* Açılış Bakiyesi */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold border-b pb-2">Açılış Bakiyesi</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label>Tutar</Label>
                     <Input type="number" placeholder="0.00" step="0.01" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Para Birimi *</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="TRY">TRY (₺)</SelectItem>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="GBP">GBP (£)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Durumu</Label>
