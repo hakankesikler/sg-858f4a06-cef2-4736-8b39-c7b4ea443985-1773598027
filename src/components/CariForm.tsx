@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { crmService } from "@/services/crmService";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface CariFormProps {
   isOpen: boolean;
@@ -84,23 +85,13 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-white">Yeni Genel Cari</h2>
-          <button
-            onClick={handleClose}
-            className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-[90vw] lg:max-w-[1400px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Yeni Genel Cari</DialogTitle>
+        </DialogHeader>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <Tabs defaultValue="bilgi" className="w-full">
           <TabsList className="w-full rounded-none border-b">
             <TabsTrigger 
               value="bilgi" 
@@ -626,7 +617,7 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
             </>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
