@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { createCustomer } from "@/services/accountingService";
+import { crmService } from "@/services/crmService";
 import { useToast } from "@/hooks/use-toast";
 
 interface CariFormProps {
@@ -38,12 +38,13 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await createCustomer({
-        name: formData.name,
-        email: formData.email,
+      await crmService.createCustomer({
+        name: formData.name || "Yeni Cari",
+        email: formData.email || "info@cari.com",
         phone: formData.phone,
-        account_type: formData.account_type,
-      });
+        account_type: formData.account_type || "musteri",
+        status: "Aktif"
+      } as any);
 
       toast({
         title: "Başarılı",

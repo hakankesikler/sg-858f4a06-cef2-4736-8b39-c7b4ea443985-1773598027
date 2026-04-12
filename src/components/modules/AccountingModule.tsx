@@ -811,7 +811,7 @@ export function AccountingModule() {
 
           <Card className="p-8">
             <div className="text-center space-y-4">
-              <p className="text-gray-500">0 adet kayıt listelenmektedir.</p>
+              <p className="text-gray-500">Toplam 0 kayıt gösteriliyor</p>
             </div>
           </Card>
 
@@ -2149,7 +2149,7 @@ export function AccountingModule() {
                         <Label>Adres Tipi</Label>
                         <Select>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seçiniz" />
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="fatura">Fatura Adresi</SelectItem>
@@ -2169,7 +2169,7 @@ export function AccountingModule() {
                         <Label>İl</Label>
                         <Select>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seçiniz" />
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="istanbul">İstanbul</SelectItem>
@@ -2182,7 +2182,7 @@ export function AccountingModule() {
                         <Label>İlçe</Label>
                         <Select>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seçiniz" />
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="kadikoy">Kadıköy</SelectItem>
@@ -2670,7 +2670,7 @@ export function AccountingModule() {
         isOpen={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
         onSuccess={() => {
-          fetchCustomers();
+          loadData();
           setIsAddDialogOpen(false);
         }}
       />
