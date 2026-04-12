@@ -524,6 +524,19 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     </select>
                   </div>
                   <div className="space-y-2">
+                    <Label>Tedarikçi Kategorisi</Label>
+                    <select
+                      value={formData.supplier_category}
+                      onChange={(e) => setFormData({ ...formData, supplier_category: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
+                    >
+                      <option value="">Seçiniz</option>
+                      <option value="nakliyeci">Nakliyeci</option>
+                      <option value="forwarder">Forwarder / Acente</option>
+                      <option value="diger">Diğer Tedarikçiler</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
                     <Label>Cari Kısa Adı</Label>
                     <Input 
                       placeholder=""
