@@ -81,7 +81,7 @@ function Calendar({
               <SelectTrigger className="pr-1.5 focus:ring-0">
                 <SelectValue>{selected?.props?.children}</SelectValue>
               </SelectTrigger>
-              <SelectContent position="popper">
+              <SelectContent position="popper" style={{ zIndex: 1000 }}>
                 {options.map((option, id: number) => (
                   <SelectItem
                     key={`${option.props.value}-${id}`}
