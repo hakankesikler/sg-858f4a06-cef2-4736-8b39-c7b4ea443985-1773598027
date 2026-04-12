@@ -34,14 +34,8 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
   });
 
   useEffect(() => {
-    if (isOpen && !editMode) {
-      loadNextDriverCode();
-      resetForm();
-    }
-  }, [isOpen, editMode]);
-
-  useEffect(() => {
     if (editMode && initialData && isOpen) {
+      console.log("Loading driver data for edit:", initialData);
       setDriverCode(initialData.driver_code || "DRV-000001");
       setFormData({
         full_name: initialData.full_name || "",
@@ -54,8 +48,21 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         status: initialData.status || "Aktif"
       });
       if (initialData.ehliyet_gecerlilik_tarihi) {
-        setEhliyetGecerlilikTarihi(initialData.ehliyet_gecerlilik_tarihi);
+        // Convert date to YYYY-MM-DD format if needed
+        const dateValue = initialData.ehliyet_gecerlilik_tarihi;
+        if (dateValue.includes('T')) {
+          // If it's ISO format, extract just the date part
+          setEhliyetGecerlilikTarihi(dateValue.split('T')[0]);
+        } else {
+          setEhliyetGecerlilikTarihi(dateValue);
+        }
+      } else {
+        setEhliyetGecerlilikTarihi("");
       }
+    } else if (!editMode && isOpen) {
+      // Reset form when opening in create mode
+      resetForm();
+      loadNextDriverCode();
     }
   }, [editMode, initialData, isOpen]);
 

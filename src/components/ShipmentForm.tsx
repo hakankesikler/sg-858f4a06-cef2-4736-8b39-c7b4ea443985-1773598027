@@ -64,6 +64,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
   useEffect(() => {
     if (editMode && initialData && isOpen) {
+      console.log("Loading shipment data for edit:", initialData);
       setShipmentCode(initialData.shipment_code || "SHP-000001");
       setFormData({
         driver_id: initialData.driver_id || "",
@@ -81,17 +82,29 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         status: initialData.status || "beklemede",
         notes: initialData.notes || ""
       });
+      
+      // Handle date conversions
       if (initialData.pickup_date) {
-        setPickupDate(initialData.pickup_date);
+        const dateValue = initialData.pickup_date;
+        setPickupDate(dateValue.includes('T') ? dateValue.split('T')[0] : dateValue);
+      } else {
+        setPickupDate("");
       }
       if (initialData.delivery_date) {
-        setDeliveryDate(initialData.delivery_date);
+        const dateValue = initialData.delivery_date;
+        setDeliveryDate(dateValue.includes('T') ? dateValue.split('T')[0] : dateValue);
+      } else {
+        setDeliveryDate("");
       }
       if (initialData.estimated_delivery_date) {
-        setEstimatedDeliveryDate(initialData.estimated_delivery_date);
+        const dateValue = initialData.estimated_delivery_date;
+        setEstimatedDeliveryDate(dateValue.includes('T') ? dateValue.split('T')[0] : dateValue);
+      } else {
+        setEstimatedDeliveryDate("");
       }
     } else if (!editMode && isOpen) {
       resetForm();
+      loadNextShipmentCode();
     }
   }, [editMode, initialData, isOpen]);
 

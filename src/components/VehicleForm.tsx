@@ -34,14 +34,8 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
   });
 
   useEffect(() => {
-    if (isOpen && !editMode) {
-      loadNextVehicleCode();
-      resetForm();
-    }
-  }, [isOpen, editMode]);
-
-  useEffect(() => {
     if (editMode && initialData && isOpen) {
+      console.log("Loading vehicle data for edit:", initialData);
       setVehicleCode(initialData.vehicle_code || "VHC-000001");
       setFormData({
         arac_tipi: initialData.arac_tipi || "",
@@ -53,11 +47,20 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         status: initialData.status || "Aktif"
       });
       if (initialData.kasko_bitis_tarihi) {
-        setKaskoBitisTarihi(initialData.kasko_bitis_tarihi);
+        const dateValue = initialData.kasko_bitis_tarihi;
+        setKaskoBitisTarihi(dateValue.includes('T') ? dateValue.split('T')[0] : dateValue);
+      } else {
+        setKaskoBitisTarihi("");
       }
       if (initialData.trafik_sigortasi_bitis_tarihi) {
-        setTrafikSigortasiBitisTarihi(initialData.trafik_sigortasi_bitis_tarihi);
+        const dateValue = initialData.trafik_sigortasi_bitis_tarihi;
+        setTrafikSigortasiBitisTarihi(dateValue.includes('T') ? dateValue.split('T')[0] : dateValue);
+      } else {
+        setTrafikSigortasiBitisTarihi("");
       }
+    } else if (!editMode && isOpen) {
+      resetForm();
+      loadNextVehicleCode();
     }
   }, [editMode, initialData, isOpen]);
 
