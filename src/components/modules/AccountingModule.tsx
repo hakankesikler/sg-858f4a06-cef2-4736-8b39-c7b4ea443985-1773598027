@@ -1262,8 +1262,12 @@ export function AccountingModule() {
                 </Card>
 
                 {filteredCustomers.length > 0 && (
-                  <div className="mt-4 text-sm text-gray-600">
-                    Toplam {filteredCustomers.length} kayıt listelenmektedir.
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <span>Toplam {filteredCustomers.length} kayıt listelenmektedir.</span>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">Önceki</Button>
+                      <Button variant="outline" size="sm">Sonraki</Button>
+                    </div>
                   </div>
                 )}
               </TabsContent>
@@ -1414,61 +1418,146 @@ export function AccountingModule() {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {expenseCategories.map((category) => (
-                  <Card key={category.id} className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-lg">{category.name}</h3>
-                        <div className="flex gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              setCurrentCategory(category);
-                              setEditedCategoryName(category.name);
-                              setEditCategoryModal(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        {Array.isArray(category.types) && category.types.map((type) => (
-                          <div key={type?.id || Math.random()} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                            <span className="text-sm">{type?.name || ''}</span>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                if (type?.id && type?.name) {
-                                  handleEditType(category.id, type.id, type.name);
-                                }
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold">Genel Gider Tipleri</h2>
+                  </div>
+                  <Button className="gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Yeni Kategori Ekle
+                  </Button>
+                </div>
+
+                <Card>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input type="checkbox" className="rounded" />
+                        </TableHead>
+                        <TableHead>Kategori Adı</TableHead>
+                        <TableHead>Açıklama</TableHead>
+                        <TableHead>Gider Tipi</TableHead>
+                        <TableHead>Durum</TableHead>
+                        <TableHead>Oluşturulma Tarihi</TableHead>
+                        <TableHead>İşlemler</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>
+                          <input type="checkbox" className="rounded" />
+                        </TableCell>
+                        <TableCell className="font-medium">Operasyonel Giderler</TableCell>
+                        <TableCell className="text-gray-600">Günlük operasyon giderleri</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">Genel</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-green-100 text-green-800">Aktif</Badge>
+                        </TableCell>
+                        <TableCell>12.04.2026</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">Düzenle</Button>
+                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">Sil</Button>
                           </div>
-                        ))}
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full"
-                        onClick={() => {
-                          setCurrentCategoryForType(category);
-                          setAddTypeModal(true);
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Yeni Tip Ekle
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>
+                          <input type="checkbox" className="rounded" />
+                        </TableCell>
+                        <TableCell className="font-medium">İdari Giderler</TableCell>
+                        <TableCell className="text-gray-600">Yönetim ve idari işlemler</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">Yönetim</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-green-100 text-green-800">Aktif</Badge>
+                        </TableCell>
+                        <TableCell>12.04.2026</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">Düzenle</Button>
+                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">Sil</Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>
+                          <input type="checkbox" className="rounded" />
+                        </TableCell>
+                        <TableCell className="font-medium">Pazarlama Giderleri</TableCell>
+                        <TableCell className="text-gray-600">Reklam ve tanıtım giderleri</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">Pazarlama</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-green-100 text-green-800">Aktif</Badge>
+                        </TableCell>
+                        <TableCell>12.04.2026</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">Düzenle</Button>
+                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">Sil</Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>
+                          <input type="checkbox" className="rounded" />
+                        </TableCell>
+                        <TableCell className="font-medium">Finans Giderleri</TableCell>
+                        <TableCell className="text-gray-600">Banka ve finansal işlemler</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">Finans</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-green-100 text-green-800">Aktif</Badge>
+                        </TableCell>
+                        <TableCell>12.04.2026</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">Düzenle</Button>
+                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">Sil</Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>
+                          <input type="checkbox" className="rounded" />
+                        </TableCell>
+                        <TableCell className="font-medium">Personel Giderleri</TableCell>
+                        <TableCell className="text-gray-600">Maaş, prim ve personel harcamaları</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">İnsan Kaynakları</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-green-100 text-green-800">Aktif</Badge>
+                        </TableCell>
+                        <TableCell>12.04.2026</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">Düzenle</Button>
+                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">Sil</Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Card>
+
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                  <span>Toplam 5 kategori gösteriliyor</span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">Önceki</Button>
+                    <Button variant="outline" size="sm">Sonraki</Button>
+                  </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
