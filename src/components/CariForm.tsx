@@ -8,6 +8,7 @@ import { crmService } from "@/services/crmService";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VergiDairesiSelect } from "@/components/VergiDairesiSelect";
+import { IlIlceSelect } from "@/components/IlIlceSelect";
 
 interface CariFormProps {
   isOpen: boolean;
@@ -570,37 +571,23 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
               </div>
 
               {/* Adres Row 2: Posta Kodu | İl | İlçe */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Posta Kodu</Label>
-                  <Input placeholder="" />
+              <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Posta Kodu</Label>
+                    <Input 
+                      placeholder=""
+                      value={formData.postal_code}
+                      onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>İl</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seçiniz" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="istanbul">İstanbul</SelectItem>
-                      <SelectItem value="ankara">Ankara</SelectItem>
-                      <SelectItem value="izmir">İzmir</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>İlçe</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seçiniz" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                      <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                      <SelectItem value="sisli">Şişli</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <IlIlceSelect
+                  ilValue={formData.city || ""}
+                  ilceValue={formData.district || ""}
+                  onIlChange={(value) => setFormData({ ...formData, city: value })}
+                  onIlceChange={(value) => setFormData({ ...formData, district: value })}
+                />
               </div>
 
               <Button variant="outline" size="sm" className="gap-2">
