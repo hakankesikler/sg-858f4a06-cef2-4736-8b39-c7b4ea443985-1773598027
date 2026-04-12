@@ -1,16 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
-type Driver = Database["public"]["Tables"]["drivers"]["Row"];
-type DriverInsert = Database["public"]["Tables"]["drivers"]["Insert"];
-type Vehicle = Database["public"]["Tables"]["vehicles"]["Row"];
-type VehicleInsert = Database["public"]["Tables"]["vehicles"]["Insert"];
+type Driver = Database["public"]["Tables"]["customer_drivers"]["Row"];
+type DriverInsert = Database["public"]["Tables"]["customer_drivers"]["Insert"];
+type Vehicle = Database["public"]["Tables"]["customer_vehicles"]["Row"];
+type VehicleInsert = Database["public"]["Tables"]["customer_vehicles"]["Insert"];
 
 export const nakliyeciService = {
   // Driver operations
   async createDriver(data: DriverInsert) {
     const { data: driver, error } = await supabase
-      .from("drivers")
+      .from("customer_drivers")
       .insert(data)
       .select()
       .single();
@@ -25,7 +25,7 @@ export const nakliyeciService = {
 
   async getDriversByCustomer(customerId: string) {
     const { data, error } = await supabase
-      .from("drivers")
+      .from("customer_drivers")
       .select("*")
       .eq("customer_id", customerId)
       .order("created_at", { ascending: false });
@@ -40,7 +40,7 @@ export const nakliyeciService = {
 
   async updateDriver(id: string, updates: Partial<DriverInsert>) {
     const { data, error } = await supabase
-      .from("drivers")
+      .from("customer_drivers")
       .update(updates)
       .eq("id", id)
       .select()
@@ -56,7 +56,7 @@ export const nakliyeciService = {
 
   async deleteDriver(id: string) {
     const { error } = await supabase
-      .from("drivers")
+      .from("customer_drivers")
       .delete()
       .eq("id", id);
 
@@ -69,7 +69,7 @@ export const nakliyeciService = {
   // Vehicle operations
   async createVehicle(data: VehicleInsert) {
     const { data: vehicle, error } = await supabase
-      .from("vehicles")
+      .from("customer_vehicles")
       .insert(data)
       .select()
       .single();
@@ -84,7 +84,7 @@ export const nakliyeciService = {
 
   async getVehiclesByCustomer(customerId: string) {
     const { data, error } = await supabase
-      .from("vehicles")
+      .from("customer_vehicles")
       .select("*")
       .eq("customer_id", customerId)
       .order("created_at", { ascending: false });
@@ -99,7 +99,7 @@ export const nakliyeciService = {
 
   async updateVehicle(id: string, updates: Partial<VehicleInsert>) {
     const { data, error } = await supabase
-      .from("vehicles")
+      .from("customer_vehicles")
       .update(updates)
       .eq("id", id)
       .select()
@@ -115,7 +115,7 @@ export const nakliyeciService = {
 
   async deleteVehicle(id: string) {
     const { error } = await supabase
-      .from("vehicles")
+      .from("customer_vehicles")
       .delete()
       .eq("id", id);
 

@@ -176,6 +176,115 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_drivers: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          ehliyet_gecerlilik_tarihi: string | null
+          ehliyet_sinifi: string | null
+          full_name: string
+          id: string
+          phone1: string | null
+          phone2: string | null
+          psikoteknik_belge_no: string | null
+          src_belge_no: string | null
+          tc_no: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          ehliyet_gecerlilik_tarihi?: string | null
+          ehliyet_sinifi?: string | null
+          full_name: string
+          id?: string
+          phone1?: string | null
+          phone2?: string | null
+          psikoteknik_belge_no?: string | null
+          src_belge_no?: string | null
+          tc_no?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          ehliyet_gecerlilik_tarihi?: string | null
+          ehliyet_sinifi?: string | null
+          full_name?: string
+          id?: string
+          phone1?: string | null
+          phone2?: string | null
+          psikoteknik_belge_no?: string | null
+          src_belge_no?: string | null
+          tc_no?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_drivers_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_vehicles: {
+        Row: {
+          arac_tipi: string | null
+          cekici_plakasi: string | null
+          created_at: string | null
+          customer_id: string
+          dorse_plakasi: string | null
+          id: string
+          kasa_tipi: string | null
+          kasko_bitis_tarihi: string | null
+          ruhsat_dosyasi_url: string | null
+          tasima_kapasitesi: number | null
+          trafik_sigortasi_bitis_tarihi: string | null
+          updated_at: string | null
+          yetki_belgesi: string | null
+        }
+        Insert: {
+          arac_tipi?: string | null
+          cekici_plakasi?: string | null
+          created_at?: string | null
+          customer_id: string
+          dorse_plakasi?: string | null
+          id?: string
+          kasa_tipi?: string | null
+          kasko_bitis_tarihi?: string | null
+          ruhsat_dosyasi_url?: string | null
+          tasima_kapasitesi?: number | null
+          trafik_sigortasi_bitis_tarihi?: string | null
+          updated_at?: string | null
+          yetki_belgesi?: string | null
+        }
+        Update: {
+          arac_tipi?: string | null
+          cekici_plakasi?: string | null
+          created_at?: string | null
+          customer_id?: string
+          dorse_plakasi?: string | null
+          id?: string
+          kasa_tipi?: string | null
+          kasko_bitis_tarihi?: string | null
+          ruhsat_dosyasi_url?: string | null
+          tasima_kapasitesi?: number | null
+          trafik_sigortasi_bitis_tarihi?: string | null
+          updated_at?: string | null
+          yetki_belgesi?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_vehicles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           account_type: string | null
