@@ -2,12 +2,16 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Truck, User, Plus, Edit, Trash2, Package } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
+import { shipmentService } from "@/services/shipmentService";
 import { DriverForm } from "@/components/DriverForm";
 import { VehicleForm } from "@/components/VehicleForm";
+import { ShipmentForm } from "@/components/ShipmentForm";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,14 +27,18 @@ export function LogisticsModule() {
   const { toast } = useToast();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [shipments, setShipments] = useState<any[]>([]);
   const [isDriverFormOpen, setIsDriverFormOpen] = useState(false);
   const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false);
+  const [isShipmentFormOpen, setIsShipmentFormOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | undefined>();
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | undefined>();
+  const [editingShipment, setEditingShipment] = useState<any | undefined>();
   const [deletingDriver, setDeletingDriver] = useState<Driver | null>(null);
   const [deletingVehicle, setDeletingVehicle] = useState<Vehicle | null>(null);
+  const [deletingShipment, setDeletingShipment] = useState<any | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deleteType, setDeleteType] = useState<"driver" | "vehicle">("driver");
+  const [deleteType, setDeleteType] = useState<"driver" | "vehicle" | "shipment">("driver");
 
   useEffect(() => {
     loadData();
@@ -38,12 +46,14 @@ export function LogisticsModule() {
 
   const loadData = async () => {
     try {
-      const [driversData, vehiclesData] = await Promise.all([
+      const [driversData, vehiclesData, shipmentsData] = await Promise.all([
         driverService.getDrivers(),
-        vehicleService.getVehicles()
+        vehicleService.getVehicles(),
+        shipmentService.getShipments()
       ]);
       setDrivers(driversData);
       setVehicles(vehiclesData);
+      setShipments(shipmentsData);
     } catch (error) {
       console.error("Error loading data:", error);
       toast({
@@ -96,14 +106,67 @@ export function LogisticsModule() {
     }
   };
 
+  const handleDeleteShipment = async () => {
+    if (!deletingShipment) return;
+    try {
+      await shipmentService.deleteShipment(deletingShipment.id);
+      toast({
+        title: "Başarılı",
+        description: "Sevkiyat başarıyla silindi",
+      });
+      loadData();
+    } catch (error) {
+      toast({
+        title: "Hata",
+        description: "Sevkiyat silinirken bir hata oluştu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setDeletingShipment(null);
+    }
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "beklemede":
+        return "bg-yellow-100 text-yellow-800";
+      case "hazırlaniyor":
+        return "bg-blue-100 text-blue-800";
+      case "yolda":
+        return "bg-purple-100 text-purple-800";
+      case "teslim_edildi":
+        return "bg-green-100 text-green-800";
+      case "iptal":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      beklemede: "Beklemede",
+      hazırlaniyor: "Hazırlanıyor",
+      yolda: "Yolda",
+      teslim_edildi: "Teslim Edildi",
+      iptal: "İptal"
+    };
+    return labels[status] || status;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Lojistik Yönetimi</h2>
       </div>
 
-      <Tabs defaultValue="drivers" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="shipments" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="shipments" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Sevkiyatlar
+          </TabsTrigger>
           <TabsTrigger value="drivers" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Sürücüler
@@ -113,6 +176,91 @@ export function LogisticsModule() {
             Araçlar
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="shipments" className="space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => {
+              setEditingShipment(undefined);
+              setIsShipmentFormOpen(true);
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Yeni Sevkiyat
+            </Button>
+          </div>
+
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="p-4 text-left text-sm font-medium">KOD</th>
+                    <th className="p-4 text-left text-sm font-medium">MÜŞTERİ</th>
+                    <th className="p-4 text-left text-sm font-medium">GÜZERGAH</th>
+                    <th className="p-4 text-left text-sm font-medium">SÜRÜCÜ</th>
+                    <th className="p-4 text-left text-sm font-medium">ARAÇ</th>
+                    <th className="p-4 text-left text-sm font-medium">YÜKLEME</th>
+                    <th className="p-4 text-left text-sm font-medium">TAHMİNİ TESLİM</th>
+                    <th className="p-4 text-left text-sm font-medium">DURUM</th>
+                    <th className="p-4 text-left text-sm font-medium">İŞLEMLER</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shipments.map((shipment) => (
+                    <tr key={shipment.id} className="border-b hover:bg-gray-50">
+                      <td className="p-4 font-medium">{shipment.shipment_code}</td>
+                      <td className="p-4">{shipment.customer?.name || "-"}</td>
+                      <td className="p-4">
+                        <div className="text-sm">
+                          <div className="font-medium">{shipment.origin}</div>
+                          <div className="text-gray-500">↓</div>
+                          <div className="font-medium">{shipment.destination}</div>
+                        </div>
+                      </td>
+                      <td className="p-4">{shipment.driver?.full_name || "-"}</td>
+                      <td className="p-4">{shipment.vehicle?.cekici_plakasi || "-"}</td>
+                      <td className="p-4">
+                        {shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd MMM yyyy", { locale: tr }) : "-"}
+                      </td>
+                      <td className="p-4">
+                        {shipment.estimated_delivery_date ? format(new Date(shipment.estimated_delivery_date), "dd MMM yyyy", { locale: tr }) : "-"}
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(shipment.status)}`}>
+                          {getStatusLabel(shipment.status)}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingShipment(shipment);
+                              setIsShipmentFormOpen(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setDeletingShipment(shipment);
+                              setDeleteType("shipment");
+                              setIsDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="drivers" className="space-y-4">
           <div className="flex justify-end">
@@ -281,20 +429,35 @@ export function LogisticsModule() {
         initialData={editingVehicle}
       />
 
+      <ShipmentForm
+        isOpen={isShipmentFormOpen}
+        onClose={() => {
+          setIsShipmentFormOpen(false);
+          setEditingShipment(undefined);
+        }}
+        onSuccess={loadData}
+        editMode={!!editingShipment}
+        initialData={editingShipment}
+      />
+
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Silme Onayı</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteType === "driver" 
-                ? "Bu sürücüyü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-                : "Bu aracı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."}
+              {deleteType === "driver" && "Bu sürücüyü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."}
+              {deleteType === "vehicle" && "Bu aracı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."}
+              {deleteType === "shipment" && "Bu sevkiyatı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>İptal</AlertDialogCancel>
             <AlertDialogAction
-              onClick={deleteType === "driver" ? handleDeleteDriver : handleDeleteVehicle}
+              onClick={
+                deleteType === "driver" ? handleDeleteDriver :
+                deleteType === "vehicle" ? handleDeleteVehicle :
+                handleDeleteShipment
+              }
               className="bg-red-600 hover:bg-red-700"
             >
               Sil
