@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { accountingService } from "@/services/accountingService";
+import { crmService } from "@/services/crmService";
 import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import {
@@ -46,6 +47,8 @@ import {
   Receipt,
   FileText,
   RefreshCw,
+  ChevronDown,
+  Info,
 } from "lucide-react";
 
 export function AccountingModule() {
@@ -617,7 +620,7 @@ export function AccountingModule() {
               <DialogHeader>
                 <DialogTitle>Yeni Alış Faturası</DialogTitle>
               </DialogHeader>
-              <PurchaseInvoiceForm onSuccess={() => setIsAddPurchaseInvoiceDialogOpen(false)} />
+              <PurchaseInvoiceForm onClose={() => setIsAddPurchaseInvoiceDialogOpen(false)} onSave={() => setIsAddPurchaseInvoiceDialogOpen(false)} />
             </DialogContent>
           </Dialog>
         </TabsContent>
@@ -1203,7 +1206,7 @@ export function AccountingModule() {
               <DialogHeader>
                 <DialogTitle>Yeni Gider Kaydı</DialogTitle>
               </DialogHeader>
-              <ExpenseForm onSuccess={() => setIsAddExpenseDialogOpen(false)} />
+              <ExpenseForm onClose={() => setIsAddExpenseDialogOpen(false)} onSave={() => setIsAddExpenseDialogOpen(false)} />
             </DialogContent>
           </Dialog>
         </TabsContent>
