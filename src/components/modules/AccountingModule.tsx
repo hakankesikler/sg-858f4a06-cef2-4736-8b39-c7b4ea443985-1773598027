@@ -124,7 +124,6 @@ export function AccountingModule() {
   };
 
   const handleAddCustomer = async () => {
-    // Zorunlu alan kontrolleri
     if (!formData.name) {
       toast({
         title: "Hata",
@@ -134,113 +133,14 @@ export function AccountingModule() {
       return;
     }
 
-    if (!formData.account_type) {
-      toast({
-        title: "Hata",
-        description: "Lütfen cari tipini seçiniz",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // TC Kimlik No / Vergi No kontrolü
-    if (cariTuru === "gercek" && !formData.tc_no) {
-      toast({
-        title: "Hata",
-        description: "Lütfen TC Kimlik No giriniz",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (cariTuru === "tuzel" && !formData.tax_number) {
-      toast({
-        title: "Hata",
-        description: "Lütfen Vergi No giriniz",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.phone) {
-      toast({
-        title: "Hata",
-        description: "Lütfen telefon numarası giriniz",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.email) {
-      toast({
-        title: "Hata",
-        description: "Lütfen e-posta adresi giriniz",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // E-posta formatı kontrolü
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast({
-        title: "Hata",
-        description: "Lütfen geçerli bir e-posta adresi giriniz",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Vade günü kontrolü
-    if (vadeGunuVar && (!vadeGunuSayisi || parseInt(vadeGunuSayisi) < 1 || parseInt(vadeGunuSayisi) > 999)) {
-      toast({
-        title: "Hata",
-        description: "Vade günü 1-999 arasında olmalıdır",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Sabit iskonto kontrolü
-    if (sabitIskontoVar && (!sabitIskontoYuzde || parseFloat(sabitIskontoYuzde) < 0 || parseFloat(sabitIskontoYuzde) > 100)) {
-      toast({
-        title: "Hata",
-        description: "Sabit iskonto 0-100 arasında olmalıdır",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      const customerData = {
-        ...formData,
-        vade_gunu: vadeGunuVar ? parseInt(vadeGunuSayisi) : null,
-        sabit_iskonto: sabitIskontoVar ? parseFloat(sabitIskontoYuzde) : null,
-      };
-
-      await crmService.createCustomer(customerData as any);
+      await crmService.createCustomer(formData as any);
       toast({
         title: "Başarılı",
         description: "Cari hesap başarıyla oluşturuldu",
       });
       setIsAddDialogOpen(false);
-      setFormData({
-        account_type: "musteri",
-        person_type: "individual",
-        name: "",
-        email: "",
-        phone: "",
-        tax_number: "",
-        tax_office: "",
-        address: "",
-        city: "",
-        company: "",
-      });
-      setVadeGunuVar(false);
-      setVadeGunuSayisi("");
-      setSabitIskontoVar(false);
-      setSabitIskontoYuzde("");
       loadCustomers();
     } catch (error) {
       console.error("Error creating customer:", error);
@@ -1038,8 +938,7 @@ export function AccountingModule() {
                       <Input
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ad Soyad"
-                        required
+                        placeholder="Cari adı"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1356,7 +1255,6 @@ export function AccountingModule() {
                           company: e.target.value 
                         })}
                         placeholder="Şirket adı"
-                        required
                       />
                     </div>
                     <div className="space-y-2">
@@ -1364,7 +1262,6 @@ export function AccountingModule() {
                       <Select
                         value={formData.account_type}
                         onValueChange={(value) => setFormData({ ...formData, account_type: value })}
-                        required
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seçiniz" />
@@ -1393,27 +1290,13 @@ export function AccountingModule() {
                       <Input placeholder="Etiket ekle" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Vergi No *</Label>
+                      <Label>Vergi No</Label>
                       <Input 
                         value={formData.tax_number}
                         onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
-                        placeholder="Vergi numarası"
-                        required
+                        placeholder="Vergi numarası" 
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Telefon *</Label>
-                      <Input
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="Telefon"
-                        type="tel"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Vergi Dairesi</Label>
                       <Select
@@ -1690,13 +1573,12 @@ export function AccountingModule() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>E-Posta *</Label>
+                    <Label>E-Posta</Label>
                     <Input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="ornek@email.com"
-                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -1844,10 +1726,7 @@ export function AccountingModule() {
                           onChange={(e) => setVadeGunuSayisi(e.target.value)}
                           placeholder="Gün sayısı"
                           className="w-32"
-                          min="1"
-                          max="999"
-                          step="1"
-                          required={vadeGunuVar}
+                          min="0"
                         />
                         <span className="text-gray-600 text-sm">gün</span>
                       </div>
@@ -1894,15 +1773,13 @@ export function AccountingModule() {
                       <div className="flex items-center gap-0">
                         <Input
                           type="number"
-                          value={sabitIskontoVar ? sabitIskontoYuzde : ""}
+                          value={sabitIskontoYuzde}
                           onChange={(e) => setSabitIskontoYuzde(e.target.value)}
                           placeholder=""
-                          disabled={!sabitIskontoVar}
                           className="rounded-r-none border-r-0"
                           min="0"
                           max="100"
                           step="0.01"
-                          required={sabitIskontoVar}
                         />
                         <div className="flex items-center justify-center bg-gray-100 border border-l-0 border-gray-300 px-3 h-10 rounded-r-md text-gray-600">
                           %
@@ -1922,13 +1799,7 @@ export function AccountingModule() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="space-y-2">
                     <Label className="text-blue-500 font-normal">Tutar</Label>
-                    <Input 
-                      type="number" 
-                      defaultValue="0.00" 
-                      step="0.01"
-                      min="0"
-                      className="text-right font-medium"
-                    />
+                    <Input type="text" defaultValue="0,00" className="text-right font-medium" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-blue-500 font-normal">Para Birimi *</Label>
