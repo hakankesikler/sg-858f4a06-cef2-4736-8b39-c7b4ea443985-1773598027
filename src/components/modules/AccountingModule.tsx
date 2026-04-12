@@ -147,10 +147,23 @@ export function AccountingModule() {
 
   const loadData = async () => {
     try {
-      const data = await crmService.getCustomers();
-      setCustomers(data as any);
+      setLoading(true);
+      const customersData = await crmService.getCustomers();
+      console.log("=== ACCOUNTING MODULE - LOADED CUSTOMERS ===");
+      console.log("Total customers:", customersData.length);
+      customersData.forEach((c: any) => {
+        console.log(`Customer: ${c.name}, VKN: ${c.vergi_no}, TC: ${c.tc_no}`);
+      });
+      setCustomers(customersData);
     } catch (error) {
-      console.error("Cari hesaplar yüklenirken hata:", error);
+      console.error("Error loading accounting data:", error);
+      toast({
+        title: "Hata",
+        description: "Veriler yüklenirken bir hata oluştu",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1042,9 +1055,19 @@ export function AccountingModule() {
                                   {customer.status}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="font-mono text-sm">
-                                {customer.tax_number || "-"}
-                              </TableCell>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {(() => {
+                                  const vkn = customer.vergi_no || customer.tc_no;
+                                  console.log(`=== VKN/TCKN for ${customer.name} ===`, {
+                                    id: customer.id,
+                                    vergi_no: customer.vergi_no,
+                                    tc_no: customer.tc_no,
+                                    vkn: vkn,
+                                    fullCustomer: customer
+                                  });
+                                  return vkn || "-";
+                                })()}
+                              </td>
                               <TableCell className="text-right font-semibold">
                                 ₺0,00
                               </TableCell>
