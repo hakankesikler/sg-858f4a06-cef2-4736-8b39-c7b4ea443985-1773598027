@@ -177,12 +177,6 @@ export function CRMModule() {
     return filtered;
   }, [customers, filterType, supplierSubCategory, searchTerm]);
 
-  const handleViewCustomer = (customer: any) => {
-    console.log("=== VIEW CUSTOMER CLICKED ===", customer);
-    setSelectedCustomer(customer);
-    setIsViewDialogOpen(true);
-  };
-
   const handleEditCustomer = (customer: any) => {
     console.log("=== EDIT CUSTOMER CLICKED ===", customer);
     setSelectedCustomer(customer);
