@@ -1,8 +1,45 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 
-type Customer = Database["public"]["Tables"]["customers"]["Row"];
-type CustomerInsert = Database["public"]["Tables"]["customers"]["Insert"];
+export interface Customer {
+  id?: string;
+  name: string;
+  company?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  status?: string;
+  last_contact?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+  city?: string;
+  account_type?: string;
+  tc_no?: string;
+  vergi_no?: string;
+  tax_office?: string;
+  mersis?: string;
+  ticaret_sicil_no?: string;
+  short_name?: string;
+  tags?: string;
+  website?: string;
+  fax?: string;
+  branch_address?: string;
+  invoice_email?: string;
+  district?: string;
+  postal_code?: string;
+  vade_gunu?: number | null;
+  sabit_iskonto?: number | null;
+  supplier_category?: string | null;
+  customer_code?: string;
+  // Nakliyeci alanları
+  authorized_person_name?: string | null;
+  authorized_person_phone?: string | null;
+  authorized_person_email?: string | null;
+  work_area?: string | null;
+  specialty?: string[] | null;
+  payment_method?: string | null;
+  payment_day?: number | null;
+}
 
 export const crmService = {
   // Get all customers
@@ -162,7 +199,7 @@ export const crmService = {
   },
 
   // Update customer
-  async updateCustomer(id: string, updates: Partial<CustomerInsert>) {
+  async updateCustomer(id: string, updates: Partial<Customer>) {
     const { data, error } = await supabase
       .from("customers")
       .update(updates)
