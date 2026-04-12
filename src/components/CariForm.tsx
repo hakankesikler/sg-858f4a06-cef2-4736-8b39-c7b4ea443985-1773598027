@@ -34,8 +34,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     tax_office: "",
     mersis: "",
     ticaret_sicil_no: "",
-    short_name: "",
-    tags: "",
     phone: "",
     fax: "",
     email: "",
@@ -46,7 +44,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     city: "",
     district: "",
     postal_code: "",
-    account_type: "musteri",
+    account_type: "",
     supplier_category: "",
     authorized_person_name: "",
     authorized_person_phone: "",
@@ -94,8 +92,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         tax_office: initialData.tax_office || "",
         mersis: initialData.mersis || "",
         ticaret_sicil_no: initialData.ticaret_sicil_no || "",
-        short_name: initialData.short_name || "",
-        tags: initialData.tags || "",
         phone: initialData.phone || "",
         fax: initialData.fax || "",
         email: initialData.email || "",
@@ -143,8 +139,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       tax_office: "",
       mersis: "",
       ticaret_sicil_no: "",
-      short_name: "",
-      tags: "",
       phone: "",
       fax: "",
       email: "",
@@ -272,8 +266,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         tax_office: formData.tax_office || null,
         mersis: formData.mersis || null,
         ticaret_sicil_no: formData.ticaret_sicil_no || null,
-        short_name: formData.short_name || null,
-        tags: formData.tags || null,
         website: formData.website || null,
         fax: formData.fax || null,
         address: formData.address || null,
@@ -390,8 +382,8 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
             {cariTuru === "gercek" ? (
               <>
                 {/* Gerçek/Şahıs Şirketi Formu */}
-                {/* Row 1: Cari Kodu, Adı, Soyadı, Tipi, Kısa Adı, İşlem Tarihi */}
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                {/* Row 1: Cari Kodu, Adı, Soyadı, Tipi, İşlem Tarihi */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div className="space-y-2">
                     <Label>Cari Kodu</Label>
                     <Input value="CAR001295" disabled className="bg-gray-50" />
@@ -428,14 +420,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Cari Kısa Adı</Label>
-                    <Input 
-                      placeholder=""
-                      value={formData.short_name}
-                      onChange={(e) => setFormData({ ...formData, short_name: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label>İşlem Tarihi</Label>
                     <Input type="date" defaultValue="2026-04-12" />
                   </div>
@@ -460,16 +444,8 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                   </div>
                 )}
 
-                {/* Row 2: Etiketler, TC Kimlik, Vergi Dairesi, Mersis No */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Etiketler</Label>
-                    <Input 
-                      placeholder=""
-                      value={formData.tags}
-                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                    />
-                  </div>
+                {/* Row 2: TC Kimlik, Vergi Dairesi, Mersis No */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>T.C. Kimlik No *</Label>
                     <Input 
@@ -502,8 +478,8 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
             ) : (
               <>
                 {/* Tüzel Kişi Formu */}
-                {/* Row 1: Cari Kodu, Firma Ünvanı (col-span-2), Tipi, Kısa Adı, İşlem Tarihi */}
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                {/* Row 1: Cari Kodu, Firma Ünvanı (col-span-2), Tipi, İşlem Tarihi */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div className="space-y-2">
                     <Label>Cari Kodu</Label>
                     <Input value="CAR001295" disabled className="bg-gray-50" />
@@ -531,14 +507,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Cari Kısa Adı</Label>
-                    <Input 
-                      placeholder=""
-                      value={formData.short_name}
-                      onChange={(e) => setFormData({ ...formData, short_name: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label>İşlem Tarihi</Label>
                     <Input type="date" defaultValue="2026-04-12" />
                   </div>
@@ -563,16 +531,8 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                   </div>
                 )}
 
-                {/* Row 2: Etiketler, Vergi Numarası, Vergi Dairesi, Mersis No */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Etiketler</Label>
-                    <Input 
-                      placeholder=""
-                      value={formData.tags}
-                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                    />
-                  </div>
+                {/* Row 2: Vergi Numarası, Vergi Dairesi, Mersis No */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Vergi Numarası *</Label>
                     <Input 
