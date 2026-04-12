@@ -162,6 +162,8 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
         sabit_iskonto: sabitIskontoVar && sabitIskontoYuzde ? parseFloat(sabitIskontoYuzde) : null
       };
 
+      console.log("Submitting customer data:", submitData);
+
       await crmService.createCustomer(submitData as any);
 
       toast({
@@ -175,7 +177,7 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
       console.error("Error creating customer:", error);
       toast({
         title: "Hata",
-        description: "Cari oluşturulurken bir hata oluştu",
+        description: error instanceof Error ? error.message : "Cari oluşturulurken bir hata oluştu",
         variant: "destructive",
       });
     } finally {

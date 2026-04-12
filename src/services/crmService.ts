@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type Customer = Database["public"]["Tables"]["customers"]["Row"];
+type CustomerInsert = Database["public"]["Tables"]["customers"]["Insert"];
 
 export const crmService = {
   // Get all customers
@@ -13,7 +14,7 @@ export const crmService = {
 
     if (error) {
       console.error("Error fetching customers:", error);
-      return [];
+      throw error;
     }
 
     return data || [];
@@ -21,36 +22,18 @@ export const crmService = {
 
   // Get customer by ID with related data
   async getCustomerById(id: string) {
-    const { data: customer, error: customerError } = await supabase
+    const { data, error } = await supabase
       .from("customers")
       .select("*")
       .eq("id", id)
       .single();
 
-    if (customerError) {
-      console.error("Error fetching customer:", customerError);
-      return null;
+    if (error) {
+      console.error("Error fetching customer:", error);
+      throw error;
     }
 
-    // Get related shipments
-    const { data: shipments } = await supabase
-      .from("shipments")
-      .select("*")
-      .eq("customer_id", id)
-      .order("created_at", { ascending: false });
-
-    // Get related invoices
-    const { data: invoices } = await supabase
-      .from("invoices")
-      .select("*")
-      .eq("customer_id", id)
-      .order("created_at", { ascending: false });
-
-    return {
-      ...customer,
-      shipments: shipments || [],
-      invoices: invoices || []
-    };
+    return data;
   },
 
   // Get customer stats
@@ -66,31 +49,10 @@ export const crmService = {
   },
 
   // Create new customer
-  async createCustomer(customerData: {
-    name: string;
-    company?: string;
-    email: string;
-    phone?: string;
-    address?: string;
-    city?: string;
-    status: "Aktif" | "Potansiyel" | "Eski Müşteri";
-    notes?: string;
-  }) {
-    const { data, error } = await supabase
+  async createCustomer(data: CustomerInsert) {
+    const { data: customer, error } = await supabase
       .from("customers")
-      .insert([
-        {
-          name: customerData.name,
-          company: customerData.company || null,
-          email: customerData.email,
-          phone: customerData.phone || null,
-          address: customerData.address || null,
-          city: customerData.city || null,
-          status: customerData.status,
-          notes: customerData.notes || null,
-          last_contact: new Date().toISOString()
-        }
-      ])
+      .insert(data)
       .select()
       .single();
 
@@ -99,17 +61,14 @@ export const crmService = {
       throw error;
     }
 
-    return data;
+    return customer;
   },
 
   // Update customer
-  async updateCustomer(id: string, customerData: Partial<Customer>) {
+  async updateCustomer(id: string, updates: Partial<CustomerInsert>) {
     const { data, error } = await supabase
       .from("customers")
-      .update({
-        ...customerData,
-        last_contact: new Date().toISOString()
-      })
+      .update(updates)
       .eq("id", id)
       .select()
       .single();
@@ -133,8 +92,6 @@ export const crmService = {
       console.error("Error deleting customer:", error);
       throw error;
     }
-
-    return true;
   },
 
   // Get unique cities for filter
