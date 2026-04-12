@@ -95,7 +95,7 @@ export function CRMModule() {
       });
       setIsDeleteDialogOpen(false);
       setDeletingCustomer(null);
-      loadCustomers();
+      loadData();
     } catch (error) {
       console.error("Error deleting customer:", error);
       toast({
@@ -468,8 +468,7 @@ export function CRMModule() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {(() => {
-                          const vkn = customer.vergi_no || customer.tc_no;
-                          console.log("Customer VKN/TCKN:", customer.id, vkn, customer);
+                          const vkn = customer.vergi_no || customer.tc_no || customer.tax_number;
                           return vkn || "-";
                         })()}
                       </td>
@@ -480,9 +479,7 @@ export function CRMModule() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log("View clicked for:", customer);
-                              setSelectedCustomer(customer);
-                              setViewModalOpen(true);
+                              openDetailDialog(customer);
                             }}
                             className="p-1 hover:bg-gray-100 rounded"
                             title="Görüntüle"
@@ -494,9 +491,8 @@ export function CRMModule() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log("Edit clicked for:", customer);
-                              setSelectedCustomer(customer);
-                              setEditModalOpen(true);
+                              setEditingCustomer(customer);
+                              setIsEditDialogOpen(true);
                             }}
                             className="p-1 hover:bg-gray-100 rounded"
                             title="Düzenle"
@@ -508,7 +504,6 @@ export function CRMModule() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log("Delete clicked for:", customer);
                               handleDeleteClick(customer);
                             }}
                             className="p-1 hover:bg-gray-100 rounded"
