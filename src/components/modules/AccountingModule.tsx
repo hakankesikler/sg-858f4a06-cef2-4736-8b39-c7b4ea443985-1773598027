@@ -1418,347 +1418,345 @@ export function AccountingModule() {
                 </Button>
               </div>
 
-              {activeExpenseTab === "genel-gider-tipleri" && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h2 className="text-2xl font-bold">Genel Gider Tipleri</h2>
-                    </div>
-                    <Button className="gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Yeni Kategori Ekle
-                    </Button>
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold">Genel Gider Tipleri</h2>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Kategorisiz Genel Gider Tipleri */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Kategorisiz Genel Gider Tipleri</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Yiyecek</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button size="sm" className="flex-1">
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Araç Bakım Onarım */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Araç Bakım Onarım</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Araç Tamir ve Bakım Giderleri</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Araç Donanım Giderleri</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button size="sm" className="flex-1">
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Yazılım */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Yazılım</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Freight Forwarding Yazılım</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button size="sm" className="flex-1">
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Taşıma Faturaları */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Taşıma Faturaları</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">FULL TRACK TAŞIMA</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Parsiyel Taşıma</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button size="sm" className="flex-1">
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Kurumsal Giderler */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Kurumsal Giderler</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">İç Sağlık Güvenlik Danışmanlık Hizmeti</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Freight Forwarding Sigortası</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Ticaret Odası Giderleri</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Noter Giderleri</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Elektrik</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button size="sm" className="flex-1">
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Finansal */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Finansal</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Yakıtbank Sky Koli Dijital Kredi</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Yakıtbank Tam Esnek Standart Kredi</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Halkbank İhtiyaç Kredisi</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">EFT</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Havale</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button size="sm" className="flex-1">
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Demirbaş */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Demirbaş</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Mobilya</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Ofis Eşyası</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Donanım</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Temizlik</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button size="sm" className="flex-1">
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Ulaşım/Konaklama */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Ulaşım/Konaklama</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Seyahat Harcaması</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Akaryakıt</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Araç Kiralama</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Otopark Ücreti</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Taksi</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button size="sm" className="flex-1">
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Temel Giderler */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Temel Giderler</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Kargo Ödemesi</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Kira</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Yemek Harcaması</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Muhasebe/Mali Müşavir</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">İletişim Gideri</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button size="sm" className="flex-1">
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-                  </div>
+                  <Button className="gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Yeni Kategori Ekle
+                  </Button>
                 </div>
-              )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Kategorisiz Genel Gider Tipleri */}
+                  <Card className="p-6">
+                    <h3 className="font-semibold text-lg mb-1">Kategorisiz Genel Gider Tipleri</h3>
+                    <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
+                    <div className="space-y-2 mb-6 min-h-[120px]">
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Yiyecek</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                        Kategoriyi Düzenle
+                      </Button>
+                      <Button size="sm" className="flex-1">
+                        + Yeni Tip Ekle
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Araç Bakım Onarım */}
+                  <Card className="p-6">
+                    <h3 className="font-semibold text-lg mb-1">Araç Bakım Onarım</h3>
+                    <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
+                    <div className="space-y-2 mb-6 min-h-[120px]">
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Araç Tamir ve Bakım Giderleri</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Araç Donanım Giderleri</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                        Kategoriyi Düzenle
+                      </Button>
+                      <Button size="sm" className="flex-1">
+                        + Yeni Tip Ekle
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Yazılım */}
+                  <Card className="p-6">
+                    <h3 className="font-semibold text-lg mb-1">Yazılım</h3>
+                    <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
+                    <div className="space-y-2 mb-6 min-h-[120px]">
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Freight Forwarding Yazılım</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                        Kategoriyi Düzenle
+                      </Button>
+                      <Button size="sm" className="flex-1">
+                        + Yeni Tip Ekle
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Taşıma Faturaları */}
+                  <Card className="p-6">
+                    <h3 className="font-semibold text-lg mb-1">Taşıma Faturaları</h3>
+                    <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
+                    <div className="space-y-2 mb-6 min-h-[120px]">
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">FULL TRACK TAŞIMA</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Parsiyel Taşıma</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                        Kategoriyi Düzenle
+                      </Button>
+                      <Button size="sm" className="flex-1">
+                        + Yeni Tip Ekle
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Kurumsal Giderler */}
+                  <Card className="p-6">
+                    <h3 className="font-semibold text-lg mb-1">Kurumsal Giderler</h3>
+                    <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
+                    <div className="space-y-2 mb-6 min-h-[120px]">
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">İç Sağlık Güvenlik Danışmanlık Hizmeti</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Freight Forwarding Sigortası</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Ticaret Odası Giderleri</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Noter Giderleri</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Elektrik</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                        Kategoriyi Düzenle
+                      </Button>
+                      <Button size="sm" className="flex-1">
+                        + Yeni Tip Ekle
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Finansal */}
+                  <Card className="p-6">
+                    <h3 className="font-semibold text-lg mb-1">Finansal</h3>
+                    <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
+                    <div className="space-y-2 mb-6 min-h-[120px]">
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Yakıtbank Sky Koli Dijital Kredi</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Yakıtbank Tam Esnek Standart Kredi</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Halkbank İhtiyaç Kredisi</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">EFT</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Havale</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                        Kategoriyi Düzenle
+                      </Button>
+                      <Button size="sm" className="flex-1">
+                        + Yeni Tip Ekle
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Demirbaş */}
+                  <Card className="p-6">
+                    <h3 className="font-semibold text-lg mb-1">Demirbaş</h3>
+                    <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
+                    <div className="space-y-2 mb-6 min-h-[120px]">
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Mobilya</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Ofis Eşyası</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Donanım</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Temizlik</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                        Kategoriyi Düzenle
+                      </Button>
+                      <Button size="sm" className="flex-1">
+                        + Yeni Tip Ekle
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Ulaşım/Konaklama */}
+                  <Card className="p-6">
+                    <h3 className="font-semibold text-lg mb-1">Ulaşım/Konaklama</h3>
+                    <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
+                    <div className="space-y-2 mb-6 min-h-[120px]">
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Seyahat Harcaması</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Akaryakıt</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Araç Kiralama</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Otopark Ücreti</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Taksi</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                        Kategoriyi Düzenle
+                      </Button>
+                      <Button size="sm" className="flex-1">
+                        + Yeni Tip Ekle
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Temel Giderler */}
+                  <Card className="p-6">
+                    <h3 className="font-semibold text-lg mb-1">Temel Giderler</h3>
+                    <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
+                    <div className="space-y-2 mb-6 min-h-[120px]">
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Kargo Ödemesi</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Kira</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Yemek Harcaması</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">Muhasebe/Mali Müşavir</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <span className="text-sm">İletişim Gideri</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                        Kategoriyi Düzenle
+                      </Button>
+                      <Button size="sm" className="flex-1">
+                        + Yeni Tip Ekle
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </TabsContent>
