@@ -199,86 +199,33 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     setCustomerCode("CST-000001");
   };
 
-  const handleSubmit = async () => {
-    // Validasyon
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate required fields
     if (cariTuru === "gercek") {
-      if (!formData.name.trim()) {
-        toast({ title: "Hata", description: "Lütfen cari adını giriniz", variant: "destructive" });
-        return;
-      }
-      if (!formData.surname?.trim()) {
-        toast({ title: "Hata", description: "Lütfen cari soyadını giriniz", variant: "destructive" });
-        return;
-      }
-      if (!formData.tc_no || formData.tc_no.length !== 11) {
-        toast({ title: "Hata", description: "Lütfen geçerli bir TC Kimlik No giriniz (11 hane)", variant: "destructive" });
-        return;
-      }
-      if (formData.tc_no[0] === "0") {
-        toast({ title: "Hata", description: "TC Kimlik No'nun ilk rakamı 0 olamaz", variant: "destructive" });
+      if (!formData.name || !formData.surname || !formData.tc_no) {
+        toast({
+          title: "Hata",
+          description: "Lütfen tüm zorunlu alanları doldurun",
+          variant: "destructive",
+        });
         return;
       }
     } else {
-      if (!formData.company_name?.trim()) {
-        toast({ title: "Hata", description: "Lütfen firma ünvanını giriniz", variant: "destructive" });
-        return;
-      }
-      if (!formData.vergi_no || formData.vergi_no.length !== 10) {
-        toast({ title: "Hata", description: "Lütfen geçerli bir Vergi No giriniz (10 hane)", variant: "destructive" });
-        return;
-      }
-    }
-
-    if (!formData.account_type) {
-      toast({ title: "Hata", description: "Lütfen cari tipini seçiniz", variant: "destructive" });
-      return;
-    }
-
-    if (!formData.phone?.trim()) {
-      toast({ title: "Hata", description: "Lütfen telefon numarası giriniz", variant: "destructive" });
-      return;
-    }
-
-    if (!formData.email?.trim()) {
-      toast({ title: "Hata", description: "Lütfen e-posta adresi giriniz", variant: "destructive" });
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast({ title: "Hata", description: "Lütfen geçerli bir e-posta adresi giriniz", variant: "destructive" });
-      return;
-    }
-
-    // Vade Günü validasyonu
-    if (vadeGunuVar && vadeGunuSayisi) {
-      const vade = parseInt(vadeGunuSayisi);
-      if (vade < 1 || vade > 999) {
-        toast({ title: "Hata", description: "Vade günü 1-999 arasında olmalıdır", variant: "destructive" });
+      if (!formData.company_name || !formData.vergi_no) {
+        toast({
+          title: "Hata",
+          description: "Lütfen tüm zorunlu alanları doldurun",
+          variant: "destructive",
+        });
         return;
       }
     }
 
-    // Sabit İskonto validasyonu
-    if (sabitIskontoVar && sabitIskontoYuzde) {
-      const iskonto = parseFloat(sabitIskontoYuzde);
-      if (iskonto < 0 || iskonto > 100) {
-        toast({ title: "Hata", description: "Sabit iskonto 0-100 arasında olmalıdır", variant: "destructive" });
-        return;
-      }
-    }
-
-    // Tutar validasyonu
-    if (formData.tutar) {
-      const tutar = parseFloat(formData.tutar);
-      if (tutar < 0) {
-        toast({ title: "Hata", description: "Tutar negatif olamaz", variant: "destructive" });
-        return;
-      }
-    }
-
-    setIsSubmitting(true);
     try {
+      setIsSubmitting(true);
+      
       const submitData = {
         customer_code: customerCode,
         name: cariTuru === "gercek" 
@@ -314,33 +261,38 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         payment_day: formData.payment_day ? parseInt(formData.payment_day) : null
       };
 
-      console.log("=== CARİ FORM SUBMIT ===");
-      console.log("Mode:", editMode ? "UPDATE" : "CREATE");
+      console.log("=== SUBMITTING CUSTOMER DATA ===");
       console.log("Submit Data:", submitData);
 
-      if (editMode && initialData?.id) {
-        // Update existing customer
-        await crmService.updateCustomer(initialData.id, submitData as any);
+      if (editMode && initialData) {
+        await crmService.updateCustomer(initialData.id, submitData);
         toast({
           title: "Başarılı",
-          description: "Cari hesap başarıyla güncellendi",
+          description: "Cari başarıyla güncellendi",
         });
       } else {
-        // Create new customer
-        await crmService.createCustomer(submitData as any);
+        const result = await crmService.createCustomer(submitData);
+        console.log("=== CREATE RESULT ===", result);
         toast({
           title: "Başarılı",
-          description: "Cari hesap başarıyla oluşturuldu",
+          description: "Cari başarıyla oluşturuldu",
         });
       }
 
-      onSuccess?.();
-      handleClose();
-    } catch (error) {
-      console.error("Error saving customer:", error);
+      onSuccess();
+      onClose();
+      resetForm();
+    } catch (error: any) {
+      console.error("=== SUBMIT ERROR ===");
+      console.error("Error object:", error);
+      console.error("Error message:", error?.message);
+      console.error("Error details:", error?.details);
+      console.error("Error hint:", error?.hint);
+      console.error("Error code:", error?.code);
+      
       toast({
         title: "Hata",
-        description: error instanceof Error ? error.message : "Cari kaydedilirken bir hata oluştu",
+        description: error?.message || "Cari kaydedilirken bir hata oluştu",
         variant: "destructive",
       });
     } finally {
