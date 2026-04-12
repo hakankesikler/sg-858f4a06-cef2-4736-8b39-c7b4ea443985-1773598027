@@ -21,26 +21,6 @@ export const logisticsService = {
     return data || [];
   },
 
-  async getCarriers() {
-    // Şimdilik mock data dönüyoruz
-    return [
-      {
-        id: "1",
-        firma_adi: "Örnek Nakliyat Ltd. Şti.",
-        vergi_no: "1234567890",
-        firma_telefon: "0555 111 22 33",
-        firma_email: "info@orneknakliyat.com",
-        calisma_bolgesi: "Türkiye Geneli",
-      }
-    ];
-  },
-
-  async createCarrier(carrierData: any) {
-    // Şimdilik sadece başarılı dönüş yapıyoruz
-    console.log("Nakliyeci kaydedildi:", carrierData);
-    return { success: true };
-  },
-
   async getShipmentById(id: string) {
     const { data, error } = await supabase
       .from("shipments")
