@@ -408,7 +408,7 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
-                    <Popover open={vergiDairesiOpen} onOpenChange={setVergiDairesiOpen}>
+                    <Popover open={vergiDairesiOpen} onOpenChange={setVergiDairesiOpen} modal={false}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -422,9 +422,18 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[300px] p-0">
+                      <PopoverContent 
+                        className="w-[300px] p-0" 
+                        align="start"
+                        onInteractOutside={(e) => {
+                          const target = e.target as HTMLElement;
+                          if (target.closest('[role="combobox"]')) {
+                            e.preventDefault();
+                          }
+                        }}
+                      >
                         <Command>
-                          <CommandInput placeholder="Vergi dairesi ara..." />
+                          <CommandInput placeholder="Vergi dairesi ara..." autoFocus />
                           <CommandEmpty>Vergi dairesi bulunamadı.</CommandEmpty>
                           <CommandGroup className="max-h-[300px] overflow-auto">
                             {vergiDaireleri.map((vd) => (
