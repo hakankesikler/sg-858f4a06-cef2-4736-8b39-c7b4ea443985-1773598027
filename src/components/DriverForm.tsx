@@ -130,7 +130,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
       // Upload file if exists
       if (ehliyetFile) {
         try {
-          await driverService.uploadDriverDocument(driverId, ehliyetFile);
+          await driverService.uploadEhliyetFile(ehliyetFile, driverId);
         } catch (error) {
           console.error("Error uploading file:", error);
           toast({
