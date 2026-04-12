@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { crmService } from "@/services/crmService";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { VergiDairesiSelect } from "@/components/VergiDairesiSelect";
 
 interface CariFormProps {
   isOpen: boolean;
@@ -354,19 +355,10 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
-                    <Select
-                      value={formData.tax_office}
-                      onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                        <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                        <SelectItem value="sisli">Şişli</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <VergiDairesiSelect
+                      value={formData.vergiDairesi}
+                      onChange={(value) => setFormData(prev => ({ ...prev, vergiDairesi: value }))}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Mersis No</Label>
@@ -452,19 +444,10 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
-                    <Select
-                      value={formData.tax_office}
-                      onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                        <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                        <SelectItem value="sisli">Şişli</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <VergiDairesiSelect
+                      value={formData.vergiDairesi}
+                      onChange={(value) => setFormData(prev => ({ ...prev, vergiDairesi: value }))}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Mersis No</Label>
