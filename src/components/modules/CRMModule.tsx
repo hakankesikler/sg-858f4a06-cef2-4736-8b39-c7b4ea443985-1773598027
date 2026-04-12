@@ -504,11 +504,11 @@ export function CRMModule() {
                   </div>
                   <div>
                     <Label className="text-gray-500">Email</Label>
-                    <p className="font-medium">{selectedCustomer.email}</p>
+                    <p className="font-medium">{selectedCustomer.email || "-"}</p>
                   </div>
                   <div>
                     <Label className="text-gray-500">Telefon</Label>
-                    <p className="font-medium">{selectedCustomer.phone}</p>
+                    <p className="font-medium">{selectedCustomer.phone || "-"}</p>
                   </div>
                   {selectedCustomer.vergi_no && (
                     <div>
@@ -556,6 +556,18 @@ export function CRMModule() {
                     onClick={() => {
                       setIsBankFormOpen(true);
                       setEditingBank(null);
+                      setBankFormData({
+                        bank_name: "",
+                        iban: "",
+                        account_holder: "",
+                        account_number: "",
+                        branch_name: "",
+                        branch_code: "",
+                        swift_code: "",
+                        currency: "TRY",
+                        is_default: false,
+                        notes: ""
+                      });
                     }}
                     size="sm"
                   >
