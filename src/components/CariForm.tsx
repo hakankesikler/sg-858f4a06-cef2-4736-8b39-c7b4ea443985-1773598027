@@ -370,9 +370,9 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                 </label>
               </div>
               
-              {/* Adres Row 1 */}
+              {/* Adres Row 1: Adres Tipi | Adres (max width) | Sil */}
               <div className="flex gap-4 items-start">
-                <div className="space-y-2" style={{ width: '150px' }}>
+                <div className="space-y-2 w-40">
                   <Label>Adres Tipi</Label>
                   <Select>
                     <SelectTrigger>
@@ -388,11 +388,23 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                 <div className="space-y-2 flex-1">
                   <Label>Adres</Label>
                   <textarea 
-                    className="w-full min-h-[80px] px-3 py-2 border rounded-md resize-none"
+                    className="w-full min-h-[120px] px-3 py-2 border rounded-md resize-none"
                     placeholder=""
                   />
                 </div>
-                <div className="space-y-2" style={{ width: '150px' }}>
+                <div className="space-y-2">
+                  <Label className="invisible">Sil</Label>
+                  <Button variant="destructive" size="sm" className="h-10 px-6">Sil</Button>
+                </div>
+              </div>
+
+              {/* Adres Row 2: Posta Kodu | İl | İlçe */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Posta Kodu</Label>
+                  <Input placeholder="" />
+                </div>
+                <div className="space-y-2">
                   <Label>İl</Label>
                   <Select>
                     <SelectTrigger>
@@ -405,7 +417,7 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2" style={{ width: '150px' }}>
+                <div className="space-y-2">
                   <Label>İlçe</Label>
                   <Select>
                     <SelectTrigger>
@@ -417,18 +429,6 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                       <SelectItem value="sisli">Şişli</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="invisible">Sil</Label>
-                  <Button variant="destructive" size="sm" className="h-10">Sil</Button>
-                </div>
-              </div>
-
-              {/* Adres Row 2 */}
-              <div className="flex gap-4">
-                <div className="space-y-2" style={{ width: '150px' }}>
-                  <Label>Posta Kodu</Label>
-                  <Input placeholder="" />
                 </div>
               </div>
 
