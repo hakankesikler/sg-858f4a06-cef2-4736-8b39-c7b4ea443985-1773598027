@@ -2530,9 +2530,210 @@ export function AccountingModule() {
 
             {/* Cari Detay Bilgileri Tab */}
             <TabsContent value="detay" className="space-y-6">
-              <div className="p-8 text-center text-gray-500">
-                <p>Cari detay bilgileri bölümü</p>
-                <p className="text-sm mt-2">Ek bilgiler burada görüntülenecek</p>
+              {/* Vade Bilgileri */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Vade Bilgileri</h3>
+                <div className="space-y-2">
+                  <Label>Vade Günü</Label>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="vadeGunu"
+                        checked={!vadeGunuVar}
+                        onChange={() => {
+                          setVadeGunuVar(false);
+                          setVadeGunuSayisi("");
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span>Yok</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="vadeGunu"
+                        checked={vadeGunuVar}
+                        onChange={() => setVadeGunuVar(true)}
+                        className="w-4 h-4"
+                      />
+                      <span>Var</span>
+                    </label>
+                  </div>
+                  {vadeGunuVar && (
+                    <div className="mt-2">
+                      <Select value={vadeGunuSayisi} onValueChange={setVadeGunuSayisi}>
+                        <SelectTrigger className="w-64">
+                          <SelectValue placeholder="Vade seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="7">7 Gün Vade</SelectItem>
+                          <SelectItem value="15">15 Gün Vade</SelectItem>
+                          <SelectItem value="30">30 Gün Vade</SelectItem>
+                          <SelectItem value="45">45 Gün Vade</SelectItem>
+                          <SelectItem value="60">60 Gün Vade</SelectItem>
+                          <SelectItem value="90">90 Gün Vade</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Sabit İskonto */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Sabit İskonto</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Sabit İskonto</Label>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="sabitIskonto"
+                          checked={!sabitIskontoVar}
+                          onChange={() => {
+                            setSabitIskontoVar(false);
+                            setSabitIskontoYuzde("");
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span>Yok</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="sabitIskonto"
+                          checked={sabitIskontoVar}
+                          onChange={() => setSabitIskontoVar(true)}
+                          className="w-4 h-4"
+                        />
+                        <span>Var</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sabit İskonto</Label>
+                    <div className="flex">
+                      <Input
+                        type="number"
+                        value={sabitIskontoYuzde}
+                        onChange={(e) => setSabitIskontoYuzde(e.target.value)}
+                        disabled={!sabitIskontoVar}
+                        placeholder="İskonto oranı"
+                        className="rounded-r-none border-r-0"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                      />
+                      <span className="inline-flex items-center px-3 text-sm bg-gray-50 border border-l-0 border-gray-300 rounded-r-md">
+                        %
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Açılış Bakiyesi */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Açılış Bakiyesi</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Tutar</Label>
+                    <Input type="number" placeholder="0.00" step="0.01" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Para Birimi *</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="TRY">TRY (₺)</SelectItem>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="GBP">GBP (£)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Durumu</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="borc">Borç</SelectItem>
+                        <SelectItem value="alacak">Alacak</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Proje</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="proje1">Proje 1</SelectItem>
+                        <SelectItem value="proje2">Proje 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>İşlem Tarihi</Label>
+                    <Input type="date" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vade Tarihi Var Mı?</Label>
+                    <div className="flex items-center gap-4 pt-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="vadeTarihi" className="w-4 h-4" />
+                        <span>Yok</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="vadeTarihi" className="w-4 h-4" />
+                        <span>Var</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Borç Alacak Bilgileri */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="text-lg font-semibold">Borç Alacak Bilgileri</h3>
+                  <Button variant="outline" size="sm">
+                    + Borç Alacak Ekle
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">Henüz borç alacak bilgisi eklenmedi.</p>
+              </div>
+
+              {/* Banka Bilgileri */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="text-lg font-semibold">Banka Bilgileri</h3>
+                  <Button variant="outline" size="sm">
+                    + Banka Ekle
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">Henüz banka bilgisi eklenmedi.</p>
+              </div>
+
+              {/* Yetkili İletişim Bilgileri */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="text-lg font-semibold">Yetkili İletişim Bilgileri</h3>
+                  <Button variant="outline" size="sm">
+                    + Yetkili Ekle
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">Henüz yetkili bilgisi eklenmedi.</p>
               </div>
             </TabsContent>
           </Tabs>
