@@ -75,7 +75,7 @@ export const vehicleService = {
 
     const { data, error } = await supabase
       .from("vehicles")
-      .insert(vehicle)
+      .insert(vehicle as any)
       .select()
       .single();
 
@@ -90,7 +90,7 @@ export const vehicleService = {
   async updateVehicle(id: string, vehicle: Partial<Vehicle>) {
     const { data, error } = await supabase
       .from("vehicles")
-      .update({ ...vehicle, updated_at: new Date().toISOString() })
+      .update({ ...vehicle, updated_at: new Date().toISOString() } as any)
       .eq("id", id)
       .select()
       .single();

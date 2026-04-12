@@ -75,7 +75,7 @@ export const driverService = {
 
     const { data, error } = await supabase
       .from("drivers")
-      .insert(driver)
+      .insert(driver as any)
       .select()
       .single();
 
@@ -90,7 +90,7 @@ export const driverService = {
   async updateDriver(id: string, driver: Partial<Driver>) {
     const { data, error } = await supabase
       .from("drivers")
-      .update({ ...driver, updated_at: new Date().toISOString() })
+      .update({ ...driver, updated_at: new Date().toISOString() } as any)
       .eq("id", id)
       .select()
       .single();

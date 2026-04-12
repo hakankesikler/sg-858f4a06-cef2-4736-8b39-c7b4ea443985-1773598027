@@ -527,6 +527,57 @@ export type Database = {
         }
         Relationships: []
       }
+      drivers: {
+        Row: {
+          created_at: string | null
+          driver_code: string
+          ehliyet_dosyasi_url: string | null
+          ehliyet_gecerlilik_tarihi: string | null
+          ehliyet_sinifi: string | null
+          full_name: string
+          id: string
+          phone_1: string
+          phone_2: string | null
+          psikoteknik_belge_no: string | null
+          src_belge_no: string | null
+          status: string | null
+          tc_no: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          driver_code: string
+          ehliyet_dosyasi_url?: string | null
+          ehliyet_gecerlilik_tarihi?: string | null
+          ehliyet_sinifi?: string | null
+          full_name: string
+          id?: string
+          phone_1: string
+          phone_2?: string | null
+          psikoteknik_belge_no?: string | null
+          src_belge_no?: string | null
+          status?: string | null
+          tc_no: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          driver_code?: string
+          ehliyet_dosyasi_url?: string | null
+          ehliyet_gecerlilik_tarihi?: string | null
+          ehliyet_sinifi?: string | null
+          full_name?: string
+          id?: string
+          phone_1?: string
+          phone_2?: string | null
+          psikoteknik_belge_no?: string | null
+          src_belge_no?: string | null
+          status?: string | null
+          tc_no?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       employee_accounts: {
         Row: {
           account_code: string
@@ -1745,34 +1796,64 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          arac_tipi: string | null
+          cekici_plakasi: string | null
           created_at: string | null
+          dorse_plakasi: string | null
           driver_name: string | null
           driver_phone: string | null
           id: string
-          plate_no: string
+          kasa_tipi: string | null
+          kasko_bitis_tarihi: string | null
+          plate_no: string | null
+          ruhsat_dosyasi_url: string | null
           status: string | null
+          tasima_kapasitesi_kg: number | null
+          trafik_sigortasi_bitis_tarihi: string | null
           updated_at: string | null
-          vehicle_type: string
+          vehicle_code: string | null
+          vehicle_type: string | null
+          yetki_belgesi: string | null
         }
         Insert: {
+          arac_tipi?: string | null
+          cekici_plakasi?: string | null
           created_at?: string | null
+          dorse_plakasi?: string | null
           driver_name?: string | null
           driver_phone?: string | null
           id?: string
-          plate_no: string
+          kasa_tipi?: string | null
+          kasko_bitis_tarihi?: string | null
+          plate_no?: string | null
+          ruhsat_dosyasi_url?: string | null
           status?: string | null
+          tasima_kapasitesi_kg?: number | null
+          trafik_sigortasi_bitis_tarihi?: string | null
           updated_at?: string | null
-          vehicle_type: string
+          vehicle_code?: string | null
+          vehicle_type?: string | null
+          yetki_belgesi?: string | null
         }
         Update: {
+          arac_tipi?: string | null
+          cekici_plakasi?: string | null
           created_at?: string | null
+          dorse_plakasi?: string | null
           driver_name?: string | null
           driver_phone?: string | null
           id?: string
-          plate_no?: string
+          kasa_tipi?: string | null
+          kasko_bitis_tarihi?: string | null
+          plate_no?: string | null
+          ruhsat_dosyasi_url?: string | null
           status?: string | null
+          tasima_kapasitesi_kg?: number | null
+          trafik_sigortasi_bitis_tarihi?: string | null
           updated_at?: string | null
-          vehicle_type?: string
+          vehicle_code?: string | null
+          vehicle_type?: string | null
+          yetki_belgesi?: string | null
         }
         Relationships: []
       }

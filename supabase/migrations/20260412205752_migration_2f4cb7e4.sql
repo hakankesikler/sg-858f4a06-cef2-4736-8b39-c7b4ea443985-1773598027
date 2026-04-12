@@ -1,0 +1,2 @@
+ALTER TABLE vehicles ALTER COLUMN plate_no DROP NOT NULL;
+ALTER TABLE vehicles ALTER COLUMN vehicle_type DROP NOT NULL;
