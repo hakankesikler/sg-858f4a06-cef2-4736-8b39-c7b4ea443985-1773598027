@@ -1,18 +1,52 @@
 import React, { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Filter, Plus, Edit, Trash2, Eye, ChevronDown, Info, Building2, Package, Users, UserCircle } from "lucide-react";
-import { crmService } from "@/services/crmService";
 import { accountingService } from "@/services/accountingService";
+import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
+import { ExpenseForm } from "@/components/ExpenseForm";
+import {
+  Wallet,
+  Building2,
+  Plus,
+  Search,
+  Filter,
+  Download,
+  Eye,
+  Pencil,
+  Trash2,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Receipt,
+  FileText,
+  RefreshCw,
+} from "lucide-react";
 
 export function AccountingModule() {
   const [activeMainTab, setActiveMainTab] = useState("panel");
@@ -21,6 +55,8 @@ export function AccountingModule() {
   const [salesInvoices, setSalesInvoices] = useState<any[]>([]);
   const [purchaseInvoices, setPurchaseInvoices] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [cashAccounts, setCashAccounts] = useState<any[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -33,7 +69,10 @@ export function AccountingModule() {
   const [filterEndDate, setFilterEndDate] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [cariTuru, setCariTuru] = useState("gercek");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddBankDialogOpen, setIsAddBankDialogOpen] = useState(false);
+  const [isAddInvoiceDialogOpen, setIsAddInvoiceDialogOpen] = useState(false);
+  const [isAddPurchaseInvoiceDialogOpen, setIsAddPurchaseInvoiceDialogOpen] = useState(false);
+  const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
   const [formData, setFormData] = useState<any>({
     account_type: "musteri",
     person_type: "individual",
@@ -571,6 +610,16 @@ export function AccountingModule() {
               </Table>
             </div>
           </Card>
+
+          {/* Purchase Invoice Dialog */}
+          <Dialog open={isAddPurchaseInvoiceDialogOpen} onOpenChange={setIsAddPurchaseInvoiceDialogOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Yeni Alış Faturası</DialogTitle>
+              </DialogHeader>
+              <PurchaseInvoiceForm onSuccess={() => setIsAddPurchaseInvoiceDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Cari Hesaplar Tab */}
@@ -975,6 +1024,189 @@ export function AccountingModule() {
             </div>
           </Card>
         </TabsContent>
+
+        {/* Satış Faturası Tab */}
+        <TabsContent value="satis-faturasi" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-blue-600">Satış Faturaları</h2>
+              <p className="text-sm text-gray-500 mt-1">Müşteri satış faturalarını yönetin</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Reload data
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Yenile
+              </Button>
+              <Button onClick={() => setIsAddInvoiceDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Yeni Fatura
+              </Button>
+            </div>
+          </div>
+
+          <Card>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Satış Faturaları</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fatura No</TableHead>
+                    <TableHead>Müşteri</TableHead>
+                    <TableHead>Tarih</TableHead>
+                    <TableHead>Tutar</TableHead>
+                    <TableHead>Durum</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {salesInvoices.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                        Henüz satış faturası bulunmuyor
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    salesInvoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell>{invoice.invoice_number}</TableCell>
+                        <TableCell>{invoice.customer_name}</TableCell>
+                        <TableCell>{new Date(invoice.invoice_date).toLocaleDateString("tr-TR")}</TableCell>
+                        <TableCell>₺{invoice.total_amount?.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant={invoice.status === "paid" ? "default" : "secondary"}>
+                            {invoice.status === "paid" ? "Ödendi" : "Beklemede"}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* Alış Faturası Tab */}
+        <TabsContent value="alis-faturasi" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-blue-600">Alış Faturaları</h2>
+              <p className="text-sm text-gray-500 mt-1">Tedarikçi alış faturalarını yönetin</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Reload data
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Yenile
+              </Button>
+              <Button onClick={() => setIsAddPurchaseInvoiceDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Yeni Alış Faturası
+              </Button>
+            </div>
+          </div>
+
+          <Card>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Alış Faturaları</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fatura No</TableHead>
+                    <TableHead>Tedarikçi</TableHead>
+                    <TableHead>Tarih</TableHead>
+                    <TableHead>Tutar</TableHead>
+                    <TableHead>Durum</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {purchaseInvoices.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                        Henüz alış faturası bulunmuyor
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    purchaseInvoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell>{invoice.invoice_number}</TableCell>
+                        <TableCell>{invoice.supplier_name}</TableCell>
+                        <TableCell>{new Date(invoice.invoice_date).toLocaleDateString("tr-TR")}</TableCell>
+                        <TableCell>₺{invoice.total_amount?.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant={invoice.status === "paid" ? "default" : "secondary"}>
+                            {invoice.status === "paid" ? "Ödendi" : "Beklemede"}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+
+          {/* Purchase Invoice Dialog */}
+          <Dialog open={isAddPurchaseInvoiceDialogOpen} onOpenChange={setIsAddPurchaseInvoiceDialogOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Yeni Alış Faturası</DialogTitle>
+              </DialogHeader>
+              <PurchaseInvoiceForm onSuccess={() => setIsAddPurchaseInvoiceDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        {/* Genel Giderler Tab */}
+        <TabsContent value="genel-giderler" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-blue-600">Genel Giderler</h2>
+              <p className="text-sm text-gray-500 mt-1">İşletme giderlerini kaydedin</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Reload data
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Yenile
+              </Button>
+              <Button onClick={() => setIsAddExpenseDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Yeni Gider
+              </Button>
+            </div>
+          </div>
+
+          <Card>
+            <div className="p-6">
+              <div className="text-center py-8 text-gray-500">
+                Gider listesi yükleniyor...
+              </div>
+            </div>
+          </Card>
+
+          {/* Expense Dialog */}
+          <Dialog open={isAddExpenseDialogOpen} onOpenChange={setIsAddExpenseDialogOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Yeni Gider Kaydı</DialogTitle>
+              </DialogHeader>
+              <ExpenseForm onSuccess={() => setIsAddExpenseDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
       </Tabs>
 
       {/* Add Customer Dialog - Comprehensive Form */}
@@ -1329,10 +1561,6 @@ export function AccountingModule() {
                           <SelectItem value="Zonguldak Vergi Dairesi">Zonguldak Vergi Dairesi</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Mersis No</Label>
-                      <Input placeholder="Mersis numarası" />
                     </div>
                   </div>
                 </>
