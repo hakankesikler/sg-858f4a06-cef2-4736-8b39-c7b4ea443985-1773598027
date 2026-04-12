@@ -184,9 +184,29 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
   const handleClose = () => {
     setFormData({
       name: "",
+      surname: "",
+      company_name: "",
       email: "",
       phone: "",
-      account_type: "",
+      account_type: "musteri",
+      tc_no: "",
+      vergi_no: "",
+      tax_office: "",
+      mersis: "",
+      short_name: "",
+      tags: "",
+      website: "",
+      fax: "",
+      address_type: "",
+      address: "",
+      city: "",
+      district: "",
+      postal_code: "",
+      vade_gunu: "",
+      tutar: "",
+      para_birimi: "TRY",
+      durumu: "",
+      proje: ""
     });
     setActiveTab("bilgi");
     setCariTuru("gercek");
