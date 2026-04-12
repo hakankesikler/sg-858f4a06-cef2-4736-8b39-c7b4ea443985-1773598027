@@ -216,13 +216,78 @@ export function AccountingModule() {
   };
 
   const handleAddCustomer = async () => {
+    // Zorunlu alan kontrolleri
     if (!formData.name) {
       toast({
         variant: "destructive",
         title: "Hata",
-        description: "Lütfen en az cari adını giriniz!",
+        description: "Lütfen cari adını giriniz!",
       });
       return;
+    }
+
+    if (!formData.account_type) {
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Lütfen cari tipini seçiniz!",
+      });
+      return;
+    }
+
+    if (!formData.phone) {
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Lütfen telefon numarası giriniz!",
+      });
+      return;
+    }
+
+    if (!formData.email) {
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Lütfen e-posta adresi giriniz!",
+      });
+      return;
+    }
+
+    // E-posta format kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Lütfen geçerli bir e-posta adresi giriniz!",
+      });
+      return;
+    }
+
+    // Vade Günü kontrolü (1-999 arası)
+    if (vadeGunuVar && vadeGunuSayisi) {
+      const vadeGunu = parseInt(vadeGunuSayisi);
+      if (vadeGunu < 1 || vadeGunu > 999) {
+        toast({
+          variant: "destructive",
+          title: "Hata",
+          description: "Vade günü 1-999 arasında olmalıdır!",
+        });
+        return;
+      }
+    }
+
+    // Sabit İskonto kontrolü (0-100 arası)
+    if (sabitIskontoVar && sabitIskontoYuzde) {
+      const iskonto = parseFloat(sabitIskontoYuzde);
+      if (iskonto < 0 || iskonto > 100) {
+        toast({
+          variant: "destructive",
+          title: "Hata",
+          description: "Sabit iskonto 0-100 arasında olmalıdır!",
+        });
+        return;
+      }
     }
 
     try {
@@ -242,14 +307,14 @@ export function AccountingModule() {
       await loadData();
       toast({
         title: "Başarılı",
-        description: "Cari başarıyla eklendi!",
+        description: "Cari hesap başarıyla oluşturuldu!",
       });
     } catch (error) {
       console.error("Error creating customer:", error);
       toast({
         variant: "destructive",
         title: "Hata",
-        description: "Cari eklenirken hata oluştu!",
+        description: "Cari hesap oluşturulurken bir hata oluştu!",
       });
     } finally {
       setIsSubmitting(false);
@@ -1569,7 +1634,8 @@ export function AccountingModule() {
                       <Input
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Cari adı"
+                        placeholder="Ad Soyad"
+                        required
                       />
                     </div>
                     <div className="space-y-2">
@@ -1616,247 +1682,20 @@ export function AccountingModule() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Vergi Dairesi</Label>
-                      <Select
-                        value={formData.tax_office}
-                        onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
-                      >
+                      <Label>İşlem Tarihi</Label>
+                      <Input type="date" defaultValue="2026-04-09" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Para Birimi *</Label>
+                      <Select>
                         <SelectTrigger>
-                          <SelectValue placeholder="Vergi dairesi seçiniz" />
+                          <SelectValue placeholder="Seçiniz" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-[300px]">
-                          <SelectItem value="19 Mayıs Vergi Dairesi">19 Mayıs Vergi Dairesi</SelectItem>
-                          <SelectItem value="Acıpayam Vergi Dairesi">Acıpayam Vergi Dairesi</SelectItem>
-                          <SelectItem value="Adapazarı Vergi Dairesi">Adapazarı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Adıyaman Vergi Dairesi">Adıyaman Vergi Dairesi</SelectItem>
-                          <SelectItem value="Afyonkarahisar Vergi Dairesi">Afyonkarahisar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ağrı Vergi Dairesi">Ağrı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Akçaabat Vergi Dairesi">Akçaabat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Akdağmadeni Vergi Dairesi">Akdağmadeni Vergi Dairesi</SelectItem>
-                          <SelectItem value="Akhisar Vergi Dairesi">Akhisar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Aksaray Vergi Dairesi">Aksaray Vergi Dairesi</SelectItem>
-                          <SelectItem value="Akşehir Vergi Dairesi">Akşehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Akyazı Vergi Dairesi">Akyazı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Alanya Vergi Dairesi">Alanya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Alaşehir Vergi Dairesi">Alaşehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Almus Vergi Dairesi">Almus Vergi Dairesi</SelectItem>
-                          <SelectItem value="Altınova Vergi Dairesi">Altınova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Amasya Vergi Dairesi">Amasya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Anamur Vergi Dairesi">Anamur Vergi Dairesi</SelectItem>
-                          <SelectItem value="Antakya Vergi Dairesi">Antakya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ardeşen Vergi Dairesi">Ardeşen Vergi Dairesi</SelectItem>
-                          <SelectItem value="Avanos Vergi Dairesi">Avanos Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ayvalık Vergi Dairesi">Ayvalık Vergi Dairesi</SelectItem>
-                          <SelectItem value="Babaeski Vergi Dairesi">Babaeski Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bafra Vergi Dairesi">Bafra Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bağlar Vergi Dairesi">Bağlar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Banaz Vergi Dairesi">Banaz Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bandırma Vergi Dairesi">Bandırma Vergi Dairesi</SelectItem>
-                          <SelectItem value="Battalgazi Vergi Dairesi">Battalgazi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Besni Vergi Dairesi">Besni Vergi Dairesi</SelectItem>
-                          <SelectItem value="Biga Vergi Dairesi">Biga Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bilecik Vergi Dairesi">Bilecik Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bingöl Vergi Dairesi">Bingöl Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bitlis Vergi Dairesi">Bitlis Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bodrum Vergi Dairesi">Bodrum Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bolu Vergi Dairesi">Bolu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bolvadin Vergi Dairesi">Bolvadin Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bor Vergi Dairesi">Bor Vergi Dairesi</SelectItem>
-                          <SelectItem value="Boyabat Vergi Dairesi">Boyabat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bozüyük Vergi Dairesi">Bozüyük Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bucak Vergi Dairesi">Bucak Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bulancak Vergi Dairesi">Bulancak Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bulanık Vergi Dairesi">Bulanık Vergi Dairesi</SelectItem>
-                          <SelectItem value="Burdur Vergi Dairesi">Burdur Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ceyhan Vergi Dairesi">Ceyhan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çan Vergi Dairesi">Çan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çanakkale Vergi Dairesi">Çanakkale Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çankaya Vergi Dairesi">Çankaya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çankırı Vergi Dairesi">Çankırı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çarşamba Vergi Dairesi">Çarşamba Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çaycuma Vergi Dairesi">Çaycuma Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çayeli Vergi Dairesi">Çayeli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çekerek Vergi Dairesi">Çekerek Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çiftlikköy Vergi Dairesi">Çiftlikköy Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çivril Vergi Dairesi">Çivril Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çorum Vergi Dairesi">Çorum Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çukurova Vergi Dairesi">Çukurova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Derince Vergi Dairesi">Derince Vergi Dairesi</SelectItem>
-                          <SelectItem value="Develi Vergi Dairesi">Develi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Devrek Vergi Dairesi">Devrek Vergi Dairesi</SelectItem>
-                          <SelectItem value="Dinar Vergi Dairesi">Dinar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Doğanşehir Vergi Dairesi">Doğanşehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Doğubayazıt Vergi Dairesi">Doğubayazıt Vergi Dairesi</SelectItem>
-                          <SelectItem value="Dörtyol Vergi Dairesi">Dörtyol Vergi Dairesi</SelectItem>
-                          <SelectItem value="Durağan Vergi Dairesi">Durağan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Düzce Vergi Dairesi">Düzce Vergi Dairesi</SelectItem>
-                          <SelectItem value="Düziçi Vergi Dairesi">Düziçi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Edirne Vergi Dairesi">Edirne Vergi Dairesi</SelectItem>
-                          <SelectItem value="Edremit Vergi Dairesi">Edremit Vergi Dairesi</SelectItem>
-                          <SelectItem value="Efeler Vergi Dairesi">Efeler Vergi Dairesi</SelectItem>
-                          <SelectItem value="Elazığ Vergi Dairesi">Elazığ Vergi Dairesi</SelectItem>
-                          <SelectItem value="Erbaa Vergi Dairesi">Erbaa Vergi Dairesi</SelectItem>
-                          <SelectItem value="Erciş Vergi Dairesi">Erciş Vergi Dairesi</SelectItem>
-                          <SelectItem value="Erdemli Vergi Dairesi">Erdemli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ereğli Vergi Dairesi">Ereğli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Erzin Vergi Dairesi">Erzin Vergi Dairesi</SelectItem>
-                          <SelectItem value="Erzincan Vergi Dairesi">Erzincan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Eşme Vergi Dairesi">Eşme Vergi Dairesi</SelectItem>
-                          <SelectItem value="Etimesgut Vergi Dairesi">Etimesgut Vergi Dairesi</SelectItem>
-                          <SelectItem value="Fatsa Vergi Dairesi">Fatsa Vergi Dairesi</SelectItem>
-                          <SelectItem value="Fethiye Vergi Dairesi">Fethiye Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gebze Vergi Dairesi">Gebze Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gediz Vergi Dairesi">Gediz Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gemlik Vergi Dairesi">Gemlik Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gerede Vergi Dairesi">Gerede Vergi Dairesi</SelectItem>
-                          <SelectItem value="Giresun Vergi Dairesi">Giresun Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gölbaşı Vergi Dairesi">Gölbaşı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gölcük Vergi Dairesi">Gölcük Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gümüşhane Vergi Dairesi">Gümüşhane Vergi Dairesi</SelectItem>
-                          <SelectItem value="Hakkari Vergi Dairesi">Hakkari Vergi Dairesi</SelectItem>
-                          <SelectItem value="Havza Vergi Dairesi">Havza Vergi Dairesi</SelectItem>
-                          <SelectItem value="Hendek Vergi Dairesi">Hendek Vergi Dairesi</SelectItem>
-                          <SelectItem value="Isparta Vergi Dairesi">Isparta Vergi Dairesi</SelectItem>
-                          <SelectItem value="İmamoğlu Vergi Dairesi">İmamoğlu Vergi Dairesi</SelectItem>
-                          <SelectItem value="İnegöl Vergi Dairesi">İnegöl Vergi Dairesi</SelectItem>
-                          <SelectItem value="İskenderun Vergi Dairesi">İskenderun Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kadirli Vergi Dairesi">Kadirli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kağızman Vergi Dairesi">Kağızman Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kahta Vergi Dairesi">Kahta Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kaman Vergi Dairesi">Kaman Vergi Dairesi</SelectItem>
-                          <SelectItem value="Karaman Vergi Dairesi">Karaman Vergi Dairesi</SelectItem>
-                          <SelectItem value="Karataş Vergi Dairesi">Karataş Vergi Dairesi</SelectItem>
-                          <SelectItem value="Karatay Vergi Dairesi">Karatay Vergi Dairesi</SelectItem>
-                          <SelectItem value="Karesi Vergi Dairesi">Karesi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kars Vergi Dairesi">Kars Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kastamonu Vergi Dairesi">Kastamonu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kayapınar Vergi Dairesi">Kayapınar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kayseri Vergi Dairesi">Kayseri Vergi Dairesi</SelectItem>
-                          <SelectItem value="Keçiören Vergi Dairesi">Keçiören Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kelkit Vergi Dairesi">Kelkit Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kepez Vergi Dairesi">Kepez Vergi Dairesi</SelectItem>
-                          <SelectItem value="Keskin Vergi Dairesi">Keskin Vergi Dairesi</SelectItem>
-                          <SelectItem value="Keşan Vergi Dairesi">Keşan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kırıkkale Vergi Dairesi">Kırıkkale Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kırklareli Vergi Dairesi">Kırklareli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kırşehir Vergi Dairesi">Kırşehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kızıltepe Vergi Dairesi">Kızıltepe Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kocaeli Vergi Dairesi">Kocaeli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kocasinan Vergi Dairesi">Kocasinan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Konya Vergi Dairesi">Konya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Konyaaltı Vergi Dairesi">Konyaaltı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kozan Vergi Dairesi">Kozan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Körfez Vergi Dairesi">Körfez Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kula Vergi Dairesi">Kula Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kulu Vergi Dairesi">Kulu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kumluca Vergi Dairesi">Kumluca Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kurtalan Vergi Dairesi">Kurtalan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kuşadası Vergi Dairesi">Kuşadası Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kütahya Vergi Dairesi">Kütahya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Lüleburgaz Vergi Dairesi">Lüleburgaz Vergi Dairesi</SelectItem>
-                          <SelectItem value="Malatya Vergi Dairesi">Malatya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mamak Vergi Dairesi">Mamak Vergi Dairesi</SelectItem>
-                          <SelectItem value="Manavgat Vergi Dairesi">Manavgat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Manisa Vergi Dairesi">Manisa Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mardin Vergi Dairesi">Mardin Vergi Dairesi</SelectItem>
-                          <SelectItem value="Marmaris Vergi Dairesi">Marmaris Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mazıdağı Vergi Dairesi">Mazıdağı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Melikgazi Vergi Dairesi">Melikgazi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Meram Vergi Dairesi">Meram Vergi Dairesi</SelectItem>
-                          <SelectItem value="Merkezefendi Vergi Dairesi">Merkezefendi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mersin Vergi Dairesi">Mersin Vergi Dairesi</SelectItem>
-                          <SelectItem value="Merzifon Vergi Dairesi">Merzifon Vergi Dairesi</SelectItem>
-                          <SelectItem value="Midyat Vergi Dairesi">Midyat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Milas Vergi Dairesi">Milas Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mudanya Vergi Dairesi">Mudanya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Muğla Vergi Dairesi">Muğla Vergi Dairesi</SelectItem>
-                          <SelectItem value="Muratpaşa Vergi Dairesi">Muratpaşa Vergi Dairesi</SelectItem>
-                          <SelectItem value="Muş Vergi Dairesi">Muş Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mut Vergi Dairesi">Mut Vergi Dairesi</SelectItem>
-                          <SelectItem value="Nazımiye Vergi Dairesi">Nazımiye Vergi Dairesi</SelectItem>
-                          <SelectItem value="Nazilli Vergi Dairesi">Nazilli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Nevşehir Vergi Dairesi">Nevşehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Niğde Vergi Dairesi">Niğde Vergi Dairesi</SelectItem>
-                          <SelectItem value="Niksar Vergi Dairesi">Niksar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Nilüfer Vergi Dairesi">Nilüfer Vergi Dairesi</SelectItem>
-                          <SelectItem value="Nizip Vergi Dairesi">Nizip Vergi Dairesi</SelectItem>
-                          <SelectItem value="Odunpazarı Vergi Dairesi">Odunpazarı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Of Vergi Dairesi">Of Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ordu Vergi Dairesi">Ordu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ortaköy Vergi Dairesi">Ortaköy Vergi Dairesi</SelectItem>
-                          <SelectItem value="Osmangazi Vergi Dairesi">Osmangazi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Osmaniye Vergi Dairesi">Osmaniye Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ostim Vergi Dairesi">Ostim Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ovacık Vergi Dairesi">Ovacık Vergi Dairesi</SelectItem>
-                          <SelectItem value="Özalp Vergi Dairesi">Özalp Vergi Dairesi</SelectItem>
-                          <SelectItem value="Palandöken Vergi Dairesi">Palandöken Vergi Dairesi</SelectItem>
-                          <SelectItem value="Pamukkale Vergi Dairesi">Pamukkale Vergi Dairesi</SelectItem>
-                          <SelectItem value="Pamukova Vergi Dairesi">Pamukova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Patnos Vergi Dairesi">Patnos Vergi Dairesi</SelectItem>
-                          <SelectItem value="Payas Vergi Dairesi">Payas Vergi Dairesi</SelectItem>
-                          <SelectItem value="Pervari Vergi Dairesi">Pervari Vergi Dairesi</SelectItem>
-                          <SelectItem value="Pozantı Vergi Dairesi">Pozantı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Pursaklar Vergi Dairesi">Pursaklar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Rize Vergi Dairesi">Rize Vergi Dairesi</SelectItem>
-                          <SelectItem value="Saimbeyli Vergi Dairesi">Saimbeyli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sakarya Vergi Dairesi">Sakarya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Salihli Vergi Dairesi">Salihli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Samsun Vergi Dairesi">Samsun Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sandıklı Vergi Dairesi">Sandıklı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sarıkamış Vergi Dairesi">Sarıkamış Vergi Dairesi</SelectItem>
-                          <SelectItem value="Selçuklu Vergi Dairesi">Selçuklu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Serdivan Vergi Dairesi">Serdivan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Serik Vergi Dairesi">Serik Vergi Dairesi</SelectItem>
-                          <SelectItem value="Seyhan Vergi Dairesi">Seyhan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Siirt Vergi Dairesi">Siirt Vergi Dairesi</SelectItem>
-                          <SelectItem value="Silifke Vergi Dairesi">Silifke Vergi Dairesi</SelectItem>
-                          <SelectItem value="Simav Vergi Dairesi">Simav Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sincan Vergi Dairesi">Sincan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sinop Vergi Dairesi">Sinop Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sivas Vergi Dairesi">Sivas Vergi Dairesi</SelectItem>
-                          <SelectItem value="Soma Vergi Dairesi">Soma Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sorgun Vergi Dairesi">Sorgun Vergi Dairesi</SelectItem>
-                          <SelectItem value="Söke Vergi Dairesi">Söke Vergi Dairesi</SelectItem>
-                          <SelectItem value="Suluova Vergi Dairesi">Suluova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sungurlu Vergi Dairesi">Sungurlu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Suşehri Vergi Dairesi">Suşehri Vergi Dairesi</SelectItem>
-                          <SelectItem value="Şahinbey Vergi Dairesi">Şahinbey Vergi Dairesi</SelectItem>
-                          <SelectItem value="Şarkışla Vergi Dairesi">Şarkışla Vergi Dairesi</SelectItem>
-                          <SelectItem value="Şehitkamil Vergi Dairesi">Şehitkamil Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tarsus Vergi Dairesi">Tarsus Vergi Dairesi</SelectItem>
-                          <SelectItem value="Taşköprü Vergi Dairesi">Taşköprü Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tatvan Vergi Dairesi">Tatvan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tavşanlı Vergi Dairesi">Tavşanlı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tepebaşı Vergi Dairesi">Tepebaşı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tokat Vergi Dairesi">Tokat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tosya Vergi Dairesi">Tosya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Trabzon Vergi Dairesi">Trabzon Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tufanbeyli Vergi Dairesi">Tufanbeyli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tunceli Vergi Dairesi">Tunceli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Turgutlu Vergi Dairesi">Turgutlu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Turhal Vergi Dairesi">Turhal Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ulubey Vergi Dairesi">Ulubey Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ulus Vergi Dairesi">Ulus Vergi Dairesi</SelectItem>
-                          <SelectItem value="Uşak Vergi Dairesi">Uşak Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ünye Vergi Dairesi">Ünye Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ürgüp Vergi Dairesi">Ürgüp Vergi Dairesi</SelectItem>
-                          <SelectItem value="Vakfıkebir Vergi Dairesi">Vakfıkebir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Van Vergi Dairesi">Van Vergi Dairesi</SelectItem>
-                          <SelectItem value="Varto Vergi Dairesi">Varto Vergi Dairesi</SelectItem>
-                          <SelectItem value="Vezirköprü Vergi Dairesi">Vezirköprü Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yakutiye Vergi Dairesi">Yakutiye Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yalova Vergi Dairesi">Yalova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yalvaç Vergi Dairesi">Yalvaç Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yatağan Vergi Dairesi">Yatağan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yenimahalle Vergi Dairesi">Yenimahalle Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yenişehir Vergi Dairesi">Yenişehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yeşilyurt Vergi Dairesi">Yeşilyurt Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yıldırım Vergi Dairesi">Yıldırım Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yozgat Vergi Dairesi">Yozgat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yüksekova Vergi Dairesi">Yüksekova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yüreğir Vergi Dairesi">Yüreğir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Zara Vergi Dairesi">Zara Vergi Dairesi</SelectItem>
-                          <SelectItem value="Zonguldak Vergi Dairesi">Zonguldak Vergi Dairesi</SelectItem>
+                        <SelectContent>
+                          <SelectItem value="TRY">TRY (₺)</SelectItem>
+                          <SelectItem value="USD">USD ($)</SelectItem>
+                          <SelectItem value="EUR">EUR (€)</SelectItem>
+                          <SelectItem value="GBP">GBP (£)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1882,6 +1721,7 @@ export function AccountingModule() {
                           company: e.target.value 
                         })}
                         placeholder="Şirket adı"
+                        required
                       />
                     </div>
                     <div className="space-y-2">
@@ -1889,6 +1729,7 @@ export function AccountingModule() {
                       <Select
                         value={formData.account_type}
                         onValueChange={(value) => setFormData({ ...formData, account_type: value })}
+                        required
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seçiniz" />
@@ -1917,255 +1758,41 @@ export function AccountingModule() {
                       <Input placeholder="Etiket ekle" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Vergi No</Label>
-                      <Input 
-                        value={formData.tax_number}
-                        onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
-                        placeholder="Vergi numarası" 
-                      />
+                      <Label>İşlem Tarihi</Label>
+                      <Input type="date" defaultValue="2026-04-09" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Vergi Dairesi</Label>
-                      <Select
-                        value={formData.tax_office}
-                        onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
-                      >
+                      <Label>Para Birimi *</Label>
+                      <Select>
                         <SelectTrigger>
-                          <SelectValue placeholder="Vergi dairesi seçiniz" />
+                          <SelectValue placeholder="Seçiniz" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-[300px]">
-                          <SelectItem value="19 Mayıs Vergi Dairesi">19 Mayıs Vergi Dairesi</SelectItem>
-                          <SelectItem value="Acıpayam Vergi Dairesi">Acıpayam Vergi Dairesi</SelectItem>
-                          <SelectItem value="Adapazarı Vergi Dairesi">Adapazarı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Adıyaman Vergi Dairesi">Adıyaman Vergi Dairesi</SelectItem>
-                          <SelectItem value="Afyonkarahisar Vergi Dairesi">Afyonkarahisar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ağrı Vergi Dairesi">Ağrı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Akçaabat Vergi Dairesi">Akçaabat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Akdağmadeni Vergi Dairesi">Akdağmadeni Vergi Dairesi</SelectItem>
-                          <SelectItem value="Akhisar Vergi Dairesi">Akhisar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Aksaray Vergi Dairesi">Aksaray Vergi Dairesi</SelectItem>
-                          <SelectItem value="Akşehir Vergi Dairesi">Akşehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Akyazı Vergi Dairesi">Akyazı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Alanya Vergi Dairesi">Alanya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Alaşehir Vergi Dairesi">Alaşehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Almus Vergi Dairesi">Almus Vergi Dairesi</SelectItem>
-                          <SelectItem value="Altınova Vergi Dairesi">Altınova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Amasya Vergi Dairesi">Amasya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Anamur Vergi Dairesi">Anamur Vergi Dairesi</SelectItem>
-                          <SelectItem value="Antakya Vergi Dairesi">Antakya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ardeşen Vergi Dairesi">Ardeşen Vergi Dairesi</SelectItem>
-                          <SelectItem value="Avanos Vergi Dairesi">Avanos Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ayvalık Vergi Dairesi">Ayvalık Vergi Dairesi</SelectItem>
-                          <SelectItem value="Babaeski Vergi Dairesi">Babaeski Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bafra Vergi Dairesi">Bafra Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bağlar Vergi Dairesi">Bağlar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Banaz Vergi Dairesi">Banaz Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bandırma Vergi Dairesi">Bandırma Vergi Dairesi</SelectItem>
-                          <SelectItem value="Battalgazi Vergi Dairesi">Battalgazi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Besni Vergi Dairesi">Besni Vergi Dairesi</SelectItem>
-                          <SelectItem value="Biga Vergi Dairesi">Biga Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bilecik Vergi Dairesi">Bilecik Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bingöl Vergi Dairesi">Bingöl Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bitlis Vergi Dairesi">Bitlis Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bodrum Vergi Dairesi">Bodrum Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bolu Vergi Dairesi">Bolu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bolvadin Vergi Dairesi">Bolvadin Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bor Vergi Dairesi">Bor Vergi Dairesi</SelectItem>
-                          <SelectItem value="Boyabat Vergi Dairesi">Boyabat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bozüyük Vergi Dairesi">Bozüyük Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bucak Vergi Dairesi">Bucak Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bulancak Vergi Dairesi">Bulancak Vergi Dairesi</SelectItem>
-                          <SelectItem value="Bulanık Vergi Dairesi">Bulanık Vergi Dairesi</SelectItem>
-                          <SelectItem value="Burdur Vergi Dairesi">Burdur Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ceyhan Vergi Dairesi">Ceyhan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çan Vergi Dairesi">Çan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çanakkale Vergi Dairesi">Çanakkale Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çankaya Vergi Dairesi">Çankaya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çankırı Vergi Dairesi">Çankırı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çarşamba Vergi Dairesi">Çarşamba Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çaycuma Vergi Dairesi">Çaycuma Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çayeli Vergi Dairesi">Çayeli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çekerek Vergi Dairesi">Çekerek Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çiftlikköy Vergi Dairesi">Çiftlikköy Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çivril Vergi Dairesi">Çivril Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çorum Vergi Dairesi">Çorum Vergi Dairesi</SelectItem>
-                          <SelectItem value="Çukurova Vergi Dairesi">Çukurova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Derince Vergi Dairesi">Derince Vergi Dairesi</SelectItem>
-                          <SelectItem value="Develi Vergi Dairesi">Develi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Devrek Vergi Dairesi">Devrek Vergi Dairesi</SelectItem>
-                          <SelectItem value="Dinar Vergi Dairesi">Dinar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Doğanşehir Vergi Dairesi">Doğanşehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Doğubayazıt Vergi Dairesi">Doğubayazıt Vergi Dairesi</SelectItem>
-                          <SelectItem value="Dörtyol Vergi Dairesi">Dörtyol Vergi Dairesi</SelectItem>
-                          <SelectItem value="Durağan Vergi Dairesi">Durağan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Düzce Vergi Dairesi">Düzce Vergi Dairesi</SelectItem>
-                          <SelectItem value="Düziçi Vergi Dairesi">Düziçi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Edirne Vergi Dairesi">Edirne Vergi Dairesi</SelectItem>
-                          <SelectItem value="Edremit Vergi Dairesi">Edremit Vergi Dairesi</SelectItem>
-                          <SelectItem value="Efeler Vergi Dairesi">Efeler Vergi Dairesi</SelectItem>
-                          <SelectItem value="Elazığ Vergi Dairesi">Elazığ Vergi Dairesi</SelectItem>
-                          <SelectItem value="Erbaa Vergi Dairesi">Erbaa Vergi Dairesi</SelectItem>
-                          <SelectItem value="Erciş Vergi Dairesi">Erciş Vergi Dairesi</SelectItem>
-                          <SelectItem value="Erdemli Vergi Dairesi">Erdemli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ereğli Vergi Dairesi">Ereğli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Erzin Vergi Dairesi">Erzin Vergi Dairesi</SelectItem>
-                          <SelectItem value="Erzincan Vergi Dairesi">Erzincan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Eşme Vergi Dairesi">Eşme Vergi Dairesi</SelectItem>
-                          <SelectItem value="Etimesgut Vergi Dairesi">Etimesgut Vergi Dairesi</SelectItem>
-                          <SelectItem value="Fatsa Vergi Dairesi">Fatsa Vergi Dairesi</SelectItem>
-                          <SelectItem value="Fethiye Vergi Dairesi">Fethiye Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gebze Vergi Dairesi">Gebze Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gediz Vergi Dairesi">Gediz Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gemlik Vergi Dairesi">Gemlik Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gerede Vergi Dairesi">Gerede Vergi Dairesi</SelectItem>
-                          <SelectItem value="Giresun Vergi Dairesi">Giresun Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gölbaşı Vergi Dairesi">Gölbaşı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gölcük Vergi Dairesi">Gölcük Vergi Dairesi</SelectItem>
-                          <SelectItem value="Gümüşhane Vergi Dairesi">Gümüşhane Vergi Dairesi</SelectItem>
-                          <SelectItem value="Hakkari Vergi Dairesi">Hakkari Vergi Dairesi</SelectItem>
-                          <SelectItem value="Havza Vergi Dairesi">Havza Vergi Dairesi</SelectItem>
-                          <SelectItem value="Hendek Vergi Dairesi">Hendek Vergi Dairesi</SelectItem>
-                          <SelectItem value="Isparta Vergi Dairesi">Isparta Vergi Dairesi</SelectItem>
-                          <SelectItem value="İmamoğlu Vergi Dairesi">İmamoğlu Vergi Dairesi</SelectItem>
-                          <SelectItem value="İnegöl Vergi Dairesi">İnegöl Vergi Dairesi</SelectItem>
-                          <SelectItem value="İskenderun Vergi Dairesi">İskenderun Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kadirli Vergi Dairesi">Kadirli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kağızman Vergi Dairesi">Kağızman Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kahta Vergi Dairesi">Kahta Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kaman Vergi Dairesi">Kaman Vergi Dairesi</SelectItem>
-                          <SelectItem value="Karaman Vergi Dairesi">Karaman Vergi Dairesi</SelectItem>
-                          <SelectItem value="Karataş Vergi Dairesi">Karataş Vergi Dairesi</SelectItem>
-                          <SelectItem value="Karatay Vergi Dairesi">Karatay Vergi Dairesi</SelectItem>
-                          <SelectItem value="Karesi Vergi Dairesi">Karesi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kars Vergi Dairesi">Kars Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kastamonu Vergi Dairesi">Kastamonu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kayapınar Vergi Dairesi">Kayapınar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kayseri Vergi Dairesi">Kayseri Vergi Dairesi</SelectItem>
-                          <SelectItem value="Keçiören Vergi Dairesi">Keçiören Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kelkit Vergi Dairesi">Kelkit Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kepez Vergi Dairesi">Kepez Vergi Dairesi</SelectItem>
-                          <SelectItem value="Keskin Vergi Dairesi">Keskin Vergi Dairesi</SelectItem>
-                          <SelectItem value="Keşan Vergi Dairesi">Keşan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kırıkkale Vergi Dairesi">Kırıkkale Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kırklareli Vergi Dairesi">Kırklareli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kırşehir Vergi Dairesi">Kırşehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kızıltepe Vergi Dairesi">Kızıltepe Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kocaeli Vergi Dairesi">Kocaeli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kocasinan Vergi Dairesi">Kocasinan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Konya Vergi Dairesi">Konya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Konyaaltı Vergi Dairesi">Konyaaltı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kozan Vergi Dairesi">Kozan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Körfez Vergi Dairesi">Körfez Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kula Vergi Dairesi">Kula Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kulu Vergi Dairesi">Kulu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kumluca Vergi Dairesi">Kumluca Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kurtalan Vergi Dairesi">Kurtalan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kuşadası Vergi Dairesi">Kuşadası Vergi Dairesi</SelectItem>
-                          <SelectItem value="Kütahya Vergi Dairesi">Kütahya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Lüleburgaz Vergi Dairesi">Lüleburgaz Vergi Dairesi</SelectItem>
-                          <SelectItem value="Malatya Vergi Dairesi">Malatya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mamak Vergi Dairesi">Mamak Vergi Dairesi</SelectItem>
-                          <SelectItem value="Manavgat Vergi Dairesi">Manavgat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Manisa Vergi Dairesi">Manisa Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mardin Vergi Dairesi">Mardin Vergi Dairesi</SelectItem>
-                          <SelectItem value="Marmaris Vergi Dairesi">Marmaris Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mazıdağı Vergi Dairesi">Mazıdağı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Melikgazi Vergi Dairesi">Melikgazi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Meram Vergi Dairesi">Meram Vergi Dairesi</SelectItem>
-                          <SelectItem value="Merkezefendi Vergi Dairesi">Merkezefendi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mersin Vergi Dairesi">Mersin Vergi Dairesi</SelectItem>
-                          <SelectItem value="Merzifon Vergi Dairesi">Merzifon Vergi Dairesi</SelectItem>
-                          <SelectItem value="Midyat Vergi Dairesi">Midyat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Milas Vergi Dairesi">Milas Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mudanya Vergi Dairesi">Mudanya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Muğla Vergi Dairesi">Muğla Vergi Dairesi</SelectItem>
-                          <SelectItem value="Muratpaşa Vergi Dairesi">Muratpaşa Vergi Dairesi</SelectItem>
-                          <SelectItem value="Muş Vergi Dairesi">Muş Vergi Dairesi</SelectItem>
-                          <SelectItem value="Mut Vergi Dairesi">Mut Vergi Dairesi</SelectItem>
-                          <SelectItem value="Nazımiye Vergi Dairesi">Nazımiye Vergi Dairesi</SelectItem>
-                          <SelectItem value="Nazilli Vergi Dairesi">Nazilli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Nevşehir Vergi Dairesi">Nevşehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Niğde Vergi Dairesi">Niğde Vergi Dairesi</SelectItem>
-                          <SelectItem value="Niksar Vergi Dairesi">Niksar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Nilüfer Vergi Dairesi">Nilüfer Vergi Dairesi</SelectItem>
-                          <SelectItem value="Nizip Vergi Dairesi">Nizip Vergi Dairesi</SelectItem>
-                          <SelectItem value="Odunpazarı Vergi Dairesi">Odunpazarı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Of Vergi Dairesi">Of Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ordu Vergi Dairesi">Ordu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ortaköy Vergi Dairesi">Ortaköy Vergi Dairesi</SelectItem>
-                          <SelectItem value="Osmangazi Vergi Dairesi">Osmangazi Vergi Dairesi</SelectItem>
-                          <SelectItem value="Osmaniye Vergi Dairesi">Osmaniye Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ostim Vergi Dairesi">Ostim Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ovacık Vergi Dairesi">Ovacık Vergi Dairesi</SelectItem>
-                          <SelectItem value="Özalp Vergi Dairesi">Özalp Vergi Dairesi</SelectItem>
-                          <SelectItem value="Palandöken Vergi Dairesi">Palandöken Vergi Dairesi</SelectItem>
-                          <SelectItem value="Pamukkale Vergi Dairesi">Pamukkale Vergi Dairesi</SelectItem>
-                          <SelectItem value="Pamukova Vergi Dairesi">Pamukova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Patnos Vergi Dairesi">Patnos Vergi Dairesi</SelectItem>
-                          <SelectItem value="Payas Vergi Dairesi">Payas Vergi Dairesi</SelectItem>
-                          <SelectItem value="Pervari Vergi Dairesi">Pervari Vergi Dairesi</SelectItem>
-                          <SelectItem value="Pozantı Vergi Dairesi">Pozantı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Pursaklar Vergi Dairesi">Pursaklar Vergi Dairesi</SelectItem>
-                          <SelectItem value="Rize Vergi Dairesi">Rize Vergi Dairesi</SelectItem>
-                          <SelectItem value="Saimbeyli Vergi Dairesi">Saimbeyli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sakarya Vergi Dairesi">Sakarya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Salihli Vergi Dairesi">Salihli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Samsun Vergi Dairesi">Samsun Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sandıklı Vergi Dairesi">Sandıklı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sarıkamış Vergi Dairesi">Sarıkamış Vergi Dairesi</SelectItem>
-                          <SelectItem value="Selçuklu Vergi Dairesi">Selçuklu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Serdivan Vergi Dairesi">Serdivan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Serik Vergi Dairesi">Serik Vergi Dairesi</SelectItem>
-                          <SelectItem value="Seyhan Vergi Dairesi">Seyhan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Siirt Vergi Dairesi">Siirt Vergi Dairesi</SelectItem>
-                          <SelectItem value="Silifke Vergi Dairesi">Silifke Vergi Dairesi</SelectItem>
-                          <SelectItem value="Simav Vergi Dairesi">Simav Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sincan Vergi Dairesi">Sincan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sinop Vergi Dairesi">Sinop Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sivas Vergi Dairesi">Sivas Vergi Dairesi</SelectItem>
-                          <SelectItem value="Soma Vergi Dairesi">Soma Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sorgun Vergi Dairesi">Sorgun Vergi Dairesi</SelectItem>
-                          <SelectItem value="Söke Vergi Dairesi">Söke Vergi Dairesi</SelectItem>
-                          <SelectItem value="Suluova Vergi Dairesi">Suluova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Sungurlu Vergi Dairesi">Sungurlu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Suşehri Vergi Dairesi">Suşehri Vergi Dairesi</SelectItem>
-                          <SelectItem value="Şahinbey Vergi Dairesi">Şahinbey Vergi Dairesi</SelectItem>
-                          <SelectItem value="Şarkışla Vergi Dairesi">Şarkışla Vergi Dairesi</SelectItem>
-                          <SelectItem value="Şehitkamil Vergi Dairesi">Şehitkamil Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tarsus Vergi Dairesi">Tarsus Vergi Dairesi</SelectItem>
-                          <SelectItem value="Taşköprü Vergi Dairesi">Taşköprü Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tatvan Vergi Dairesi">Tatvan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tavşanlı Vergi Dairesi">Tavşanlı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tepebaşı Vergi Dairesi">Tepebaşı Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tokat Vergi Dairesi">Tokat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tosya Vergi Dairesi">Tosya Vergi Dairesi</SelectItem>
-                          <SelectItem value="Trabzon Vergi Dairesi">Trabzon Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tufanbeyli Vergi Dairesi">Tufanbeyli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Tunceli Vergi Dairesi">Tunceli Vergi Dairesi</SelectItem>
-                          <SelectItem value="Turgutlu Vergi Dairesi">Turgutlu Vergi Dairesi</SelectItem>
-                          <SelectItem value="Turhal Vergi Dairesi">Turhal Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ulubey Vergi Dairesi">Ulubey Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ulus Vergi Dairesi">Ulus Vergi Dairesi</SelectItem>
-                          <SelectItem value="Uşak Vergi Dairesi">Uşak Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ünye Vergi Dairesi">Ünye Vergi Dairesi</SelectItem>
-                          <SelectItem value="Ürgüp Vergi Dairesi">Ürgüp Vergi Dairesi</SelectItem>
-                          <SelectItem value="Vakfıkebir Vergi Dairesi">Vakfıkebir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Van Vergi Dairesi">Van Vergi Dairesi</SelectItem>
-                          <SelectItem value="Varto Vergi Dairesi">Varto Vergi Dairesi</SelectItem>
-                          <SelectItem value="Vezirköprü Vergi Dairesi">Vezirköprü Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yakutiye Vergi Dairesi">Yakutiye Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yalova Vergi Dairesi">Yalova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yalvaç Vergi Dairesi">Yalvaç Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yatağan Vergi Dairesi">Yatağan Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yenimahalle Vergi Dairesi">Yenimahalle Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yenişehir Vergi Dairesi">Yenişehir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yeşilyurt Vergi Dairesi">Yeşilyurt Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yıldırım Vergi Dairesi">Yıldırım Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yozgat Vergi Dairesi">Yozgat Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yüksekova Vergi Dairesi">Yüksekova Vergi Dairesi</SelectItem>
-                          <SelectItem value="Yüreğir Vergi Dairesi">Yüreğir Vergi Dairesi</SelectItem>
-                          <SelectItem value="Zara Vergi Dairesi">Zara Vergi Dairesi</SelectItem>
-                          <SelectItem value="Zonguldak Vergi Dairesi">Zonguldak Vergi Dairesi</SelectItem>
+                        <SelectContent>
+                          <SelectItem value="TRY">TRY (₺)</SelectItem>
+                          <SelectItem value="USD">USD ($)</SelectItem>
+                          <SelectItem value="EUR">EUR (€)</SelectItem>
+                          <SelectItem value="GBP">GBP (£)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>İşlem Tarihi</Label>
+                      <Input type="date" defaultValue="2026-04-09" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Para Birimi *</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="TRY">TRY (₺)</SelectItem>
+                          <SelectItem value="USD">USD ($)</SelectItem>
+                          <SelectItem value="EUR">EUR (€)</SelectItem>
+                          <SelectItem value="GBP">GBP (£)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -2176,29 +1803,24 @@ export function AccountingModule() {
               {/* İletişim Bilgileri */}
               <div className="border-t pt-4">
                 <h3 className="text-lg font-semibold mb-4 text-blue-600">İletişim Bilgileri</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label>Telefon No</Label>
-                    <div className="flex gap-2">
-                      <div className="w-16 flex items-center justify-center border rounded px-2 bg-gray-50">
-                        <span className="text-xl">🇹🇷</span>
-                        <ChevronDown className="w-3 h-3 ml-1" />
-                      </div>
-                      <Input
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="0501 234 5678"
-                        className="flex-1"
-                      />
-                    </div>
+                    <Label>Telefon *</Label>
+                    <Input 
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="Telefon numarası"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>E-Posta</Label>
-                    <Input
+                    <Label>E-posta *</Label>
+                    <Input 
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="ornek@email.com"
+                      placeholder="E-posta adresi"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -2340,7 +1962,9 @@ export function AccountingModule() {
                           onChange={(e) => setVadeGunuSayisi(e.target.value)}
                           placeholder="Gün sayısı"
                           className="w-32"
-                          min="0"
+                          min="1"
+                          max="999"
+                          step="1"
                         />
                         <span className="text-sm text-gray-600">gün</span>
                       </div>
@@ -2349,50 +1973,56 @@ export function AccountingModule() {
                 </div>
               </div>
 
-              {/* Diğer Bilgiler */}
+              {/* Sabit İskonto */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Diğer Bilgiler</h3>
-                <div className="space-y-2">
-                  <Label>Sabit İskonto</Label>
-                  <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="sabitIskonto"
-                        checked={!sabitIskontoVar}
-                        onChange={() => {
-                          setSabitIskontoVar(false);
-                          setSabitIskontoYuzde("");
-                        }}
-                        className="w-4 h-4"
-                      />
-                      <span>Yok</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="sabitIskonto"
-                        checked={sabitIskontoVar}
-                        onChange={() => setSabitIskontoVar(true)}
-                        className="w-4 h-4"
-                      />
-                      <span>Var</span>
-                    </label>
-                    {sabitIskontoVar && (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          value={sabitIskontoYuzde}
-                          onChange={(e) => setSabitIskontoYuzde(e.target.value)}
-                          placeholder="İskonto oranı"
-                          className="w-32"
-                          min="0"
-                          max="100"
-                          step="0.01"
+                <h3 className="text-lg font-semibold border-b pb-2">Sabit İskonto</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Sabit İskonto</Label>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="sabitIskonto"
+                          checked={!sabitIskontoVar}
+                          onChange={() => {
+                            setSabitIskontoVar(false);
+                            setSabitIskontoYuzde("");
+                          }}
+                          className="w-4 h-4"
                         />
-                        <span className="text-sm text-gray-600">%</span>
-                      </div>
-                    )}
+                        <span>Yok</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="sabitIskonto"
+                          checked={sabitIskontoVar}
+                          onChange={() => setSabitIskontoVar(true)}
+                          className="w-4 h-4"
+                        />
+                        <span>Var</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sabit İskonto</Label>
+                    <div className="flex">
+                      <Input
+                        type="number"
+                        value={sabitIskontoYuzde}
+                        onChange={(e) => setSabitIskontoYuzde(e.target.value)}
+                        disabled={!sabitIskontoVar}
+                        placeholder="İskonto oranı"
+                        className="rounded-r-none border-r-0"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                      />
+                      <span className="inline-flex items-center px-3 text-sm bg-gray-50 border border-l-0 border-gray-300 rounded-r-md">
+                        %
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
