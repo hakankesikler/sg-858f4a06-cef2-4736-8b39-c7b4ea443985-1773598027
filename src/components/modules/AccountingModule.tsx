@@ -163,6 +163,9 @@ export function AccountingModule() {
   const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
   const [isEditCategoryDialogOpen, setIsEditCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState({ name: "", id: "" });
+  const [isAddExpenseTypeDialogOpen, setIsAddExpenseTypeDialogOpen] = useState(false);
+  const [selectedCategoryForType, setSelectedCategoryForType] = useState("");
+  const [newExpenseTypeName, setNewExpenseTypeName] = useState("");
 
   const loadData = async () => {
     try {
@@ -180,6 +183,12 @@ export function AccountingModule() {
   const openEditCategoryDialog = (categoryName: string, categoryId: string) => {
     setEditingCategory({ name: categoryName, id: categoryId });
     setIsEditCategoryDialogOpen(true);
+  };
+
+  const openAddExpenseTypeDialog = (categoryName: string) => {
+    setSelectedCategoryForType(categoryName);
+    setNewExpenseTypeName("");
+    setIsAddExpenseTypeDialogOpen(true);
   };
 
   const openAddDialog = () => {
@@ -1460,7 +1469,11 @@ export function AccountingModule() {
                       >
                         Kategoriyi Düzenle
                       </Button>
-                      <Button size="sm" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => openAddExpenseTypeDialog("Kategorisiz Genel Gider Tipleri")}
+                      >
                         + Yeni Tip Ekle
                       </Button>
                     </div>
@@ -1493,7 +1506,11 @@ export function AccountingModule() {
                       >
                         Kategoriyi Düzenle
                       </Button>
-                      <Button size="sm" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => openAddExpenseTypeDialog("Araç Bakım Onarım")}
+                      >
                         + Yeni Tip Ekle
                       </Button>
                     </div>
@@ -1520,7 +1537,11 @@ export function AccountingModule() {
                       >
                         Kategoriyi Düzenle
                       </Button>
-                      <Button size="sm" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => openAddExpenseTypeDialog("Yazılım")}
+                      >
                         + Yeni Tip Ekle
                       </Button>
                     </div>
@@ -1553,7 +1574,11 @@ export function AccountingModule() {
                       >
                         Kategoriyi Düzenle
                       </Button>
-                      <Button size="sm" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => openAddExpenseTypeDialog("Taşıma Faturaları")}
+                      >
                         + Yeni Tip Ekle
                       </Button>
                     </div>
@@ -1604,7 +1629,11 @@ export function AccountingModule() {
                       >
                         Kategoriyi Düzenle
                       </Button>
-                      <Button size="sm" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => openAddExpenseTypeDialog("Kurumsal Giderler")}
+                      >
                         + Yeni Tip Ekle
                       </Button>
                     </div>
@@ -1655,7 +1684,11 @@ export function AccountingModule() {
                       >
                         Kategoriyi Düzenle
                       </Button>
-                      <Button size="sm" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => openAddExpenseTypeDialog("Finansal")}
+                      >
                         + Yeni Tip Ekle
                       </Button>
                     </div>
@@ -1700,7 +1733,11 @@ export function AccountingModule() {
                       >
                         Kategoriyi Düzenle
                       </Button>
-                      <Button size="sm" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => openAddExpenseTypeDialog("Demirbaş")}
+                      >
                         + Yeni Tip Ekle
                       </Button>
                     </div>
@@ -1751,7 +1788,11 @@ export function AccountingModule() {
                       >
                         Kategoriyi Düzenle
                       </Button>
-                      <Button size="sm" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => openAddExpenseTypeDialog("Ulaşım/Konaklama")}
+                      >
                         + Yeni Tip Ekle
                       </Button>
                     </div>
@@ -1802,7 +1843,11 @@ export function AccountingModule() {
                       >
                         Kategoriyi Düzenle
                       </Button>
-                      <Button size="sm" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => openAddExpenseTypeDialog("Temel Giderler")}
+                      >
                         + Yeni Tip Ekle
                       </Button>
                     </div>
@@ -2017,27 +2062,6 @@ export function AccountingModule() {
                     <div className="space-y-2">
                       <Label>T.C. Kimlik No</Label>
                       <Input placeholder="TC Kimlik No" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>İşlem Tarihi</Label>
-                      <Input type="date" defaultValue="2026-04-09" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Para Birimi *</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seçiniz" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="TRY">TRY (₺)</SelectItem>
-                          <SelectItem value="USD">USD ($)</SelectItem>
-                          <SelectItem value="EUR">EUR (€)</SelectItem>
-                          <SelectItem value="GBP">GBP (£)</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
                 </>
@@ -2499,6 +2523,77 @@ export function AccountingModule() {
         </DialogContent>
       </Dialog>
 
+      {/* Add Expense Type Dialog */}
+      <Dialog open={isAddExpenseTypeDialogOpen} onOpenChange={setIsAddExpenseTypeDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl">Yeni Genel Gider Tipi</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-blue-600">
+                Genel Gider Adı <span className="text-blue-600">*</span>
+              </Label>
+              <Input
+                value={newExpenseTypeName}
+                onChange={(e) => setNewExpenseTypeName(e.target.value)}
+                placeholder=""
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-blue-600">Kategori</Label>
+              <Select value={selectedCategoryForType} onValueChange={setSelectedCategoryForType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Kategorisiz Genel Gider Tipleri">Kategorisiz Genel Gider Tipleri</SelectItem>
+                  <SelectItem value="Araç Bakım Onarım">Araç Bakım Onarım</SelectItem>
+                  <SelectItem value="Yazılım">Yazılım</SelectItem>
+                  <SelectItem value="Taşıma Faturaları">Taşıma Faturaları</SelectItem>
+                  <SelectItem value="Kurumsal Giderler">Kurumsal Giderler</SelectItem>
+                  <SelectItem value="Finansal">Finansal</SelectItem>
+                  <SelectItem value="Demirbaş">Demirbaş</SelectItem>
+                  <SelectItem value="Ulaşım/Konaklama">Ulaşım/Konaklama</SelectItem>
+                  <SelectItem value="Temel Giderler">Temel Giderler</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-center mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddExpenseTypeDialogOpen(false)}
+              className="text-red-600 border-red-600 hover:bg-red-50"
+            >
+              Kapat
+            </Button>
+            <Button
+              onClick={() => {
+                if (!newExpenseTypeName) {
+                  toast({
+                    title: "Hata",
+                    description: "Lütfen gider adını giriniz!",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                toast({
+                  title: "Başarılı",
+                  description: `"${newExpenseTypeName}" gider tipi "${selectedCategoryForType}" kategorisine eklendi!`,
+                });
+                setIsAddExpenseTypeDialogOpen(false);
+              }}
+              variant="outline"
+              className="text-green-600 border-green-600 hover:bg-green-50"
+            >
+              Kaydet
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Category Dialog */}
       <Dialog open={isEditCategoryDialogOpen} onOpenChange={setIsEditCategoryDialogOpen}>
         <DialogContent className="max-w-md">
@@ -2534,9 +2629,10 @@ export function AccountingModule() {
                 });
                 setIsEditCategoryDialogOpen(false);
               }}
-              className="bg-green-600 hover:bg-green-700"
+              variant="outline"
+              className="text-green-600 border-green-600 hover:bg-green-50"
             >
-              Güncelle
+              Kaydet
             </Button>
             <Button
               variant="destructive"
