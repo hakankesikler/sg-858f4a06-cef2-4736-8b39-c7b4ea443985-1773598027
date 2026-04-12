@@ -68,10 +68,10 @@ export const crmService = {
   async getNextCustomerCode(accountType: string, supplierCategory?: string): Promise<string> {
     try {
       // Determine prefix based on account type and supplier category
-      let prefix = "CST"; // Default: Customer
+      let prefix = "MEDBAR CST"; // Default: Customer (MEDBAR prefix)
       
       if (accountType === "musteri") {
-        prefix = "CST";
+        prefix = "MEDBAR CST";
       } else if (accountType === "tedarikci") {
         if (supplierCategory === "nakliyeci") {
           prefix = "NKL";
@@ -105,9 +105,11 @@ export const crmService = {
         return `${prefix}-000001`;
       }
 
-      // Extract number from last code (e.g., "NKL-000123" -> 123)
+      // Extract number from last code (e.g., "MEDBAR CST-000001" -> 1, "NKL-000123" -> 123)
       const lastCode = data[0].customer_code;
-      const match = lastCode?.match(new RegExp(`${prefix}-(\\d+)`));
+      // Escape special characters in prefix for regex
+      const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const match = lastCode?.match(new RegExp(`${escapedPrefix}-(\\d+)`));
       
       if (!match) {
         // Invalid format, start fresh
@@ -117,7 +119,7 @@ export const crmService = {
       const lastNumber = parseInt(match[1], 10);
       const nextNumber = lastNumber + 1;
       
-      // Format with leading zeros (CST-000001, NKL-000002, etc.)
+      // Format with leading zeros (MEDBAR CST-000001, NKL-000002, etc.)
       const nextCode = `${prefix}-${nextNumber.toString().padStart(6, "0")}`;
       
       console.log("=== GENERATED CUSTOMER CODE ===");
@@ -129,7 +131,7 @@ export const crmService = {
       return nextCode;
     } catch (error) {
       console.error("Error generating customer code:", error);
-      return "CST-000001";
+      return "MEDBAR CST-000001";
     }
   },
 
@@ -142,6 +144,10 @@ export const crmService = {
         customer.supplier_category || undefined
       );
     }
+
+    console.log("=== CREATING CUSTOMER ===");
+    console.log("Customer Code:", customer.customer_code);
+    console.log("Account Type:", customer.account_type);
 
     const { data, error } = await supabase
       .from("customers")

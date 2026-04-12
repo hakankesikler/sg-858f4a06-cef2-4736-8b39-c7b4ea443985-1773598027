@@ -23,7 +23,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
   const [cariTuru, setCariTuru] = useState<"gercek" | "tuzel">("tuzel");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("bilgi");
-  const [customerCode, setCustomerCode] = useState("CAR000000");
+  const [customerCode, setCustomerCode] = useState("MEDBAR CST-000001");
   
   const [formData, setFormData] = useState({
     name: "",
@@ -151,7 +151,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       setCustomerCode(nextCode);
     } catch (error) {
       console.error("Error loading next customer code:", error);
-      setCustomerCode("CST-000001");
+      setCustomerCode("MEDBAR CST-000001");
     }
   };
 
@@ -196,7 +196,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     setSabitIskontoVar(false);
     setSabitIskontoYuzde("");
     setCariTuru("tuzel");
-    setCustomerCode("CAR000000");
+    setCustomerCode("MEDBAR CST-000001");
   };
 
   const handleSubmit = async () => {
