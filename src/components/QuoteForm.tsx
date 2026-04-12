@@ -14,62 +14,72 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
-const formSchema = z.object({
-  fullName: z.string().min(2, { message: "Lütfen geçerli bir ad soyad girin." }),
+const quoteFormSchema = z.object({
+  fullName: z.string().min(2, { message: "Ad Soyad en az 2 karakter olmalıdır." }),
   companyName: z.string().optional(),
-  email: z.string().email({ message: "Lütfen geçerli bir e-posta adresi girin." }),
-  phone: z.string().min(10, { message: "Lütfen geçerli bir telefon numarası girin." }),
-  serviceType: z.enum(["domestic", "international"], { required_error: "Lütfen bir hizmet türü seçin." }),
-  transportMode: z.string().min(1, { message: "Lütfen taşıma türünü seçin." }),
+  email: z.string().email({ message: "Geçerli bir e-posta adresi giriniz." }),
+  phone: z.string().min(10, { message: "Geçerli bir telefon numarası giriniz." }),
+  
+  // Transport details
+  serviceType: z.enum(["domestic", "international"], {
+    required_error: "Lütfen hizmet türü seçiniz.",
+  }),
+  transportMode: z.string({ required_error: "Lütfen taşıma şekli seçiniz." }),
   transportDetail: z.string().optional(),
-  senderCountry: z.string().optional(),
-  senderCity: z.string().min(1, { message: "Lütfen çıkış noktasını belirtin." }),
-  receiverCountry: z.string().optional(),
-  receiverCity: z.string().min(1, { message: "Lütfen varış noktasını belirtin." }),
-  cargoType: z.string().min(1, { message: "Lütfen yük cinsini belirtin." }),
-  weight: z.string().optional(),
+  
+  // Location
+  senderCountry: z.string({ required_error: "Gönderici ülke seçiniz." }),
+  senderCity: z.string({ required_error: "Gönderici şehir seçiniz." }),
+  receiverCountry: z.string({ required_error: "Alıcı ülke seçiniz." }),
+  receiverCity: z.string({ required_error: "Alıcı şehir seçiniz." }),
+  senderAddress: z.string().optional(),
+  receiverAddress: z.string().optional(),
+  
+  // Cargo Details
+  cargoType: z.string({ required_error: "Lütfen yük tipi seçiniz." }),
+  weight: z.string({ required_error: "Lütfen ağırlık giriniz." }),
   volume: z.string().optional(),
   pieces: z.string().optional(),
-  containerType: z.string().optional(),
   value: z.string().optional(),
   readyDate: z.string().optional(),
-  targetPrice: z.string().optional(),
-  customs: z.boolean().default(false),
+  
+  // Extra Services
   insurance: z.boolean().default(false),
+  customs: z.boolean().default(false),
   warehousing: z.boolean().default(false),
+  
   message: z.string().optional(),
 });
 
-type QuoteFormValues = z.infer<typeof formSchema>;
+type QuoteFormValues = z.infer<typeof quoteFormSchema>;
 
 export function QuoteForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<QuoteFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(quoteFormSchema),
     defaultValues: {
       fullName: "",
       companyName: "",
       email: "",
       phone: "",
       serviceType: "domestic",
-      transportMode: "",
-      transportDetail: "",
+      transportMode: "road",
       senderCountry: "Türkiye",
       senderCity: "",
       receiverCountry: "Türkiye",
       receiverCity: "",
+      senderAddress: "",
+      receiverAddress: "",
       cargoType: "",
       weight: "",
       volume: "",
       pieces: "",
-      containerType: "",
       value: "",
       readyDate: "",
-      targetPrice: "",
-      customs: false,
       insurance: false,
+      customs: false,
       warehousing: false,
       message: "",
     },
@@ -80,11 +90,9 @@ export function QuoteForm() {
 
   const onSubmit = async (data: QuoteFormValues) => {
     setIsSubmitting(true);
-    console.log("🔵 Form gönderimi başladı:", data);
-
+    
     try {
-      // E-posta gönderme
-      console.log("📧 E-posta API'sine istek gönderiliyor...");
+      // 1. E-posta Gönderimi (Mevcut API)
       const response = await fetch("/api/send-quote", {
         method: "POST",
         headers: {
@@ -94,63 +102,38 @@ export function QuoteForm() {
       });
 
       if (!response.ok) {
-        throw new Error("E-posta gönderilemedi");
-      }
-      console.log("✅ E-posta başarıyla gönderildi");
-
-      // ✅ CRM'e lead olarak kaydet
-      console.log("💾 Supabase'e lead kaydediliyor...");
-
-      // Form alanlarını database tablosuna eşleştir
-      const originStr = data.senderCountry ? `${data.senderCity}, ${data.senderCountry}` : data.senderCity;
-      const destStr = data.receiverCountry ? `${data.receiverCity}, ${data.receiverCountry}` : data.receiverCity;
-      let cargoTypeStr = data.cargoType;
-      if (data.transportDetail) {
-        cargoTypeStr += ` (${data.transportDetail})`;
-      }
-      if (data.containerType) {
-        cargoTypeStr += ` - Konteyner: ${data.containerType}`;
+        throw new Error("Teklif talebi gönderilemedi.");
       }
 
-      // Ek hizmetler notu
-      let reqStr = "";
-      if (data.customs) reqStr += "Gümrükleme, ";
-      if (data.insurance) reqStr += "Sigorta, ";
-      if (data.warehousing) reqStr += "Depolama, ";
-      if (data.targetPrice) reqStr += `Hedef Fiyat: ${data.targetPrice}, `;
-      if (data.readyDate) reqStr += `Hazır Tarih: ${data.readyDate}`;
-
-      const insertData = {
-        company_name: data.companyName || "Belirtilmedi",
-        contact_name: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        service_type: data.transportMode, // Kara, Hava, Deniz vb.
-        origin: originStr,
-        destination: destStr,
-        cargo_type: cargoTypeStr,
-        weight: data.weight || null, // Convert to string as database expects
-        volume: data.volume || null, // Convert to string as database expects
-        package_count: data.pieces || null, // Convert to string as database expects
-        special_requirements: reqStr || null,
-        message: data.message || null,
-        status: "yeni",
-        source: "website",
-        priority: "normal",
-      };
-
-      console.log("📋 Lead verisi:", insertData);
-
-      const { data: leadData, error: leadError } = await supabase
-        .from("leads")
-        .insert([insertData])
-        .select();
+      // 2. Supabase CRM Leads Tablosuna Kayıt
+      const { error: leadError } = await supabase.from("leads").insert([
+        {
+          company_name: data.companyName || data.fullName,
+          contact_name: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          service_type: data.transportMode,
+          origin: `${data.senderCity}, ${data.senderCountry}`,
+          destination: `${data.receiverCity}, ${data.receiverCountry}`,
+          cargo_type: data.cargoType,
+          weight: data.weight,
+          volume: data.volume,
+          package_count: data.pieces,
+          pickup_date: data.readyDate || null,
+          special_requirements: [
+            data.insurance ? "Sigorta" : null,
+            data.customs ? "Gümrük" : null,
+            data.warehousing ? "Depolama" : null
+          ].filter(Boolean).join(", "),
+          message: data.message,
+          status: "yeni",
+          source: "website",
+          priority: "normal",
+        },
+      ]);
 
       if (leadError) {
-        console.error("❌ Lead kayıt hatası:", leadError);
-        console.error("Hata detayı:", JSON.stringify(leadError, null, 2));
-      } else {
-        console.log("✅ Lead başarıyla kaydedildi:", leadData);
+        console.error("Lead kayıt hatası:", leadError);
       }
 
       toast({
@@ -160,7 +143,7 @@ export function QuoteForm() {
       
       form.reset();
     } catch (error) {
-      console.error("❌ Form gönderim hatası:", error);
+      console.error("Form submit error:", error);
       toast({
         title: "Bir hata oluştu",
         description: "Lütfen daha sonra tekrar deneyiniz.",
@@ -486,40 +469,41 @@ export function QuoteForm() {
             </div>
           </div>
 
-          {/* Ek Hizmetler */}
-          <div className="space-y-4 pt-4 border-t">
-            <h3 className="text-lg font-medium">Ek Hizmetler</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Ek Hizmetler ve Notlar */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-slate-800 border-b pb-2">Ek Hizmetler ve Notlar</h3>
+            
+            <div className="flex flex-col sm:flex-row gap-4 mb-4">
               <FormField
                 control={form.control}
-                name="customs"
+                name="insurance"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
                       <Checkbox
-                        checked={!!field.value}
+                        checked={field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Gümrükleme</FormLabel>
+                      <FormLabel>Emtia Sigortası İstiyorum</FormLabel>
                     </div>
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="insurance"
+                name="customs"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
                       <Checkbox
-                        checked={!!field.value}
+                        checked={field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Sigorta</FormLabel>
+                      <FormLabel>Gümrükleme İstiyorum</FormLabel>
                     </div>
                   </FormItem>
                 )}
@@ -528,20 +512,38 @@ export function QuoteForm() {
                 control={form.control}
                 name="warehousing"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
                       <Checkbox
-                        checked={!!field.value}
+                        checked={field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Depolama</FormLabel>
+                      <FormLabel>Depolama İstiyorum</FormLabel>
                     </div>
                   </FormItem>
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="message"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ek Notlarınız</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Belirtmek istediğiniz diğer detaylar..." 
+                      className="min-h-[100px]"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           <div className="pt-4 border-t flex items-center justify-end">
