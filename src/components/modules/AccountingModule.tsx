@@ -53,6 +53,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { accountingService } from "@/services/accountingService";
 import { crmService } from "@/services/crmService";
+import { CariForm } from "@/components/CariForm";
 
 type Invoice = {
   id: string;
@@ -127,19 +128,6 @@ export function AccountingModule() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    company: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    tax_number: "",
-    tax_office: "",
-    status: "Potansiyel" as const,
-    notes: "",
-    account_type: "musteri"
-  });
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingCustomer, setDeletingCustomer] = useState<any>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -2676,6 +2664,16 @@ export function AccountingModule() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Cari Form */}
+      <CariForm
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSuccess={() => {
+          fetchCustomers();
+          setIsAddDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

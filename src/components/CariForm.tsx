@@ -1,327 +1,82 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createCustomer } from "@/services/accountingService";
+import { useToast } from "@/hooks/use-toast";
 
 interface CariFormProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-interface FormData {
-  cariType: "gercek" | "tuzel";
-  cariKodu: string;
-  cariAdi: string;
-  cariSoyadi: string;
-  cariTipi: string;
-  cariKisaAdi: string;
-  islemTarihi: string;
-  etiketler: string;
-  tcKimlikNo: string;
-  vergiNo: string;
-  vergiDairesi: string;
-  mersisNo: string;
-  telefonUlkeKodu: string;
-  telefonNo: string;
-  email: string;
-  webSitesi: string;
-  faksUlkeKodu: string;
-  faksNo: string;
-  yurtDisiAdresi: boolean;
-  adresTipi: string;
-  adres: string;
-  il: string;
-  ilce: string;
-  postaKodu: string;
-}
-
-interface FormErrors {
-  cariAdi?: string;
-  cariSoyadi?: string;
-  cariTipi?: string;
-  tcKimlikNo?: string;
-  vergiNo?: string;
-  etiketler?: string;
-  vergiDairesi?: string;
-  email?: string;
-  telefonNo?: string;
-  webSitesi?: string;
-  postaKodu?: string;
-  adresTipi?: string;
-  adres?: string;
-  il?: string;
-  ilce?: string;
-}
-
-export function CariForm({ isOpen, onClose }: CariFormProps) {
-  const [activeTab, setActiveTab] = useState<"bilgiler" | "detay">("bilgiler");
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [formData, setFormData] = useState<FormData>({
-    cariType: "gercek",
-    cariKodu: "CAR001273",
-    cariAdi: "",
-    cariSoyadi: "",
-    cariTipi: "",
-    cariKisaAdi: "",
-    islemTarihi: new Date().toISOString().split("T")[0],
-    etiketler: "",
-    tcKimlikNo: "",
-    vergiNo: "",
-    vergiDairesi: "",
-    mersisNo: "",
-    telefonUlkeKodu: "+90",
-    telefonNo: "",
+export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("bilgi");
+  const [cariTuru, setCariTuru] = useState("gercek");
+  
+  // Form states
+  const [formData, setFormData] = useState({
+    name: "",
     email: "",
-    webSitesi: "",
-    faksUlkeKodu: "+90",
-    faksNo: "",
-    yurtDisiAdresi: false,
-    adresTipi: "",
-    adres: "",
-    il: "",
-    ilce: "",
-    postaKodu: "",
+    phone: "",
+    account_type: "",
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
+  // Vade states
+  const [vadeGunuVar, setVadeGunuVar] = useState(false);
+  const [vadeGunuSayisi, setVadeGunuSayisi] = useState("");
 
-  // Cari türü değiştiğinde TC/Vergi No alanlarını temizle
-  useEffect(() => {
-    if (formData.cariType === "gercek") {
-      // Tüzel'den Gerçek'e geçildiğinde Vergi No'yu temizle
-      setFormData((prev) => ({ ...prev, vergiNo: "" }));
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.vergiNo;
-        return newErrors;
-      });
-    } else if (formData.cariType === "tuzel") {
-      // Gerçek'ten Tüzel'e geçildiğinde TC Kimlik No'yu temizle
-      setFormData((prev) => ({ ...prev, tcKimlikNo: "" }));
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.tcKimlikNo;
-        return newErrors;
-      });
-    }
-  }, [formData.cariType]);
+  // İskonto states
+  const [sabitIskontoVar, setSabitIskontoVar] = useState(false);
+  const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
 
-  // Validation functions
-  const validateTCKimlik = (tc: string): boolean => {
-    if (!tc) return true; // Optional field
-    const cleaned = tc.replace(/\s/g, "");
-    return /^\d{11}$/.test(cleaned);
-  };
-
-  const validateVergiNo = (vergiNo: string): boolean => {
-    if (!vergiNo) return true; // Optional field
-    const cleaned = vergiNo.replace(/\s/g, "");
-    return /^\d{10}$/.test(cleaned);
-  };
-
-  const validateEmail = (email: string): boolean => {
-    if (!email) return true; // Optional field
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const validatePhone = (phone: string): boolean => {
-    if (!phone) return true; // Optional field
-    const cleaned = phone.replace(/\s/g, "");
-    return /^\d{10}$/.test(cleaned);
-  };
-
-  const validateWebsite = (url: string): boolean => {
-    if (!url) return true; // Optional field
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
-      new URL(url.startsWith("http") ? url : `https://${url}`);
-      return true;
-    } catch {
-      return false;
+      await createCustomer({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        account_type: formData.account_type,
+      });
+
+      toast({
+        title: "Başarılı",
+        description: "Cari başarıyla oluşturuldu",
+      });
+
+      onSuccess?.();
+      handleClose();
+    } catch (error) {
+      console.error("Error creating customer:", error);
+      toast({
+        title: "Hata",
+        description: "Cari oluşturulurken bir hata oluştu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const validatePostalCode = (code: string): boolean => {
-    if (!code) return true; // Optional field
-    return /^\d{5}$/.test(code);
-  };
-
-  const validateField = (name: string, value: string) => {
-    let error = "";
-
-    // Zorunlu alanlar
-    if (name === "cariAdi" && !value.trim()) {
-      error = "Cari adı zorunludur";
-    }
-    if (name === "cariSoyadi" && !value.trim()) {
-      error = "Cari soyadı zorunludur";
-    }
-    if (name === "cariTipi" && !value) {
-      error = "Cari tipi seçilmelidir";
-    }
-
-    // Cari türüne göre zorunlu alanlar
-    if (name === "tcKimlikNo" && formData.cariType === "gercek") {
-      if (!value.trim()) {
-        error = "T.C. Kimlik No zorunludur";
-      } else if (value.length !== 11) {
-        error = "T.C. Kimlik No 11 haneli olmalıdır";
-      } else if (!/^\d+$/.test(value)) {
-        error = "T.C. Kimlik No sadece rakamlardan oluşmalıdır";
-      }
-    }
-
-    if (name === "vergiNo" && formData.cariType === "tuzel") {
-      if (!value.trim()) {
-        error = "Vergi No zorunludur";
-      } else if (value.length !== 10) {
-        error = "Vergi No 10 haneli olmalıdır";
-      } else if (!/^\d+$/.test(value)) {
-        error = "Vergi No sadece rakamlardan oluşmalıdır";
-      }
-    }
-
-    return error;
-  };
-
-  // Real-time validation
-  useEffect(() => {
-    const newErrors: FormErrors = {};
-
-    // Required fields
-    if (touched.cariAdi && !formData.cariAdi.trim()) {
-      newErrors.cariAdi = "Cari adı zorunludur";
-    }
-
-    if (touched.cariSoyadi && !formData.cariSoyadi.trim()) {
-      newErrors.cariSoyadi = "Cari soyadı zorunludur";
-    }
-
-    if (touched.cariTipi && !formData.cariTipi) {
-      newErrors.cariTipi = "Cari tipi seçilmelidir";
-    }
-
-    // TC Kimlik validation
-    if (formData.cariType === "gercek") {
-      if (touched.tcKimlikNo && !formData.tcKimlikNo) {
-        newErrors.tcKimlikNo = "T.C. Kimlik No zorunludur";
-      } else if (touched.tcKimlikNo && formData.tcKimlikNo && !validateTCKimlik(formData.tcKimlikNo)) {
-        newErrors.tcKimlikNo = "T.C. Kimlik No 11 haneli olmalıdır";
-      }
-    }
-
-    // Vergi No validation
-    if (formData.cariType === "tuzel") {
-      if (touched.vergiNo && !formData.vergiNo) {
-        newErrors.vergiNo = "Vergi No zorunludur";
-      } else if (touched.vergiNo && formData.vergiNo && !validateVergiNo(formData.vergiNo)) {
-        newErrors.vergiNo = "Vergi No 10 haneli olmalıdır";
-      }
-    }
-
-    // Email validation
-    if (touched.email && formData.email && !validateEmail(formData.email)) {
-      newErrors.email = "Geçerli bir e-posta adresi giriniz";
-    }
-
-    // Phone validation
-    if (touched.telefonNo && formData.telefonNo && !validatePhone(formData.telefonNo)) {
-      newErrors.telefonNo = "Telefon numarası 10 haneli olmalıdır";
-    }
-
-    // Website validation
-    if (touched.webSitesi && formData.webSitesi && !validateWebsite(formData.webSitesi)) {
-      newErrors.webSitesi = "Geçerli bir web sitesi adresi giriniz";
-    }
-
-    // Postal code validation
-    if (touched.postaKodu && formData.postaKodu && !validatePostalCode(formData.postaKodu)) {
-      newErrors.postaKodu = "Posta kodu 5 haneli olmalıdır";
-    }
-
-    setErrors(newErrors);
-  }, [formData, touched]);
-
-  const handleInputChange = (field: keyof FormData, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleBlur = (field: string) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-  };
-
-  const isFormValid = (): boolean => {
-    // Check required fields
-    if (!formData.cariAdi.trim() || !formData.cariSoyadi.trim() || !formData.cariTipi) {
-      return false;
-    }
-
-    if (formData.cariType === "gercek" && (!formData.tcKimlikNo || formData.tcKimlikNo.length !== 11)) {
-      return false;
-    }
-
-    if (formData.cariType === "tuzel" && (!formData.vergiNo || formData.vergiNo.length !== 10)) {
-      return false;
-    }
-
-    // Check if there are any validation errors
-    if (Object.keys(errors).length > 0) {
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleSave = () => {
-    // Mark all fields as touched to show validation errors
-    const allFields = Object.keys(formData).reduce((acc, key) => {
-      acc[key] = true;
-      return acc;
-    }, {} as Record<string, boolean>);
-    setTouched(allFields);
-
-    if (!isFormValid()) {
-      return;
-    }
-
-    // Here you would normally send data to backend
-    console.log("Form data:", formData);
-    alert("Cari başarıyla kaydedildi! (Demo - Backend bağlantısı gerekli)");
-    onClose();
   };
 
   const handleClose = () => {
-    // Reset form
     setFormData({
-      cariType: "gercek",
-      cariKodu: "CAR001273",
-      cariAdi: "",
-      cariSoyadi: "",
-      cariTipi: "",
-      cariKisaAdi: "",
-      islemTarihi: new Date().toISOString().split("T")[0],
-      etiketler: "",
-      tcKimlikNo: "",
-      vergiNo: "",
-      vergiDairesi: "",
-      mersisNo: "",
-      telefonUlkeKodu: "+90",
-      telefonNo: "",
+      name: "",
       email: "",
-      webSitesi: "",
-      faksUlkeKodu: "+90",
-      faksNo: "",
-      yurtDisiAdresi: false,
-      adresTipi: "",
-      adres: "",
-      il: "",
-      ilce: "",
-      postaKodu: "",
+      phone: "",
+      account_type: "",
     });
-    setTouched({});
-    setErrors({});
+    setActiveTab("bilgi");
+    setCariTuru("gercek");
+    setVadeGunuVar(false);
+    setVadeGunuSayisi("");
+    setSabitIskontoVar(false);
+    setSabitIskontoYuzde("");
     onClose();
   };
 
@@ -329,7 +84,7 @@ export function CariForm({ isOpen, onClose }: CariFormProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
           <h2 className="text-xl font-bold text-white">Yeni Genel Cari</h2>
@@ -344,517 +99,531 @@ export function CariForm({ isOpen, onClose }: CariFormProps) {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab("bilgiler")}
-            className={`flex-1 px-6 py-3 font-medium text-sm transition-colors ${
-              activeTab === "bilgiler"
-                ? "bg-green-100 text-green-700 border-b-2 border-green-600"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            ▶ Cari Bilgileri
-          </button>
-          <button
-            onClick={() => setActiveTab("detay")}
-            className={`flex-1 px-6 py-3 font-medium text-sm transition-colors ${
-              activeTab === "detay"
-                ? "bg-green-100 text-green-700 border-b-2 border-green-600"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            ▶ Cari Detay Bilgileri
-          </button>
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <TabsList className="w-full rounded-none border-b">
+            <TabsTrigger 
+              value="bilgi" 
+              className="flex-1 data-[state=active]:bg-green-100 data-[state=active]:text-green-700 data-[state=active]:border-b-2 data-[state=active]:border-green-600"
+            >
+              ✓ Cari Bilgileri
+            </TabsTrigger>
+            <TabsTrigger 
+              value="detay"
+              className="flex-1 data-[state=active]:bg-green-100 data-[state=active]:text-green-700 data-[state=active]:border-b-2 data-[state=active]:border-green-600"
+            >
+              ▶ Cari Detay Bilgileri
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Form Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === "bilgiler" && (
-            <div className="space-y-6">
-              {/* Cari Türü */}
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-3 block">Cari Türü</Label>
-                <div className="flex gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="cariType"
-                      checked={formData.cariType === "gercek"}
-                      onChange={() => handleInputChange("cariType", "gercek")}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm text-gray-700">Gerçek/Şahıs Şirketi</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="cariType"
-                      checked={formData.cariType === "tuzel"}
-                      onChange={() => handleInputChange("cariType", "tuzel")}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm text-gray-700">Tüzel</span>
-                  </label>
-                </div>
+          {/* Cari Bilgileri Tab */}
+          <TabsContent value="bilgi" className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Cari Türü */}
+            <div className="space-y-2">
+              <Label>Cari Türü</Label>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={cariTuru === "gercek"}
+                    onChange={() => setCariTuru("gercek")}
+                    className="w-4 h-4"
+                  />
+                  <span>Gerçek/Şahıs Şirketi</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={cariTuru === "tuzel"}
+                    onChange={() => setCariTuru("tuzel")}
+                    className="w-4 h-4"
+                  />
+                  <span>Tüzel</span>
+                </label>
               </div>
+            </div>
 
-              {/* Row 1: Cari Kodu, Adı, Soyadı, Tipi, Kısa Adı, İşlem Tarihi */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                <div>
-                  <Label htmlFor="cariKodu" className="text-sm font-medium text-gray-700">
-                    Cari Kodu
-                  </Label>
-                  <Input
-                    id="cariKodu"
-                    value={formData.cariKodu}
-                    onChange={(e) => handleInputChange("cariKodu", e.target.value)}
-                    className="mt-1"
-                    disabled
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="cariAdi" className="text-sm font-medium text-gray-700">
-                    Cari Adı <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="cariAdi"
-                    value={formData.cariAdi}
-                    onChange={(e) => handleInputChange("cariAdi", e.target.value)}
-                    onBlur={() => handleBlur("cariAdi")}
-                    className={`mt-1 ${errors.cariAdi ? "border-red-500" : ""}`}
-                    placeholder="Cari adını giriniz"
-                  />
-                  {errors.cariAdi && (
-                    <p className="text-xs text-red-500 mt-1">{errors.cariAdi}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="cariSoyadi" className="text-sm font-medium text-gray-700">
-                    Cari Soyadı <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="cariSoyadi"
-                    value={formData.cariSoyadi}
-                    onChange={(e) => handleInputChange("cariSoyadi", e.target.value)}
-                    onBlur={() => handleBlur("cariSoyadi")}
-                    className={`mt-1 ${errors.cariSoyadi ? "border-red-500" : ""}`}
-                    placeholder="Cari soyadını giriniz"
-                  />
-                  {errors.cariSoyadi && (
-                    <p className="text-xs text-red-500 mt-1">{errors.cariSoyadi}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="cariTipi" className="text-sm font-medium text-gray-700">
-                    Cari Tipi <span className="text-red-500">*</span>
-                  </Label>
-                  <Select 
-                    value={formData.cariTipi} 
-                    onValueChange={(value) => {
-                      handleInputChange("cariTipi", value);
-                      handleBlur("cariTipi");
-                    }}
-                  >
-                    <SelectTrigger className={`mt-1 ${errors.cariTipi ? "border-red-500" : ""}`}>
-                      <SelectValue placeholder="Seçiniz" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="musteri">Müşteri</SelectItem>
-                      <SelectItem value="tedarikci">Tedarikçi</SelectItem>
-                      <SelectItem value="her-ikisi">Her İkisi</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.cariTipi && (
-                    <p className="text-xs text-red-500 mt-1">{errors.cariTipi}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="cariKisaAdi" className="text-sm font-medium text-gray-700">
-                    Cari Kısa Adı
-                  </Label>
-                  <Input
-                    id="cariKisaAdi"
-                    value={formData.cariKisaAdi}
-                    onChange={(e) => handleInputChange("cariKisaAdi", e.target.value)}
-                    className="mt-1"
-                    placeholder="Kısa ad"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="islemTarihi" className="text-sm font-medium text-gray-700">
-                    İşlem Tarihi
-                  </Label>
-                  <Input
-                    id="islemTarihi"
-                    type="date"
-                    value={formData.islemTarihi}
-                    onChange={(e) => handleInputChange("islemTarihi", e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
+            {/* Row 1: 6 Columns */}
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+              <div className="space-y-2">
+                <Label>Cari Kodu</Label>
+                <Input value="CAR001295" disabled className="bg-gray-50" />
               </div>
-
-              {/* Row 2: Etiketler, TC, Vergi Dairesi, Mersis */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <Label htmlFor="etiketler" className="text-sm font-medium text-gray-700">
-                    Etiketler
-                  </Label>
-                  <Input
-                    id="etiketler"
-                    value={formData.etiketler}
-                    onChange={(e) => handleInputChange("etiketler", e.target.value)}
-                    onBlur={() => handleBlur("etiketler")}
-                    className={`mt-1 ${errors.etiketler ? "border-red-500" : ""}`}
-                    placeholder="Etiketler"
-                  />
-                </div>
-
-                {/* TC Kimlik No - Sadece Gerçek Kişi için */}
-                {formData.cariType === "gercek" && (
-                  <div>
-                    <Label htmlFor="tcKimlikNo" className="text-sm font-medium text-gray-700">
-                      T.C. Kimlik No <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="tcKimlikNo"
-                      value={formData.tcKimlikNo}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "").slice(0, 11);
-                        handleInputChange("tcKimlikNo", value);
-                      }}
-                      onBlur={() => handleBlur("tcKimlikNo")}
-                      className={`mt-1 ${errors.tcKimlikNo ? "border-red-500" : ""}`}
-                      placeholder="11 haneli TC kimlik"
-                      maxLength={11}
-                    />
-                    {errors.tcKimlikNo && (
-                      <p className="text-xs text-red-500 mt-1">{errors.tcKimlikNo}</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Vergi No - Sadece Tüzel Kişi için */}
-                {formData.cariType === "tuzel" && (
-                  <div>
-                    <Label htmlFor="vergiNo" className="text-sm font-medium text-gray-700">
-                      Vergi No <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="vergiNo"
-                      value={formData.vergiNo}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "").slice(0, 10);
-                        handleInputChange("vergiNo", value);
-                      }}
-                      onBlur={() => handleBlur("vergiNo")}
-                      className={`mt-1 ${errors.vergiNo ? "border-red-500" : ""}`}
-                      placeholder="10 haneli Vergi No"
-                      maxLength={10}
-                    />
-                    {errors.vergiNo && (
-                      <p className="text-xs text-red-500 mt-1">{errors.vergiNo}</p>
-                    )}
-                  </div>
-                )}
-
-                <div>
-                  <Label htmlFor="vergiDairesi" className="text-sm font-medium text-gray-700">
-                    Vergi Dairesi
-                  </Label>
-                  <Select value={formData.vergiDairesi} onValueChange={(value) => handleInputChange("vergiDairesi", value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Seçiniz" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="kadikoy">Kadıköy Vergi Dairesi</SelectItem>
-                      <SelectItem value="besiktas">Beşiktaş Vergi Dairesi</SelectItem>
-                      <SelectItem value="sisli">Şişli Vergi Dairesi</SelectItem>
-                      <SelectItem value="uskudar">Üsküdar Vergi Dairesi</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="mersisNo" className="text-sm font-medium text-gray-700">
-                    Mersis No
-                  </Label>
-                  <Input
-                    id="mersisNo"
-                    value={formData.mersisNo}
-                    onChange={(e) => handleInputChange("mersisNo", e.target.value)}
-                    className="mt-1"
-                    placeholder="Mersis numarası"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label>Cari Adı</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder=""
+                />
               </div>
-
-              {/* İletişim Bilgileri Section */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-blue-700 mb-4">İletişim Bilgileri</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <Label htmlFor="telefonNo" className="text-sm font-medium text-gray-700">
-                      Telefon No
-                    </Label>
-                    <div className="flex gap-2 mt-1">
-                      <Select value={formData.telefonUlkeKodu} onValueChange={(value) => handleInputChange("telefonUlkeKodu", value)}>
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+90">🇹🇷 +90</SelectItem>
-                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
-                          <SelectItem value="+44">🇬🇧 +44</SelectItem>
-                          <SelectItem value="+49">🇩🇪 +49</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        id="telefonNo"
-                        value={formData.telefonNo}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, "").slice(0, 10);
-                          handleInputChange("telefonNo", value);
-                        }}
-                        onBlur={() => handleBlur("telefonNo")}
-                        className={`flex-1 ${errors.telefonNo ? "border-red-500" : ""}`}
-                        placeholder="5XX XXX XX XX"
-                        maxLength={10}
-                      />
-                    </div>
-                    {errors.telefonNo && (
-                      <p className="text-xs text-red-500 mt-1">{errors.telefonNo}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                      E-Posta
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      onBlur={() => handleBlur("email")}
-                      className={`mt-1 ${errors.email ? "border-red-500" : ""}`}
-                      placeholder="ornek@mail.com"
-                    />
-                    {errors.email && (
-                      <p className="text-xs text-red-500 mt-1">{errors.email}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="webSitesi" className="text-sm font-medium text-gray-700">
-                      Web Sitesi
-                    </Label>
-                    <Input
-                      id="webSitesi"
-                      value={formData.webSitesi}
-                      onChange={(e) => handleInputChange("webSitesi", e.target.value)}
-                      onBlur={() => handleBlur("webSitesi")}
-                      className={`mt-1 ${errors.webSitesi ? "border-red-500" : ""}`}
-                      placeholder="www.ornek.com"
-                    />
-                    {errors.webSitesi && (
-                      <p className="text-xs text-red-500 mt-1">{errors.webSitesi}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="faksNo" className="text-sm font-medium text-gray-700">
-                      Faks No
-                    </Label>
-                    <div className="flex gap-2 mt-1">
-                      <Select value={formData.faksUlkeKodu} onValueChange={(value) => handleInputChange("faksUlkeKodu", value)}>
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+90">🇹🇷 +90</SelectItem>
-                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
-                          <SelectItem value="+44">🇬🇧 +44</SelectItem>
-                          <SelectItem value="+49">🇩🇪 +49</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        id="faksNo"
-                        value={formData.faksNo}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, "").slice(0, 10);
-                          handleInputChange("faksNo", value);
-                        }}
-                        className="flex-1"
-                        placeholder="5XX XXX XX XX"
-                        maxLength={10}
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label>Cari Soyadı</Label>
+                <Input placeholder="" />
               </div>
+              <div className="space-y-2">
+                <Label>Cari Tipi</Label>
+                <Select
+                  value={formData.account_type}
+                  onValueChange={(value) => setFormData({ ...formData, account_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seçiniz" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="musteri">Müşteri</SelectItem>
+                    <SelectItem value="tedarikci">Tedarikçi</SelectItem>
+                    <SelectItem value="personel">Personel</SelectItem>
+                    <SelectItem value="ortak">Ortak</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Cari Kısa Adı</Label>
+                <Input placeholder="" />
+              </div>
+              <div className="space-y-2">
+                <Label>İşlem Tarihi</Label>
+                <Input type="date" defaultValue="2026-04-12" />
+              </div>
+            </div>
 
-              {/* Adres Bilgileri Section */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-blue-700 mb-4">Adres Bilgileri</h3>
-                
-                <div className="mb-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.yurtDisiAdresi}
-                      onChange={(e) => handleInputChange("yurtDisiAdresi", e.target.checked)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-sm text-gray-700">Yurt Dışı Adresi</span>
-                  </label>
-                </div>
+            {/* Row 2: 4 Columns */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>Etiketler</Label>
+                <Input placeholder="" />
+              </div>
+              <div className="space-y-2">
+                <Label>T.C. Kimlik No</Label>
+                <Input placeholder="" maxLength={11} />
+              </div>
+              <div className="space-y-2">
+                <Label>Vergi Dairesi</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seçiniz" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="kadikoy">Kadıköy</SelectItem>
+                    <SelectItem value="besiktas">Beşiktaş</SelectItem>
+                    <SelectItem value="sisli">Şişli</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Mersis No</Label>
+                <Input placeholder="" />
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <Label htmlFor="adresTipi" className="text-sm font-medium text-gray-700">
-                      Adres Tipi
-                    </Label>
-                    <Select value={formData.adresTipi} onValueChange={(value) => handleInputChange("adresTipi", value)}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Seçiniz" />
+            {/* İletişim Bilgileri */}
+            <div className="space-y-4 mt-6">
+              <h3 className="text-lg font-semibold border-b pb-2">İletişim Bilgileri</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label>Telefon No</Label>
+                  <div className="flex gap-2">
+                    <Select defaultValue="+90">
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="is">İş</SelectItem>
-                        <SelectItem value="ev">Ev</SelectItem>
-                        <SelectItem value="fatura">Fatura</SelectItem>
-                        <SelectItem value="sevkiyat">Sevkiyat</SelectItem>
+                        <SelectItem value="+90">🇹🇷</SelectItem>
+                        <SelectItem value="+1">🇺🇸</SelectItem>
+                        <SelectItem value="+44">🇬🇧</SelectItem>
+                        <SelectItem value="+49">🇩🇪</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-
-                  <div className="md:col-span-1 lg:col-span-3">
-                    <Label htmlFor="adres" className="text-sm font-medium text-gray-700">
-                      Adres
-                    </Label>
-                    <Textarea
-                      id="adres"
-                      value={formData.adres}
-                      onChange={(e) => handleInputChange("adres", e.target.value)}
-                      className="mt-1"
-                      rows={3}
-                      placeholder="Açık adres giriniz"
+                    <Input 
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="0501 234 5678"
+                      className="flex-1"
                     />
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <Label htmlFor="il" className="text-sm font-medium text-gray-700">
-                      İl
-                    </Label>
-                    <Select value={formData.il} onValueChange={(value) => handleInputChange("il", value)}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="istanbul">İstanbul</SelectItem>
-                        <SelectItem value="ankara">Ankara</SelectItem>
-                        <SelectItem value="izmir">İzmir</SelectItem>
-                        <SelectItem value="bursa">Bursa</SelectItem>
-                        <SelectItem value="antalya">Antalya</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="ilce" className="text-sm font-medium text-gray-700">
-                      İlçe
-                    </Label>
-                    <Select value={formData.ilce} onValueChange={(value) => handleInputChange("ilce", value)}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                        <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                        <SelectItem value="sisli">Şişli</SelectItem>
-                        <SelectItem value="uskudar">Üsküdar</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="postaKodu" className="text-sm font-medium text-gray-700">
-                      Posta Kodu
-                    </Label>
-                    <Input
-                      id="postaKodu"
-                      value={formData.postaKodu}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "").slice(0, 5);
-                        handleInputChange("postaKodu", value);
-                      }}
-                      onBlur={() => handleBlur("postaKodu")}
-                      className={`mt-1 ${errors.postaKodu ? "border-red-500" : ""}`}
-                      placeholder="34XXX"
-                      maxLength={5}
-                    />
-                    {errors.postaKodu && (
-                      <p className="text-xs text-red-500 mt-1">{errors.postaKodu}</p>
-                    )}
-                  </div>
-
-                  <div className="flex items-end">
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      className="w-full"
-                    >
-                      Sil
-                    </Button>
-                  </div>
+                <div className="space-y-2">
+                  <Label>E-Posta</Label>
+                  <Input 
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder=""
+                  />
                 </div>
-
-                <div className="mt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                  >
-                    + Adres Ekle
-                  </Button>
+                <div className="space-y-2">
+                  <Label>Web Sitesi</Label>
+                  <Input placeholder="" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Faks No</Label>
+                  <div className="flex gap-2">
+                    <Select defaultValue="+90">
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="+90">🇹🇷</SelectItem>
+                        <SelectItem value="+1">🇺🇸</SelectItem>
+                        <SelectItem value="+44">🇬🇧</SelectItem>
+                        <SelectItem value="+49">🇩🇪</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input 
+                      placeholder="0501 234 5678"
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          )}
 
-          {activeTab === "detay" && (
-            <div className="text-center py-12 text-gray-500">
-              <p>Cari detay bilgileri burada görüntülenecek...</p>
+            {/* Adres Bilgileri */}
+            <div className="space-y-4 mt-6">
+              <h3 className="text-lg font-semibold border-b pb-2">Adres Bilgileri</h3>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" className="rounded" />
+                  <span className="text-sm">Yurt Dışı Adresi</span>
+                </label>
+              </div>
+              
+              {/* Adres Row 1 */}
+              <div className="flex gap-4 items-start">
+                <div className="space-y-2" style={{ width: '150px' }}>
+                  <Label>Adres Tipi</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seçiniz" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fatura">Fatura Adresi</SelectItem>
+                      <SelectItem value="teslimat">Teslimat Adresi</SelectItem>
+                      <SelectItem value="merkez">Merkez Adresi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 flex-1">
+                  <Label>Adres</Label>
+                  <textarea 
+                    className="w-full min-h-[80px] px-3 py-2 border rounded-md resize-none"
+                    placeholder=""
+                  />
+                </div>
+                <div className="space-y-2" style={{ width: '150px' }}>
+                  <Label>İl</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seçiniz" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="istanbul">İstanbul</SelectItem>
+                      <SelectItem value="ankara">Ankara</SelectItem>
+                      <SelectItem value="izmir">İzmir</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2" style={{ width: '150px' }}>
+                  <Label>İlçe</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seçiniz" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="kadikoy">Kadıköy</SelectItem>
+                      <SelectItem value="besiktas">Beşiktaş</SelectItem>
+                      <SelectItem value="sisli">Şişli</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="invisible">Sil</Label>
+                  <Button variant="destructive" size="sm" className="h-10">Sil</Button>
+                </div>
+              </div>
+
+              {/* Adres Row 2 */}
+              <div className="flex gap-4">
+                <div className="space-y-2" style={{ width: '150px' }}>
+                  <Label>Posta Kodu</Label>
+                  <Input placeholder="" />
+                </div>
+              </div>
+
+              <Button variant="outline" size="sm" className="gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Adres Ekle
+              </Button>
             </div>
-          )}
-        </div>
+          </TabsContent>
+
+          {/* Cari Detay Bilgileri Tab */}
+          <TabsContent value="detay" className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Vade Bilgileri */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Vade Bilgileri</h3>
+              <div className="space-y-2">
+                <Label>Vade Günü</Label>
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="vadeGunu"
+                      checked={!vadeGunuVar}
+                      onChange={() => {
+                        setVadeGunuVar(false);
+                        setVadeGunuSayisi("");
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <span>Yok</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="vadeGunu"
+                      checked={vadeGunuVar}
+                      onChange={() => setVadeGunuVar(true)}
+                      className="w-4 h-4"
+                    />
+                    <span>Var</span>
+                  </label>
+                </div>
+                {vadeGunuVar && (
+                  <div className="mt-2">
+                    <Select value={vadeGunuSayisi} onValueChange={setVadeGunuSayisi}>
+                      <SelectTrigger className="w-64">
+                        <SelectValue placeholder="7 Gün Vade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7">7 Gün Vade</SelectItem>
+                        <SelectItem value="15">15 Gün Vade</SelectItem>
+                        <SelectItem value="30">30 Gün Vade</SelectItem>
+                        <SelectItem value="45">45 Gün Vade</SelectItem>
+                        <SelectItem value="60">60 Gün Vade</SelectItem>
+                        <SelectItem value="90">90 Gün Vade</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Diğer Bilgiler - Sabit İskonto */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Diğer Bilgiler</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Sabit İskonto</Label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sabitIskonto"
+                        checked={!sabitIskontoVar}
+                        onChange={() => {
+                          setSabitIskontoVar(false);
+                          setSabitIskontoYuzde("");
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span>Yok</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sabitIskonto"
+                        checked={sabitIskontoVar}
+                        onChange={() => setSabitIskontoVar(true)}
+                        className="w-4 h-4"
+                      />
+                      <span>Var</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Sabit İskonto</Label>
+                  <div className="flex">
+                    <Input
+                      type="number"
+                      value={sabitIskontoYuzde}
+                      onChange={(e) => setSabitIskontoYuzde(e.target.value)}
+                      disabled={!sabitIskontoVar}
+                      placeholder="İskonto oranı"
+                      className="rounded-r-none border-r-0"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                    />
+                    <span className="inline-flex items-center px-3 text-sm bg-gray-50 border border-l-0 border-gray-300 rounded-r-md">
+                      %
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Açılış Bakiyesi */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Açılış Bakiyesi</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label>Tutar</Label>
+                  <Input type="text" placeholder="0,00" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Para Birimi *</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="TRY" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="TRY">TRY</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Durumu</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seçiniz" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="borc">Borç</SelectItem>
+                      <SelectItem value="alacak">Alacak</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Proje</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seçiniz" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="proje1">Proje 1</SelectItem>
+                      <SelectItem value="proje2">Proje 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>İşlem Tarihi</Label>
+                  <Input type="date" defaultValue="2026-04-10" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Vade Tarihi Var Mı?</Label>
+                  <div className="flex items-center gap-4 pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="vadeTarihi" className="w-4 h-4" defaultChecked />
+                      <span>Yok</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="vadeTarihi" className="w-4 h-4" />
+                      <span>Var</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-sm text-gray-500">
+                <svg className="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                Ayarlar sayfasından Proje Takip seçeneğini kapatabilirsiniz.
+              </div>
+            </div>
+
+            {/* Borç Alacak Bilgileri */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center border-b pb-2">
+                <h3 className="text-lg font-semibold">Borç Alacak Bilgileri</h3>
+                <Button variant="outline" size="sm">
+                  + Borç Alacak Ekle
+                </Button>
+              </div>
+              <p className="text-sm text-gray-500">Henüz borç alacak bilgisi eklenmedi.</p>
+            </div>
+
+            {/* Banka Bilgileri */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center border-b pb-2">
+                <h3 className="text-lg font-semibold">Banka Bilgileri</h3>
+                <Button variant="outline" size="sm">
+                  + Banka Ekle
+                </Button>
+              </div>
+              <p className="text-sm text-gray-500">Henüz banka bilgisi eklenmedi.</p>
+            </div>
+
+            {/* Yetkili İletişim Bilgileri */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center border-b pb-2">
+                <h3 className="text-lg font-semibold">Yetkili İletişim Bilgileri</h3>
+                <Button variant="outline" size="sm">
+                  + Yetkili Ekle
+                </Button>
+              </div>
+              <p className="text-sm text-gray-500">Henüz yetkili bilgisi eklenmedi.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Footer Buttons */}
-        <div className="border-t border-gray-200 px-6 py-4 flex justify-end gap-3 bg-gray-50">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-            className="px-6"
-          >
-            İptal
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={!isFormValid()}
-            className="px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Kaydet
-          </Button>
+        <div className="border-t border-gray-200 px-6 py-4 flex justify-between gap-3 bg-gray-50">
+          {activeTab === "bilgi" ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveTab("detay")}
+              >
+                Cari Detay Bilgileri
+              </Button>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleClose}
+                >
+                  Vazgeç
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveTab("bilgi")}
+              >
+                Geri
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
