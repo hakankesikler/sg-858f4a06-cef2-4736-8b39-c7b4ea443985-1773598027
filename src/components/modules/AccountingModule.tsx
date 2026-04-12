@@ -2009,24 +2009,24 @@ export function AccountingModule() {
               {/* Cari Bilgileri - GERÇEK/ŞAHIS */}
               {cariTuru === "gercek" && (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div className="space-y-2">
                       <Label>Cari Kodu</Label>
-                      <Input value="CAR001294" disabled className="bg-gray-50" />
+                      <Input value="Hakan Kesikler" disabled className="bg-gray-50" />
                     </div>
                     <div className="space-y-2">
                       <Label>Cari Adı *</Label>
                       <Input
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ad"
+                        placeholder="Hakan"
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label>Cari Soyadı *</Label>
                       <Input
-                        placeholder="Soyad"
+                        placeholder="Kesikler"
                         required
                       />
                     </div>
@@ -2038,7 +2038,7 @@ export function AccountingModule() {
                         required
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Seçiniz" />
+                          <SelectValue placeholder="Tedarikçi" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="musteri">Müşteri</SelectItem>
@@ -2048,28 +2048,38 @@ export function AccountingModule() {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <Label>Cari Kısa Adı</Label>
-                      <Input placeholder="Kısa ad" />
+                      <Input placeholder="Hakan" />
                     </div>
-                    <div className="space-y-2">
-                      <Label>İşlem Tarihi</Label>
-                      <Input type="date" defaultValue="2026-04-10" />
-                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Etiketler</Label>
                       <Input placeholder="Etiket ekle" />
                     </div>
                     <div className="space-y-2">
-                      <Label>T.C. Kimlik No *</Label>
+                      <Label>İşlem Tarihi</Label>
+                      <div className="relative">
+                        <Input type="date" defaultValue="2026-04-10" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>T.C. Kimlik No</Label>
                       <Input 
-                        placeholder="TC Kimlik No" 
+                        placeholder="14015721270" 
                         maxLength={11}
-                        required
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Vergi Dairesi</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Mersis No</Label>
                     </div>
                   </div>
                 </>
@@ -2738,15 +2748,22 @@ export function AccountingModule() {
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="flex justify-between gap-2 mt-6">
+          <DialogFooter className="flex justify-end gap-2 mt-6">
             <Button
               type="button"
               variant="outline"
               onClick={() => {
-                // Go back to Cari Bilgileri tab logic here
+                // Switch to Cari Detay Bilgileri tab
               }}
             >
-              Geri
+              Cari Detay Bilgileri
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setIsAddDialogOpen(false)}
+            >
+              Vazgeç
             </Button>
             <Button
               type="submit"
