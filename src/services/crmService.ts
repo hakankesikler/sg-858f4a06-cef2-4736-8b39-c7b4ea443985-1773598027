@@ -65,59 +65,87 @@ export const crmService = {
   },
 
   // Get next customer code
-  async getNextCustomerCode(): Promise<string> {
+  async getNextCustomerCode(accountType: string, supplierCategory?: string): Promise<string> {
     try {
-      // Get the latest customer code
+      // Determine prefix based on account type and supplier category
+      let prefix = "CST"; // Default: Customer
+      
+      if (accountType === "musteri") {
+        prefix = "CST";
+      } else if (accountType === "tedarikci") {
+        if (supplierCategory === "nakliyeci") {
+          prefix = "NKL";
+        } else if (supplierCategory === "forwarder") {
+          prefix = "FWD";
+        } else {
+          prefix = "YGD"; // Yardımcı/Diğer tedarikçi
+        }
+      } else if (accountType === "personel") {
+        prefix = "PRS";
+      } else if (accountType === "ortak") {
+        prefix = "ORT";
+      }
+
+      // Get the latest customer code with this prefix
       const { data, error } = await supabase
         .from("customers")
         .select("customer_code")
         .not("customer_code", "is", null)
+        .like("customer_code", `${prefix}-%`)
         .order("customer_code", { ascending: false })
         .limit(1);
 
       if (error) {
         console.error("Error fetching last customer code:", error);
-        // If error, start from CAR000001
-        return "CAR000001";
+        return `${prefix}-000001`;
       }
 
       if (!data || data.length === 0) {
-        // No customers yet, start from CAR000001
-        return "CAR000001";
+        // No customers with this prefix yet
+        return `${prefix}-000001`;
       }
 
-      // Extract number from last code (e.g., "CAR000123" -> 123)
+      // Extract number from last code (e.g., "NKL-000123" -> 123)
       const lastCode = data[0].customer_code;
-      const match = lastCode?.match(/CAR(\d+)/);
+      const match = lastCode?.match(new RegExp(`${prefix}-(\\d+)`));
       
       if (!match) {
         // Invalid format, start fresh
-        return "CAR000001";
+        return `${prefix}-000001`;
       }
 
       const lastNumber = parseInt(match[1], 10);
       const nextNumber = lastNumber + 1;
       
-      // Format with leading zeros (CAR000001, CAR000002, etc.)
-      const nextCode = `CAR${nextNumber.toString().padStart(6, "0")}`;
+      // Format with leading zeros (CST-000001, NKL-000002, etc.)
+      const nextCode = `${prefix}-${nextNumber.toString().padStart(6, "0")}`;
+      
+      console.log("=== GENERATED CUSTOMER CODE ===");
+      console.log("Account Type:", accountType);
+      console.log("Supplier Category:", supplierCategory);
+      console.log("Prefix:", prefix);
+      console.log("Next Code:", nextCode);
       
       return nextCode;
     } catch (error) {
       console.error("Error generating customer code:", error);
-      return "CAR000001";
+      return "CST-000001";
     }
   },
 
   // Create new customer
-  async createCustomer(data: CustomerInsert) {
+  async createCustomer(customer: Customer) {
     // Generate customer code if not provided
-    if (!data.customer_code) {
-      data.customer_code = await this.getNextCustomerCode();
+    if (!customer.customer_code) {
+      customer.customer_code = await this.getNextCustomerCode(
+        customer.account_type || "musteri",
+        customer.supplier_category || undefined
+      );
     }
 
-    const { data: customer, error } = await supabase
+    const { data, error } = await supabase
       .from("customers")
-      .insert(data)
+      .insert(customer)
       .select()
       .single();
 
@@ -126,7 +154,7 @@ export const crmService = {
       throw error;
     }
 
-    return customer;
+    return data;
   },
 
   // Update customer

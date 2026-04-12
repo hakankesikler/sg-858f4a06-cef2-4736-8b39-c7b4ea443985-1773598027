@@ -135,13 +135,23 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     }
   }, [editMode, initialData, isOpen]);
 
+  // Reload customer code when account type or supplier category changes
+  useEffect(() => {
+    if (isOpen && !editMode) {
+      loadNextCustomerCode();
+    }
+  }, [formData.account_type, formData.supplier_category, isOpen, editMode]);
+
   const loadNextCustomerCode = async () => {
     try {
-      const nextCode = await crmService.getNextCustomerCode();
+      const nextCode = await crmService.getNextCustomerCode(
+        formData.account_type,
+        formData.supplier_category || undefined
+      );
       setCustomerCode(nextCode);
     } catch (error) {
       console.error("Error loading next customer code:", error);
-      setCustomerCode("CAR000001");
+      setCustomerCode("CST-000001");
     }
   };
 
