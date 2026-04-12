@@ -542,7 +542,7 @@ export function AccountingModule() {
       });
       setIsDeleteDialogOpen(false);
       setDeletingCustomer(null);
-      loadCustomers();
+      loadData();
     } catch (error) {
       console.error("Error deleting customer:", error);
       toast({
@@ -1057,8 +1057,8 @@ export function AccountingModule() {
                                       e.preventDefault();
                                       e.stopPropagation();
                                       console.log("=== VIEW CUSTOMER CLICKED (Accounting) ===", customer);
-                                      setSelectedCustomer(customer);
-                                      setViewCustomerOpen(true);
+                                      setDetailCustomer(customer);
+                                      setIsDetailDialogOpen(true);
                                     }}
                                   >
                                     <Eye className="w-4 h-4" />
@@ -1070,8 +1070,8 @@ export function AccountingModule() {
                                       e.preventDefault();
                                       e.stopPropagation();
                                       console.log("=== EDIT CUSTOMER CLICKED (Accounting) ===", customer);
-                                      setSelectedCustomer(customer);
-                                      setEditCustomerOpen(true);
+                                      setEditingCustomer(customer);
+                                      setIsEditDialogOpen(true);
                                     }}
                                   >
                                     <Edit className="w-4 h-4" />
@@ -1790,69 +1790,69 @@ export function AccountingModule() {
       />
 
       {/* View Customer Dialog */}
-      <Dialog open={viewCustomerOpen} onOpenChange={setViewCustomerOpen}>
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Cari Detayları</DialogTitle>
           </DialogHeader>
-          {selectedCustomer && (
+          {detailCustomer && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-gray-500">Ünvan</Label>
-                  <p className="font-medium">{selectedCustomer.name}</p>
+                  <p className="font-medium">{detailCustomer.name}</p>
                 </div>
                 <div>
                   <Label className="text-gray-500">Cari Tipi</Label>
                   <p className="font-medium">
-                    {selectedCustomer.account_type === "musteri" ? "Müşteri" : 
-                     selectedCustomer.account_type === "tedarikci" ? "Tedarikçi" :
-                     selectedCustomer.account_type === "personel" ? "Personel" :
-                     selectedCustomer.account_type === "ortak" ? "Ortak" : "Müşteri"}
+                    {detailCustomer.account_type === "musteri" ? "Müşteri" : 
+                     detailCustomer.account_type === "tedarikci" ? "Tedarikçi" :
+                     detailCustomer.account_type === "personel" ? "Personel" :
+                     detailCustomer.account_type === "ortak" ? "Ortak" : "Müşteri"}
                   </p>
                 </div>
                 <div>
                   <Label className="text-gray-500">Email</Label>
-                  <p className="font-medium">{selectedCustomer.email}</p>
+                  <p className="font-medium">{detailCustomer.email}</p>
                 </div>
                 <div>
                   <Label className="text-gray-500">Telefon</Label>
-                  <p className="font-medium">{selectedCustomer.phone}</p>
+                  <p className="font-medium">{detailCustomer.phone}</p>
                 </div>
-                {selectedCustomer.vergi_no && (
+                {detailCustomer.vergi_no && (
                   <div>
                     <Label className="text-gray-500">Vergi No</Label>
-                    <p className="font-medium">{selectedCustomer.vergi_no}</p>
+                    <p className="font-medium">{detailCustomer.vergi_no}</p>
                   </div>
                 )}
-                {selectedCustomer.tc_no && (
+                {detailCustomer.tc_no && (
                   <div>
                     <Label className="text-gray-500">TC No</Label>
-                    <p className="font-medium">{selectedCustomer.tc_no}</p>
+                    <p className="font-medium">{detailCustomer.tc_no}</p>
                   </div>
                 )}
-                {selectedCustomer.tax_office && (
+                {detailCustomer.tax_office && (
                   <div>
                     <Label className="text-gray-500">Vergi Dairesi</Label>
-                    <p className="font-medium">{selectedCustomer.tax_office}</p>
+                    <p className="font-medium">{detailCustomer.tax_office}</p>
                   </div>
                 )}
-                {selectedCustomer.city && (
+                {detailCustomer.city && (
                   <div>
                     <Label className="text-gray-500">İl</Label>
-                    <p className="font-medium">{selectedCustomer.city}</p>
+                    <p className="font-medium">{detailCustomer.city}</p>
                   </div>
                 )}
-                {selectedCustomer.district && (
+                {detailCustomer.district && (
                   <div>
                     <Label className="text-gray-500">İlçe</Label>
-                    <p className="font-medium">{selectedCustomer.district}</p>
+                    <p className="font-medium">{detailCustomer.district}</p>
                   </div>
                 )}
-                {selectedCustomer.address && (
+                {detailCustomer.address && (
                   <div className="col-span-2">
                     <Label className="text-gray-500">Adres</Label>
-                    <p className="font-medium">{selectedCustomer.address}</p>
+                    <p className="font-medium">{detailCustomer.address}</p>
                   </div>
                 )}
               </div>
@@ -1862,7 +1862,7 @@ export function AccountingModule() {
       </Dialog>
 
       {/* Edit Customer Dialog */}
-      <Dialog open={editCustomerOpen} onOpenChange={setEditCustomerOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cari Düzenle</DialogTitle>
