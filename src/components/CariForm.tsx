@@ -94,6 +94,11 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         postal_code: initialData.postal_code || "",
         account_type: initialData.account_type || "musteri",
         tutar: "",
+        address_type: "",
+        vade_gunu: initialData.vade_gunu?.toString() || "",
+        para_birimi: "TRY",
+        durumu: "",
+        proje: ""
       });
       
       setVadeGunuVar(!!initialData.vade_gunu);
@@ -127,6 +132,11 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       postal_code: "",
       account_type: "musteri",
       tutar: "",
+      address_type: "",
+      vade_gunu: "",
+      para_birimi: "TRY",
+      durumu: "",
+      proje: ""
     });
     setVadeGunuVar(false);
     setVadeGunuSayisi("");

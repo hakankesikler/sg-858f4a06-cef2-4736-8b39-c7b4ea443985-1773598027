@@ -378,7 +378,7 @@ export function CRMModule() {
         isOpen={isEditDialogOpen}
         onClose={() => {
           setIsEditDialogOpen(false);
-          setSelectedCustomer(null);
+          setEditingCustomer(null);
         }}
         onSuccess={loadCustomers}
         editMode={true}
