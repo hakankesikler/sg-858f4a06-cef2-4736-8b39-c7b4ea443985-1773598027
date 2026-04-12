@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,13 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -530,6 +525,36 @@ export function AccountingModule() {
     setEditTypeModal(true);
   };
 
+  const handleDeleteCustomerClick = (customer: any) => {
+    setDeletingCustomer(customer);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (!deletingCustomer) return;
+
+    try {
+      setIsSubmitting(true);
+      await crmService.deleteCustomer(deletingCustomer.id);
+      toast({
+        title: "Başarılı",
+        description: "Cari başarıyla silindi",
+      });
+      setIsDeleteDialogOpen(false);
+      setDeletingCustomer(null);
+      loadCustomers();
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      toast({
+        title: "Hata",
+        description: "Cari silinirken bir hata oluştu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <Tabs defaultValue="panel" className="w-full">
@@ -967,8 +992,8 @@ export function AccountingModule() {
                         <TableHead>Cari Tipi</TableHead>
                         <TableHead>Telefon Numarası</TableHead>
                         <TableHead>Etiketler</TableHead>
-                        <TableHead>VKN/TCKN</TableHead>
-                        <TableHead className="text-right">İşlemler</TableHead>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">VKN/TCKN</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1028,23 +1053,37 @@ export function AccountingModule() {
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => openDetailDialog(customer)}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log("=== VIEW CUSTOMER CLICKED (Accounting) ===", customer);
+                                      setSelectedCustomer(customer);
+                                      setViewCustomerOpen(true);
+                                    }}
                                   >
                                     <Eye className="w-4 h-4" />
                                   </Button>
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => openEditDialog(customer)}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log("=== EDIT CUSTOMER CLICKED (Accounting) ===", customer);
+                                      setSelectedCustomer(customer);
+                                      setEditCustomerOpen(true);
+                                    }}
                                   >
                                     <Edit className="w-4 h-4" />
                                   </Button>
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => {
-                                      setDeletingCustomer(customer);
-                                      setIsDeleteDialogOpen(true);
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      console.log("=== DELETE CUSTOMER CLICKED (Accounting) ===", customer);
+                                      handleDeleteCustomerClick(customer);
                                     }}
                                   >
                                     <Trash2 className="w-4 h-4 text-red-600" />
@@ -1749,6 +1788,112 @@ export function AccountingModule() {
           setIsAddDialogOpen(false);
         }}
       />
+
+      {/* View Customer Dialog */}
+      <Dialog open={viewCustomerOpen} onOpenChange={setViewCustomerOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Cari Detayları</DialogTitle>
+          </DialogHeader>
+          {selectedCustomer && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-500">Ünvan</Label>
+                  <p className="font-medium">{selectedCustomer.name}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Cari Tipi</Label>
+                  <p className="font-medium">
+                    {selectedCustomer.account_type === "musteri" ? "Müşteri" : 
+                     selectedCustomer.account_type === "tedarikci" ? "Tedarikçi" :
+                     selectedCustomer.account_type === "personel" ? "Personel" :
+                     selectedCustomer.account_type === "ortak" ? "Ortak" : "Müşteri"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Email</Label>
+                  <p className="font-medium">{selectedCustomer.email}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Telefon</Label>
+                  <p className="font-medium">{selectedCustomer.phone}</p>
+                </div>
+                {selectedCustomer.vergi_no && (
+                  <div>
+                    <Label className="text-gray-500">Vergi No</Label>
+                    <p className="font-medium">{selectedCustomer.vergi_no}</p>
+                  </div>
+                )}
+                {selectedCustomer.tc_no && (
+                  <div>
+                    <Label className="text-gray-500">TC No</Label>
+                    <p className="font-medium">{selectedCustomer.tc_no}</p>
+                  </div>
+                )}
+                {selectedCustomer.tax_office && (
+                  <div>
+                    <Label className="text-gray-500">Vergi Dairesi</Label>
+                    <p className="font-medium">{selectedCustomer.tax_office}</p>
+                  </div>
+                )}
+                {selectedCustomer.city && (
+                  <div>
+                    <Label className="text-gray-500">İl</Label>
+                    <p className="font-medium">{selectedCustomer.city}</p>
+                  </div>
+                )}
+                {selectedCustomer.district && (
+                  <div>
+                    <Label className="text-gray-500">İlçe</Label>
+                    <p className="font-medium">{selectedCustomer.district}</p>
+                  </div>
+                )}
+                {selectedCustomer.address && (
+                  <div className="col-span-2">
+                    <Label className="text-gray-500">Adres</Label>
+                    <p className="font-medium">{selectedCustomer.address}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Customer Dialog */}
+      <Dialog open={editCustomerOpen} onOpenChange={setEditCustomerOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cari Düzenle</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-500">
+            Düzenleme özelliği yakında eklenecek.
+          </p>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cariyi Sil</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{deletingCustomer?.name}" carisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>İptal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCustomer}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isSubmitting ? "Siliniyor..." : "Sil"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
