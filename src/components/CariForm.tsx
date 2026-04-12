@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { crmService } from "@/services/crmService";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, ChevronsUpDown } from "lucide-react";
@@ -29,7 +29,7 @@ const vergiDaireleri = [
   "Doğankent", "Doğubayazıt", "Düzce", "Eber Gölü", "Edirne", "Edremit", "Efeler", "Eflani",
   "Elbistan", "Elazığ", "Emirdağ", "Erbaa", "Erciş", "Erdek", "Erenköy", "Ergani", "Ermenek",
   "Erzincan", "Erzurum", "Esenler", "Esenyurt", "Eskişehir", "Espiye", "Etimesgut", "Eyüp",
-  "Fatih", "Fatsa", "Fethiye", "Finike", "Foça", "ガzağaç", "Gaziantep İhtisas", "Gazipaşa",
+  "Fatih", "Fatsa", "Fethiye", "Finike", "Foça", "Gazağaç", "Gaziantep İhtisas", "Gazipaşa",
   "Gebze", "Gediz", "Gelibolu", "Gemerek", "Gemlik", "Gerede", "Giresun", "Gölbaşı (Ankara)",
   "Gölcük", "Gölmarmara", "Gönen", "Görele", "Görükle", "Güngören", "Gürsu", "Güzelyurt",
   "Hadım", "Hakkari", "Halfeti", "Hatay", "Havran", "Havza", "Hendek", "Hınıs", "Hopa",
@@ -39,7 +39,7 @@ const vergiDaireleri = [
   "Karacabey", "Karadeniz Ereğli", "Karaman", "Karamürsel", "Karapınar", "Karasu",
   "Karatay", "Kars", "Karşıyaka", "Kartal", "Kastamonu", "Kayseri İhtisas", "Keçiören",
   "Kemer", "Kemalpaşa", "Kepez", "Kilis", "Kırıkkale", "Kırklareli", "Kırşehir", "Kızılcahamam",
-  "Kızıltepe", "Kocaeli", "Konak", "Konya İhtisas", "Korkuteli", "Körfez", "Korkuteli",
+  "Kızıltepe", "Kocaeli", "Konak", "Konya İhtisas", "Korkuteli", "Körfez",
   "Kulu", "Kumluca", "Kurtalan", "Kurtuluş", "Kuşadası", "Kütahya", "Küçükçekmece",
   "Lüleburgaz", "Malatya", "Malazgirt", "Maltepe", "Manisa", "Maraş Dulkadiroğlu",
   "Mardin", "Marmaris", "Mecidiyeköy", "Menemen", "Menteşe", "Merkezefendi", "Merzifon",
@@ -554,43 +554,64 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
-                    <Popover>
+                    <Popover open={vergiDairesiOpen} onOpenChange={(open) => {
+                      setVergiDairesiOpen(open);
+                      if (!open) setVergiDairesiSearch("");
+                    }}>
                       <PopoverTrigger asChild>
-                        <Select
-                          value={formData.tax_office}
-                          onValueChange={(value) => setFormData({ ...formData, tax_office: value })}
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={vergiDairesiOpen}
+                          className="w-full justify-between"
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seçiniz" />
-                          </SelectTrigger>
-                        </Select>
+                          {formData.tax_office || "Seçiniz"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-80">
-                        <Command>
-                          <CommandInput placeholder="Vergi dairesi ara..." />
-                          <CommandEmpty>
-                            Hiçbir sonuç bulunamadı.
-                          </CommandEmpty>
-                          <CommandGroup>
-                            {vergiDaireleri.map((item) => (
-                              <CommandItem
-                                key={item}
-                                value={item}
-                                onSelect={(currentValue) => {
-                                  setFormData({ ...formData, tax_office: currentValue });
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    formData.tax_office === item ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {item}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </Command>
+                      <PopoverContent className="w-[300px] p-0" align="start">
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Vergi dairesi ara..."
+                            value={vergiDairesiSearch}
+                            onChange={(e) => setVergiDairesiSearch(e.target.value)}
+                            className="w-full border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 px-3 py-2"
+                            autoFocus
+                          />
+                          <ScrollArea className="h-[200px] mt-0">
+                            <div className="space-y-1 p-1">
+                              {vergiDaireleri
+                                .filter((vd) => vd.toLowerCase().includes(vergiDairesiSearch.toLowerCase()))
+                                .map((vd) => (
+                                  <div
+                                    key={vd}
+                                    className={cn(
+                                      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                                      formData.tax_office === vd && "bg-accent"
+                                    )}
+                                    onClick={() => {
+                                      setFormData({ ...formData, tax_office: vd });
+                                      setVergiDairesiOpen(false);
+                                      setVergiDairesiSearch("");
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        formData.tax_office === vd ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {vd}
+                                  </div>
+                                ))}
+                              {vergiDaireleri.filter((vd) => vd.toLowerCase().includes(vergiDairesiSearch.toLowerCase())).length === 0 && (
+                                <div className="text-center text-sm text-gray-500 py-4">
+                                  Bulunamadı.
+                                </div>
+                              )}
+                            </div>
+                          </ScrollArea>
+                        </div>
                       </PopoverContent>
                     </Popover>
                   </div>
