@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -47,6 +49,10 @@ import {
   Receipt,
   FileText,
   RefreshCw,
+  Package,
+  UserCircle,
+  Users,
+  Edit,
   ChevronDown,
   Info,
 } from "lucide-react";
@@ -92,6 +98,7 @@ export function AccountingModule() {
   const [vadeGunuSayisi, setVadeGunuSayisi] = useState("");
   const [sabitIskontoVar, setSabitIskontoVar] = useState(false);
   const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -1163,7 +1170,7 @@ export function AccountingModule() {
               <DialogHeader>
                 <DialogTitle>Yeni Alış Faturası</DialogTitle>
               </DialogHeader>
-              <PurchaseInvoiceForm onSuccess={() => setIsAddPurchaseInvoiceDialogOpen(false)} />
+              <PurchaseInvoiceForm onClose={() => setIsAddPurchaseInvoiceDialogOpen(false)} onSave={() => setIsAddPurchaseInvoiceDialogOpen(false)} />
             </DialogContent>
           </Dialog>
         </TabsContent>
