@@ -2009,36 +2009,32 @@ export function AccountingModule() {
               {/* Cari Bilgileri - GERÇEK/ŞAHIS */}
               {cariTuru === "gercek" && (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  {/* Row 1: Cari Kodu, Adı, Soyadı, Tipi, Kısa Adı, İşlem Tarihi */}
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                     <div className="space-y-2">
                       <Label>Cari Kodu</Label>
-                      <Input value="Hakan Kesikler" disabled className="bg-gray-50" />
+                      <Input value="CAR001295" disabled className="bg-gray-50" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Cari Adı *</Label>
+                      <Label>Cari Adı</Label>
                       <Input
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Hakan"
-                        required
+                        placeholder=""
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Cari Soyadı *</Label>
-                      <Input
-                        placeholder="Kesikler"
-                        required
-                      />
+                      <Label>Cari Soyadı</Label>
+                      <Input placeholder="" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Cari Tipi *</Label>
+                      <Label>Cari Tipi</Label>
                       <Select
                         value={formData.account_type}
                         onValueChange={(value) => setFormData({ ...formData, account_type: value })}
-                        required
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Tedarikçi" />
+                          <SelectValue placeholder="Seçiniz" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="musteri">Müşteri</SelectItem>
@@ -2050,31 +2046,183 @@ export function AccountingModule() {
                     </div>
                     <div className="space-y-2">
                       <Label>Cari Kısa Adı</Label>
-                      <Input placeholder="Hakan" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>Etiketler</Label>
-                      <Input placeholder="Etiket ekle" />
+                      <Input placeholder="" />
                     </div>
                     <div className="space-y-2">
                       <Label>İşlem Tarihi</Label>
-                      <div className="relative">
-                        <Input type="date" defaultValue="2026-04-10" />
-                      </div>
+                      <Input type="date" defaultValue="2026-04-12" />
+                    </div>
+                  </div>
+
+                  {/* Row 2: Etiketler, TC Kimlik, Vergi Dairesi, Mersis No */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Etiketler</Label>
+                      <Input placeholder="" />
                     </div>
                     <div className="space-y-2">
                       <Label>T.C. Kimlik No</Label>
-                      <Input 
-                        placeholder="14015721270" 
-                        maxLength={11}
-                      />
+                      <Input placeholder="" maxLength={11} />
                     </div>
                     <div className="space-y-2">
                       <Label>Vergi Dairesi</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="kadikoy">Kadıköy</SelectItem>
+                          <SelectItem value="besiktas">Beşiktaş</SelectItem>
+                          <SelectItem value="sisli">Şişli</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
+                    <div className="space-y-2">
+                      <Label>Mersis No</Label>
+                      <Input placeholder="" />
+                    </div>
+                  </div>
+
+                  {/* İletişim Bilgileri */}
+                  <div className="space-y-4 mt-6">
+                    <h3 className="text-lg font-semibold border-b pb-2">İletişim Bilgileri</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Telefon No</Label>
+                        <div className="flex gap-2">
+                          <Select defaultValue="+90">
+                            <SelectTrigger className="w-20">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="+90">🇹🇷</SelectItem>
+                              <SelectItem value="+1">🇺🇸</SelectItem>
+                              <SelectItem value="+44">🇬🇧</SelectItem>
+                              <SelectItem value="+49">🇩🇪</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input 
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="0501 234 5678"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>E-Posta</Label>
+                        <Input 
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder=""
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Web Sitesi</Label>
+                        <Input placeholder="" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Faks No</Label>
+                        <div className="flex gap-2">
+                          <Select defaultValue="+90">
+                            <SelectTrigger className="w-20">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="+90">🇹🇷</SelectItem>
+                              <SelectItem value="+1">🇺🇸</SelectItem>
+                              <SelectItem value="+44">🇬🇧</SelectItem>
+                              <SelectItem value="+49">🇩🇪</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input 
+                            placeholder="0501 234 5678"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Adres Bilgileri */}
+                  <div className="space-y-4 mt-6">
+                    <h3 className="text-lg font-semibold border-b pb-2">Adres Bilgileri</h3>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2">
+                        <input type="checkbox" className="rounded" />
+                        <span className="text-sm">Yurt Dışı Adresi</span>
+                      </label>
+                    </div>
+                    
+                    {/* Adres Row 1: Adres Tipi, Adres, İl, İlçe, Sil */}
+                    <div className="flex gap-4 items-start">
+                      <div className="space-y-2" style={{ width: '150px' }}>
+                        <Label>Adres Tipi</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seçiniz" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="fatura">Fatura Adresi</SelectItem>
+                            <SelectItem value="teslimat">Teslimat Adresi</SelectItem>
+                            <SelectItem value="merkez">Merkez Adresi</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2 flex-1">
+                        <Label>Adres</Label>
+                        <textarea 
+                          className="w-full min-h-[80px] px-3 py-2 border rounded-md resize-none"
+                          placeholder=""
+                        />
+                      </div>
+                      <div className="space-y-2" style={{ width: '150px' }}>
+                        <Label>İl</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seçiniz" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="istanbul">İstanbul</SelectItem>
+                            <SelectItem value="ankara">Ankara</SelectItem>
+                            <SelectItem value="izmir">İzmir</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2" style={{ width: '150px' }}>
+                        <Label>İlçe</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seçiniz" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="kadikoy">Kadıköy</SelectItem>
+                            <SelectItem value="besiktas">Beşiktaş</SelectItem>
+                            <SelectItem value="sisli">Şişli</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="invisible">Sil</Label>
+                        <Button variant="destructive" size="sm" className="h-10">Sil</Button>
+                      </div>
+                    </div>
+
+                    {/* Adres Row 2: Posta Kodu */}
+                    <div className="flex gap-4">
+                      <div className="space-y-2" style={{ width: '150px' }}>
+                        <Label>Posta Kodu</Label>
+                        <Input placeholder="" />
+                      </div>
+                    </div>
+
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Adres Ekle
+                    </Button>
                   </div>
                 </>
               )}
@@ -2160,70 +2308,6 @@ export function AccountingModule() {
                   </div>
                 </>
               )}
-
-              {/* İletişim Bilgileri */}
-              <div className="border-t pt-4">
-                <h3 className="text-lg font-semibold mb-4 text-blue-600">İletişim Bilgileri</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Telefon No *</Label>
-                    <div className="flex gap-2">
-                      <Select defaultValue="+90">
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+90">🇹🇷 +90</SelectItem>
-                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
-                          <SelectItem value="+44">🇬🇧 +44</SelectItem>
-                          <SelectItem value="+49">🇩🇪 +49</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input 
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="0501 234 5678"
-                        className="flex-1"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>E-posta *</Label>
-                    <Input 
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="E-posta adresi"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Web Sitesi</Label>
-                    <Input placeholder="www.ornek.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Faks No</Label>
-                    <div className="flex gap-2">
-                      <Select defaultValue="+90">
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="+90">🇹🇷 +90</SelectItem>
-                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
-                          <SelectItem value="+44">🇬🇧 +44</SelectItem>
-                          <SelectItem value="+49">🇩🇪 +49</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input 
-                        placeholder="0501 234 5678"
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
             </TabsContent>
 
             {/* Cari Detay Bilgileri Tab */}
@@ -2395,114 +2479,6 @@ export function AccountingModule() {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Borç Alacak Bilgileri */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center border-b pb-2">
-                  <h3 className="text-lg font-semibold">Borç Alacak Bilgileri</h3>
-                  <Button variant="outline" size="sm">
-                    + Borç Alacak Ekle
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-500">Henüz borç alacak bilgisi eklenmedi.</p>
-              </div>
-
-              {/* Banka Bilgileri */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center border-b pb-2">
-                  <h3 className="text-lg font-semibold">Banka Bilgileri</h3>
-                  <Button variant="outline" size="sm">
-                    + Banka Ekle
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-500">Henüz banka bilgisi eklenmedi.</p>
-              </div>
-
-              {/* Yetkili İletişim Bilgileri */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center border-b pb-2">
-                  <h3 className="text-lg font-semibold">Yetkili İletişim Bilgileri</h3>
-                  <Button variant="outline" size="sm">
-                    + Yetkili Ekle
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-500">Henüz yetkili bilgisi eklenmedi.</p>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Adres Bilgileri</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" className="rounded" />
-                    <span className="text-sm">Yurt Dışı Adresi</span>
-                  </label>
-                </div>
-                <div className="grid grid-cols-12 gap-4 items-start">
-                  <div className="col-span-2 space-y-2">
-                    <Label>Adres Tipi</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="fatura">Fatura Adresi</SelectItem>
-                        <SelectItem value="teslimat">Teslimat Adresi</SelectItem>
-                        <SelectItem value="merkez">Merkez Adresi</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-4 space-y-2">
-                    <Label>Adres</Label>
-                    <textarea 
-                      className="w-full min-h-[40px] px-3 py-2 border rounded-md resize-none"
-                      placeholder="Adres"
-                      rows={1}
-                    />
-                  </div>
-                  <div className="col-span-2 space-y-2">
-                    <Label>İl</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="istanbul">İstanbul</SelectItem>
-                        <SelectItem value="ankara">Ankara</SelectItem>
-                        <SelectItem value="izmir">İzmir</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-2 space-y-2">
-                    <Label>İlçe</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                        <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                        <SelectItem value="sisli">Şişli</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-2 space-y-2">
-                    <Label className="invisible">Sil</Label>
-                    <Button variant="destructive" size="sm" className="w-full">Sil</Button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-12 gap-4">
-                  <div className="col-span-2 space-y-2">
-                    <Label>Posta Kodu</Label>
-                    <Input placeholder="Posta kodu" />
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Adres Ekle
-                </Button>
               </div>
             </TabsContent>
           </Tabs>
