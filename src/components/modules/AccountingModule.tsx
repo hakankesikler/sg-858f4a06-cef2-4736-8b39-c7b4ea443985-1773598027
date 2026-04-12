@@ -161,6 +161,8 @@ export function AccountingModule() {
   const [vadeGunuSayisi, setVadeGunuSayisi] = useState("");
   const [sabitIskontoVar, setSabitIskontoVar] = useState(false);
   const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
+  const [isEditCategoryDialogOpen, setIsEditCategoryDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState({ name: "", id: "" });
 
   const loadData = async () => {
     try {
@@ -174,6 +176,11 @@ export function AccountingModule() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const openEditCategoryDialog = (categoryName: string, categoryId: string) => {
+    setEditingCategory({ name: categoryName, id: categoryId });
+    setIsEditCategoryDialogOpen(true);
+  };
 
   const openAddDialog = () => {
     setFormData({
@@ -1445,7 +1452,12 @@ export function AccountingModule() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-blue-600 border-blue-600"
+                        onClick={() => openEditCategoryDialog("Kategorisiz Genel Gider Tipleri", "1")}
+                      >
                         Kategoriyi Düzenle
                       </Button>
                       <Button size="sm" className="flex-1">
@@ -1473,7 +1485,12 @@ export function AccountingModule() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-blue-600 border-blue-600"
+                        onClick={() => openEditCategoryDialog("Araç Bakım Onarım", "2")}
+                      >
                         Kategoriyi Düzenle
                       </Button>
                       <Button size="sm" className="flex-1">
@@ -1495,7 +1512,12 @@ export function AccountingModule() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-blue-600 border-blue-600"
+                        onClick={() => openEditCategoryDialog("Yazılım", "3")}
+                      >
                         Kategoriyi Düzenle
                       </Button>
                       <Button size="sm" className="flex-1">
@@ -1523,7 +1545,12 @@ export function AccountingModule() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-blue-600 border-blue-600"
+                        onClick={() => openEditCategoryDialog("Taşıma Faturaları", "4")}
+                      >
                         Kategoriyi Düzenle
                       </Button>
                       <Button size="sm" className="flex-1">
@@ -1569,7 +1596,12 @@ export function AccountingModule() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-blue-600 border-blue-600"
+                        onClick={() => openEditCategoryDialog("Kurumsal Giderler", "5")}
+                      >
                         Kategoriyi Düzenle
                       </Button>
                       <Button size="sm" className="flex-1">
@@ -1615,7 +1647,12 @@ export function AccountingModule() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-blue-600 border-blue-600"
+                        onClick={() => openEditCategoryDialog("Finansal", "6")}
+                      >
                         Kategoriyi Düzenle
                       </Button>
                       <Button size="sm" className="flex-1">
@@ -1655,7 +1692,12 @@ export function AccountingModule() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-blue-600 border-blue-600"
+                        onClick={() => openEditCategoryDialog("Demirbaş", "7")}
+                      >
                         Kategoriyi Düzenle
                       </Button>
                       <Button size="sm" className="flex-1">
@@ -1701,7 +1743,12 @@ export function AccountingModule() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-blue-600 border-blue-600"
+                        onClick={() => openEditCategoryDialog("Ulaşım/Konaklama", "8")}
+                      >
                         Kategoriyi Düzenle
                       </Button>
                       <Button size="sm" className="flex-1">
@@ -1747,7 +1794,12 @@ export function AccountingModule() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-blue-600 border-blue-600">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-blue-600 border-blue-600"
+                        onClick={() => openEditCategoryDialog("Temel Giderler", "9")}
+                      >
                         Kategoriyi Düzenle
                       </Button>
                       <Button size="sm" className="flex-1">
@@ -2444,6 +2496,62 @@ export function AccountingModule() {
               {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Category Dialog */}
+      <Dialog open={isEditCategoryDialogOpen} onOpenChange={setIsEditCategoryDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl">Kategori Düzenle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>
+                Ad <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={editingCategory.name}
+                onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                placeholder="Kategori adı"
+                required
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-center mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setIsEditCategoryDialogOpen(false)}
+              className="text-red-600 border-red-600 hover:bg-red-50"
+            >
+              Kapat
+            </Button>
+            <Button
+              onClick={() => {
+                toast({
+                  title: "Başarılı",
+                  description: "Kategori güncellendi!",
+                });
+                setIsEditCategoryDialogOpen(false);
+              }}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Güncelle
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                toast({
+                  title: "Başarılı",
+                  description: "Kategori silindi!",
+                  variant: "destructive",
+                });
+                setIsEditCategoryDialogOpen(false);
+              }}
+            >
+              Sil
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
