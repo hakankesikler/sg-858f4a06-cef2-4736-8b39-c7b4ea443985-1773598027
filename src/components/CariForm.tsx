@@ -20,11 +20,11 @@ interface CariFormProps {
 
 export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initialData }: CariFormProps) {
   const { toast } = useToast();
+  const [cariTuru, setCariTuru] = useState<"gercek" | "tuzel">("tuzel");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("bilgi");
-  const [cariTuru, setCariTuru] = useState<"gercek" | "tuzel">("gercek");
+  const [customerCode, setCustomerCode] = useState("CAR000000");
   
-  // Form states
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
@@ -73,6 +73,9 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
   useEffect(() => {
     if (editMode && initialData && isOpen) {
       console.log("=== POPULATING FORM FOR EDIT ===", initialData);
+      
+      // Set customer code from existing data
+      setCustomerCode(initialData.customer_code || "CAR000000");
       
       // Determine cari türü from data
       const isGercek = !!initialData.tc_no;
@@ -123,11 +126,24 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       setVadeGunuSayisi(initialData.vade_gunu?.toString() || "");
       setSabitIskontoVar(!!initialData.sabit_iskonto);
       setSabitIskontoYuzde(initialData.sabit_iskonto?.toString() || "");
+    } else if (isOpen && !editMode) {
+      // Create mode - fetch next customer code
+      loadNextCustomerCode();
     } else if (!isOpen) {
       // Reset form when closing
       resetForm();
     }
   }, [editMode, initialData, isOpen]);
+
+  const loadNextCustomerCode = async () => {
+    try {
+      const nextCode = await crmService.getNextCustomerCode();
+      setCustomerCode(nextCode);
+    } catch (error) {
+      console.error("Error loading next customer code:", error);
+      setCustomerCode("CAR000001");
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -170,6 +186,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     setSabitIskontoVar(false);
     setSabitIskontoYuzde("");
     setCariTuru("tuzel");
+    setCustomerCode("CAR000000");
   };
 
   const handleSubmit = async () => {
@@ -253,6 +270,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     setIsSubmitting(true);
     try {
       const submitData = {
+        customer_code: customerCode,
         name: cariTuru === "gercek" 
           ? `${formData.name} ${formData.surname}`.trim() 
           : formData.company_name,
@@ -386,7 +404,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div className="space-y-2">
                     <Label>Cari Kodu</Label>
-                    <Input value="CAR001295" disabled className="bg-gray-50" />
+                    <Input value={customerCode} disabled className="bg-gray-50" />
                   </div>
                   <div className="space-y-2">
                     <Label>Cari Adı *</Label>
@@ -482,7 +500,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div className="space-y-2">
                     <Label>Cari Kodu</Label>
-                    <Input value="CAR001295" disabled className="bg-gray-50" />
+                    <Input value={customerCode} disabled className="bg-gray-50" />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>Firma Ünvanı *</Label>

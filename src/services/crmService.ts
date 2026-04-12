@@ -48,8 +48,73 @@ export const crmService = {
     return { total, active, potential, old };
   },
 
+  // Get unique cities for filter
+  async getCities() {
+    const { data, error } = await supabase
+      .from("customers")
+      .select("city")
+      .not("city", "is", null);
+
+    if (error) {
+      console.error("Error fetching cities:", error);
+      return [];
+    }
+
+    const cities = [...new Set(data.map(c => c.city).filter(Boolean))];
+    return cities.sort();
+  },
+
+  // Get next customer code
+  async getNextCustomerCode(): Promise<string> {
+    try {
+      // Get the latest customer code
+      const { data, error } = await supabase
+        .from("customers")
+        .select("customer_code")
+        .not("customer_code", "is", null)
+        .order("customer_code", { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error("Error fetching last customer code:", error);
+        // If error, start from CAR000001
+        return "CAR000001";
+      }
+
+      if (!data || data.length === 0) {
+        // No customers yet, start from CAR000001
+        return "CAR000001";
+      }
+
+      // Extract number from last code (e.g., "CAR000123" -> 123)
+      const lastCode = data[0].customer_code;
+      const match = lastCode?.match(/CAR(\d+)/);
+      
+      if (!match) {
+        // Invalid format, start fresh
+        return "CAR000001";
+      }
+
+      const lastNumber = parseInt(match[1], 10);
+      const nextNumber = lastNumber + 1;
+      
+      // Format with leading zeros (CAR000001, CAR000002, etc.)
+      const nextCode = `CAR${nextNumber.toString().padStart(6, "0")}`;
+      
+      return nextCode;
+    } catch (error) {
+      console.error("Error generating customer code:", error);
+      return "CAR000001";
+    }
+  },
+
   // Create new customer
   async createCustomer(data: CustomerInsert) {
+    // Generate customer code if not provided
+    if (!data.customer_code) {
+      data.customer_code = await this.getNextCustomerCode();
+    }
+
     const { data: customer, error } = await supabase
       .from("customers")
       .insert(data)
@@ -92,21 +157,5 @@ export const crmService = {
       console.error("Error deleting customer:", error);
       throw error;
     }
-  },
-
-  // Get unique cities for filter
-  async getCities() {
-    const { data, error } = await supabase
-      .from("customers")
-      .select("city")
-      .not("city", "is", null);
-
-    if (error) {
-      console.error("Error fetching cities:", error);
-      return [];
-    }
-
-    const cities = [...new Set(data.map(c => c.city).filter(Boolean))];
-    return cities.sort();
   }
 };
