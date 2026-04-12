@@ -162,63 +162,44 @@ export function AccountingModule() {
   const [sabitIskontoVar, setSabitIskontoVar] = useState(false);
   const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
 
-  // Load data
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const categories = await accountingService.getExpenseCategories();
-      
-      const transformedCategories: ExpenseCategory[] = (categories || []).map((cat: any) => ({
-        id: cat?.id || '',
-        name: cat?.name || '',
-        types: Array.isArray(cat?.expense_types) 
-          ? cat.expense_types.map((type: any) => ({
-              id: type?.id || '',
-              name: type?.name || ''
-            }))
-          : []
-      }));
-      
-      setExpenseCategories(transformedCategories);
-      
-      const [customerData] = await Promise.all([
-        crmService.getCustomers()
-      ]);
-      setCustomers(customerData);
-      
-      setSalesInvoices([]);
-      setPurchaseInvoices([]);
-    } catch (error) {
-      console.error("Veri yükleme hatası:", error);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name) {
       toast({
-        variant: "destructive",
         title: "Hata",
-        description: "Veriler yüklenirken bir hata oluştu",
+        description: "Lütfen cari adı giriniz.",
+        variant: "destructive",
       });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      // Vade ve İskonto bilgilerini formData'ya ekle
+      const dataToSubmit = {
+        ...formData,
+        payment_term_days: vadeGunuVar ? parseInt(vadeGunuSayisi) || 0 : 0,
+        discount_rate: sabitIskontoVar ? parseFloat(sabitIskontoYuzde) || 0 : 0,
+      };
       
-      setExpenseCategories([
-        {
-          id: "1",
-          name: "Kategoriyle Genel Gider Tipleri",
-          types: [{ id: "t1", name: "Yiyecek" }]
-        }
-      ]);
+      await onAddCustomer(dataToSubmit);
+      setIsAddDialogOpen(false);
+      toast({
+        title: "Başarılı",
+        description: "Cari hesap başarıyla oluşturuldu.",
+      });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast({
+        title: "Hata",
+        description: "Cari hesap oluşturulurken bir hata oluştu.",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const loadCities = async () => {
-    const cityList = await crmService.getCities();
-    setCities(cityList);
-  };
-
-  useEffect(() => {
-    loadData();
-    loadCities();
-  }, []);
-
-  // CRM Helper Functions
   const openAddDialog = () => {
     setFormData({
       name: "",
