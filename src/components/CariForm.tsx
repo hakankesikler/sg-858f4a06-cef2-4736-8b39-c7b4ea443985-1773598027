@@ -33,6 +33,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     vergi_no: "",
     tax_office: "",
     mersis: "",
+    ticaret_sicil_no: "",
     short_name: "",
     tags: "",
     phone: "",
@@ -40,11 +41,23 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     email: "",
     website: "",
     address: "",
+    branch_address: "",
+    invoice_email: "",
     city: "",
     district: "",
     postal_code: "",
     account_type: "musteri",
     supplier_category: "",
+    authorized_person_name: "",
+    authorized_person_phone: "",
+    authorized_person_email: "",
+    work_area: "",
+    specialty: [] as string[],
+    payment_method: "",
+    payment_day: "",
+    bank_name: "",
+    iban: "",
+    account_holder: "",
     tutar: "",
     address_type: "",
     vade_gunu: "",
@@ -83,6 +96,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         vergi_no: initialData.vergi_no || "",
         tax_office: initialData.tax_office || "",
         mersis: initialData.mersis || "",
+        ticaret_sicil_no: initialData.ticaret_sicil_no || "",
         short_name: initialData.short_name || "",
         tags: initialData.tags || "",
         phone: initialData.phone || "",
@@ -90,11 +104,23 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         email: initialData.email || "",
         website: initialData.website || "",
         address: initialData.address || "",
+        branch_address: initialData.branch_address || "",
+        invoice_email: initialData.invoice_email || "",
         city: initialData.city || "",
         district: initialData.district || "",
         postal_code: initialData.postal_code || "",
         account_type: initialData.account_type || "musteri",
         supplier_category: initialData.supplier_category || "",
+        authorized_person_name: initialData.authorized_person_name || "",
+        authorized_person_phone: initialData.authorized_person_phone || "",
+        authorized_person_email: initialData.authorized_person_email || "",
+        work_area: initialData.work_area || "",
+        specialty: Array.isArray(initialData.specialty) ? initialData.specialty : [],
+        payment_method: initialData.payment_method || "",
+        payment_day: initialData.payment_day?.toString() || "",
+        bank_name: initialData.bank_name || "",
+        iban: initialData.iban || "",
+        account_holder: initialData.account_holder || "",
         tutar: "",
         address_type: "",
         vade_gunu: initialData.vade_gunu?.toString() || "",
@@ -122,6 +148,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       vergi_no: "",
       tax_office: "",
       mersis: "",
+      ticaret_sicil_no: "",
       short_name: "",
       tags: "",
       phone: "",
@@ -129,11 +156,23 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       email: "",
       website: "",
       address: "",
+      branch_address: "",
+      invoice_email: "",
       city: "",
       district: "",
       postal_code: "",
       account_type: "musteri",
       supplier_category: "",
+      authorized_person_name: "",
+      authorized_person_phone: "",
+      authorized_person_email: "",
+      work_area: "",
+      specialty: [],
+      payment_method: "",
+      payment_day: "",
+      bank_name: "",
+      iban: "",
+      account_holder: "",
       tutar: "",
       address_type: "",
       vade_gunu: "",
@@ -241,16 +280,30 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         vergi_no: cariTuru === "tuzel" ? formData.vergi_no : null,
         tax_office: formData.tax_office || null,
         mersis: formData.mersis || null,
+        ticaret_sicil_no: formData.ticaret_sicil_no || null,
         short_name: formData.short_name || null,
         tags: formData.tags || null,
         website: formData.website || null,
         fax: formData.fax || null,
         address: formData.address || null,
+        branch_address: formData.branch_address || null,
+        invoice_email: formData.invoice_email || null,
         city: formData.city || null,
         district: formData.district || null,
         postal_code: formData.postal_code || null,
         vade_gunu: vadeGunuVar && vadeGunuSayisi ? parseInt(vadeGunuSayisi) : null,
-        sabit_iskonto: sabitIskontoVar && sabitIskontoYuzde ? parseFloat(sabitIskontoYuzde) : null
+        sabit_iskonto: sabitIskontoVar && sabitIskontoYuzde ? parseFloat(sabitIskontoYuzde) : null,
+        // Nakliyeci specific fields
+        authorized_person_name: formData.authorized_person_name || null,
+        authorized_person_phone: formData.authorized_person_phone || null,
+        authorized_person_email: formData.authorized_person_email || null,
+        work_area: formData.work_area || null,
+        specialty: formData.specialty.length > 0 ? formData.specialty : null,
+        payment_method: formData.payment_method || null,
+        payment_day: formData.payment_day ? parseInt(formData.payment_day) : null,
+        bank_name: formData.bank_name || null,
+        iban: formData.iban || null,
+        account_holder: formData.account_holder || null
       };
 
       console.log("=== CARİ FORM SUBMIT ===");
@@ -660,6 +713,213 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 Adres Ekle
               </Button>
             </div>
+
+            {/* Nakliyeci Specific Fields */}
+            {formData.account_type === "tedarikci" && formData.supplier_category === "nakliyeci" && (
+              <>
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="text-lg font-semibold mb-4">Nakliyeciye Özel Bilgiler</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Ticaret Sicil No */}
+                    <div className="space-y-2">
+                      <Label>Ticaret Sicil No</Label>
+                      <Input
+                        type="text"
+                        value={formData.ticaret_sicil_no}
+                        onChange={(e) => setFormData({ ...formData, ticaret_sicil_no: e.target.value })}
+                        placeholder="Ticaret sicil numarası"
+                      />
+                    </div>
+
+                    {/* Fatura E-posta */}
+                    <div className="space-y-2">
+                      <Label>Fatura / E-Fatura E-posta</Label>
+                      <Input
+                        type="email"
+                        value={formData.invoice_email}
+                        onChange={(e) => setFormData({ ...formData, invoice_email: e.target.value })}
+                        placeholder="fatura@firma.com"
+                      />
+                    </div>
+
+                    {/* Şube Adresi */}
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Şube Adresi (varsa)</Label>
+                      <Input
+                        type="text"
+                        value={formData.branch_address}
+                        onChange={(e) => setFormData({ ...formData, branch_address: e.target.value })}
+                        placeholder="Şube adresi"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Yetkili Bilgileri */}
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="text-lg font-semibold mb-4">Yetkili Bilgileri</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Yetkili Adı Soyadı</Label>
+                      <Input
+                        type="text"
+                        value={formData.authorized_person_name}
+                        onChange={(e) => setFormData({ ...formData, authorized_person_name: e.target.value })}
+                        placeholder="Ad Soyad"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Yetkili Telefonu</Label>
+                      <Input
+                        type="tel"
+                        value={formData.authorized_person_phone}
+                        onChange={(e) => setFormData({ ...formData, authorized_person_phone: e.target.value })}
+                        placeholder="0555 555 55 55"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Yetkili E-posta</Label>
+                      <Input
+                        type="email"
+                        value={formData.authorized_person_email}
+                        onChange={(e) => setFormData({ ...formData, authorized_person_email: e.target.value })}
+                        placeholder="yetkili@firma.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Operasyonel Bilgiler */}
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="text-lg font-semibold mb-4">Operasyonel Bilgiler</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Çalışma Bölgesi */}
+                    <div className="space-y-2">
+                      <Label>Çalışma Bölgesi</Label>
+                      <select
+                        value={formData.work_area}
+                        onChange={(e) => setFormData({ ...formData, work_area: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-md"
+                      >
+                        <option value="">Seçiniz</option>
+                        <option value="turkiye_geneli">Türkiye Geneli</option>
+                        <option value="bolgesel">Bölgesel</option>
+                      </select>
+                    </div>
+
+                    {/* Ödeme Şekli */}
+                    <div className="space-y-2">
+                      <Label>Ödeme Şekli</Label>
+                      <select
+                        value={formData.payment_method}
+                        onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-md"
+                      >
+                        <option value="">Seçiniz</option>
+                        <option value="nakit">Nakit</option>
+                        <option value="havale">Havale</option>
+                        <option value="vadeli">Vadeli</option>
+                      </select>
+                    </div>
+
+                    {/* Ödeme Günü */}
+                    <div className="space-y-2">
+                      <Label>Ödeme Günü</Label>
+                      <select
+                        value={formData.payment_day}
+                        onChange={(e) => setFormData({ ...formData, payment_day: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-md"
+                      >
+                        <option value="">Seçiniz</option>
+                        <option value="7">7 Gün</option>
+                        <option value="15">15 Gün</option>
+                        <option value="30">30 Gün</option>
+                        <option value="45">45 Gün</option>
+                        <option value="60">60 Gün</option>
+                      </select>
+                    </div>
+
+                    {/* Uzmanlık - Multiple checkbox */}
+                    <div className="space-y-2">
+                      <Label>Uzmanlık</Label>
+                      <div className="space-y-2 border rounded-md p-3">
+                        {["parsiyel", "komple", "frigo", "agir_yuk", "diger"].map((spec) => (
+                          <label key={spec} className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={formData.specialty.includes(spec)}
+                              onChange={(e) => {
+                                const newSpecialty = e.target.checked
+                                  ? [...formData.specialty, spec]
+                                  : formData.specialty.filter(s => s !== spec);
+                                setFormData({ ...formData, specialty: newSpecialty });
+                              }}
+                              className="rounded"
+                            />
+                            <span className="capitalize">
+                              {spec === "agir_yuk" ? "Ağır Yük" : 
+                               spec === "diger" ? "Diğer" : spec}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Banka Bilgileri */}
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="text-lg font-semibold mb-4">Banka Bilgileri</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Banka Adı</Label>
+                      <Input
+                        type="text"
+                        value={formData.bank_name}
+                        onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+                        placeholder="Banka adı"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Hesap Sahibi</Label>
+                      <Input
+                        type="text"
+                        value={formData.account_holder}
+                        onChange={(e) => setFormData({ ...formData, account_holder: e.target.value })}
+                        placeholder="Hesap sahibi adı"
+                      />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>IBAN</Label>
+                      <Input
+                        type="text"
+                        value={formData.iban}
+                        onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
+                        placeholder="TR00 0000 0000 0000 0000 0000 00"
+                        maxLength={32}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sürücü ve Araç bilgileri için not */}
+                <div className="border-t pt-6 mt-6">
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>Not:</strong> Sürücü ve araç bilgileri cari kaydedildikten sonra cari detay sayfasından eklenebilir.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </TabsContent>
 
           {/* Cari Detay Bilgileri Tab */}
