@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Search, Plus, Building2, Eye, Edit, Trash2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, Plus, Building2, Eye, Edit, Trash2, Users, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -13,13 +13,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function CRMModule() {
   const { toast } = useToast();
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("musteri");
+  const [filterType, setFilterType] = useState("all");
+  const [supplierSubCategory, setSupplierSubCategory] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   
   // View/Edit/Delete states
@@ -55,16 +57,35 @@ export function CRMModule() {
     }
   };
 
-  const filteredCustomers = customers.filter((customer) => {
-    const matchesSearch =
-      customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone?.includes(searchTerm);
+  const filteredCustomers = useMemo(() => {
+    let filtered = customers;
 
-    const matchesType = filterType === "all" || customer.account_type === filterType;
+    // Filter by main account type
+    if (filterType !== "all") {
+      filtered = filtered.filter(c => c.account_type === filterType);
+    }
 
-    return matchesSearch && matchesType;
-  });
+    // Filter by supplier sub-category if in tedarikci tab
+    if (filterType === "tedarikci" && supplierSubCategory !== "all") {
+      filtered = filtered.filter(c => c.supplier_category === supplierSubCategory);
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(c =>
+        c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    console.log("=== FILTERED CUSTOMERS ===");
+    console.log("Filter Type:", filterType);
+    console.log("Supplier Sub-Category:", supplierSubCategory);
+    console.log("Filtered Count:", filtered.length);
+
+    return filtered;
+  }, [customers, filterType, supplierSubCategory, searchTerm]);
 
   const handleViewCustomer = (customer: any) => {
     console.log("=== VIEW CUSTOMER CLICKED ===", customer);
@@ -133,45 +154,114 @@ export function CRMModule() {
         <Button variant="outline">Dışarıya Aktar</Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-3 overflow-x-auto pb-2">
         <button
-          onClick={() => setFilterType("musteri")}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-            filterType === "musteri" ? "bg-gray-900 text-white" : "bg-white border"
+          onClick={() => {
+            setFilterType("all");
+            setSupplierSubCategory("all");
+          }}
+          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
+            filterType === "all"
+              ? "bg-gray-900 text-white shadow-lg"
+              : "bg-white text-gray-700 hover:bg-gray-50 border"
           }`}
         >
-          <Building2 className="h-4 w-4" />
+          <Building2 className="h-5 w-5" />
           Müşteri Cari
         </button>
         <button
-          onClick={() => setFilterType("tedarikci")}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-            filterType === "tedarikci" ? "bg-gray-900 text-white" : "bg-white border"
+          onClick={() => {
+            setFilterType("tedarikci");
+            setSupplierSubCategory("all");
+          }}
+          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
+            filterType === "tedarikci"
+              ? "bg-gray-900 text-white shadow-lg"
+              : "bg-white text-gray-700 hover:bg-gray-50 border"
           }`}
         >
-          <Building2 className="h-4 w-4" />
+          <Building2 className="h-5 w-5" />
           Tedarikçi Cari
         </button>
         <button
-          onClick={() => setFilterType("personel")}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-            filterType === "personel" ? "bg-gray-900 text-white" : "bg-white border"
+          onClick={() => {
+            setFilterType("personel");
+            setSupplierSubCategory("all");
+          }}
+          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
+            filterType === "personel"
+              ? "bg-gray-900 text-white shadow-lg"
+              : "bg-white text-gray-700 hover:bg-gray-50 border"
           }`}
         >
-          <Building2 className="h-4 w-4" />
+          <Users className="h-5 w-5" />
           Personel Cari
         </button>
         <button
-          onClick={() => setFilterType("ortak")}
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-            filterType === "ortak" ? "bg-gray-900 text-white" : "bg-white border"
+          onClick={() => {
+            setFilterType("ortak");
+            setSupplierSubCategory("all");
+          }}
+          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
+            filterType === "ortak"
+              ? "bg-gray-900 text-white shadow-lg"
+              : "bg-white text-gray-700 hover:bg-gray-50 border"
           }`}
         >
-          <Building2 className="h-4 w-4" />
+          <Users className="h-5 w-5" />
           Ortak Cari
         </button>
+      </div>
 
+      {/* Supplier Sub-Category Tabs */}
+      {filterType === "tedarikci" && (
+        <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-2 border-b">
+          <button
+            onClick={() => setSupplierSubCategory("all")}
+            className={`px-4 py-2 rounded-t-lg font-medium transition-all whitespace-nowrap ${
+              supplierSubCategory === "all"
+                ? "bg-blue-50 text-blue-700 border-b-2 border-blue-700"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            Tümü
+          </button>
+          <button
+            onClick={() => setSupplierSubCategory("nakliyeci")}
+            className={`px-4 py-2 rounded-t-lg font-medium transition-all whitespace-nowrap ${
+              supplierSubCategory === "nakliyeci"
+                ? "bg-blue-50 text-blue-700 border-b-2 border-blue-700"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            Nakliyeci
+          </button>
+          <button
+            onClick={() => setSupplierSubCategory("forwarder")}
+            className={`px-4 py-2 rounded-t-lg font-medium transition-all whitespace-nowrap ${
+              supplierSubCategory === "forwarder"
+                ? "bg-blue-50 text-blue-700 border-b-2 border-blue-700"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            Forwarder / Acente
+          </button>
+          <button
+            onClick={() => setSupplierSubCategory("diger")}
+            className={`px-4 py-2 rounded-t-lg font-medium transition-all whitespace-nowrap ${
+              supplierSubCategory === "diger"
+                ? "bg-blue-50 text-blue-700 border-b-2 border-blue-700"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            Diğer Tedarikçiler
+          </button>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-4">
         <div className="ml-auto flex items-center gap-2">
           <Search className="h-4 w-4 text-gray-400" />
           <Input

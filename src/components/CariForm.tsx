@@ -29,24 +29,25 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     name: "",
     surname: "",
     company_name: "",
-    email: "",
-    phone: "",
-    account_type: "musteri",
     tc_no: "",
     vergi_no: "",
     tax_office: "",
     mersis: "",
     short_name: "",
     tags: "",
-    website: "",
+    phone: "",
     fax: "",
-    address_type: "",
+    email: "",
+    website: "",
     address: "",
     city: "",
     district: "",
     postal_code: "",
-    vade_gunu: "",
+    account_type: "musteri",
+    supplier_category: "",
     tutar: "",
+    address_type: "",
+    vade_gunu: "",
     para_birimi: "TRY",
     durumu: "",
     proje: ""
@@ -93,6 +94,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         district: initialData.district || "",
         postal_code: initialData.postal_code || "",
         account_type: initialData.account_type || "musteri",
+        supplier_category: initialData.supplier_category || "",
         tutar: "",
         address_type: "",
         vade_gunu: initialData.vade_gunu?.toString() || "",
@@ -131,6 +133,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       district: "",
       postal_code: "",
       account_type: "musteri",
+      supplier_category: "",
       tutar: "",
       address_type: "",
       vade_gunu: "",
@@ -232,6 +235,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         email: formData.email,
         phone: formData.phone,
         account_type: formData.account_type,
+        supplier_category: formData.account_type === "tedarikci" ? (formData.supplier_category || null) : null,
         status: "Aktif",
         tc_no: cariTuru === "gercek" ? formData.tc_no : null,
         vergi_no: cariTuru === "tuzel" ? formData.vergi_no : null,
@@ -370,22 +374,17 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Cari Tipi *</Label>
-                    <Select
+                    <Label>Cari Tipi <span className="text-red-500">*</span></Label>
+                    <select
                       value={formData.account_type}
-                      onValueChange={(value) => setFormData({ ...formData, account_type: value })}
-                      required
+                      onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="musteri">Müşteri</SelectItem>
-                        <SelectItem value="tedarikci">Tedarikçi</SelectItem>
-                        <SelectItem value="personel">Personel</SelectItem>
-                        <SelectItem value="ortak">Ortak</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <option value="musteri">Müşteri</option>
+                      <option value="tedarikci">Tedarikçi</option>
+                      <option value="personel">Personel</option>
+                      <option value="ortak">Ortak</option>
+                    </select>
                   </div>
                   <div className="space-y-2">
                     <Label>Cari Kısa Adı</Label>
@@ -459,22 +458,17 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Cari Tipi *</Label>
-                    <Select
+                    <Label>Cari Tipi <span className="text-red-500">*</span></Label>
+                    <select
                       value={formData.account_type}
-                      onValueChange={(value) => setFormData({ ...formData, account_type: value })}
-                      required
+                      onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="musteri">Müşteri</SelectItem>
-                        <SelectItem value="tedarikci">Tedarikçi</SelectItem>
-                        <SelectItem value="personel">Personel</SelectItem>
-                        <SelectItem value="ortak">Ortak</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <option value="musteri">Müşteri</option>
+                      <option value="tedarikci">Tedarikçi</option>
+                      <option value="personel">Personel</option>
+                      <option value="ortak">Ortak</option>
+                    </select>
                   </div>
                   <div className="space-y-2">
                     <Label>Cari Kısa Adı</Label>

@@ -196,6 +196,7 @@ export type Database = {
           sabit_iskonto: number | null
           short_name: string | null
           status: string | null
+          supplier_category: string | null
           tags: string | null
           tax_office: string | null
           tc_no: string | null
@@ -223,6 +224,7 @@ export type Database = {
           sabit_iskonto?: number | null
           short_name?: string | null
           status?: string | null
+          supplier_category?: string | null
           tags?: string | null
           tax_office?: string | null
           tc_no?: string | null
@@ -250,6 +252,7 @@ export type Database = {
           sabit_iskonto?: number | null
           short_name?: string | null
           status?: string | null
+          supplier_category?: string | null
           tags?: string | null
           tax_office?: string | null
           tc_no?: string | null
