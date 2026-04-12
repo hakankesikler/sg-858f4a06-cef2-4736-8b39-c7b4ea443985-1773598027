@@ -162,43 +162,18 @@ export function AccountingModule() {
   const [sabitIskontoVar, setSabitIskontoVar] = useState(false);
   const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name) {
-      toast({
-        title: "Hata",
-        description: "Lütfen cari adı giriniz.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
+  const loadData = async () => {
     try {
-      // Vade ve İskonto bilgilerini formData'ya ekle
-      const dataToSubmit = {
-        ...formData,
-        payment_term_days: vadeGunuVar ? parseInt(vadeGunuSayisi) || 0 : 0,
-        discount_rate: sabitIskontoVar ? parseFloat(sabitIskontoYuzde) || 0 : 0,
-      };
-      
-      await onAddCustomer(dataToSubmit);
-      setIsAddDialogOpen(false);
-      toast({
-        title: "Başarılı",
-        description: "Cari hesap başarıyla oluşturuldu.",
-      });
+      const data = await crmService.getCustomers();
+      setCustomers(data as any);
     } catch (error) {
-      console.error("Error submitting form:", error);
-      toast({
-        title: "Hata",
-        description: "Cari hesap oluşturulurken bir hata oluştu.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      console.error("Cari hesaplar yüklenirken hata:", error);
     }
   };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const openAddDialog = () => {
     setFormData({
@@ -241,18 +216,28 @@ export function AccountingModule() {
   };
 
   const handleAddCustomer = async () => {
-    if (!formData.name || !formData.email) {
+    if (!formData.name) {
       toast({
         variant: "destructive",
         title: "Hata",
-        description: "Lütfen en az isim ve email giriniz!",
+        description: "Lütfen en az cari adını giriniz!",
       });
       return;
     }
 
     try {
       setIsSubmitting(true);
-      await crmService.createCustomer(formData);
+      
+      const dataToSubmit = { ...formData };
+      
+      if (vadeGunuVar && vadeGunuSayisi) {
+        (dataToSubmit as any).payment_term_days = parseInt(vadeGunuSayisi);
+      }
+      if (sabitIskontoVar && sabitIskontoYuzde) {
+        (dataToSubmit as any).discount_rate = parseFloat(sabitIskontoYuzde);
+      }
+
+      await crmService.createCustomer(dataToSubmit);
       setIsAddDialogOpen(false);
       await loadData();
       toast({
@@ -2535,7 +2520,8 @@ export function AccountingModule() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              onClick={handleSubmit}
+              onClick={handleAddCustomer}
+              className="bg-green-600 hover:bg-green-700"
             >
               {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
             </Button>
