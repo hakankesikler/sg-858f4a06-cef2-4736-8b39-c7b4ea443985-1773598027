@@ -1380,6 +1380,7 @@ export function AccountingModule() {
                       </TableHead>
                       <TableHead>Cari Bilgisi</TableHead>
                       <TableHead>Etiketler</TableHead>
+                      <TableHead>Kategori</TableHead>
                       <TableHead>Gider Tipi</TableHead>
                       <TableHead>Seri No</TableHead>
                       <TableHead>Proje</TableHead>
@@ -1395,7 +1396,7 @@ export function AccountingModule() {
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell colSpan={14} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={15} className="text-center py-8 text-gray-500">
                         Toplam 7 kayıt gösteriliyor
                       </TableCell>
                     </TableRow>
