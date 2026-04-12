@@ -6,9 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { crmService } from "@/services/crmService";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -105,6 +105,7 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
   const [sabitIskontoVar, setSabitIskontoVar] = useState(false);
   const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
   const [vergiDairesiOpen, setVergiDairesiOpen] = useState(false);
+  const [vergiDairesiSearch, setVergiDairesiSearch] = useState("");
 
   useEffect(() => {
   }, [formData]);
@@ -408,7 +409,10 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
-                    <Popover open={vergiDairesiOpen} onOpenChange={setVergiDairesiOpen} modal={false}>
+                    <Popover open={vergiDairesiOpen} onOpenChange={(open) => {
+                      setVergiDairesiOpen(open);
+                      if (!open) setVergiDairesiSearch("");
+                    }}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -416,46 +420,47 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                           aria-expanded={vergiDairesiOpen}
                           className="w-full justify-between"
                         >
-                          {formData.tax_office
-                            ? vergiDaireleri.find((vd) => vd.toLowerCase() === formData.tax_office.toLowerCase())
-                            : "Seçiniz"}
+                          {formData.tax_office || "Seçiniz"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent 
-                        className="w-[300px] p-0" 
-                        align="start"
-                        onInteractOutside={(e) => {
-                          const target = e.target as HTMLElement;
-                          if (target.closest('[role="combobox"]')) {
-                            e.preventDefault();
-                          }
-                        }}
-                      >
-                        <Command>
-                          <CommandInput placeholder="Vergi dairesi ara..." autoFocus />
-                          <CommandEmpty>Vergi dairesi bulunamadı.</CommandEmpty>
-                          <CommandGroup className="max-h-[300px] overflow-auto">
-                            {vergiDaireleri.map((vd) => (
-                              <CommandItem
-                                key={vd}
-                                value={vd}
-                                onSelect={(currentValue) => {
-                                  setFormData({ ...formData, tax_office: currentValue === formData.tax_office ? "" : currentValue });
-                                  setVergiDairesiOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    formData.tax_office === vd ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {vd}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </Command>
+                      <PopoverContent className="w-[300px] p-0" align="start">
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Vergi dairesi ara..."
+                            value={vergiDairesiSearch}
+                            onChange={(e) => setVergiDairesiSearch(e.target.value)}
+                            className="w-full"
+                          />
+                          <ScrollArea className="h-[200px] mt-2">
+                            <div className="space-y-1">
+                              {vergiDaireleri
+                                .filter((vd) => vd.toLowerCase().includes(vergiDairesiSearch.toLowerCase()))
+                                .map((vd) => (
+                                  <div
+                                    key={vd}
+                                    className={cn(
+                                      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                                      formData.tax_office === vd && "bg-accent"
+                                    )}
+                                    onClick={() => {
+                                      setFormData({ ...formData, tax_office: vd });
+                                      setVergiDairesiOpen(false);
+                                      setVergiDairesiSearch("");
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        formData.tax_office === vd ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {vd}
+                                  </div>
+                                ))}
+                            </div>
+                          </ScrollArea>
+                        </div>
                       </PopoverContent>
                     </Popover>
                   </div>
