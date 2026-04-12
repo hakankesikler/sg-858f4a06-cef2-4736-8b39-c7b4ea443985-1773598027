@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("bilgi");
-  const [cariTuru, setCariTuru] = useState("gercek");
+  const [cariTuru, setCariTuru] = useState<"gercek" | "tuzel">("gercek");
   
   // Form states
   const [formData, setFormData] = useState({
@@ -112,10 +112,11 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
             {/* Cari Türü */}
             <div className="space-y-2">
               <Label>Cari Türü</Label>
-              <div className="flex gap-6">
+              <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
+                    name="cariTuru"
                     checked={cariTuru === "gercek"}
                     onChange={() => setCariTuru("gercek")}
                     className="w-4 h-4"
@@ -125,88 +126,177 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
+                    name="cariTuru"
                     checked={cariTuru === "tuzel"}
                     onChange={() => setCariTuru("tuzel")}
                     className="w-4 h-4"
                   />
-                  <span>Tüzel</span>
+                  <span>Tüzel Kişi</span>
                 </label>
               </div>
             </div>
 
-            {/* Row 1: 6 Columns */}
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-              <div className="space-y-2">
-                <Label>Cari Kodu</Label>
-                <Input value="CAR001295" disabled className="bg-gray-50" />
-              </div>
-              <div className="space-y-2">
-                <Label>Cari Adı</Label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder=""
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Cari Soyadı</Label>
-                <Input placeholder="" />
-              </div>
-              <div className="space-y-2">
-                <Label>Cari Tipi</Label>
-                <Select
-                  value={formData.account_type}
-                  onValueChange={(value) => setFormData({ ...formData, account_type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seçiniz" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="musteri">Müşteri</SelectItem>
-                    <SelectItem value="tedarikci">Tedarikçi</SelectItem>
-                    <SelectItem value="personel">Personel</SelectItem>
-                    <SelectItem value="ortak">Ortak</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Cari Kısa Adı</Label>
-                <Input placeholder="" />
-              </div>
-              <div className="space-y-2">
-                <Label>İşlem Tarihi</Label>
-                <Input type="date" defaultValue="2026-04-12" />
-              </div>
-            </div>
+            {cariTuru === "gercek" ? (
+              <>
+                {/* Gerçek/Şahıs Şirketi Formu */}
+                {/* Row 1: Cari Kodu, Adı, Soyadı, Tipi, Kısa Adı, İşlem Tarihi */}
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                  <div className="space-y-2">
+                    <Label>Cari Kodu</Label>
+                    <Input value="CAR001295" disabled className="bg-gray-50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cari Adı</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder=""
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cari Soyadı</Label>
+                    <Input placeholder="" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cari Tipi</Label>
+                    <Select
+                      value={formData.account_type}
+                      onValueChange={(value) => setFormData({ ...formData, account_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="musteri">Müşteri</SelectItem>
+                        <SelectItem value="tedarikci">Tedarikçi</SelectItem>
+                        <SelectItem value="personel">Personel</SelectItem>
+                        <SelectItem value="ortak">Ortak</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cari Kısa Adı</Label>
+                    <Input placeholder="" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>İşlem Tarihi</Label>
+                    <Input type="date" defaultValue="2026-04-12" />
+                  </div>
+                </div>
 
-            {/* Row 2: 4 Columns */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label>Etiketler</Label>
-                <Input placeholder="" />
-              </div>
-              <div className="space-y-2">
-                <Label>T.C. Kimlik No</Label>
-                <Input placeholder="" maxLength={11} />
-              </div>
-              <div className="space-y-2">
-                <Label>Vergi Dairesi</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seçiniz" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="kadikoy">Kadıköy</SelectItem>
-                    <SelectItem value="besiktas">Beşiktaş</SelectItem>
-                    <SelectItem value="sisli">Şişli</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Mersis No</Label>
-                <Input placeholder="" />
-              </div>
-            </div>
+                {/* Row 2: Etiketler, TC Kimlik, Vergi Dairesi, Mersis No */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Etiketler</Label>
+                    <Input placeholder="" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>T.C. Kimlik No</Label>
+                    <Input 
+                      placeholder="" 
+                      maxLength={11}
+                      pattern="[1-9][0-9]{10}"
+                      title="11 haneli TC Kimlik No (ilk rakam 0 olamaz)"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vergi Dairesi</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="kadikoy">Kadıköy</SelectItem>
+                        <SelectItem value="besiktas">Beşiktaş</SelectItem>
+                        <SelectItem value="sisli">Şişli</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Mersis No</Label>
+                    <Input placeholder="" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Tüzel Kişi Formu */}
+                {/* Row 1: Cari Kodu, Firma Ünvanı (col-span-2), Tipi, Kısa Adı, İşlem Tarihi */}
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                  <div className="space-y-2">
+                    <Label>Cari Kodu</Label>
+                    <Input value="CAR001295" disabled className="bg-gray-50" />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Firma Ünvanı</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Şirket ünvanını giriniz"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cari Tipi</Label>
+                    <Select
+                      value={formData.account_type}
+                      onValueChange={(value) => setFormData({ ...formData, account_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="musteri">Müşteri</SelectItem>
+                        <SelectItem value="tedarikci">Tedarikçi</SelectItem>
+                        <SelectItem value="personel">Personel</SelectItem>
+                        <SelectItem value="ortak">Ortak</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cari Kısa Adı</Label>
+                    <Input placeholder="" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>İşlem Tarihi</Label>
+                    <Input type="date" defaultValue="2026-04-12" />
+                  </div>
+                </div>
+
+                {/* Row 2: Etiketler, Vergi Numarası, Vergi Dairesi, Mersis No */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Etiketler</Label>
+                    <Input placeholder="" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vergi Numarası</Label>
+                    <Input 
+                      placeholder="" 
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      title="10 haneli Vergi Numarası"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vergi Dairesi</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="kadikoy">Kadıköy</SelectItem>
+                        <SelectItem value="besiktas">Beşiktaş</SelectItem>
+                        <SelectItem value="sisli">Şişli</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Mersis No</Label>
+                    <Input placeholder="" />
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* İletişim Bilgileri */}
             <div className="space-y-4 mt-6">
