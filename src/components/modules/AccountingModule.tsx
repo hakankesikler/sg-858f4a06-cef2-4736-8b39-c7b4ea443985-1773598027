@@ -183,6 +183,11 @@ export function AccountingModule() {
     setIsEditDialogOpen(true);
   };
 
+  const openDetailDialog = (customer: any) => {
+    setDetailCustomer(customer);
+    setIsDetailDialogOpen(true);
+  };
+
   const handleExportExcel = () => {
     const csvContent = [
       ["Kod", "Unvan", "Cari Tipi", "Email", "Telefon", "Şehir", "VKN/TCKN", "Durum"].join(","),
