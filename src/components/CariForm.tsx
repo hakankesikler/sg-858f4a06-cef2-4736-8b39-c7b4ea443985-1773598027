@@ -430,7 +430,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     <Label>Cari Tipi <span className="text-red-500">*</span></Label>
                     <select
                       value={formData.account_type}
-                      onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, account_type: e.target.value, supplier_category: "" })}
                       className="w-full px-3 py-2 border rounded-md"
                     >
                       <option value="musteri">Müşteri</option>
@@ -452,6 +452,25 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     <Input type="date" defaultValue="2026-04-12" />
                   </div>
                 </div>
+
+                {/* Tedarikçi Kategorisi for Gerçek Kişi */}
+                {formData.account_type === "tedarikci" && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                    <div className="space-y-2">
+                      <Label>Tedarikçi Kategorisi</Label>
+                      <select
+                        value={formData.supplier_category}
+                        onChange={(e) => setFormData({ ...formData, supplier_category: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-md"
+                      >
+                        <option value="">Seçiniz</option>
+                        <option value="nakliyeci">Nakliyeci</option>
+                        <option value="forwarder">Forwarder / Acente</option>
+                        <option value="diger">Diğer Tedarikçiler</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
 
                 {/* Row 2: Etiketler, TC Kimlik, Vergi Dairesi, Mersis No */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -514,26 +533,13 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     <Label>Cari Tipi <span className="text-red-500">*</span></Label>
                     <select
                       value={formData.account_type}
-                      onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, account_type: e.target.value, supplier_category: "" })}
                       className="w-full px-3 py-2 border rounded-md"
                     >
                       <option value="musteri">Müşteri</option>
                       <option value="tedarikci">Tedarikçi</option>
                       <option value="personel">Personel</option>
                       <option value="ortak">Ortak</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Tedarikçi Kategorisi</Label>
-                    <select
-                      value={formData.supplier_category}
-                      onChange={(e) => setFormData({ ...formData, supplier_category: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md"
-                    >
-                      <option value="">Seçiniz</option>
-                      <option value="nakliyeci">Nakliyeci</option>
-                      <option value="forwarder">Forwarder / Acente</option>
-                      <option value="diger">Diğer Tedarikçiler</option>
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -549,6 +555,25 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     <Input type="date" defaultValue="2026-04-12" />
                   </div>
                 </div>
+
+                {/* Tedarikçi Kategorisi for Tüzel Kişi */}
+                {formData.account_type === "tedarikci" && (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                    <div className="space-y-2">
+                      <Label>Tedarikçi Kategorisi</Label>
+                      <select
+                        value={formData.supplier_category}
+                        onChange={(e) => setFormData({ ...formData, supplier_category: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-md"
+                      >
+                        <option value="">Seçiniz</option>
+                        <option value="nakliyeci">Nakliyeci</option>
+                        <option value="forwarder">Forwarder / Acente</option>
+                        <option value="diger">Diğer Tedarikçiler</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
 
                 {/* Row 2: Etiketler, Vergi Numarası, Vergi Dairesi, Mersis No */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
