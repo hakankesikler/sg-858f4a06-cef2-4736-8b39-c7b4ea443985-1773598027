@@ -157,6 +157,10 @@ export function AccountingModule() {
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cariTuru, setCariTuru] = useState("gercek");
+  const [vadeGunuVar, setVadeGunuVar] = useState(false);
+  const [vadeGunuSayisi, setVadeGunuSayisi] = useState("");
+  const [sabitIskontoVar, setSabitIskontoVar] = useState(false);
+  const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
 
   // Load data
   const loadData = async () => {
@@ -230,6 +234,10 @@ export function AccountingModule() {
       account_type: activeTab
     });
     setCariTuru("gercek");
+    setVadeGunuVar(false);
+    setVadeGunuSayisi("");
+    setSabitIskontoVar(false);
+    setSabitIskontoYuzde("");
     setIsAddDialogOpen(true);
   };
 
@@ -1886,10 +1894,6 @@ export function AccountingModule() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Mersis No</Label>
-                      <Input placeholder="Mersis numarası" />
-                    </div>
                   </div>
                 </>
               )}
@@ -2332,6 +2336,202 @@ export function AccountingModule() {
                   Adres Ekle
                 </Button>
               </div>
+
+              {/* Vade Bilgileri */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Vade Bilgileri</h3>
+                <div className="space-y-2">
+                  <Label>Vade Günü</Label>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="vadeGunu"
+                        checked={!vadeGunuVar}
+                        onChange={() => {
+                          setVadeGunuVar(false);
+                          setVadeGunuSayisi("");
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span>Yok</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="vadeGunu"
+                        checked={vadeGunuVar}
+                        onChange={() => setVadeGunuVar(true)}
+                        className="w-4 h-4"
+                      />
+                      <span>Var</span>
+                    </label>
+                    {vadeGunuVar && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={vadeGunuSayisi}
+                          onChange={(e) => setVadeGunuSayisi(e.target.value)}
+                          placeholder="Gün sayısı"
+                          className="w-32"
+                          min="0"
+                        />
+                        <span className="text-sm text-gray-600">gün</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Diğer Bilgiler */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Diğer Bilgiler</h3>
+                <div className="space-y-2">
+                  <Label>Sabit İskonto</Label>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sabitIskonto"
+                        checked={!sabitIskontoVar}
+                        onChange={() => {
+                          setSabitIskontoVar(false);
+                          setSabitIskontoYuzde("");
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span>Yok</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sabitIskonto"
+                        checked={sabitIskontoVar}
+                        onChange={() => setSabitIskontoVar(true)}
+                        className="w-4 h-4"
+                      />
+                      <span>Var</span>
+                    </label>
+                    {sabitIskontoVar && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={sabitIskontoYuzde}
+                          onChange={(e) => setSabitIskontoYuzde(e.target.value)}
+                          placeholder="İskonto oranı"
+                          className="w-32"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                        />
+                        <span className="text-sm text-gray-600">%</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Açılış Bakiyesi */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Açılış Bakiyesi</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Tutar</Label>
+                    <Input type="number" placeholder="0.00" step="0.01" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Para Birimi *</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="TRY">TRY (₺)</SelectItem>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="GBP">GBP (£)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Durumu</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="borc">Borç</SelectItem>
+                        <SelectItem value="alacak">Alacak</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Proje</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="proje1">Proje 1</SelectItem>
+                        <SelectItem value="proje2">Proje 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>İşlem Tarihi</Label>
+                    <Input type="date" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vade Tarihi Var Mı?</Label>
+                    <div className="flex items-center gap-4 pt-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="vadeTarihi" className="w-4 h-4" />
+                        <span>Yok</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="vadeTarihi" className="w-4 h-4" />
+                        <span>Var</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Borç Alacak Bilgileri */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="text-lg font-semibold">Borç Alacak Bilgileri</h3>
+                  <Button variant="outline" size="sm">
+                    + Borç Alacak Ekle
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">Henüz borç alacak bilgisi eklenmedi.</p>
+              </div>
+
+              {/* Banka Bilgileri */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="text-lg font-semibold">Banka Bilgileri</h3>
+                  <Button variant="outline" size="sm">
+                    + Banka Ekle
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">Henüz banka bilgisi eklenmedi.</p>
+              </div>
+
+              {/* Yetkili İletişim Bilgileri */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="text-lg font-semibold">Yetkili İletişim Bilgileri</h3>
+                  <Button variant="outline" size="sm">
+                    + Yetkili Ekle
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500">Henüz yetkili bilgisi eklenmedi.</p>
+              </div>
             </TabsContent>
 
             {/* Cari Detay Bilgileri Tab */}
@@ -2343,18 +2543,18 @@ export function AccountingModule() {
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="flex gap-2">
+          <DialogFooter className="flex justify-between gap-2">
             <Button
-              variant="outline"
+              type="button"
+              variant="destructive"
               onClick={() => setIsAddDialogOpen(false)}
-              className="border-red-500 text-red-600 hover:bg-red-50"
             >
               Vazgeç
             </Button>
             <Button
-              onClick={handleAddCustomer}
+              type="submit"
               disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700"
+              onClick={handleSubmit}
             >
               {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
             </Button>
