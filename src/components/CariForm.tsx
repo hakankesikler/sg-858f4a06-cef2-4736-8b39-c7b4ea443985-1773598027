@@ -407,68 +407,71 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                       required
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label>Vergi Dairesi</Label>
-                    <Popover open={vergiDairesiOpen} onOpenChange={(open) => {
-                      setVergiDairesiOpen(open);
-                      if (!open) setVergiDairesiSearch("");
-                    }}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={vergiDairesiOpen}
-                          className="w-full justify-between"
-                        >
-                          {formData.tax_office || "Seçiniz"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[300px] p-0" align="start">
-                        <div className="space-y-2">
-                          <Input
-                            placeholder="Vergi dairesi ara..."
-                            value={vergiDairesiSearch}
-                            onChange={(e) => setVergiDairesiSearch(e.target.value)}
-                            className="w-full border-0 border-b rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 px-3 py-2"
-                            autoFocus
-                          />
-                          <ScrollArea className="h-[200px] mt-0">
-                            <div className="space-y-1 p-1">
-                              {vergiDaireleri
-                                .filter((vd) => vd.toLowerCase().includes(vergiDairesiSearch.toLowerCase()))
-                                .map((vd) => (
-                                  <div
-                                    key={vd}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setVergiDairesiOpen(!vergiDairesiOpen)}
+                      className="w-full justify-between"
+                    >
+                      {formData.tax_office || "Seçiniz"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                    
+                    {vergiDairesiOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => setVergiDairesiOpen(false)}
+                        />
+                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg">
+                          <div className="p-2 border-b">
+                            <Input
+                              type="text"
+                              placeholder="Vergi dairesi ara..."
+                              value={vergiDairesiSearch}
+                              onChange={(e) => setVergiDairesiSearch(e.target.value)}
+                              className="h-9"
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                            />
+                          </div>
+                          <div className="max-h-[300px] overflow-y-auto">
+                            {vergiDaireleri
+                              .filter((vd) => vd.toLowerCase().includes(vergiDairesiSearch.toLowerCase()))
+                              .map((vd) => (
+                                <div
+                                  key={vd}
+                                  className={cn(
+                                    "relative flex cursor-pointer select-none items-center px-2 py-2 text-sm hover:bg-gray-100",
+                                    formData.tax_office === vd && "bg-gray-100"
+                                  )}
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setFormData({ ...formData, tax_office: vd });
+                                    setVergiDairesiOpen(false);
+                                    setVergiDairesiSearch("");
+                                  }}
+                                >
+                                  <Check
                                     className={cn(
-                                      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
-                                      formData.tax_office === vd && "bg-accent"
+                                      "mr-2 h-4 w-4",
+                                      formData.tax_office === vd ? "opacity-100" : "opacity-0"
                                     )}
-                                    onClick={() => {
-                                      setFormData({ ...formData, tax_office: vd });
-                                      setVergiDairesiOpen(false);
-                                      setVergiDairesiSearch("");
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        formData.tax_office === vd ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    {vd}
-                                  </div>
-                                ))}
-                              {vergiDaireleri.filter((vd) => vd.toLowerCase().includes(vergiDairesiSearch.toLowerCase())).length === 0 && (
-                                <div className="text-center text-sm text-gray-500 py-4">
-                                  Bulunamadı.
+                                  />
+                                  {vd}
                                 </div>
-                              )}
-                            </div>
-                          </ScrollArea>
+                              ))}
+                            {vergiDaireleri.filter((vd) => vd.toLowerCase().includes(vergiDairesiSearch.toLowerCase())).length === 0 && (
+                              <div className="text-center text-sm text-gray-500 py-4">
+                                Vergi dairesi bulunamadı.
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </PopoverContent>
-                    </Popover>
+                      </>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Mersis No</Label>
