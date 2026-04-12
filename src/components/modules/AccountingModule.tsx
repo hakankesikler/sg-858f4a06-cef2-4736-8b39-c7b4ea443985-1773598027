@@ -2019,19 +2019,23 @@ export function AccountingModule() {
                       <Input
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ad Soyad"
+                        placeholder="Ad"
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label>Cari Soyadı *</Label>
-                      <Input placeholder="Cari soyadı" />
+                      <Input
+                        placeholder="Soyad"
+                        required
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Cari Tipi *</Label>
                       <Select
                         value={formData.account_type}
                         onValueChange={(value) => setFormData({ ...formData, account_type: value })}
+                        required
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seçiniz" />
@@ -2053,15 +2057,19 @@ export function AccountingModule() {
                     </div>
                     <div className="space-y-2">
                       <Label>İşlem Tarihi</Label>
-                      <Input type="date" defaultValue="2026-04-09" />
+                      <Input type="date" defaultValue="2026-04-10" />
                     </div>
                     <div className="space-y-2">
                       <Label>Etiketler</Label>
                       <Input placeholder="Etiket ekle" />
                     </div>
                     <div className="space-y-2">
-                      <Label>T.C. Kimlik No</Label>
-                      <Input placeholder="TC Kimlik No" />
+                      <Label>T.C. Kimlik No *</Label>
+                      <Input 
+                        placeholder="TC Kimlik No" 
+                        maxLength={11}
+                        required
+                      />
                     </div>
                   </div>
                 </>
@@ -2115,7 +2123,7 @@ export function AccountingModule() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <Label>İşlem Tarihi</Label>
-                      <Input type="date" defaultValue="2026-04-09" />
+                      <Input type="date" defaultValue="2026-04-10" />
                     </div>
                     <div className="space-y-2">
                       <Label>Etiketler</Label>
@@ -2123,7 +2131,7 @@ export function AccountingModule() {
                     </div>
                     <div className="space-y-2">
                       <Label>İşlem Tarihi</Label>
-                      <Input type="date" defaultValue="2026-04-09" />
+                      <Input type="date" defaultValue="2026-04-10" />
                     </div>
                     <div className="space-y-2">
                       <Label>Para Birimi *</Label>
@@ -2144,7 +2152,7 @@ export function AccountingModule() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>İşlem Tarihi</Label>
-                      <Input type="date" defaultValue="2026-04-09" />
+                      <Input type="date" defaultValue="2026-04-10" />
                     </div>
                     <div className="space-y-2">
                       <Label>Para Birimi *</Label>
@@ -2167,15 +2175,29 @@ export function AccountingModule() {
               {/* İletişim Bilgileri */}
               <div className="border-t pt-4">
                 <h3 className="text-lg font-semibold mb-4 text-blue-600">İletişim Bilgileri</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Telefon *</Label>
-                    <Input 
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="Telefon numarası"
-                      required
-                    />
+                    <Label>Telefon No *</Label>
+                    <div className="flex gap-2">
+                      <Select defaultValue="+90">
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="+90">🇹🇷 +90</SelectItem>
+                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                          <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                          <SelectItem value="+49">🇩🇪 +49</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input 
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="0501 234 5678"
+                        className="flex-1"
+                        required
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>E-posta *</Label>
@@ -2194,11 +2216,21 @@ export function AccountingModule() {
                   <div className="space-y-2">
                     <Label>Faks No</Label>
                     <div className="flex gap-2">
-                      <div className="w-16 flex items-center justify-center border rounded px-2 bg-gray-50">
-                        <span className="text-xl">🇹🇷</span>
-                        <ChevronDown className="w-3 h-3 ml-1" />
-                      </div>
-                      <Input placeholder="0501 234 5678" className="flex-1" />
+                      <Select defaultValue="+90">
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="+90">🇹🇷 +90</SelectItem>
+                          <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                          <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                          <SelectItem value="+49">🇩🇪 +49</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input 
+                        placeholder="0501 234 5678"
+                        className="flex-1"
+                      />
                     </div>
                   </div>
                 </div>
@@ -2223,8 +2255,8 @@ export function AccountingModule() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="fatura">Fatura Adresi</SelectItem>
-                          <SelectItem value="sevkiyat">Sevkiyat Adresi</SelectItem>
-                          <SelectItem value="iade">İade Adresi</SelectItem>
+                          <SelectItem value="teslimat">Teslimat Adresi</SelectItem>
+                          <SelectItem value="merkez">Merkez Adresi</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -2318,22 +2350,24 @@ export function AccountingModule() {
                       />
                       <span>Var</span>
                     </label>
-                    {vadeGunuVar && (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          value={vadeGunuSayisi}
-                          onChange={(e) => setVadeGunuSayisi(e.target.value)}
-                          placeholder="Gün sayısı"
-                          className="w-32"
-                          min="1"
-                          max="999"
-                          step="1"
-                        />
-                        <span className="text-sm text-gray-600">gün</span>
-                      </div>
-                    )}
                   </div>
+                  {vadeGunuVar && (
+                    <div className="mt-2">
+                      <Select value={vadeGunuSayisi} onValueChange={setVadeGunuSayisi}>
+                        <SelectTrigger className="w-64">
+                          <SelectValue placeholder="Vade seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="7">7 Gün Vade</SelectItem>
+                          <SelectItem value="15">15 Gün Vade</SelectItem>
+                          <SelectItem value="30">30 Gün Vade</SelectItem>
+                          <SelectItem value="45">45 Gün Vade</SelectItem>
+                          <SelectItem value="60">60 Gün Vade</SelectItem>
+                          <SelectItem value="90">90 Gün Vade</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2503,13 +2537,15 @@ export function AccountingModule() {
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="flex justify-between gap-2">
+          <DialogFooter className="flex justify-between gap-2 mt-6">
             <Button
               type="button"
-              variant="destructive"
-              onClick={() => setIsAddDialogOpen(false)}
+              variant="outline"
+              onClick={() => {
+                // Go back to Cari Bilgileri tab logic here
+              }}
             >
-              Vazgeç
+              Geri
             </Button>
             <Button
               type="submit"
