@@ -1886,17 +1886,17 @@ export function AccountingModule() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Customer Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cari Düzenle</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-gray-500">
-            Düzenleme özelliği yakında eklenecek.
-          </p>
-        </DialogContent>
-      </Dialog>
+      {/* Edit Customer Dialog - Now using CariForm */}
+      <CariForm
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setEditingCustomer(null);
+        }}
+        onSuccess={loadData}
+        editMode={true}
+        initialData={editingCustomer}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

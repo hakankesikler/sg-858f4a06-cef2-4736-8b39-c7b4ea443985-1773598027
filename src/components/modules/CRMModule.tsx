@@ -373,18 +373,17 @@ export function CRMModule() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cari Düzenle</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-gray-500">
-            Düzenleme özelliği yakında eklenecek. Şu anda sadece görüntüleme ve silme
-            desteklenmektedir.
-          </p>
-        </DialogContent>
-      </Dialog>
+      {/* Edit Customer Dialog - Now using CariForm */}
+      <CariForm
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setSelectedCustomer(null);
+        }}
+        onSuccess={loadCustomers}
+        editMode={true}
+        initialData={selectedCustomer}
+      />
 
       {/* Delete Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { crmService } from "@/services/crmService";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { VergiDairesiSelect } from "@/components/VergiDairesiSelect";
 import { IlIlceSelect } from "@/components/IlIlceSelect";
 
@@ -14,9 +14,11 @@ interface CariFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  editMode?: boolean;
+  initialData?: any;
 }
 
-export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
+export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initialData }: CariFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("bilgi");
@@ -57,6 +59,81 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
   // İskonto states
   const [sabitIskontoVar, setSabitIskontoVar] = useState(false);
   const [sabitIskontoYuzde, setSabitIskontoYuzde] = useState("");
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editMode && initialData && isOpen) {
+      console.log("=== POPULATING FORM FOR EDIT ===", initialData);
+      
+      // Determine cari türü from data
+      const isGercek = !!initialData.tc_no;
+      setCariTuru(isGercek ? "gercek" : "tuzel");
+      
+      // Split name for gerçek kişi
+      const nameParts = initialData.name?.split(" ") || [];
+      const surname = isGercek && nameParts.length > 1 ? nameParts.pop() : "";
+      const firstName = isGercek ? nameParts.join(" ") : "";
+      
+      setFormData({
+        name: firstName || "",
+        surname: surname || "",
+        company_name: !isGercek ? initialData.name : "",
+        tc_no: initialData.tc_no || "",
+        vergi_no: initialData.vergi_no || "",
+        tax_office: initialData.tax_office || "",
+        mersis: initialData.mersis || "",
+        short_name: initialData.short_name || "",
+        tags: initialData.tags || "",
+        phone: initialData.phone || "",
+        fax: initialData.fax || "",
+        email: initialData.email || "",
+        website: initialData.website || "",
+        address: initialData.address || "",
+        city: initialData.city || "",
+        district: initialData.district || "",
+        postal_code: initialData.postal_code || "",
+        account_type: initialData.account_type || "musteri",
+        tutar: "",
+      });
+      
+      setVadeGunuVar(!!initialData.vade_gunu);
+      setVadeGunuSayisi(initialData.vade_gunu?.toString() || "");
+      setSabitIskontoVar(!!initialData.sabit_iskonto);
+      setSabitIskontoYuzde(initialData.sabit_iskonto?.toString() || "");
+    } else if (!isOpen) {
+      // Reset form when closing
+      resetForm();
+    }
+  }, [editMode, initialData, isOpen]);
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      surname: "",
+      company_name: "",
+      tc_no: "",
+      vergi_no: "",
+      tax_office: "",
+      mersis: "",
+      short_name: "",
+      tags: "",
+      phone: "",
+      fax: "",
+      email: "",
+      website: "",
+      address: "",
+      city: "",
+      district: "",
+      postal_code: "",
+      account_type: "musteri",
+      tutar: "",
+    });
+    setVadeGunuVar(false);
+    setVadeGunuSayisi("");
+    setSabitIskontoVar(false);
+    setSabitIskontoYuzde("");
+    setCariTuru("tuzel");
+  };
 
   const handleSubmit = async () => {
     // Validasyon
@@ -162,27 +239,33 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
         sabit_iskonto: sabitIskontoVar && sabitIskontoYuzde ? parseFloat(sabitIskontoYuzde) : null
       };
 
-      console.log("=== CARİ FORM SUBMIT DATA ===");
-      console.log("Cari Türü:", cariTuru);
-      console.log("Form Data:", formData);
+      console.log("=== CARİ FORM SUBMIT ===");
+      console.log("Mode:", editMode ? "UPDATE" : "CREATE");
       console.log("Submit Data:", submitData);
-      console.log("Vergi No:", submitData.vergi_no);
-      console.log("TC No:", submitData.tc_no);
 
-      await crmService.createCustomer(submitData as any);
-
-      toast({
-        title: "Başarılı",
-        description: "Cari hesap başarıyla oluşturuldu",
-      });
+      if (editMode && initialData?.id) {
+        // Update existing customer
+        await crmService.updateCustomer(initialData.id, submitData as any);
+        toast({
+          title: "Başarılı",
+          description: "Cari hesap başarıyla güncellendi",
+        });
+      } else {
+        // Create new customer
+        await crmService.createCustomer(submitData as any);
+        toast({
+          title: "Başarılı",
+          description: "Cari hesap başarıyla oluşturuldu",
+        });
+      }
 
       onSuccess?.();
       handleClose();
     } catch (error) {
-      console.error("Error creating customer:", error);
+      console.error("Error saving customer:", error);
       toast({
         title: "Hata",
-        description: error instanceof Error ? error.message : "Cari oluşturulurken bir hata oluştu",
+        description: error instanceof Error ? error.message : "Cari kaydedilirken bir hata oluştu",
         variant: "destructive",
       });
     } finally {
@@ -191,38 +274,7 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
   };
 
   const handleClose = () => {
-    setFormData({
-      name: "",
-      surname: "",
-      company_name: "",
-      email: "",
-      phone: "",
-      account_type: "musteri",
-      tc_no: "",
-      vergi_no: "",
-      tax_office: "",
-      mersis: "",
-      short_name: "",
-      tags: "",
-      website: "",
-      fax: "",
-      address_type: "",
-      address: "",
-      city: "",
-      district: "",
-      postal_code: "",
-      vade_gunu: "",
-      tutar: "",
-      para_birimi: "TRY",
-      durumu: "",
-      proje: ""
-    });
-    setActiveTab("bilgi");
-    setCariTuru("gercek");
-    setVadeGunuVar(false);
-    setVadeGunuSayisi("");
-    setSabitIskontoVar(false);
-    setSabitIskontoYuzde("");
+    resetForm();
     onClose();
   };
 
@@ -230,9 +282,9 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[90vw] lg:max-w-[1400px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Yeni Genel Cari</DialogTitle>
+          <DialogTitle>{editMode ? "Cari Düzenle" : "Yeni Cari Oluştur"}</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="bilgi" className="w-full">
