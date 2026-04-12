@@ -356,8 +356,8 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
                     <VergiDairesiSelect
-                      value={formData.vergiDairesi}
-                      onChange={(value) => setFormData(prev => ({ ...prev, vergiDairesi: value }))}
+                      value={formData.tax_office}
+                      onChange={(value) => setFormData(prev => ({ ...prev, tax_office: value }))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -445,8 +445,8 @@ export function CariForm({ isOpen, onClose, onSuccess }: CariFormProps) {
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
                     <VergiDairesiSelect
-                      value={formData.vergiDairesi}
-                      onChange={(value) => setFormData(prev => ({ ...prev, vergiDairesi: value }))}
+                      value={formData.tax_office}
+                      onChange={(value) => setFormData(prev => ({ ...prev, tax_office: value }))}
                     />
                   </div>
                   <div className="space-y-2">
