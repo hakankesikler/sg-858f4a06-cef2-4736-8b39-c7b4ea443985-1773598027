@@ -176,6 +176,65 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_bank_accounts: {
+        Row: {
+          account_holder: string
+          account_number: string | null
+          bank_name: string
+          branch_code: string | null
+          branch_name: string | null
+          created_at: string | null
+          currency: string | null
+          customer_id: string
+          iban: string
+          id: string
+          is_default: boolean | null
+          notes: string | null
+          swift_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_holder: string
+          account_number?: string | null
+          bank_name: string
+          branch_code?: string | null
+          branch_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_id: string
+          iban: string
+          id?: string
+          is_default?: boolean | null
+          notes?: string | null
+          swift_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_holder?: string
+          account_number?: string | null
+          bank_name?: string
+          branch_code?: string | null
+          branch_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_id?: string
+          iban?: string
+          id?: string
+          is_default?: boolean | null
+          notes?: string | null
+          swift_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_bank_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_drivers: {
         Row: {
           created_at: string | null

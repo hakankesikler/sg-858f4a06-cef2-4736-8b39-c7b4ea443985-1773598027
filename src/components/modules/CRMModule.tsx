@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Building2, Eye, Edit, Trash2, Users, Filter } from "lucide-react";
+import { Search, Plus, Building2, Eye, Edit, Trash2, Users, Filter, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { bankAccountService, type BankAccount } from "@/services/bankAccountService";
 
 export function CRMModule() {
   const { toast } = useToast();
@@ -26,11 +27,29 @@ export function CRMModule() {
   
   // View/Edit/Delete states
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [deletingCustomer, setDeletingCustomer] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
+  // Bank account states
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [isBankFormOpen, setIsBankFormOpen] = useState(false);
+  const [editingBank, setEditingBank] = useState<BankAccount | null>(null);
+  const [bankFormData, setBankFormData] = useState({
+    bank_name: "",
+    iban: "",
+    account_holder: "",
+    account_number: "",
+    branch_name: "",
+    branch_code: "",
+    swift_code: "",
+    currency: "TRY",
+    is_default: false,
+    notes: ""
+  });
+  
   useEffect(() => {
     loadCustomers();
   }, []);
@@ -55,6 +74,77 @@ export function CRMModule() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadBankAccounts = async (customerId: string) => {
+    try {
+      const accounts = await bankAccountService.getBankAccounts(customerId);
+      setBankAccounts(accounts);
+    } catch (error) {
+      console.error("Error loading bank accounts:", error);
+    }
+  };
+
+  const handleSaveBankAccount = async () => {
+    if (!selectedCustomer) return;
+
+    try {
+      setIsSubmitting(true);
+      const accountData = {
+        ...bankFormData,
+        customer_id: selectedCustomer.id
+      };
+
+      if (editingBank?.id) {
+        await bankAccountService.updateBankAccount(editingBank.id, accountData);
+        toast({ title: "Başarılı", description: "Banka hesabı güncellendi" });
+      } else {
+        await bankAccountService.createBankAccount(accountData);
+        toast({ title: "Başarılı", description: "Banka hesabı eklendi" });
+      }
+
+      await loadBankAccounts(selectedCustomer.id);
+      setIsBankFormOpen(false);
+      setEditingBank(null);
+      setBankFormData({
+        bank_name: "",
+        iban: "",
+        account_holder: "",
+        account_number: "",
+        branch_name: "",
+        branch_code: "",
+        swift_code: "",
+        currency: "TRY",
+        is_default: false,
+        notes: ""
+      });
+    } catch (error) {
+      console.error("Error saving bank account:", error);
+      toast({ title: "Hata", description: "Banka hesabı kaydedilemedi", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteBankAccount = async (id: string) => {
+    if (!confirm("Bu banka hesabını silmek istediğinizden emin misiniz?")) return;
+
+    try {
+      await bankAccountService.deleteBankAccount(id);
+      toast({ title: "Başarılı", description: "Banka hesabı silindi" });
+      if (selectedCustomer) {
+        await loadBankAccounts(selectedCustomer.id);
+      }
+    } catch (error) {
+      console.error("Error deleting bank account:", error);
+      toast({ title: "Hata", description: "Banka hesabı silinemedi", variant: "destructive" });
+    }
+  };
+
+  const openDetailDialog = (customer: any) => {
+    setSelectedCustomer(customer);
+    setIsDetailDialogOpen(true);
+    loadBankAccounts(customer.id);
   };
 
   const filteredCustomers = useMemo(() => {
@@ -348,7 +438,7 @@ export function CRMModule() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => handleViewCustomer(customer)}
+                        onClick={() => openDetailDialog(customer)}
                         className="p-1 hover:bg-gray-100 rounded transition-colors"
                         title="Görüntüle"
                       >
@@ -390,76 +480,274 @@ export function CRMModule() {
         onSuccess={loadCustomers}
       />
 
-      {/* View Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-2xl">
+      {/* View Customer Dialog with Bank Accounts Tab */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Cari Detayları</DialogTitle>
           </DialogHeader>
           {selectedCustomer && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-gray-500">Ünvan</Label>
-                <p className="font-medium">{selectedCustomer.name}</p>
-              </div>
-              <div>
-                <Label className="text-gray-500">Cari Tipi</Label>
-                <p className="font-medium">
-                  {selectedCustomer.account_type === "musteri"
-                    ? "Müşteri"
-                    : selectedCustomer.account_type === "tedarikci"
-                    ? "Tedarikçi"
-                    : selectedCustomer.account_type === "personel"
-                    ? "Personel"
-                    : "Ortak"}
-                </p>
-              </div>
-              <div>
-                <Label className="text-gray-500">Email</Label>
-                <p className="font-medium">{selectedCustomer.email}</p>
-              </div>
-              <div>
-                <Label className="text-gray-500">Telefon</Label>
-                <p className="font-medium">{selectedCustomer.phone}</p>
-              </div>
-              {selectedCustomer.vergi_no && (
-                <div>
-                  <Label className="text-gray-500">Vergi No</Label>
-                  <p className="font-medium">{selectedCustomer.vergi_no}</p>
+            <Tabs defaultValue="info" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="info">Genel Bilgiler</TabsTrigger>
+                <TabsTrigger value="bank">Banka Hesapları</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="info" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-gray-500">Ünvan</Label>
+                    <p className="font-medium">{selectedCustomer.name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Cari Tipi</Label>
+                    <p className="font-medium">
+                      {selectedCustomer.account_type === "musteri" ? "Müşteri" : 
+                       selectedCustomer.account_type === "tedarikci" ? "Tedarikçi" :
+                       selectedCustomer.account_type === "personel" ? "Personel" :
+                       selectedCustomer.account_type === "ortak" ? "Ortak" : "Müşteri"}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Email</Label>
+                    <p className="font-medium">{selectedCustomer.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-500">Telefon</Label>
+                    <p className="font-medium">{selectedCustomer.phone}</p>
+                  </div>
+                  {selectedCustomer.vergi_no && (
+                    <div>
+                      <Label className="text-gray-500">Vergi No</Label>
+                      <p className="font-medium">{selectedCustomer.vergi_no}</p>
+                    </div>
+                  )}
+                  {selectedCustomer.tc_no && (
+                    <div>
+                      <Label className="text-gray-500">TC No</Label>
+                      <p className="font-medium">{selectedCustomer.tc_no}</p>
+                    </div>
+                  )}
+                  {selectedCustomer.tax_office && (
+                    <div>
+                      <Label className="text-gray-500">Vergi Dairesi</Label>
+                      <p className="font-medium">{selectedCustomer.tax_office}</p>
+                    </div>
+                  )}
+                  {selectedCustomer.city && (
+                    <div>
+                      <Label className="text-gray-500">İl</Label>
+                      <p className="font-medium">{selectedCustomer.city}</p>
+                    </div>
+                  )}
+                  {selectedCustomer.district && (
+                    <div>
+                      <Label className="text-gray-500">İlçe</Label>
+                      <p className="font-medium">{selectedCustomer.district}</p>
+                    </div>
+                  )}
+                  {selectedCustomer.address && (
+                    <div className="col-span-2">
+                      <Label className="text-gray-500">Adres</Label>
+                      <p className="font-medium">{selectedCustomer.address}</p>
+                    </div>
+                  )}
                 </div>
-              )}
-              {selectedCustomer.tc_no && (
-                <div>
-                  <Label className="text-gray-500">TC No</Label>
-                  <p className="font-medium">{selectedCustomer.tc_no}</p>
+              </TabsContent>
+              
+              <TabsContent value="bank" className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold">Banka Hesapları</h3>
+                  <Button
+                    onClick={() => {
+                      setIsBankFormOpen(true);
+                      setEditingBank(null);
+                    }}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Banka Hesabı Ekle
+                  </Button>
                 </div>
-              )}
-              {selectedCustomer.tax_office && (
-                <div>
-                  <Label className="text-gray-500">Vergi Dairesi</Label>
-                  <p className="font-medium">{selectedCustomer.tax_office}</p>
-                </div>
-              )}
-              {selectedCustomer.city && (
-                <div>
-                  <Label className="text-gray-500">İl</Label>
-                  <p className="font-medium">{selectedCustomer.city}</p>
-                </div>
-              )}
-              {selectedCustomer.district && (
-                <div>
-                  <Label className="text-gray-500">İlçe</Label>
-                  <p className="font-medium">{selectedCustomer.district}</p>
-                </div>
-              )}
-              {selectedCustomer.address && (
-                <div className="col-span-2">
-                  <Label className="text-gray-500">Adres</Label>
-                  <p className="font-medium">{selectedCustomer.address}</p>
-                </div>
-              )}
-            </div>
+
+                {bankAccounts.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <CreditCard className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Henüz banka hesabı eklenmemiş</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {bankAccounts.map((account) => (
+                      <div key={account.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-semibold">{account.bank_name}</h4>
+                              {account.is_default && (
+                                <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded">
+                                  Varsayılan
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 mb-1">
+                              <strong>Hesap Sahibi:</strong> {account.account_holder}
+                            </p>
+                            <p className="text-sm text-gray-600 font-mono">
+                              <strong>IBAN:</strong> {account.iban}
+                            </p>
+                            {account.swift_code && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                <strong>SWIFT:</strong> {account.swift_code}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingBank(account);
+                                setBankFormData({
+                                  bank_name: account.bank_name,
+                                  iban: account.iban,
+                                  account_holder: account.account_holder,
+                                  account_number: account.account_number || "",
+                                  branch_name: account.branch_name || "",
+                                  branch_code: account.branch_code || "",
+                                  swift_code: account.swift_code || "",
+                                  currency: account.currency || "TRY",
+                                  is_default: account.is_default || false,
+                                  notes: account.notes || ""
+                                });
+                                setIsBankFormOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => account.id && handleDeleteBankAccount(account.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bank Account Form Dialog */}
+      <Dialog open={isBankFormOpen} onOpenChange={setIsBankFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingBank ? "Banka Hesabını Düzenle" : "Yeni Banka Hesabı Ekle"}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Banka Adı *</Label>
+              <Input
+                value={bankFormData.bank_name}
+                onChange={(e) => setBankFormData({ ...bankFormData, bank_name: e.target.value })}
+                placeholder="Örn: Ziraat Bankası"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Hesap Sahibi *</Label>
+              <Input
+                value={bankFormData.account_holder}
+                onChange={(e) => setBankFormData({ ...bankFormData, account_holder: e.target.value })}
+                placeholder="Ad Soyad / Firma Ünvanı"
+              />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>IBAN *</Label>
+              <Input
+                value={bankFormData.iban}
+                onChange={(e) => setBankFormData({ ...bankFormData, iban: e.target.value })}
+                placeholder="TR00 0000 0000 0000 0000 0000 00"
+                maxLength={32}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Hesap No</Label>
+              <Input
+                value={bankFormData.account_number}
+                onChange={(e) => setBankFormData({ ...bankFormData, account_number: e.target.value })}
+                placeholder="Hesap numarası"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Şube Adı</Label>
+              <Input
+                value={bankFormData.branch_name}
+                onChange={(e) => setBankFormData({ ...bankFormData, branch_name: e.target.value })}
+                placeholder="Şube adı"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Şube Kodu</Label>
+              <Input
+                value={bankFormData.branch_code}
+                onChange={(e) => setBankFormData({ ...bankFormData, branch_code: e.target.value })}
+                placeholder="Şube kodu"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>SWIFT Kodu</Label>
+              <Input
+                value={bankFormData.swift_code}
+                onChange={(e) => setBankFormData({ ...bankFormData, swift_code: e.target.value })}
+                placeholder="SWIFT kodu"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Para Birimi</Label>
+              <select
+                value={bankFormData.currency}
+                onChange={(e) => setBankFormData({ ...bankFormData, currency: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md"
+              >
+                <option value="TRY">TRY - Türk Lirası</option>
+                <option value="USD">USD - Amerikan Doları</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GBP">GBP - İngiliz Sterlini</option>
+              </select>
+            </div>
+            <div className="space-y-2 col-span-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={bankFormData.is_default}
+                  onChange={(e) => setBankFormData({ ...bankFormData, is_default: e.target.checked })}
+                  className="rounded"
+                />
+                <span>Varsayılan hesap olarak ayarla</span>
+              </label>
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>Notlar</Label>
+              <Input
+                value={bankFormData.notes}
+                onChange={(e) => setBankFormData({ ...bankFormData, notes: e.target.value })}
+                placeholder="Ek notlar"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBankFormOpen(false)}>
+              İptal
+            </Button>
+            <Button onClick={handleSaveBankAccount} disabled={isSubmitting}>
+              {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

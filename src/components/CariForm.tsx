@@ -55,9 +55,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     specialty: [] as string[],
     payment_method: "",
     payment_day: "",
-    bank_name: "",
-    iban: "",
-    account_holder: "",
     tutar: "",
     address_type: "",
     vade_gunu: "",
@@ -118,9 +115,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         specialty: Array.isArray(initialData.specialty) ? initialData.specialty : [],
         payment_method: initialData.payment_method || "",
         payment_day: initialData.payment_day?.toString() || "",
-        bank_name: initialData.bank_name || "",
-        iban: initialData.iban || "",
-        account_holder: initialData.account_holder || "",
         tutar: "",
         address_type: "",
         vade_gunu: initialData.vade_gunu?.toString() || "",
@@ -170,9 +164,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       specialty: [],
       payment_method: "",
       payment_day: "",
-      bank_name: "",
-      iban: "",
-      account_holder: "",
       tutar: "",
       address_type: "",
       vade_gunu: "",
@@ -300,10 +291,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         work_area: formData.work_area || null,
         specialty: formData.specialty.length > 0 ? formData.specialty : null,
         payment_method: formData.payment_method || null,
-        payment_day: formData.payment_day ? parseInt(formData.payment_day) : null,
-        bank_name: formData.bank_name || null,
-        iban: formData.iban || null,
-        account_holder: formData.account_holder || null
+        payment_day: formData.payment_day ? parseInt(formData.payment_day) : null
       };
 
       console.log("=== CARİ FORM SUBMIT ===");
@@ -910,49 +898,11 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                   </div>
                 </div>
 
-                {/* Banka Bilgileri */}
-                <div className="border-t pt-6 mt-6">
-                  <h3 className="text-lg font-semibold mb-4">Banka Bilgileri</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Banka Adı</Label>
-                      <Input
-                        type="text"
-                        value={formData.bank_name}
-                        onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-                        placeholder="Banka adı"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Hesap Sahibi</Label>
-                      <Input
-                        type="text"
-                        value={formData.account_holder}
-                        onChange={(e) => setFormData({ ...formData, account_holder: e.target.value })}
-                        placeholder="Hesap sahibi adı"
-                      />
-                    </div>
-
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>IBAN</Label>
-                      <Input
-                        type="text"
-                        value={formData.iban}
-                        onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
-                        placeholder="TR00 0000 0000 0000 0000 0000 00"
-                        maxLength={32}
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 {/* Sürücü ve Araç bilgileri için not */}
                 <div className="border-t pt-6 mt-6">
                   <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                     <p className="text-sm text-blue-800">
-                      <strong>Not:</strong> Sürücü ve araç bilgileri cari kaydedildikten sonra cari detay sayfasından eklenebilir.
+                      <strong>Not:</strong> Sürücü, araç ve banka hesap bilgileri cari kaydedildikten sonra cari detay sayfasından eklenebilir.
                     </p>
                   </div>
                 </div>
@@ -1139,17 +1089,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 </Button>
               </div>
               <p className="text-sm text-gray-500">Henüz borç alacak bilgisi eklenmedi.</p>
-            </div>
-
-            {/* Banka Bilgileri */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center border-b pb-2">
-                <h3 className="text-lg font-semibold">Banka Bilgileri</h3>
-                <Button variant="outline" size="sm">
-                  + Banka Ekle
-                </Button>
-              </div>
-              <p className="text-sm text-gray-500">Henüz banka bilgisi eklenmedi.</p>
             </div>
 
             {/* Yetkili İletişim Bilgileri */}
