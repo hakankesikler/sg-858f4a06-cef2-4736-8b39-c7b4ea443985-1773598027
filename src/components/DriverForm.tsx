@@ -268,11 +268,23 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
                   <SelectValue placeholder="Ehliyet sınıfı seçin" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="B">B</SelectItem>
-                  <SelectItem value="C">C</SelectItem>
-                  <SelectItem value="CE">CE</SelectItem>
-                  <SelectItem value="D">D</SelectItem>
-                  <SelectItem value="DE">DE</SelectItem>
+                  <SelectItem value="M">M (Moped)</SelectItem>
+                  <SelectItem value="A1">A1 (Motorsiklet 125cc)</SelectItem>
+                  <SelectItem value="A2">A2 (Motorsiklet 35kW)</SelectItem>
+                  <SelectItem value="A">A (Motorsiklet)</SelectItem>
+                  <SelectItem value="B1">B1 (Hafif Araç)</SelectItem>
+                  <SelectItem value="B">B (Otomobil)</SelectItem>
+                  <SelectItem value="BE">BE (Otomobil + Römork)</SelectItem>
+                  <SelectItem value="C1">C1 (Kamyonet)</SelectItem>
+                  <SelectItem value="C1E">C1E (Kamyonet + Römork)</SelectItem>
+                  <SelectItem value="C">C (Kamyon)</SelectItem>
+                  <SelectItem value="CE">CE (Kamyon + Römork)</SelectItem>
+                  <SelectItem value="D1">D1 (Minibüs)</SelectItem>
+                  <SelectItem value="D1E">D1E (Minibüs + Römork)</SelectItem>
+                  <SelectItem value="D">D (Otobüs)</SelectItem>
+                  <SelectItem value="DE">DE (Otobüs + Römork)</SelectItem>
+                  <SelectItem value="F">F (Traktör)</SelectItem>
+                  <SelectItem value="G">G (Özel Amaçlı Araç)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
