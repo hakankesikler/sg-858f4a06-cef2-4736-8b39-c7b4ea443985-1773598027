@@ -35,9 +35,14 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
 
   useEffect(() => {
     if (editMode && initialData && isOpen) {
-      console.log("Loading driver data for edit:", initialData);
+      console.log("=== DRIVER EDIT MODE ===");
+      console.log("Full initialData:", initialData);
+      console.log("ehliyet_sinifi value:", initialData.ehliyet_sinifi);
+      console.log("ehliyet_gecerlilik_tarihi value:", initialData.ehliyet_gecerlilik_tarihi);
+      
       setDriverCode(initialData.driver_code || "DRV-000001");
-      setFormData({
+      
+      const newFormData = {
         full_name: initialData.full_name || "",
         tc_no: initialData.tc_no || "",
         phone_1: initialData.phone_1 || "",
@@ -46,21 +51,22 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         psikoteknik_belge_no: initialData.psikoteknik_belge_no || "",
         ehliyet_sinifi: initialData.ehliyet_sinifi || "",
         status: initialData.status || "Aktif"
-      });
+      };
+      
+      console.log("Setting formData:", newFormData);
+      setFormData(newFormData);
+      
       if (initialData.ehliyet_gecerlilik_tarihi) {
-        // Convert date to YYYY-MM-DD format if needed
         const dateValue = initialData.ehliyet_gecerlilik_tarihi;
-        if (dateValue.includes('T')) {
-          // If it's ISO format, extract just the date part
-          setEhliyetGecerlilikTarihi(dateValue.split('T')[0]);
-        } else {
-          setEhliyetGecerlilikTarihi(dateValue);
-        }
+        const formattedDate = dateValue.includes('T') ? dateValue.split('T')[0] : dateValue;
+        console.log("Setting date:", formattedDate);
+        setEhliyetGecerlilikTarihi(formattedDate);
       } else {
+        console.log("No date found, setting empty");
         setEhliyetGecerlilikTarihi("");
       }
     } else if (!editMode && isOpen) {
-      // Reset form when opening in create mode
+      console.log("=== CREATE MODE ===");
       resetForm();
       loadNextDriverCode();
     }
