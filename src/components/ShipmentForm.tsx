@@ -35,8 +35,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [drivers, setDrivers] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
+    supplier_id: "",
     driver_id: "",
     vehicle_id: "",
     customer_id: "",
@@ -103,6 +105,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       console.log("Loading shipment data for edit:", initialData);
       setShipmentCode(initialData.shipment_code || "SHP-000001");
       setFormData({
+        supplier_id: initialData.supplier_id || "",
         driver_id: initialData.driver_id || "",
         vehicle_id: initialData.vehicle_id || "",
         customer_id: initialData.customer_id || "",
@@ -167,7 +170,13 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       ]);
       setDrivers(driversData);
       setVehicles(vehiclesData);
-      setCustomers(customersData);
+      
+      // Separate customers and suppliers
+      const customersList = customersData.filter(c => c.account_type === "musteri" || !c.account_type);
+      const suppliersList = customersData.filter(c => c.account_type === "tedarikci");
+      
+      setCustomers(customersList);
+      setSuppliers(suppliersList);
     } catch (error) {
       console.error("Error loading selection data:", error);
     }
@@ -200,6 +209,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       
       const submitData = {
         shipment_code: shipmentCode,
+        supplier_id: formData.supplier_id || null,
         driver_id: formData.driver_id || null,
         vehicle_id: formData.vehicle_id || null,
         customer_id: formData.customer_id || null,
@@ -264,6 +274,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
   const resetForm = () => {
     setFormData({
+      supplier_id: "",
       driver_id: "",
       vehicle_id: "",
       customer_id: "",
@@ -313,8 +324,23 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             <Input value={shipmentCode} disabled className="bg-gray-50" />
           </div>
 
-          {/* Sürücü, Araç, Müşteri Seçimi */}
+          {/* Tedarikçi, Sürücü, Araç Seçimi */}
           <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Tedarikçi</Label>
+              <Select value={formData.supplier_id} onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tedarikçi seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map((supplier) => (
+                    <SelectItem key={supplier.id} value={supplier.id!}>
+                      {supplier.customer_code} - {supplier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label>Sürücü</Label>
               <Select value={formData.driver_id} onValueChange={(value) => setFormData({ ...formData, driver_id: value })}>
@@ -340,21 +366,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   {vehicles.map((vehicle) => (
                     <SelectItem key={vehicle.id} value={vehicle.id!}>
                       {vehicle.vehicle_code} - {vehicle.cekici_plakasi}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Müşteri</Label>
-              <Select value={formData.customer_id} onValueChange={(value) => setFormData({ ...formData, customer_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Müşteri seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id!}>
-                      {customer.customer_code} - {customer.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -392,6 +403,27 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           {/* Gönderici ve Alıcı Bilgileri */}
           <div className="border-t pt-4">
             <h3 className="font-semibold mb-4">Gönderici ve Alıcı Detayları</h3>
+            
+            {/* Müşteri (Ödeme Sorumlusu) */}
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label>Müşteri (Ödeme Sorumlusu)</Label>
+                <Select value={formData.customer_id} onValueChange={(value) => setFormData({ ...formData, customer_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Müşteri seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id!}>
+                        {customer.customer_code} - {customer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {/* Gönderici ve Alıcı */}
             <div className="grid grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label>Gönderici Adı/Firma</Label>
