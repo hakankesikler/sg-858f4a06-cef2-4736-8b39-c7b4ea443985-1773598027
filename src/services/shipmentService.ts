@@ -15,6 +15,8 @@ export interface Shipment {
   cargo_weight?: number | null;
   cargo_volume?: number | null;
   cargo_description?: string | null;
+  cost?: number | null;
+  cost_currency?: string;
   price?: number | null;
   currency?: string;
   payment_status?: string;

@@ -46,6 +46,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     cargo_weight: "",
     cargo_volume: "",
     cargo_description: "",
+    cost: "",
+    cost_currency: "TRY",
     price: "",
     currency: "TRY",
     payment_status: "beklemede",
@@ -110,6 +112,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         cargo_weight: initialData.cargo_weight?.toString() || "",
         cargo_volume: initialData.cargo_volume?.toString() || "",
         cargo_description: initialData.cargo_description || "",
+        cost: initialData.cost?.toString() || "",
+        cost_currency: initialData.cost_currency || "TRY",
         price: initialData.price?.toString() || "",
         currency: initialData.currency || "TRY",
         payment_status: initialData.payment_status || "beklemede",
@@ -208,6 +212,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         cargo_weight: formData.cargo_weight ? parseFloat(formData.cargo_weight) : null,
         cargo_volume: formData.cargo_volume ? parseFloat(formData.cargo_volume) : null,
         cargo_description: formData.cargo_description || null,
+        cost: formData.cost ? parseFloat(formData.cost) : null,
+        cost_currency: formData.cost_currency,
         price: formData.price ? parseFloat(formData.price) : null,
         currency: formData.currency,
         payment_status: formData.payment_status,
@@ -267,6 +273,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       cargo_weight: "",
       cargo_volume: "",
       cargo_description: "",
+      cost: "",
+      cost_currency: "TRY",
       price: "",
       currency: "TRY",
       payment_status: "beklemede",
@@ -349,6 +357,33 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                       {customer.customer_code} - {customer.name}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Maliyet Bilgileri */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Maliyet (Size Olan Maliyet)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.cost}
+                onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Para Birimi</Label>
+              <Select value={formData.cost_currency} onValueChange={(value) => setFormData({ ...formData, cost_currency: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TRY">TRY</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
                 </SelectContent>
               </Select>
             </div>
