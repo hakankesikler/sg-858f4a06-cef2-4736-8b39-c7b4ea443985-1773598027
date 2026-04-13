@@ -1662,10 +1662,12 @@ export type Database = {
       }
       shipments: {
         Row: {
+          adet: number | null
           cargo_description: string | null
           cargo_type: string | null
           cargo_volume: number | null
           cargo_weight: number | null
+          cinsi: string | null
           created_at: string | null
           currency: string | null
           customer_id: string | null
@@ -1674,21 +1676,32 @@ export type Database = {
           driver_id: string | null
           estimated_delivery_date: string | null
           id: string
+          kg_ds: number | null
+          mali: string | null
           notes: string | null
           origin: string
           payment_status: string | null
           pickup_date: string | null
           price: number | null
+          receiver: string | null
+          receiver_district: string | null
+          receiver_ii: string | null
+          satis_birim: number | null
+          satis_tutar: number | null
+          sender_ii: string | null
           shipment_code: string
           status: string | null
+          toplam_kg_ds: number | null
           updated_at: string | null
           vehicle_id: string | null
         }
         Insert: {
+          adet?: number | null
           cargo_description?: string | null
           cargo_type?: string | null
           cargo_volume?: number | null
           cargo_weight?: number | null
+          cinsi?: string | null
           created_at?: string | null
           currency?: string | null
           customer_id?: string | null
@@ -1697,21 +1710,32 @@ export type Database = {
           driver_id?: string | null
           estimated_delivery_date?: string | null
           id?: string
+          kg_ds?: number | null
+          mali?: string | null
           notes?: string | null
           origin: string
           payment_status?: string | null
           pickup_date?: string | null
           price?: number | null
+          receiver?: string | null
+          receiver_district?: string | null
+          receiver_ii?: string | null
+          satis_birim?: number | null
+          satis_tutar?: number | null
+          sender_ii?: string | null
           shipment_code: string
           status?: string | null
+          toplam_kg_ds?: number | null
           updated_at?: string | null
           vehicle_id?: string | null
         }
         Update: {
+          adet?: number | null
           cargo_description?: string | null
           cargo_type?: string | null
           cargo_volume?: number | null
           cargo_weight?: number | null
+          cinsi?: string | null
           created_at?: string | null
           currency?: string | null
           customer_id?: string | null
@@ -1720,13 +1744,22 @@ export type Database = {
           driver_id?: string | null
           estimated_delivery_date?: string | null
           id?: string
+          kg_ds?: number | null
+          mali?: string | null
           notes?: string | null
           origin?: string
           payment_status?: string | null
           pickup_date?: string | null
           price?: number | null
+          receiver?: string | null
+          receiver_district?: string | null
+          receiver_ii?: string | null
+          satis_birim?: number | null
+          satis_tutar?: number | null
+          sender_ii?: string | null
           shipment_code?: string
           status?: string | null
+          toplam_kg_ds?: number | null
           updated_at?: string | null
           vehicle_id?: string | null
         }

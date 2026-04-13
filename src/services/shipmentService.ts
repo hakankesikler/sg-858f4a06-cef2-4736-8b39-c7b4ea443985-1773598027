@@ -20,6 +20,17 @@ export interface Shipment {
   payment_status?: string;
   status?: string;
   notes?: string | null;
+  sender_ii?: string | null;
+  receiver?: string | null;
+  receiver_district?: string | null;
+  receiver_ii?: string | null;
+  adet?: number | null;
+  cinsi?: string | null;
+  kg_ds?: number | null;
+  toplam_kg_ds?: number | null;
+  satis_birim?: number | null;
+  satis_tutar?: number | null;
+  mali?: string | null;
   created_at?: string;
   updated_at?: string;
 }

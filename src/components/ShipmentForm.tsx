@@ -50,7 +50,18 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     currency: "TRY",
     payment_status: "beklemede",
     status: "beklemede",
-    notes: ""
+    notes: "",
+    sender_ii: "",
+    receiver: "",
+    receiver_district: "",
+    receiver_ii: "",
+    adet: "",
+    cinsi: "",
+    kg_ds: "",
+    toplam_kg_ds: "",
+    satis_birim: "",
+    satis_tutar: "",
+    mali: "nakit"
   });
 
   useEffect(() => {
@@ -61,6 +72,28 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       }
     }
   }, [isOpen, editMode]);
+
+  // Auto-calculate toplam_kg_ds (adet * kg_ds)
+  useEffect(() => {
+    const adet = parseFloat(formData.adet) || 0;
+    const kgDs = parseFloat(formData.kg_ds) || 0;
+    const toplam = adet * kgDs;
+    
+    if (toplam > 0 && toplam.toString() !== formData.toplam_kg_ds) {
+      setFormData(prev => ({ ...prev, toplam_kg_ds: toplam.toFixed(2) }));
+    }
+  }, [formData.adet, formData.kg_ds]);
+
+  // Auto-calculate satis_tutar (adet * satis_birim)
+  useEffect(() => {
+    const adet = parseFloat(formData.adet) || 0;
+    const birim = parseFloat(formData.satis_birim) || 0;
+    const tutar = adet * birim;
+    
+    if (tutar > 0 && tutar.toString() !== formData.satis_tutar) {
+      setFormData(prev => ({ ...prev, satis_tutar: tutar.toFixed(2) }));
+    }
+  }, [formData.adet, formData.satis_birim]);
 
   useEffect(() => {
     if (editMode && initialData && isOpen) {
@@ -80,7 +113,18 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         currency: initialData.currency || "TRY",
         payment_status: initialData.payment_status || "beklemede",
         status: initialData.status || "beklemede",
-        notes: initialData.notes || ""
+        notes: initialData.notes || "",
+        sender_ii: initialData.sender_ii || "",
+        receiver: initialData.receiver || "",
+        receiver_district: initialData.receiver_district || "",
+        receiver_ii: initialData.receiver_ii || "",
+        adet: initialData.adet?.toString() || "",
+        cinsi: initialData.cinsi || "",
+        kg_ds: initialData.kg_ds?.toString() || "",
+        toplam_kg_ds: initialData.toplam_kg_ds?.toString() || "",
+        satis_birim: initialData.satis_birim?.toString() || "",
+        satis_tutar: initialData.satis_tutar?.toString() || "",
+        mali: initialData.mali || "nakit"
       });
       
       // Handle date conversions
@@ -166,7 +210,18 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         currency: formData.currency,
         payment_status: formData.payment_status,
         status: formData.status,
-        notes: formData.notes || null
+        notes: formData.notes || null,
+        sender_ii: formData.sender_ii || null,
+        receiver: formData.receiver || null,
+        receiver_district: formData.receiver_district || null,
+        receiver_ii: formData.receiver_ii || null,
+        adet: formData.adet ? parseInt(formData.adet) : null,
+        cinsi: formData.cinsi || null,
+        kg_ds: formData.kg_ds ? parseFloat(formData.kg_ds) : null,
+        toplam_kg_ds: formData.toplam_kg_ds ? parseFloat(formData.toplam_kg_ds) : null,
+        satis_birim: formData.satis_birim ? parseFloat(formData.satis_birim) : null,
+        satis_tutar: formData.satis_tutar ? parseFloat(formData.satis_tutar) : null,
+        mali: formData.mali || null
       };
 
       if (editMode && initialData) {
@@ -213,7 +268,18 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       currency: "TRY",
       payment_status: "beklemede",
       status: "beklemede",
-      notes: ""
+      notes: "",
+      sender_ii: "",
+      receiver: "",
+      receiver_district: "",
+      receiver_ii: "",
+      adet: "",
+      cinsi: "",
+      kg_ds: "",
+      toplam_kg_ds: "",
+      satis_birim: "",
+      satis_tutar: "",
+      mali: "nakit"
     });
     setPickupDate("");
     setDeliveryDate("");
@@ -268,7 +334,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Müşteri</Label>
+              <Label>Müşteri (Gönderici)</Label>
               <Select value={formData.customer_id} onValueChange={(value) => setFormData({ ...formData, customer_id: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Müşteri seçin" />
@@ -281,6 +347,148 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Gönderici II - Alıcı Bilgileri */}
+          <div className="border-t pt-4">
+            <h3 className="font-semibold mb-4">Gönderici ve Alıcı Detayları</h3>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>Gönderici II</Label>
+                <Input
+                  value={formData.sender_ii}
+                  onChange={(e) => setFormData({ ...formData, sender_ii: e.target.value })}
+                  placeholder="İkinci gönderici (opsiyonel)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Alıcı</Label>
+                <Input
+                  value={formData.receiver}
+                  onChange={(e) => setFormData({ ...formData, receiver: e.target.value })}
+                  placeholder="Alıcı adı/firma"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Alıcı İlçe</Label>
+                <Input
+                  value={formData.receiver_district}
+                  onChange={(e) => setFormData({ ...formData, receiver_district: e.target.value })}
+                  placeholder="İlçe"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Alıcı II</Label>
+                <Input
+                  value={formData.receiver_ii}
+                  onChange={(e) => setFormData({ ...formData, receiver_ii: e.target.value })}
+                  placeholder="İkinci alıcı (opsiyonel)"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Yük Detayları - Adet, Cinsi, KG/DS */}
+          <div className="border-t pt-4">
+            <h3 className="font-semibold mb-4">Yük Detayları</h3>
+            <div className="grid grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <Label>Adet</Label>
+                <Input
+                  type="number"
+                  value={formData.adet}
+                  onChange={(e) => setFormData({ ...formData, adet: e.target.value })}
+                  placeholder="Koli/paket sayısı"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Cinsi</Label>
+                <Input
+                  value={formData.cinsi}
+                  onChange={(e) => setFormData({ ...formData, cinsi: e.target.value })}
+                  placeholder="Yük cinsi"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>KG/DS (Birim)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.kg_ds}
+                  onChange={(e) => setFormData({ ...formData, kg_ds: e.target.value })}
+                  placeholder="Birim ağırlık"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Toplam KG/DS</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.toplam_kg_ds}
+                  disabled
+                  className="bg-gray-100"
+                  placeholder="Otomatik hesaplanır"
+                />
+                <p className="text-xs text-gray-500">Adet × KG/DS</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Mali Durum</Label>
+                <Select value={formData.mali} onValueChange={(value) => setFormData({ ...formData, mali: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nakit">Nakit</SelectItem>
+                    <SelectItem value="kredi_karti">Kredi Kartı</SelectItem>
+                    <SelectItem value="havale">Havale/EFT</SelectItem>
+                    <SelectItem value="cek">Çek</SelectItem>
+                    <SelectItem value="acik_hesap">Açık Hesap</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Satış Bilgileri */}
+          <div className="border-t pt-4">
+            <h3 className="font-semibold mb-4">Satış Bilgileri</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Satış Birim (Fiyat)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.satis_birim}
+                  onChange={(e) => setFormData({ ...formData, satis_birim: e.target.value })}
+                  placeholder="Birim fiyat"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Satış Tutar (Toplam)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.satis_tutar}
+                  disabled
+                  className="bg-gray-100"
+                  placeholder="Otomatik hesaplanır"
+                />
+                <p className="text-xs text-gray-500">Adet × Birim Fiyat</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Para Birimi</Label>
+                <Select value={formData.currency} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TRY">TRY</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
