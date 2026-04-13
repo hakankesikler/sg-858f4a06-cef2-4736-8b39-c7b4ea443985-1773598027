@@ -34,43 +34,45 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
   });
 
   useEffect(() => {
-    if (editMode && initialData && isOpen) {
-      console.log("=== DRIVER EDIT MODE ===");
-      console.log("Full initialData:", initialData);
-      console.log("ehliyet_sinifi value:", initialData.ehliyet_sinifi);
-      console.log("ehliyet_gecerlilik_tarihi value:", initialData.ehliyet_gecerlilik_tarihi);
-      
-      setDriverCode(initialData.driver_code || "DRV-000001");
-      
-      const newFormData = {
-        full_name: initialData.full_name || "",
-        tc_no: initialData.tc_no || "",
-        phone_1: initialData.phone_1 || "",
-        phone_2: initialData.phone_2 || "",
-        src_belge_no: initialData.src_belge_no || "",
-        psikoteknik_belge_no: initialData.psikoteknik_belge_no || "",
-        ehliyet_sinifi: initialData.ehliyet_sinifi || "",
-        status: initialData.status || "Aktif"
-      };
-      
-      console.log("Setting formData:", newFormData);
-      setFormData(newFormData);
-      
-      if (initialData.ehliyet_gecerlilik_tarihi) {
-        const dateValue = initialData.ehliyet_gecerlilik_tarihi;
-        const formattedDate = dateValue.includes('T') ? dateValue.split('T')[0] : dateValue;
-        console.log("Setting date:", formattedDate);
-        setEhliyetGecerlilikTarihi(formattedDate);
+    if (isOpen) {
+      if (editMode && initialData) {
+        console.log("=== DRIVER EDIT MODE ===");
+        console.log("Full initialData:", initialData);
+        console.log("ehliyet_sinifi value:", initialData.ehliyet_sinifi);
+        console.log("ehliyet_gecerlilik_tarihi value:", initialData.ehliyet_gecerlilik_tarihi);
+        
+        setDriverCode(initialData.driver_code || "DRV-000001");
+        
+        const newFormData = {
+          full_name: initialData.full_name || "",
+          tc_no: initialData.tc_no || "",
+          phone_1: initialData.phone_1 || "",
+          phone_2: initialData.phone_2 || "",
+          src_belge_no: initialData.src_belge_no || "",
+          psikoteknik_belge_no: initialData.psikoteknik_belge_no || "",
+          ehliyet_sinifi: initialData.ehliyet_sinifi || "",
+          status: initialData.status || "Aktif"
+        };
+        
+        console.log("Setting formData:", newFormData);
+        setFormData(newFormData);
+        
+        if (initialData.ehliyet_gecerlilik_tarihi) {
+          const dateValue = initialData.ehliyet_gecerlilik_tarihi;
+          const formattedDate = dateValue.includes('T') ? dateValue.split('T')[0] : dateValue;
+          console.log("Setting date:", formattedDate);
+          setEhliyetGecerlilikTarihi(formattedDate);
+        } else {
+          console.log("No date found, setting empty");
+          setEhliyetGecerlilikTarihi("");
+        }
       } else {
-        console.log("No date found, setting empty");
-        setEhliyetGecerlilikTarihi("");
+        console.log("=== CREATE MODE ===");
+        resetForm();
+        loadNextDriverCode();
       }
-    } else if (!editMode && isOpen) {
-      console.log("=== CREATE MODE ===");
-      resetForm();
-      loadNextDriverCode();
     }
-  }, [editMode, initialData, isOpen]);
+  }, [isOpen, editMode, initialData]);
 
   const loadNextDriverCode = async () => {
     try {
