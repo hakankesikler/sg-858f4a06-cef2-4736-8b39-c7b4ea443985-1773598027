@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -1689,6 +1689,7 @@ export type Database = {
           satis_birim: number | null
           satis_tutar: number | null
           sender_ii: string | null
+          sender_name: string | null
           shipment_code: string
           status: string | null
           toplam_kg_ds: number | null
@@ -1723,6 +1724,7 @@ export type Database = {
           satis_birim?: number | null
           satis_tutar?: number | null
           sender_ii?: string | null
+          sender_name?: string | null
           shipment_code: string
           status?: string | null
           toplam_kg_ds?: number | null
@@ -1757,6 +1759,7 @@ export type Database = {
           satis_birim?: number | null
           satis_tutar?: number | null
           sender_ii?: string | null
+          sender_name?: string | null
           shipment_code?: string
           status?: string | null
           toplam_kg_ds?: number | null
