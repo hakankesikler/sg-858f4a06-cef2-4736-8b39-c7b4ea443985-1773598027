@@ -44,17 +44,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     customer_id: "",
     origin: "",
     destination: "",
-    cargo_type: "",
-    cargo_weight: "",
-    cargo_volume: "",
-    cargo_description: "",
     cost: "",
     cost_currency: "TRY",
-    price: "",
-    currency: "TRY",
-    payment_status: "beklemede",
-    status: "beklemede",
-    notes: "",
     sender_name: "",
     sender_ii: "",
     receiver: "",
@@ -110,17 +101,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         customer_id: initialData.customer_id || "",
         origin: initialData.origin || "",
         destination: initialData.destination || "",
-        cargo_type: initialData.cargo_type || "",
-        cargo_weight: initialData.cargo_weight?.toString() || "",
-        cargo_volume: initialData.cargo_volume?.toString() || "",
-        cargo_description: initialData.cargo_description || "",
         cost: initialData.cost?.toString() || "",
         cost_currency: initialData.cost_currency || "TRY",
-        price: initialData.price?.toString() || "",
-        currency: initialData.currency || "TRY",
-        payment_status: initialData.payment_status || "beklemede",
-        status: initialData.status || "beklemede",
-        notes: initialData.notes || "",
         sender_name: initialData.sender_name || "",
         sender_ii: initialData.sender_ii || "",
         receiver: initialData.receiver || "",
@@ -207,17 +189,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         pickup_date: pickupDate || null,
         delivery_date: deliveryDate || null,
         estimated_delivery_date: estimatedDeliveryDate || null,
-        cargo_type: formData.cargo_type || null,
-        cargo_weight: formData.cargo_weight ? parseFloat(formData.cargo_weight) : null,
-        cargo_volume: formData.cargo_volume ? parseFloat(formData.cargo_volume) : null,
-        cargo_description: formData.cargo_description || null,
         cost: formData.cost ? parseFloat(formData.cost) : null,
         cost_currency: formData.cost_currency,
-        price: formData.price ? parseFloat(formData.price) : null,
-        currency: formData.currency,
-        payment_status: formData.payment_status,
-        status: formData.status,
-        notes: formData.notes || null,
         sender_name: formData.sender_name || null,
         sender_ii: formData.sender_ii || null,
         receiver: formData.receiver || null,
@@ -268,17 +241,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       customer_id: "",
       origin: "",
       destination: "",
-      cargo_type: "",
-      cargo_weight: "",
-      cargo_volume: "",
-      cargo_description: "",
       cost: "",
       cost_currency: "TRY",
-      price: "",
-      currency: "TRY",
-      payment_status: "beklemede",
-      status: "beklemede",
-      notes: "",
       sender_name: "",
       sender_ii: "",
       receiver: "",
@@ -570,120 +534,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
                 className="w-full"
-              />
-            </div>
-          </div>
-
-          {/* Yük Bilgileri */}
-          <div className="border-t pt-4">
-            <h3 className="font-semibold mb-4">Yük Bilgileri</h3>
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="space-y-2">
-                <Label>Yük Tipi</Label>
-                <Input
-                  value={formData.cargo_type}
-                  onChange={(e) => setFormData({ ...formData, cargo_type: e.target.value })}
-                  placeholder="Örn: Palet, Koli"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Ağırlık (kg)</Label>
-                <Input
-                  type="number"
-                  value={formData.cargo_weight}
-                  onChange={(e) => setFormData({ ...formData, cargo_weight: e.target.value })}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Hacim (m³)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.cargo_volume}
-                  onChange={(e) => setFormData({ ...formData, cargo_volume: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Yük Açıklaması</Label>
-              <Textarea
-                value={formData.cargo_description}
-                onChange={(e) => setFormData({ ...formData, cargo_description: e.target.value })}
-                placeholder="Yük hakkında detaylı bilgi..."
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* Finansal Bilgiler */}
-          <div className="border-t pt-4">
-            <h3 className="font-semibold mb-4">Finansal Bilgiler</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Fiyat</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Para Birimi</Label>
-                <Select value={formData.currency} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TRY">TRY</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Ödeme Durumu</Label>
-                <Select value={formData.payment_status} onValueChange={(value) => setFormData({ ...formData, payment_status: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="beklemede">Beklemede</SelectItem>
-                    <SelectItem value="kismen_odendi">Kısmen Ödendi</SelectItem>
-                    <SelectItem value="odendi">Ödendi</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Durum ve Notlar */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Sevkiyat Durumu</Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beklemede">Beklemede</SelectItem>
-                  <SelectItem value="hazırlaniyor">Hazırlanıyor</SelectItem>
-                  <SelectItem value="yolda">Yolda</SelectItem>
-                  <SelectItem value="teslim_edildi">Teslim Edildi</SelectItem>
-                  <SelectItem value="iptal">İptal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Notlar</Label>
-              <Textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Ek notlar..."
-                rows={3}
               />
             </div>
           </div>

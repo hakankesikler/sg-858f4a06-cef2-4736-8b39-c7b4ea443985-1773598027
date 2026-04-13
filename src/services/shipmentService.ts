@@ -12,17 +12,8 @@ export interface Shipment {
   pickup_date?: string | null;
   delivery_date?: string | null;
   estimated_delivery_date?: string | null;
-  cargo_type?: string | null;
-  cargo_weight?: number | null;
-  cargo_volume?: number | null;
-  cargo_description?: string | null;
   cost?: number | null;
   cost_currency?: string;
-  price?: number | null;
-  currency?: string;
-  payment_status?: string;
-  status?: string;
-  notes?: string | null;
   sender_name?: string | null;
   sender_ii?: string | null;
   receiver?: string | null;
