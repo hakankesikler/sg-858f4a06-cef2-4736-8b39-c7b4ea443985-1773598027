@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -1668,6 +1668,8 @@ export type Database = {
           cargo_volume: number | null
           cargo_weight: number | null
           cinsi: string | null
+          cost: number | null
+          cost_currency: string | null
           created_at: string | null
           currency: string | null
           customer_id: string | null
@@ -1703,6 +1705,8 @@ export type Database = {
           cargo_volume?: number | null
           cargo_weight?: number | null
           cinsi?: string | null
+          cost?: number | null
+          cost_currency?: string | null
           created_at?: string | null
           currency?: string | null
           customer_id?: string | null
@@ -1738,6 +1742,8 @@ export type Database = {
           cargo_volume?: number | null
           cargo_weight?: number | null
           cinsi?: string | null
+          cost?: number | null
+          cost_currency?: string | null
           created_at?: string | null
           currency?: string | null
           customer_id?: string | null
