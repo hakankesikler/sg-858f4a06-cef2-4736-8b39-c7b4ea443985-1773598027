@@ -34,7 +34,6 @@ export interface Shipment {
   toplam_kg_ds?: number | null;
   satis_birim?: number | null;
   satis_tutar?: number | null;
-  mali?: string | null;
   created_at?: string;
   updated_at?: string;
 }

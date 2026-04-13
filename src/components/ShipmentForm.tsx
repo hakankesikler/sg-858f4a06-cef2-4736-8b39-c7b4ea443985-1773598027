@@ -65,8 +65,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     kg_ds: "",
     toplam_kg_ds: "",
     satis_birim: "",
-    satis_tutar: "",
-    mali: "nakit"
+    satis_tutar: ""
   });
 
   useEffect(() => {
@@ -132,8 +131,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         kg_ds: initialData.kg_ds?.toString() || "",
         toplam_kg_ds: initialData.toplam_kg_ds?.toString() || "",
         satis_birim: initialData.satis_birim?.toString() || "",
-        satis_tutar: initialData.satis_tutar?.toString() || "",
-        mali: initialData.mali || "nakit"
+        satis_tutar: initialData.satis_tutar?.toString() || ""
       });
       
       // Handle date conversions
@@ -239,8 +237,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         kg_ds: formData.kg_ds ? parseFloat(formData.kg_ds) : null,
         toplam_kg_ds: formData.toplam_kg_ds ? parseFloat(formData.toplam_kg_ds) : null,
         satis_birim: formData.satis_birim ? parseFloat(formData.satis_birim) : null,
-        satis_tutar: formData.satis_tutar ? parseFloat(formData.satis_tutar) : null,
-        mali: formData.mali || null
+        satis_tutar: formData.satis_tutar ? parseFloat(formData.satis_tutar) : null
       };
 
       if (editMode && initialData) {
@@ -301,8 +298,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       kg_ds: "",
       toplam_kg_ds: "",
       satis_birim: "",
-      satis_tutar: "",
-      mali: "nakit"
+      satis_tutar: ""
     });
     setPickupDate("");
     setDeliveryDate("");
@@ -471,7 +467,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           {/* Yük Detayları - Adet, Cinsi, KG/DS */}
           <div className="border-t pt-4">
             <h3 className="font-semibold mb-4">Yük Detayları</h3>
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Adet</Label>
                 <Input
@@ -510,21 +506,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   placeholder="Otomatik hesaplanır"
                 />
                 <p className="text-xs text-gray-500">Adet × KG/DS</p>
-              </div>
-              <div className="space-y-2">
-                <Label>Mali Durum</Label>
-                <Select value={formData.mali} onValueChange={(value) => setFormData({ ...formData, mali: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="nakit">Nakit</SelectItem>
-                    <SelectItem value="kredi_karti">Kredi Kartı</SelectItem>
-                    <SelectItem value="havale">Havale/EFT</SelectItem>
-                    <SelectItem value="cek">Çek</SelectItem>
-                    <SelectItem value="acik_hesap">Açık Hesap</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           </div>

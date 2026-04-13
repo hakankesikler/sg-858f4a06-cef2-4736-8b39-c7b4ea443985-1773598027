@@ -1679,7 +1679,6 @@ export type Database = {
           estimated_delivery_date: string | null
           id: string
           kg_ds: number | null
-          mali: string | null
           notes: string | null
           origin: string
           payment_status: string | null
@@ -1717,7 +1716,6 @@ export type Database = {
           estimated_delivery_date?: string | null
           id?: string
           kg_ds?: number | null
-          mali?: string | null
           notes?: string | null
           origin: string
           payment_status?: string | null
@@ -1755,7 +1753,6 @@ export type Database = {
           estimated_delivery_date?: string | null
           id?: string
           kg_ds?: number | null
-          mali?: string | null
           notes?: string | null
           origin?: string
           payment_status?: string | null
