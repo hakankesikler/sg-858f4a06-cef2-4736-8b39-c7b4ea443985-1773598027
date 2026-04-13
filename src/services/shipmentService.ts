@@ -14,6 +14,8 @@ export interface Shipment {
   estimated_delivery_date?: string | null;
   cost?: number | null;
   cost_currency?: string;
+  currency?: string;
+  status?: string;
   sender_name?: string | null;
   sender_ii?: string | null;
   receiver?: string | null;

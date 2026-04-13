@@ -1667,6 +1667,7 @@ export type Database = {
           cost: number | null
           cost_currency: string | null
           created_at: string | null
+          currency: string | null
           customer_id: string | null
           delivery_date: string | null
           destination: string | null
@@ -1684,6 +1685,7 @@ export type Database = {
           sender_ii: string | null
           sender_name: string | null
           shipment_code: string
+          status: string | null
           supplier_id: string | null
           toplam_kg_ds: number | null
           updated_at: string | null
@@ -1695,6 +1697,7 @@ export type Database = {
           cost?: number | null
           cost_currency?: string | null
           created_at?: string | null
+          currency?: string | null
           customer_id?: string | null
           delivery_date?: string | null
           destination?: string | null
@@ -1712,6 +1715,7 @@ export type Database = {
           sender_ii?: string | null
           sender_name?: string | null
           shipment_code: string
+          status?: string | null
           supplier_id?: string | null
           toplam_kg_ds?: number | null
           updated_at?: string | null
@@ -1723,6 +1727,7 @@ export type Database = {
           cost?: number | null
           cost_currency?: string | null
           created_at?: string | null
+          currency?: string | null
           customer_id?: string | null
           delivery_date?: string | null
           destination?: string | null
@@ -1740,6 +1745,7 @@ export type Database = {
           sender_ii?: string | null
           sender_name?: string | null
           shipment_code?: string
+          status?: string | null
           supplier_id?: string | null
           toplam_kg_ds?: number | null
           updated_at?: string | null
