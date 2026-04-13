@@ -29,7 +29,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     phone_2: "",
     src_belge_no: "",
     psikoteknik_belge_no: "",
-    ehliyet_sinifi: "",
+    ehliyet_sinifi: [] as string[],
     status: "Aktif"
   });
 
@@ -43,6 +43,11 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         
         setDriverCode(initialData.driver_code || "DRV-000001");
         
+        // Convert comma-separated string to array for ehliyet_sinifi
+        const ehliyetSiniflari = initialData.ehliyet_sinifi 
+          ? initialData.ehliyet_sinifi.split(',').map((s: string) => s.trim()).filter((s: string) => s)
+          : [];
+        
         const newFormData = {
           full_name: initialData.full_name || "",
           tc_no: initialData.tc_no || "",
@@ -50,7 +55,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
           phone_2: initialData.phone_2 || "",
           src_belge_no: initialData.src_belge_no || "",
           psikoteknik_belge_no: initialData.psikoteknik_belge_no || "",
-          ehliyet_sinifi: initialData.ehliyet_sinifi || "",
+          ehliyet_sinifi: ehliyetSiniflari,
           status: initialData.status || "Aktif"
         };
         
@@ -105,6 +110,9 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     try {
       setIsSubmitting(true);
       
+      // Convert ehliyet_sinifi array to comma-separated string
+      const ehliyetSinifiString = formData.ehliyet_sinifi.join(', ');
+      
       const submitData = {
         driver_code: driverCode,
         full_name: formData.full_name,
@@ -113,7 +121,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         phone_2: formData.phone_2 || null,
         src_belge_no: formData.src_belge_no || null,
         psikoteknik_belge_no: formData.psikoteknik_belge_no || null,
-        ehliyet_sinifi: formData.ehliyet_sinifi || null,
+        ehliyet_sinifi: ehliyetSinifiString || null,
         ehliyet_gecerlilik_tarihi: ehliyetGecerlilikTarihi || null,
         status: formData.status
       };
@@ -173,7 +181,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
       phone_2: "",
       src_belge_no: "",
       psikoteknik_belge_no: "",
-      ehliyet_sinifi: "",
+      ehliyet_sinifi: [],
       status: "Aktif"
     });
     setEhliyetGecerlilikTarihi("");
@@ -262,31 +270,57 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
           {/* Ehliyet Bilgileri */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Ehliyet Sınıfı</Label>
-              <Select value={formData.ehliyet_sinifi} onValueChange={(value) => setFormData({ ...formData, ehliyet_sinifi: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Ehliyet sınıfı seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="M">M (Moped)</SelectItem>
-                  <SelectItem value="A1">A1 (Motorsiklet 125cc)</SelectItem>
-                  <SelectItem value="A2">A2 (Motorsiklet 35kW)</SelectItem>
-                  <SelectItem value="A">A (Motorsiklet)</SelectItem>
-                  <SelectItem value="B1">B1 (Hafif Araç)</SelectItem>
-                  <SelectItem value="B">B (Otomobil)</SelectItem>
-                  <SelectItem value="BE">BE (Otomobil + Römork)</SelectItem>
-                  <SelectItem value="C1">C1 (Kamyonet)</SelectItem>
-                  <SelectItem value="C1E">C1E (Kamyonet + Römork)</SelectItem>
-                  <SelectItem value="C">C (Kamyon)</SelectItem>
-                  <SelectItem value="CE">CE (Kamyon + Römork)</SelectItem>
-                  <SelectItem value="D1">D1 (Minibüs)</SelectItem>
-                  <SelectItem value="D1E">D1E (Minibüs + Römork)</SelectItem>
-                  <SelectItem value="D">D (Otobüs)</SelectItem>
-                  <SelectItem value="DE">DE (Otobüs + Römork)</SelectItem>
-                  <SelectItem value="F">F (Traktör)</SelectItem>
-                  <SelectItem value="G">G (Özel Amaçlı Araç)</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Ehliyet Sınıfları</Label>
+              <div className="border rounded-md p-4 max-h-60 overflow-y-auto space-y-2">
+                {[
+                  { value: "M", label: "M (Moped)" },
+                  { value: "A1", label: "A1 (Motorsiklet 125cc)" },
+                  { value: "A2", label: "A2 (Motorsiklet 35kW)" },
+                  { value: "A", label: "A (Motorsiklet)" },
+                  { value: "B1", label: "B1 (Hafif Araç)" },
+                  { value: "B", label: "B (Otomobil)" },
+                  { value: "BE", label: "BE (Otomobil + Römork)" },
+                  { value: "C1", label: "C1 (Kamyonet)" },
+                  { value: "C1E", label: "C1E (Kamyonet + Römork)" },
+                  { value: "C", label: "C (Kamyon)" },
+                  { value: "CE", label: "CE (Kamyon + Römork)" },
+                  { value: "D1", label: "D1 (Minibüs)" },
+                  { value: "D1E", label: "D1E (Minibüs + Römork)" },
+                  { value: "D", label: "D (Otobüs)" },
+                  { value: "DE", label: "DE (Otobüs + Römork)" },
+                  { value: "F", label: "F (Traktör)" },
+                  { value: "G", label: "G (Özel Amaçlı Araç)" }
+                ].map((license) => (
+                  <div key={license.value} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`license-${license.value}`}
+                      checked={formData.ehliyet_sinifi.includes(license.value)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData({
+                            ...formData,
+                            ehliyet_sinifi: [...formData.ehliyet_sinifi, license.value]
+                          });
+                        } else {
+                          setFormData({
+                            ...formData,
+                            ehliyet_sinifi: formData.ehliyet_sinifi.filter(v => v !== license.value)
+                          });
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <label
+                      htmlFor={`license-${license.value}`}
+                      className="text-sm cursor-pointer select-none"
+                    >
+                      {license.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500">Birden fazla sınıf seçebilirsiniz</p>
             </div>
             <div className="space-y-2">
               <Label>Ehliyet Geçerlilik Tarihi</Label>
