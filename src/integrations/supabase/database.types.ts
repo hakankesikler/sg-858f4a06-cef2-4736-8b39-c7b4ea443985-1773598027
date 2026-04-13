@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -1694,6 +1694,7 @@ export type Database = {
           sender_name: string | null
           shipment_code: string
           status: string | null
+          supplier_id: string | null
           toplam_kg_ds: number | null
           updated_at: string | null
           vehicle_id: string | null
@@ -1731,6 +1732,7 @@ export type Database = {
           sender_name?: string | null
           shipment_code: string
           status?: string | null
+          supplier_id?: string | null
           toplam_kg_ds?: number | null
           updated_at?: string | null
           vehicle_id?: string | null
@@ -1768,6 +1770,7 @@ export type Database = {
           sender_name?: string | null
           shipment_code?: string
           status?: string | null
+          supplier_id?: string | null
           toplam_kg_ds?: number | null
           updated_at?: string | null
           vehicle_id?: string | null
@@ -1785,6 +1788,13 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
           {
