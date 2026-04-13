@@ -58,7 +58,16 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     vade_gunu: "",
     para_birimi: "TRY",
     durumu: "",
-    proje: ""
+    proje: "",
+    // Forwarder/Havayolu alanları
+    carrier_type: "karayolu",
+    iata_code: "",
+    fiata_number: "",
+    scac_code: "",
+    airline_prefix: "",
+    service_types: [] as string[],
+    service_regions: [] as string[],
+    equipment_types: [] as string[]
   });
 
   // Vade states
@@ -119,7 +128,16 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         vade_gunu: initialData.vade_gunu?.toString() || "",
         para_birimi: "TRY",
         durumu: "",
-        proje: ""
+        proje: "",
+        // Forwarder/Havayolu alanları
+        carrier_type: initialData.carrier_type || "karayolu",
+        iata_code: initialData.iata_code || "",
+        fiata_number: initialData.fiata_number || "",
+        scac_code: initialData.scac_code || "",
+        airline_prefix: initialData.airline_prefix || "",
+        service_types: Array.isArray(initialData.service_types) ? initialData.service_types : [],
+        service_regions: Array.isArray(initialData.service_regions) ? initialData.service_regions : [],
+        equipment_types: Array.isArray(initialData.equipment_types) ? initialData.equipment_types : []
       });
       
       setVadeGunuVar(!!initialData.vade_gunu);
@@ -189,7 +207,16 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       vade_gunu: "",
       para_birimi: "TRY",
       durumu: "",
-      proje: ""
+      proje: "",
+      // Forwarder/Havayolu alanları
+      carrier_type: "karayolu",
+      iata_code: "",
+      fiata_number: "",
+      scac_code: "",
+      airline_prefix: "",
+      service_types: [],
+      service_regions: [],
+      equipment_types: []
     });
     setVadeGunuVar(false);
     setVadeGunuSayisi("");
@@ -258,7 +285,16 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         work_area: formData.work_area || null,
         specialty: formData.specialty.length > 0 ? formData.specialty : null,
         payment_method: formData.payment_method || null,
-        payment_day: formData.payment_day ? parseInt(formData.payment_day) : null
+        payment_day: formData.payment_day ? parseInt(formData.payment_day) : null,
+        // Forwarder/Havayolu fields
+        carrier_type: formData.carrier_type || null,
+        iata_code: formData.iata_code || null,
+        fiata_number: formData.fiata_number || null,
+        scac_code: formData.scac_code || null,
+        airline_prefix: formData.airline_prefix || null,
+        service_types: formData.service_types.length > 0 ? formData.service_types : null,
+        service_regions: formData.service_regions.length > 0 ? formData.service_regions : null,
+        equipment_types: formData.equipment_types.length > 0 ? formData.equipment_types : null
       };
 
       console.log("=== SUBMITTING CUSTOMER DATA ===");
@@ -421,6 +457,24 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                         <option value="diger">Diğer Tedarikçiler</option>
                       </select>
                     </div>
+                    
+                    {/* Taşıyıcı Türü - Forwarder seçildiğinde göster */}
+                    {formData.supplier_category === "forwarder" && (
+                      <div className="space-y-2">
+                        <Label>Taşıyıcı Türü</Label>
+                        <select
+                          value={formData.carrier_type}
+                          onChange={(e) => setFormData({ ...formData, carrier_type: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md"
+                        >
+                          <option value="karayolu">Karayolu</option>
+                          <option value="forwarder">Freight Forwarder</option>
+                          <option value="nvocc">NVOCC</option>
+                          <option value="havayolu_acentesi">Havayolu Acentesi</option>
+                          <option value="gsa">GSA</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -508,6 +562,24 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                         <option value="diger">Diğer Tedarikçiler</option>
                       </select>
                     </div>
+                    
+                    {/* Taşıyıcı Türü - Forwarder seçildiğinde göster */}
+                    {formData.supplier_category === "forwarder" && (
+                      <div className="space-y-2">
+                        <Label>Taşıyıcı Türü</Label>
+                        <select
+                          value={formData.carrier_type}
+                          onChange={(e) => setFormData({ ...formData, carrier_type: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md"
+                        >
+                          <option value="karayolu">Karayolu</option>
+                          <option value="forwarder">Freight Forwarder</option>
+                          <option value="nvocc">NVOCC</option>
+                          <option value="havayolu_acentesi">Havayolu Acentesi</option>
+                          <option value="gsa">GSA</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -844,6 +916,272 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     <p className="text-sm text-blue-800">
                       <strong>Not:</strong> Sürücü, araç ve banka hesap bilgileri cari kaydedildikten sonra cari detay sayfasından eklenebilir.
                     </p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Forwarder/NVOCC/Havayolu Acentesi Specific Fields */}
+            {formData.account_type === "tedarikci" && formData.supplier_category === "forwarder" && (
+              <>
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="text-lg font-semibold mb-4">
+                    {formData.carrier_type === "forwarder" && "Forwarder Bilgileri"}
+                    {formData.carrier_type === "nvocc" && "NVOCC Bilgileri"}
+                    {formData.carrier_type === "havayolu_acentesi" && "Havayolu Acentesi Bilgileri"}
+                    {formData.carrier_type === "gsa" && "GSA Bilgileri"}
+                    {formData.carrier_type === "karayolu" && "Karayolu Taşıyıcı Bilgileri"}
+                  </h3>
+                  
+                  {/* Genel Bilgiler */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="space-y-2">
+                      <Label>Ticaret Sicil No</Label>
+                      <Input
+                        type="text"
+                        value={formData.ticaret_sicil_no}
+                        onChange={(e) => setFormData({ ...formData, ticaret_sicil_no: e.target.value })}
+                        placeholder="Ticaret sicil numarası"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Fatura / E-Fatura E-posta</Label>
+                      <Input
+                        type="email"
+                        value={formData.invoice_email}
+                        onChange={(e) => setFormData({ ...formData, invoice_email: e.target.value })}
+                        placeholder="fatura@firma.com"
+                      />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Şube Adresi (varsa)</Label>
+                      <Input
+                        type="text"
+                        value={formData.branch_address}
+                        onChange={(e) => setFormData({ ...formData, branch_address: e.target.value })}
+                        placeholder="Şube adresi"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Taşıyıcı Kodları */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    {(formData.carrier_type === "forwarder" || formData.carrier_type === "nvocc" || formData.carrier_type === "havayolu_acentesi") && (
+                      <div className="space-y-2">
+                        <Label>IATA Kodu</Label>
+                        <Input
+                          type="text"
+                          value={formData.iata_code}
+                          onChange={(e) => setFormData({ ...formData, iata_code: e.target.value })}
+                          placeholder="örn: IST123"
+                          maxLength={6}
+                        />
+                      </div>
+                    )}
+
+                    {(formData.carrier_type === "forwarder" || formData.carrier_type === "nvocc") && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>FIATA No</Label>
+                          <Input
+                            type="text"
+                            value={formData.fiata_number}
+                            onChange={(e) => setFormData({ ...formData, fiata_number: e.target.value })}
+                            placeholder="FIATA numarası"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>SCAC Kodu</Label>
+                          <Input
+                            type="text"
+                            value={formData.scac_code}
+                            onChange={(e) => setFormData({ ...formData, scac_code: e.target.value })}
+                            placeholder="SCAC"
+                            maxLength={4}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {formData.carrier_type === "havayolu_acentesi" && (
+                      <div className="space-y-2">
+                        <Label>Airline Prefix</Label>
+                        <Input
+                          type="text"
+                          value={formData.airline_prefix}
+                          onChange={(e) => setFormData({ ...formData, airline_prefix: e.target.value })}
+                          placeholder="örn: 235"
+                          maxLength={3}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Yetkili Bilgileri */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="space-y-2">
+                      <Label>Yetkili Adı Soyadı</Label>
+                      <Input
+                        type="text"
+                        value={formData.authorized_person_name}
+                        onChange={(e) => setFormData({ ...formData, authorized_person_name: e.target.value })}
+                        placeholder="Ad Soyad"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Yetkili Telefonu</Label>
+                      <Input
+                        type="tel"
+                        value={formData.authorized_person_phone}
+                        onChange={(e) => setFormData({ ...formData, authorized_person_phone: e.target.value })}
+                        placeholder="0555 555 55 55"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Yetkili E-posta</Label>
+                      <Input
+                        type="email"
+                        value={formData.authorized_person_email}
+                        onChange={(e) => setFormData({ ...formData, authorized_person_email: e.target.value })}
+                        placeholder="yetkili@firma.com"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Hizmet Türleri (Forwarder/NVOCC için) */}
+                  {(formData.carrier_type === "forwarder" || formData.carrier_type === "nvocc") && (
+                    <div className="space-y-2 mb-4">
+                      <Label>Hizmet Türleri</Label>
+                      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 border rounded-md p-3">
+                        {["FCL", "LCL", "AIR_EXPORT", "AIR_IMPORT", "TRANSIT", "DEPOLAMA"].map((service) => (
+                          <label key={service} className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={formData.service_types.includes(service)}
+                              onChange={(e) => {
+                                const newServices = e.target.checked
+                                  ? [...formData.service_types, service]
+                                  : formData.service_types.filter(s => s !== service);
+                                setFormData({ ...formData, service_types: newServices });
+                              }}
+                              className="rounded"
+                            />
+                            <span className="text-sm">{service}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hizmet Türleri (Havayolu için) */}
+                  {formData.carrier_type === "havayolu_acentesi" && (
+                    <div className="space-y-2 mb-4">
+                      <Label>Hava Kargo Servisleri</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 border rounded-md p-3">
+                        {["GENERAL", "DG", "PERISHABLE", "PHARMA", "EXPRESS"].map((service) => (
+                          <label key={service} className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={formData.service_types.includes(service)}
+                              onChange={(e) => {
+                                const newServices = e.target.checked
+                                  ? [...formData.service_types, service]
+                                  : formData.service_types.filter(s => s !== service);
+                                setFormData({ ...formData, service_types: newServices });
+                              }}
+                              className="rounded"
+                            />
+                            <span className="text-sm">{service}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Çalışma Bölgeleri */}
+                  <div className="space-y-2 mb-4">
+                    <Label>Çalışma Bölgeleri</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-2 border rounded-md p-3">
+                      {["AVRUPA", "UZAKDOGU", "AMERIKA", "ORTADOGU", "AFRIKA", "TURKIYE"].map((region) => (
+                        <label key={region} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={formData.service_regions.includes(region)}
+                            onChange={(e) => {
+                              const newRegions = e.target.checked
+                                ? [...formData.service_regions, region]
+                                : formData.service_regions.filter(r => r !== region);
+                              setFormData({ ...formData, service_regions: newRegions });
+                            }}
+                            className="rounded"
+                          />
+                          <span className="text-sm capitalize">{region.toLowerCase()}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Ekipman Tipleri (Denizyolu için) */}
+                  {(formData.carrier_type === "forwarder" || formData.carrier_type === "nvocc") && (
+                    <div className="space-y-2 mb-4">
+                      <Label>Ekipman Tipleri (Denizyolu)</Label>
+                      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 border rounded-md p-3">
+                        {["20DC", "40DC", "40HC", "OT", "FR", "REEFER"].map((equip) => (
+                          <label key={equip} className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={formData.equipment_types.includes(equip)}
+                              onChange={(e) => {
+                                const newEquipment = e.target.checked
+                                  ? [...formData.equipment_types, equip]
+                                  : formData.equipment_types.filter(eq => eq !== equip);
+                                setFormData({ ...formData, equipment_types: newEquipment });
+                              }}
+                              className="rounded"
+                            />
+                            <span className="text-sm">{equip}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ödeme Bilgileri */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Ödeme Şekli</Label>
+                      <select
+                        value={formData.payment_method}
+                        onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-md"
+                      >
+                        <option value="">Seçiniz</option>
+                        <option value="nakit">Nakit</option>
+                        <option value="havale">Havale</option>
+                        <option value="vadeli">Vadeli</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Anlaşılan Vade</Label>
+                      <select
+                        value={formData.payment_day}
+                        onChange={(e) => setFormData({ ...formData, payment_day: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-md"
+                      >
+                        <option value="">Seçiniz</option>
+                        <option value="7">7 Gün</option>
+                        <option value="15">15 Gün</option>
+                        <option value="30">30 Gün</option>
+                        <option value="45">45 Gün</option>
+                        <option value="60">60 Gün</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </>

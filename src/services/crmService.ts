@@ -39,6 +39,15 @@ export interface Customer {
   specialty?: string[] | null;
   payment_method?: string | null;
   payment_day?: number | null;
+  // Forwarder/Havayolu alanları
+  carrier_type?: string | null;
+  iata_code?: string | null;
+  fiata_number?: string | null;
+  scac_code?: string | null;
+  airline_prefix?: string | null;
+  service_types?: string[] | null;
+  service_regions?: string[] | null;
+  equipment_types?: string[] | null;
 }
 
 export const crmService = {
