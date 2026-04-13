@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -1663,15 +1663,10 @@ export type Database = {
       shipments: {
         Row: {
           adet: number | null
-          cargo_description: string | null
-          cargo_type: string | null
-          cargo_volume: number | null
-          cargo_weight: number | null
           cinsi: string | null
           cost: number | null
           cost_currency: string | null
           created_at: string | null
-          currency: string | null
           customer_id: string | null
           delivery_date: string | null
           destination: string | null
@@ -1679,11 +1674,8 @@ export type Database = {
           estimated_delivery_date: string | null
           id: string
           kg_ds: number | null
-          notes: string | null
           origin: string | null
-          payment_status: string | null
           pickup_date: string | null
-          price: number | null
           receiver: string | null
           receiver_district: string | null
           receiver_ii: string | null
@@ -1692,7 +1684,6 @@ export type Database = {
           sender_ii: string | null
           sender_name: string | null
           shipment_code: string
-          status: string | null
           supplier_id: string | null
           toplam_kg_ds: number | null
           updated_at: string | null
@@ -1700,15 +1691,10 @@ export type Database = {
         }
         Insert: {
           adet?: number | null
-          cargo_description?: string | null
-          cargo_type?: string | null
-          cargo_volume?: number | null
-          cargo_weight?: number | null
           cinsi?: string | null
           cost?: number | null
           cost_currency?: string | null
           created_at?: string | null
-          currency?: string | null
           customer_id?: string | null
           delivery_date?: string | null
           destination?: string | null
@@ -1716,11 +1702,8 @@ export type Database = {
           estimated_delivery_date?: string | null
           id?: string
           kg_ds?: number | null
-          notes?: string | null
           origin?: string | null
-          payment_status?: string | null
           pickup_date?: string | null
-          price?: number | null
           receiver?: string | null
           receiver_district?: string | null
           receiver_ii?: string | null
@@ -1729,7 +1712,6 @@ export type Database = {
           sender_ii?: string | null
           sender_name?: string | null
           shipment_code: string
-          status?: string | null
           supplier_id?: string | null
           toplam_kg_ds?: number | null
           updated_at?: string | null
@@ -1737,15 +1719,10 @@ export type Database = {
         }
         Update: {
           adet?: number | null
-          cargo_description?: string | null
-          cargo_type?: string | null
-          cargo_volume?: number | null
-          cargo_weight?: number | null
           cinsi?: string | null
           cost?: number | null
           cost_currency?: string | null
           created_at?: string | null
-          currency?: string | null
           customer_id?: string | null
           delivery_date?: string | null
           destination?: string | null
@@ -1753,11 +1730,8 @@ export type Database = {
           estimated_delivery_date?: string | null
           id?: string
           kg_ds?: number | null
-          notes?: string | null
           origin?: string | null
-          payment_status?: string | null
           pickup_date?: string | null
-          price?: number | null
           receiver?: string | null
           receiver_district?: string | null
           receiver_ii?: string | null
@@ -1766,7 +1740,6 @@ export type Database = {
           sender_ii?: string | null
           sender_name?: string | null
           shipment_code?: string
-          status?: string | null
           supplier_id?: string | null
           toplam_kg_ds?: number | null
           updated_at?: string | null
