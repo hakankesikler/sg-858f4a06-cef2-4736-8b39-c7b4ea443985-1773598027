@@ -29,6 +29,7 @@ export const driverService = {
       throw error;
     }
 
+    console.log("Drivers fetched from database:", data);
     return data || [];
   },
 
