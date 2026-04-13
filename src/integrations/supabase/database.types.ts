@@ -348,18 +348,27 @@ export type Database = {
         Row: {
           account_type: string | null
           address: string | null
+          airline_prefix: string | null
           authorized_person_email: string | null
           authorized_person_name: string | null
           authorized_person_phone: string | null
           branch_address: string | null
+          carrier_type: string | null
           city: string | null
           company: string | null
+          contract_file_url: string | null
           created_at: string | null
           customer_code: string | null
           district: string | null
           email: string | null
+          equipment_types: string[] | null
           fax: string | null
+          fiata_number: string | null
+          has_contract: boolean | null
+          iata_code: string | null
           id: string
+          imo_ism_number: string | null
+          insurance_type: string | null
           invoice_email: string | null
           last_contact: string | null
           mersis: string | null
@@ -368,8 +377,12 @@ export type Database = {
           payment_day: number | null
           payment_method: string | null
           phone: string | null
+          policy_number: string | null
           postal_code: string | null
           sabit_iskonto: number | null
+          scac_code: string | null
+          service_regions: string[] | null
+          service_types: string[] | null
           short_name: string | null
           specialty: string[] | null
           status: string | null
@@ -387,18 +400,27 @@ export type Database = {
         Insert: {
           account_type?: string | null
           address?: string | null
+          airline_prefix?: string | null
           authorized_person_email?: string | null
           authorized_person_name?: string | null
           authorized_person_phone?: string | null
           branch_address?: string | null
+          carrier_type?: string | null
           city?: string | null
           company?: string | null
+          contract_file_url?: string | null
           created_at?: string | null
           customer_code?: string | null
           district?: string | null
           email?: string | null
+          equipment_types?: string[] | null
           fax?: string | null
+          fiata_number?: string | null
+          has_contract?: boolean | null
+          iata_code?: string | null
           id?: string
+          imo_ism_number?: string | null
+          insurance_type?: string | null
           invoice_email?: string | null
           last_contact?: string | null
           mersis?: string | null
@@ -407,8 +429,12 @@ export type Database = {
           payment_day?: number | null
           payment_method?: string | null
           phone?: string | null
+          policy_number?: string | null
           postal_code?: string | null
           sabit_iskonto?: number | null
+          scac_code?: string | null
+          service_regions?: string[] | null
+          service_types?: string[] | null
           short_name?: string | null
           specialty?: string[] | null
           status?: string | null
@@ -426,18 +452,27 @@ export type Database = {
         Update: {
           account_type?: string | null
           address?: string | null
+          airline_prefix?: string | null
           authorized_person_email?: string | null
           authorized_person_name?: string | null
           authorized_person_phone?: string | null
           branch_address?: string | null
+          carrier_type?: string | null
           city?: string | null
           company?: string | null
+          contract_file_url?: string | null
           created_at?: string | null
           customer_code?: string | null
           district?: string | null
           email?: string | null
+          equipment_types?: string[] | null
           fax?: string | null
+          fiata_number?: string | null
+          has_contract?: boolean | null
+          iata_code?: string | null
           id?: string
+          imo_ism_number?: string | null
+          insurance_type?: string | null
           invoice_email?: string | null
           last_contact?: string | null
           mersis?: string | null
@@ -446,8 +481,12 @@ export type Database = {
           payment_day?: number | null
           payment_method?: string | null
           phone?: string | null
+          policy_number?: string | null
           postal_code?: string | null
           sabit_iskonto?: number | null
+          scac_code?: string | null
+          service_regions?: string[] | null
+          service_types?: string[] | null
           short_name?: string | null
           specialty?: string[] | null
           status?: string | null
