@@ -336,6 +336,24 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
           {/* Ehliyet Dosyası */}
           <div className="space-y-2">
             <Label>Ehliyet Dosyası</Label>
+            
+            {/* Show existing file if available */}
+            {editMode && initialData?.ehliyet_dosyasi_url && !ehliyetFile && (
+              <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-blue-700">Mevcut dosya:</span>
+                  <a
+                    href={initialData.ehliyet_dosyasi_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                  >
+                    📎 Dosyayı Görüntüle
+                  </a>
+                </div>
+              </div>
+            )}
+            
             <div className="flex items-center gap-2">
               <Input
                 type="file"
