@@ -30,6 +30,8 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
     kasa_tipi: "",
     tasima_kapasitesi_kg: "",
     yetki_belgesi: "",
+    ruhsat_sahibi: "",
+    ruhsat_no: "",
     status: "Aktif"
   });
 
@@ -44,6 +46,8 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         kasa_tipi: initialData.kasa_tipi || "",
         tasima_kapasitesi_kg: initialData.tasima_kapasitesi_kg?.toString() || "",
         yetki_belgesi: initialData.yetki_belgesi || "",
+        ruhsat_sahibi: initialData.ruhsat_sahibi || "",
+        ruhsat_no: initialData.ruhsat_no || "",
         status: initialData.status || "Aktif"
       });
       if (initialData.kasko_bitis_tarihi) {
@@ -105,6 +109,8 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         kasko_bitis_tarihi: kaskoBitisTarihi || null,
         trafik_sigortasi_bitis_tarihi: trafikSigortasiBitisTarihi || null,
         yetki_belgesi: formData.yetki_belgesi || null,
+        ruhsat_sahibi: formData.ruhsat_sahibi || null,
+        ruhsat_no: formData.ruhsat_no || null,
         status: formData.status
       };
 
@@ -163,6 +169,8 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
       kasa_tipi: "",
       tasima_kapasitesi_kg: "",
       yetki_belgesi: "",
+      ruhsat_sahibi: "",
+      ruhsat_no: "",
       status: "Aktif"
     });
     setKaskoBitisTarihi("");
@@ -281,9 +289,47 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
             />
           </div>
 
+          {/* Ruhsat Bilgileri */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Ruhsat Sahibi Adı Soyadı</Label>
+              <Input
+                value={formData.ruhsat_sahibi}
+                onChange={(e) => setFormData({ ...formData, ruhsat_sahibi: e.target.value })}
+                placeholder="Ahmet Yılmaz"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Ruhsat No</Label>
+              <Input
+                value={formData.ruhsat_no}
+                onChange={(e) => setFormData({ ...formData, ruhsat_no: e.target.value })}
+                placeholder="ABC123456"
+              />
+            </div>
+          </div>
+
           {/* Ruhsat Dosyası */}
           <div className="space-y-2">
             <Label>Ruhsat Dosyası</Label>
+            
+            {/* Show existing file if available */}
+            {editMode && initialData?.ruhsat_dosyasi_url && !ruhsatFile && (
+              <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-blue-700">Mevcut dosya:</span>
+                  <a
+                    href={initialData.ruhsat_dosyasi_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                  >
+                    📎 Dosyayı Görüntüle
+                  </a>
+                </div>
+              </div>
+            )}
+            
             <div className="flex items-center gap-2">
               <Input
                 type="file"
