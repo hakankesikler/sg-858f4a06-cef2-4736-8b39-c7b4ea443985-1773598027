@@ -192,15 +192,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.origin || !formData.destination) {
-      toast({
-        title: "Hata",
-        description: "Lütfen çıkış ve varış noktalarını girin",
-        variant: "destructive",
-      });
-      return;
-    }
 
     try {
       setIsSubmitting(true);
@@ -211,8 +202,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         driver_id: formData.driver_id || null,
         vehicle_id: formData.vehicle_id || null,
         customer_id: formData.customer_id || null,
-        origin: formData.origin,
-        destination: formData.destination,
+        origin: formData.origin || null,
+        destination: formData.destination || null,
         pickup_date: pickupDate || null,
         delivery_date: deliveryDate || null,
         estimated_delivery_date: estimatedDeliveryDate || null,
@@ -548,31 +539,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     <SelectItem value="EUR">EUR</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Rota Bilgileri */}
-          <div className="border-t pt-4">
-            <h3 className="font-semibold mb-4">Rota Bilgileri</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Çıkış Noktası *</Label>
-                <Input
-                  value={formData.origin}
-                  onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                  placeholder="Örn: İzmir"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Varış Noktası *</Label>
-                <Input
-                  value={formData.destination}
-                  onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                  placeholder="Örn: Ankara"
-                  required
-                />
               </div>
             </div>
           </div>

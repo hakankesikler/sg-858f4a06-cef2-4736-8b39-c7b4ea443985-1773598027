@@ -1674,13 +1674,13 @@ export type Database = {
           currency: string | null
           customer_id: string | null
           delivery_date: string | null
-          destination: string
+          destination: string | null
           driver_id: string | null
           estimated_delivery_date: string | null
           id: string
           kg_ds: number | null
           notes: string | null
-          origin: string
+          origin: string | null
           payment_status: string | null
           pickup_date: string | null
           price: number | null
@@ -1711,13 +1711,13 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           delivery_date?: string | null
-          destination: string
+          destination?: string | null
           driver_id?: string | null
           estimated_delivery_date?: string | null
           id?: string
           kg_ds?: number | null
           notes?: string | null
-          origin: string
+          origin?: string | null
           payment_status?: string | null
           pickup_date?: string | null
           price?: number | null
@@ -1748,13 +1748,13 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           delivery_date?: string | null
-          destination?: string
+          destination?: string | null
           driver_id?: string | null
           estimated_delivery_date?: string | null
           id?: string
           kg_ds?: number | null
           notes?: string | null
-          origin?: string
+          origin?: string | null
           payment_status?: string | null
           pickup_date?: string | null
           price?: number | null
