@@ -51,6 +51,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     payment_status: "beklemede",
     status: "beklemede",
     notes: "",
+    sender_name: "",
     sender_ii: "",
     receiver: "",
     receiver_district: "",
@@ -114,6 +115,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         payment_status: initialData.payment_status || "beklemede",
         status: initialData.status || "beklemede",
         notes: initialData.notes || "",
+        sender_name: initialData.sender_name || "",
         sender_ii: initialData.sender_ii || "",
         receiver: initialData.receiver || "",
         receiver_district: initialData.receiver_district || "",
@@ -211,6 +213,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         payment_status: formData.payment_status,
         status: formData.status,
         notes: formData.notes || null,
+        sender_name: formData.sender_name || null,
         sender_ii: formData.sender_ii || null,
         receiver: formData.receiver || null,
         receiver_district: formData.receiver_district || null,
@@ -269,6 +272,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       payment_status: "beklemede",
       status: "beklemede",
       notes: "",
+      sender_name: "",
       sender_ii: "",
       receiver: "",
       receiver_district: "",
@@ -334,7 +338,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Müşteri (Gönderici)</Label>
+              <Label>Müşteri</Label>
               <Select value={formData.customer_id} onValueChange={(value) => setFormData({ ...formData, customer_id: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Müşteri seçin" />
@@ -350,10 +354,18 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
           </div>
 
-          {/* Gönderici II - Alıcı Bilgileri */}
+          {/* Gönderici ve Alıcı Bilgileri */}
           <div className="border-t pt-4">
             <h3 className="font-semibold mb-4">Gönderici ve Alıcı Detayları</h3>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <Label>Gönderici Adı/Firma</Label>
+                <Input
+                  value={formData.sender_name}
+                  onChange={(e) => setFormData({ ...formData, sender_name: e.target.value })}
+                  placeholder="Gönderici adı veya firma"
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Gönderici II</Label>
                 <Input
@@ -363,11 +375,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 />
               </div>
               <div className="space-y-2">
-                <Label>Alıcı</Label>
+                <Label>Alıcı Adı/Firma</Label>
                 <Input
                   value={formData.receiver}
                   onChange={(e) => setFormData({ ...formData, receiver: e.target.value })}
-                  placeholder="Alıcı adı/firma"
+                  placeholder="Alıcı adı veya firma"
                 />
               </div>
               <div className="space-y-2">

@@ -20,6 +20,7 @@ export interface Shipment {
   payment_status?: string;
   status?: string;
   notes?: string | null;
+  sender_name?: string | null;
   sender_ii?: string | null;
   receiver?: string | null;
   receiver_district?: string | null;
