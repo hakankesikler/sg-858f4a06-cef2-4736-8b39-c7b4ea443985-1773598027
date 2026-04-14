@@ -289,7 +289,18 @@ export function LogisticsModule() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => generateWaybill(shipment)}
+                            onClick={async () => {
+                              try {
+                                await generateWaybill(shipment);
+                              } catch (error) {
+                                console.error("Error generating waybill:", error);
+                                toast({
+                                  title: "Hata",
+                                  description: "İrsaliye oluşturulurken bir hata oluştu",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
                             title="İrsaliye İndir"
                           >
                             <FileDown className="h-4 w-4 text-blue-600" />

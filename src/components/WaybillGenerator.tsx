@@ -25,7 +25,17 @@ interface WaybillData {
   toplam_kg_ds?: number;
 }
 
-export const generateWaybill = (shipment: WaybillData) => {
+const loadImage = (src: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+};
+
+export const generateWaybill = async (shipment: WaybillData) => {
   const doc = new jsPDF();
   
   // Page dimensions
@@ -41,15 +51,23 @@ export const generateWaybill = (shipment: WaybillData) => {
   doc.setFillColor(...primaryColor);
   doc.rect(0, 0, pageWidth, 40, "F");
   
-  // Company name
+  // Load and add logo
+  try {
+    const logo = await loadImage("/rex-logo-circle.png");
+    doc.addImage(logo, "PNG", 15, 5, 30, 30);
+  } catch (error) {
+    console.warn("Logo could not be loaded:", error);
+  }
+  
+  // Company name (next to logo)
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(24);
   doc.setFont("helvetica", "bold");
-  doc.text("REX LOJİSTİK", pageWidth / 2, 20, { align: "center" });
+  doc.text("REX LOJİSTİK", 50, 20);
   
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
-  doc.text("SEVK İRSALİYESİ", pageWidth / 2, 30, { align: "center" });
+  doc.text("SEVK İRSALİYESİ", 50, 30);
   
   // Reset text color
   doc.setTextColor(...darkColor);
@@ -221,7 +239,7 @@ export const generateWaybill = (shipment: WaybillData) => {
   doc.setFontSize(7);
   doc.setTextColor(128, 128, 128);
   doc.text(
-    "Bu belge elektronik ortamda oluşturulmuştur. Geçerlilik için islak imza gerekmektedir.",
+    "Bu belge elektronik ortamda oluşturulmuştur. Geçerlilik için ıslak imza gerekmektedir.",
     pageWidth / 2,
     pageHeight - 10,
     { align: "center" }
