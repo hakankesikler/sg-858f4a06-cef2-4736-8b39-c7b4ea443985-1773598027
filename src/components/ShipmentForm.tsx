@@ -41,6 +41,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [senderSuggestions, setSenderSuggestions] = useState<string[]>([]);
   const [receiverSuggestions, setReceiverSuggestions] = useState<string[]>([]);
   const [districtSuggestions, setDistrictSuggestions] = useState<string[]>([]);
+  const [originSuggestions, setOriginSuggestions] = useState<string[]>([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState<string[]>([]);
   
   // Cargo items state
   const [cargoItems, setCargoItems] = useState<CargoItemInput[]>([
@@ -307,9 +309,25 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           .filter(Boolean)
       )].sort();
       
+      // Extract unique origin cities (gönderici il)
+      const origins = [...new Set(
+        shipments
+          .map(s => s.origin)
+          .filter(Boolean)
+      )].sort();
+      
+      // Extract unique destination cities (alıcı il)
+      const destinations = [...new Set(
+        shipments
+          .map(s => s.destination)
+          .filter(Boolean)
+      )].sort();
+      
       setSenderSuggestions(senders);
       setReceiverSuggestions(receivers);
       setDistrictSuggestions(districts);
+      setOriginSuggestions(origins);
+      setDestinationSuggestions(destinations);
     } catch (error) {
       console.error("Error loading suggestions:", error);
     }
@@ -561,7 +579,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
             
             {/* Gönderici ve Alıcı */}
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-7 gap-4">
               <div className="space-y-2">
                 <Label>Gönderici Adı/Firma</Label>
                 <Input
@@ -576,6 +594,20 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   ))}
                   {customers.map((customer) => (
                     <option key={customer.id} value={customer.name || ""} />
+                  ))}
+                </datalist>
+              </div>
+              <div className="space-y-2">
+                <Label>Gönderici İl</Label>
+                <Input
+                  list="origin-suggestions"
+                  value={formData.origin}
+                  onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                  placeholder="İl"
+                />
+                <datalist id="origin-suggestions">
+                  {originSuggestions.map((suggestion, idx) => (
+                    <option key={idx} value={suggestion} />
                   ))}
                 </datalist>
               </div>
@@ -614,6 +646,20 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 />
                 <datalist id="district-suggestions">
                   {districtSuggestions.map((suggestion, idx) => (
+                    <option key={idx} value={suggestion} />
+                  ))}
+                </datalist>
+              </div>
+              <div className="space-y-2">
+                <Label>Alıcı İl</Label>
+                <Input
+                  list="destination-suggestions"
+                  value={formData.destination}
+                  onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
+                  placeholder="İl"
+                />
+                <datalist id="destination-suggestions">
+                  {destinationSuggestions.map((suggestion, idx) => (
                     <option key={idx} value={suggestion} />
                   ))}
                 </datalist>
