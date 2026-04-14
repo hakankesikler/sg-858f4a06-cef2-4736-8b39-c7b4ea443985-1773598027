@@ -37,9 +37,10 @@ export const shipmentService = {
       .from("shipments")
       .select(`
         *,
+        supplier:customers!shipments_supplier_id_fkey(id, customer_code, name),
         driver:drivers(id, driver_code, full_name),
         vehicle:vehicles(id, vehicle_code, cekici_plakasi, arac_tipi),
-        customer:customers(id, customer_code, name)
+        customer:customers!shipments_customer_id_fkey(id, customer_code, name)
       `)
       .order("created_at", { ascending: false });
 
