@@ -38,6 +38,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [customers, setCustomers] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   
+  // Suggestions from past shipments
+  const [senderSuggestions, setSenderSuggestions] = useState<string[]>([]);
+  const [receiverSuggestions, setReceiverSuggestions] = useState<string[]>([]);
+  const [districtSuggestions, setDistrictSuggestions] = useState<string[]>([]);
+  
   // Cargo items state
   const [cargoItems, setCargoItems] = useState<CargoItemInput[]>([
     { adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }
@@ -276,8 +281,44 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       
       setCustomers(customersList);
       setSuppliers(suppliersList);
+      
+      // Load suggestions from past shipments
+      await loadSuggestions();
     } catch (error) {
       console.error("Error loading selection data:", error);
+    }
+  };
+
+  const loadSuggestions = async () => {
+    try {
+      const shipments = await shipmentService.getShipments();
+      
+      // Extract unique sender names
+      const senders = [...new Set(
+        shipments
+          .map(s => s.sender_name)
+          .filter(Boolean)
+      )].sort();
+      
+      // Extract unique receiver names
+      const receivers = [...new Set(
+        shipments
+          .map(s => s.receiver)
+          .filter(Boolean)
+      )].sort();
+      
+      // Extract unique receiver districts
+      const districts = [...new Set(
+        shipments
+          .map(s => s.receiver_district)
+          .filter(Boolean)
+      )].sort();
+      
+      setSenderSuggestions(senders);
+      setReceiverSuggestions(receivers);
+      setDistrictSuggestions(districts);
+    } catch (error) {
+      console.error("Error loading suggestions:", error);
     }
   };
 
@@ -288,6 +329,28 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     } catch (error) {
       console.error("Error loading next shipment code:", error);
       setShipmentCode("SHP-000001");
+    }
+  };
+
+  const handleCustomerChange = (customerId: string) => {
+    setFormData({ ...formData, customer_id: customerId });
+    
+    // Auto-fill sender/receiver details from selected customer
+    const selectedCustomer = customers.find(c => c.id === customerId);
+    if (selectedCustomer && !editMode) {
+      // Only auto-fill if not in edit mode (don't overwrite existing data)
+      const customerName = selectedCustomer.name || "";
+      const customerCity = selectedCustomer.city || "";
+      const customerDistrict = selectedCustomer.district || "";
+      
+      // Auto-fill sender if empty
+      if (!formData.sender_name) {
+        setFormData(prev => ({
+          ...prev,
+          customer_id: customerId,
+          sender_name: customerName
+        }));
+      }
     }
   };
 
@@ -491,7 +554,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div className="space-y-2">
                 <Label>Müşteri (Ödeme Sorumlusu)</Label>
-                <Select value={formData.customer_id} onValueChange={(value) => setFormData({ ...formData, customer_id: value })}>
+                <Select value={formData.customer_id} onValueChange={handleCustomerChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Müşteri seçin" />
                   </SelectTrigger>
@@ -511,10 +574,19 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               <div className="space-y-2">
                 <Label>Gönderici Adı/Firma</Label>
                 <Input
+                  list="sender-suggestions"
                   value={formData.sender_name}
                   onChange={(e) => setFormData({ ...formData, sender_name: e.target.value })}
                   placeholder="Gönderici adı veya firma"
                 />
+                <datalist id="sender-suggestions">
+                  {senderSuggestions.map((suggestion, idx) => (
+                    <option key={idx} value={suggestion} />
+                  ))}
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.name || ""} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-2">
                 <Label>Gönderici II</Label>
@@ -527,18 +599,33 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               <div className="space-y-2">
                 <Label>Alıcı Adı/Firma</Label>
                 <Input
+                  list="receiver-suggestions"
                   value={formData.receiver}
                   onChange={(e) => setFormData({ ...formData, receiver: e.target.value })}
                   placeholder="Alıcı adı veya firma"
                 />
+                <datalist id="receiver-suggestions">
+                  {receiverSuggestions.map((suggestion, idx) => (
+                    <option key={idx} value={suggestion} />
+                  ))}
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.name || ""} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-2">
                 <Label>Alıcı İlçe</Label>
                 <Input
+                  list="district-suggestions"
                   value={formData.receiver_district}
                   onChange={(e) => setFormData({ ...formData, receiver_district: e.target.value })}
                   placeholder="İlçe"
                 />
+                <datalist id="district-suggestions">
+                  {districtSuggestions.map((suggestion, idx) => (
+                    <option key={idx} value={suggestion} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-2">
                 <Label>Alıcı II</Label>
