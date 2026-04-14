@@ -219,9 +219,11 @@ export function LogisticsModule() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="p-4 text-left text-sm font-semibold">YÜKLEME</th>
+                    <th className="p-4 text-left text-sm font-semibold">GÖNDERİCİ</th>
+                    <th className="p-4 text-left text-sm font-semibold">ALICI</th>
                     <th className="p-4 text-left text-sm font-semibold">SÜRÜCÜ</th>
                     <th className="p-4 text-left text-sm font-semibold">ARAÇ</th>
-                    <th className="p-4 text-left text-sm font-semibold">YÜKLEME</th>
                     <th className="p-4 text-left text-sm font-semibold">TESLİM TARİHİ</th>
                     <th className="p-4 text-left text-sm font-semibold">TESLİM ALAN</th>
                     <th className="p-4 text-left text-sm font-semibold">DURUM</th>
@@ -231,11 +233,13 @@ export function LogisticsModule() {
                 <tbody>
                   {shipments.map((shipment) => (
                     <tr key={shipment.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4 font-medium">{shipment.driver?.full_name || "-"}</td>
-                      <td className="p-4">{shipment.vehicle?.cekici_plakasi || "-"}</td>
                       <td className="p-4">
                         {shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd MMM yyyy", { locale: tr }) : "-"}
                       </td>
+                      <td className="p-4">{shipment.sender_name || "-"}</td>
+                      <td className="p-4">{shipment.receiver || "-"}</td>
+                      <td className="p-4 font-medium">{shipment.driver?.full_name || "-"}</td>
+                      <td className="p-4">{shipment.vehicle?.cekici_plakasi || "-"}</td>
                       <td className="p-4">
                         {shipment.delivery_date ? format(new Date(shipment.delivery_date), "dd MMM yyyy", { locale: tr }) : "-"}
                       </td>
