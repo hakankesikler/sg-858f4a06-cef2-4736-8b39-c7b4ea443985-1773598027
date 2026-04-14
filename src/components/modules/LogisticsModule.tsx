@@ -217,38 +217,30 @@ export function LogisticsModule() {
           <Card>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="p-4 text-left text-sm font-medium">KOD</th>
-                    <th className="p-4 text-left text-sm font-medium">MÜŞTERİ</th>
-                    <th className="p-4 text-left text-sm font-medium">GÜZERGAH</th>
-                    <th className="p-4 text-left text-sm font-medium">SÜRÜCÜ</th>
-                    <th className="p-4 text-left text-sm font-medium">ARAÇ</th>
-                    <th className="p-4 text-left text-sm font-medium">YÜKLEME</th>
-                    <th className="p-4 text-left text-sm font-medium">TAHMİNİ TESLİM</th>
-                    <th className="p-4 text-left text-sm font-medium">DURUM</th>
-                    <th className="p-4 text-left text-sm font-medium">İŞLEMLER</th>
+                    <th className="p-4 text-left text-sm font-semibold">SÜRÜCÜ</th>
+                    <th className="p-4 text-left text-sm font-semibold">ARAÇ</th>
+                    <th className="p-4 text-left text-sm font-semibold">YÜKLEME</th>
+                    <th className="p-4 text-left text-sm font-semibold">TESLİM TARİHİ</th>
+                    <th className="p-4 text-left text-sm font-semibold">TESLİM ALAN</th>
+                    <th className="p-4 text-left text-sm font-semibold">DURUM</th>
+                    <th className="p-4 text-left text-sm font-semibold">İŞLEMLER</th>
                   </tr>
                 </thead>
                 <tbody>
                   {shipments.map((shipment) => (
                     <tr key={shipment.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4 font-medium">{shipment.shipment_code}</td>
-                      <td className="p-4">{shipment.customer?.name || "-"}</td>
-                      <td className="p-4">
-                        <div className="text-sm">
-                          <div className="font-medium">{shipment.origin}</div>
-                          <div className="text-gray-500">↓</div>
-                          <div className="font-medium">{shipment.destination}</div>
-                        </div>
-                      </td>
-                      <td className="p-4">{shipment.driver?.full_name || "-"}</td>
+                      <td className="p-4 font-medium">{shipment.driver?.full_name || "-"}</td>
                       <td className="p-4">{shipment.vehicle?.cekici_plakasi || "-"}</td>
                       <td className="p-4">
                         {shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd MMM yyyy", { locale: tr }) : "-"}
                       </td>
                       <td className="p-4">
-                        {shipment.estimated_delivery_date ? format(new Date(shipment.estimated_delivery_date), "dd MMM yyyy", { locale: tr }) : "-"}
+                        {shipment.delivery_date ? format(new Date(shipment.delivery_date), "dd MMM yyyy", { locale: tr }) : "-"}
+                      </td>
+                      <td className="p-4">
+                        {shipment.delivered_to || "-"}
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
