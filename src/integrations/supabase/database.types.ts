@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -1712,6 +1712,7 @@ export type Database = {
       }
       shipments: {
         Row: {
+          actual_delivery_date: string | null
           adet: number | null
           cinsi: string | null
           cost: number | null
@@ -1719,7 +1720,9 @@ export type Database = {
           created_at: string | null
           currency: string | null
           customer_id: string | null
+          delivered_to: string | null
           delivery_date: string | null
+          delivery_proof_url: string | null
           destination: string | null
           driver_id: string | null
           estimated_delivery_date: string | null
@@ -1742,6 +1745,7 @@ export type Database = {
           vehicle_id: string | null
         }
         Insert: {
+          actual_delivery_date?: string | null
           adet?: number | null
           cinsi?: string | null
           cost?: number | null
@@ -1749,7 +1753,9 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           customer_id?: string | null
+          delivered_to?: string | null
           delivery_date?: string | null
+          delivery_proof_url?: string | null
           destination?: string | null
           driver_id?: string | null
           estimated_delivery_date?: string | null
@@ -1772,6 +1778,7 @@ export type Database = {
           vehicle_id?: string | null
         }
         Update: {
+          actual_delivery_date?: string | null
           adet?: number | null
           cinsi?: string | null
           cost?: number | null
@@ -1779,7 +1786,9 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           customer_id?: string | null
+          delivered_to?: string | null
           delivery_date?: string | null
+          delivery_proof_url?: string | null
           destination?: string | null
           driver_id?: string | null
           estimated_delivery_date?: string | null
