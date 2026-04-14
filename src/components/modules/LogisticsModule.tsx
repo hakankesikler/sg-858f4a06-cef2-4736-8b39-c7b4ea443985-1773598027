@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Package, FileText } from "lucide-react";
+import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService } from "@/services/shipmentService";
@@ -10,6 +10,7 @@ import { DriverForm } from "@/components/DriverForm";
 import { VehicleForm } from "@/components/VehicleForm";
 import { ShipmentForm } from "@/components/ShipmentForm";
 import { DeliveryModal } from "@/components/DeliveryModal";
+import { generateWaybill } from "@/components/WaybillGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -285,6 +286,14 @@ export function LogisticsModule() {
                       </td>
                       <td className="p-4">
                         <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => generateWaybill(shipment)}
+                            title="İrsaliye İndir"
+                          >
+                            <FileDown className="h-4 w-4 text-blue-600" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
