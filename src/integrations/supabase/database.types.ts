@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -1891,7 +1891,10 @@ export type Database = {
           kasa_tipi: string | null
           kasko_bitis_tarihi: string | null
           plate_no: string | null
+          ruhsat_dosyasi: string | null
           ruhsat_dosyasi_url: string | null
+          ruhsat_no: string | null
+          ruhsat_sahibi_adi_soyadi: string | null
           status: string | null
           tasima_kapasitesi_kg: number | null
           trafik_sigortasi_bitis_tarihi: string | null
@@ -1911,7 +1914,10 @@ export type Database = {
           kasa_tipi?: string | null
           kasko_bitis_tarihi?: string | null
           plate_no?: string | null
+          ruhsat_dosyasi?: string | null
           ruhsat_dosyasi_url?: string | null
+          ruhsat_no?: string | null
+          ruhsat_sahibi_adi_soyadi?: string | null
           status?: string | null
           tasima_kapasitesi_kg?: number | null
           trafik_sigortasi_bitis_tarihi?: string | null
@@ -1931,7 +1937,10 @@ export type Database = {
           kasa_tipi?: string | null
           kasko_bitis_tarihi?: string | null
           plate_no?: string | null
+          ruhsat_dosyasi?: string | null
           ruhsat_dosyasi_url?: string | null
+          ruhsat_no?: string | null
+          ruhsat_sahibi_adi_soyadi?: string | null
           status?: string | null
           tasima_kapasitesi_kg?: number | null
           trafik_sigortasi_bitis_tarihi?: string | null
