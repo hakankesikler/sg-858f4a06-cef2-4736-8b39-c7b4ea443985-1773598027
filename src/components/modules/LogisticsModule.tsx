@@ -45,20 +45,41 @@ export function LogisticsModule() {
   }, []);
 
   const loadData = async () => {
+    // Load drivers
     try {
-      const [driversData, vehiclesData, shipmentsData] = await Promise.all([
-        driverService.getDrivers(),
-        vehicleService.getVehicles(),
-        shipmentService.getShipments()
-      ]);
+      const driversData = await driverService.getDrivers();
       setDrivers(driversData);
+    } catch (error) {
+      console.error("Error loading drivers:", error);
+      toast({
+        title: "Uyarı",
+        description: "Sürücüler yüklenirken bir hata oluştu",
+        variant: "destructive",
+      });
+    }
+
+    // Load vehicles
+    try {
+      const vehiclesData = await vehicleService.getVehicles();
       setVehicles(vehiclesData);
+    } catch (error) {
+      console.error("Error loading vehicles:", error);
+      toast({
+        title: "Uyarı",
+        description: "Araçlar yüklenirken bir hata oluştu",
+        variant: "destructive",
+      });
+    }
+
+    // Load shipments
+    try {
+      const shipmentsData = await shipmentService.getShipments();
       setShipments(shipmentsData);
     } catch (error) {
-      console.error("Error loading data:", error);
+      console.error("Error loading shipments:", error);
       toast({
-        title: "Hata",
-        description: "Veriler yüklenirken bir hata oluştu",
+        title: "Uyarı",
+        description: "Sevkiyatlar yüklenirken bir hata oluştu",
         variant: "destructive",
       });
     }
