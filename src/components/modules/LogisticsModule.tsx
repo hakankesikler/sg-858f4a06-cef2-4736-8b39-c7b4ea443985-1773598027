@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import * as XLSX from "xlsx";
 
 export function LogisticsModule() {
   const { toast } = useToast();
@@ -231,6 +232,112 @@ export function LogisticsModule() {
     );
   });
 
+  // Export to Excel
+  const exportToExcel = () => {
+    try {
+      const data = filteredShipments.map((shipment) => ({
+        "Sevkiyat Kodu": shipment.shipment_code || "-",
+        "Yükleme Tarihi": shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd.MM.yyyy", { locale: tr }) : "-",
+        "Gönderici": shipment.sender_name || "-",
+        "Gönderici İl": shipment.origin || "-",
+        "Alıcı": shipment.receiver || "-",
+        "Alıcı İlçe": shipment.receiver_district || "-",
+        "Alıcı İl": shipment.destination || "-",
+        "Sürücü": shipment.driver?.full_name || "-",
+        "Araç": shipment.vehicle?.cekici_plakasi || "-",
+        "Teslim Tarihi": shipment.delivery_date ? format(new Date(shipment.delivery_date), "dd.MM.yyyy", { locale: tr }) : "-",
+        "Teslim Alan": shipment.delivered_to || "-",
+        "Durum": getStatusLabel(shipment.status),
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sevkiyatlar");
+
+      // Auto-size columns
+      const maxWidth = 20;
+      const colWidths = Object.keys(data[0] || {}).map(() => ({ wch: maxWidth }));
+      worksheet["!cols"] = colWidths;
+
+      const fileName = `Sevkiyatlar_${format(new Date(), "dd-MM-yyyy_HH-mm")}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+
+      toast({
+        title: "Başarılı",
+        description: "Excel dosyası indirildi",
+      });
+    } catch (error) {
+      console.error("Excel export error:", error);
+      toast({
+        title: "Hata",
+        description: "Excel dosyası oluşturulurken bir hata oluştu",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Export to CSV
+  const exportToCSV = () => {
+    try {
+      const headers = [
+        "Sevkiyat Kodu",
+        "Yükleme Tarihi",
+        "Gönderici",
+        "Gönderici İl",
+        "Alıcı",
+        "Alıcı İlçe",
+        "Alıcı İl",
+        "Sürücü",
+        "Araç",
+        "Teslim Tarihi",
+        "Teslim Alan",
+        "Durum",
+      ];
+
+      const rows = filteredShipments.map((shipment) => [
+        shipment.shipment_code || "-",
+        shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd.MM.yyyy", { locale: tr }) : "-",
+        shipment.sender_name || "-",
+        shipment.origin || "-",
+        shipment.receiver || "-",
+        shipment.receiver_district || "-",
+        shipment.destination || "-",
+        shipment.driver?.full_name || "-",
+        shipment.vehicle?.cekici_plakasi || "-",
+        shipment.delivery_date ? format(new Date(shipment.delivery_date), "dd.MM.yyyy", { locale: tr }) : "-",
+        shipment.delivered_to || "-",
+        getStatusLabel(shipment.status),
+      ]);
+
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+      ].join("\n");
+
+      // UTF-8 BOM for Turkish characters
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Sevkiyatlar_${format(new Date(), "dd-MM-yyyy_HH-mm")}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Başarılı",
+        description: "CSV dosyası indirildi",
+      });
+    } catch (error) {
+      console.error("CSV export error:", error);
+      toast({
+        title: "Hata",
+        description: "CSV dosyası oluşturulurken bir hata oluştu",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -254,7 +361,17 @@ export function LogisticsModule() {
         </TabsList>
 
         <TabsContent value="shipments" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            <div className="flex gap-2">
+              <Button onClick={exportToExcel} variant="outline">
+                <FileDown className="h-4 w-4 mr-2" />
+                Excel İndir
+              </Button>
+              <Button onClick={exportToCSV} variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                CSV İndir
+              </Button>
+            </div>
             <Button onClick={() => {
               setEditingShipment(undefined);
               setIsShipmentFormOpen(true);
