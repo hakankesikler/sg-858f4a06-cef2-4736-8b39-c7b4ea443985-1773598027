@@ -40,7 +40,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   
   // Cargo items state
   const [cargoItems, setCargoItems] = useState<CargoItemInput[]>([
-    { adet: 0, cinsi: "", kg_ds: 0, sira_no: 1 }
+    { adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }
   ]);
   
   const [formData, setFormData] = useState({
@@ -72,6 +72,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       adet: 0, 
       cinsi: "", 
       kg_ds: 0, 
+      birim_fiyat: 0,
+      alt_toplam_fiyat: 0,
       sira_no: cargoItems.length + 1 
     }]);
   };
@@ -95,13 +97,24 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       updated[index].cinsi = value.toString();
     } else if (field === 'kg_ds') {
       updated[index].kg_ds = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    } else if (field === 'birim_fiyat') {
+      updated[index].birim_fiyat = typeof value === 'string' ? parseFloat(value) || 0 : value;
     }
+    
+    // Auto-calculate alt_toplam_fiyat (adet × birim_fiyat)
+    updated[index].alt_toplam_fiyat = updated[index].adet * (updated[index].birim_fiyat || 0);
+    
     setCargoItems(updated);
   };
 
   // Calculate total KG/DS from all cargo items
   const totalKgDs = cargoItems.reduce((sum, item) => {
     return sum + (item.adet * item.kg_ds);
+  }, 0);
+
+  // Calculate total price from all cargo items
+  const totalPrice = cargoItems.reduce((sum, item) => {
+    return sum + (item.alt_toplam_fiyat || 0);
   }, 0);
 
   useEffect(() => {
@@ -198,14 +211,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           adet: item.adet,
           cinsi: item.cinsi,
           kg_ds: item.kg_ds,
+          birim_fiyat: item.birim_fiyat || 0,
+          alt_toplam_fiyat: item.alt_toplam_fiyat || 0,
           sira_no: item.sira_no
         })));
       } else {
-        setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, sira_no: 1 }]);
+        setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
       }
     } catch (error) {
       console.error("Error loading cargo items:", error);
-      setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, sira_no: 1 }]);
+      setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
     }
   };
 
@@ -342,7 +357,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     setDeliveryDate("");
     setEstimatedDeliveryDate("");
     setShipmentCode("SHP-000001");
-    setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, sira_no: 1 }]);
+    setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
   };
 
   return (
@@ -515,7 +530,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
             <div className="space-y-3">
               {cargoItems.map((item, index) => (
-                <div key={index} className="grid grid-cols-5 gap-3 items-end p-3 border rounded-lg bg-gray-50">
+                <div key={index} className="grid grid-cols-7 gap-3 items-end p-3 border rounded-lg bg-gray-50">
                   <div className="space-y-1">
                     <Label className="text-xs">Adet</Label>
                     <Input
@@ -546,9 +561,26 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Alt Toplam</Label>
+                    <Label className="text-xs">Alt Toplam KG</Label>
                     <div className="px-3 py-2 bg-white border rounded-md font-medium text-sm">
                       {(item.adet * item.kg_ds).toFixed(2)} kg
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Birim Fiyat (₺)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={item.birim_fiyat || ""}
+                      onChange={(e) => updateCargoItem(index, 'birim_fiyat', e.target.value)}
+                      placeholder="50.00"
+                      min="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Alt Toplam Fiyat</Label>
+                    <div className="px-3 py-2 bg-white border rounded-md font-medium text-sm text-green-600">
+                      {(item.alt_toplam_fiyat || 0).toFixed(2)} ₺
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -568,11 +600,17 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               ))}
             </div>
 
-            <div className="mt-4 pt-4 border-t">
+            <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-4">
               <div className="flex justify-end items-center gap-2">
                 <span className="text-sm font-semibold">TOPLAM KG/DS:</span>
                 <span className="text-lg font-bold text-primary">
                   {totalKgDs.toFixed(2)} kg
+                </span>
+              </div>
+              <div className="flex justify-end items-center gap-2">
+                <span className="text-sm font-semibold">TOPLAM FİYAT:</span>
+                <span className="text-lg font-bold text-green-600">
+                  {totalPrice.toFixed(2)} ₺
                 </span>
               </div>
             </div>

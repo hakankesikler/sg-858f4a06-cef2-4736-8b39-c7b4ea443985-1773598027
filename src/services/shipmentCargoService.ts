@@ -8,6 +8,8 @@ export interface CargoItemInput {
   cinsi: string;
   kg_ds: number;
   sira_no: number;
+  birim_fiyat?: number;
+  alt_toplam_fiyat?: number;
 }
 
 export const shipmentCargoService = {
@@ -32,7 +34,9 @@ export const shipmentCargoService = {
       adet: item.adet,
       cinsi: item.cinsi,
       kg_ds: item.kg_ds,
-      sira_no: item.sira_no
+      sira_no: item.sira_no,
+      birim_fiyat: item.birim_fiyat || 0,
+      alt_toplam_fiyat: item.alt_toplam_fiyat || 0
     }));
 
     const { error } = await supabase
