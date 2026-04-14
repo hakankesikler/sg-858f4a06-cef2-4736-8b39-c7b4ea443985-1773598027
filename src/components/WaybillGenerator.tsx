@@ -33,9 +33,9 @@ export const generateWaybill = (shipment: WaybillData) => {
   const pageHeight = doc.internal.pageSize.getHeight();
   
   // Colors
-  const primaryColor = [41, 128, 185]; // Professional blue
-  const darkColor = [44, 62, 80];
-  const lightGray = [236, 240, 241];
+  const primaryColor: [number, number, number] = [41, 128, 185]; // Professional blue
+  const darkColor: [number, number, number] = [44, 62, 80];
+  const lightGray: [number, number, number] = [236, 240, 241];
   
   // Header background
   doc.setFillColor(...primaryColor);
