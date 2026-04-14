@@ -579,7 +579,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
             
             {/* Gönderici ve Alıcı */}
-            <div className="grid grid-cols-7 gap-4">
+            <div className="grid grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label>Gönderici Adı/Firma</Label>
                 <Input
@@ -610,14 +610,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     <option key={idx} value={suggestion} />
                   ))}
                 </datalist>
-              </div>
-              <div className="space-y-2">
-                <Label>Gönderici II</Label>
-                <Input
-                  value={formData.sender_ii}
-                  onChange={(e) => setFormData({ ...formData, sender_ii: e.target.value })}
-                  placeholder="İkinci gönderici (opsiyonel)"
-                />
               </div>
               <div className="space-y-2">
                 <Label>Alıcı Adı/Firma</Label>
@@ -663,14 +655,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     <option key={idx} value={suggestion} />
                   ))}
                 </datalist>
-              </div>
-              <div className="space-y-2">
-                <Label>Alıcı II</Label>
-                <Input
-                  value={formData.receiver_ii}
-                  onChange={(e) => setFormData({ ...formData, receiver_ii: e.target.value })}
-                  placeholder="İkinci alıcı (opsiyonel)"
-                />
               </div>
             </div>
           </div>
