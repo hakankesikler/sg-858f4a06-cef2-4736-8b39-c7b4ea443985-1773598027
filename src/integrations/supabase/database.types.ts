@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -1659,6 +1659,50 @@ export type Database = {
           value?: string | null
         }
         Relationships: []
+      }
+      shipment_cargo_items: {
+        Row: {
+          adet: number
+          alt_toplam: number | null
+          cinsi: string
+          created_at: string | null
+          id: string
+          kg_ds: number
+          shipment_id: string
+          sira_no: number
+          updated_at: string | null
+        }
+        Insert: {
+          adet: number
+          alt_toplam?: number | null
+          cinsi: string
+          created_at?: string | null
+          id?: string
+          kg_ds: number
+          shipment_id: string
+          sira_no?: number
+          updated_at?: string | null
+        }
+        Update: {
+          adet?: number
+          alt_toplam?: number | null
+          cinsi?: string
+          created_at?: string | null
+          id?: string
+          kg_ds?: number
+          shipment_id?: string
+          sira_no?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_cargo_items_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shipments: {
         Row: {
