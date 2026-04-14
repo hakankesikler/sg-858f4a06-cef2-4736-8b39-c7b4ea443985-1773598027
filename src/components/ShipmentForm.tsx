@@ -137,8 +137,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
       return {
         ...item,
-        birim_fiyat: itemUnitPrice,
-        alt_toplam_fiyat: itemTotalPrice
+        birim_fiyat: parseFloat(itemUnitPrice.toFixed(2)),
+        alt_toplam_fiyat: parseFloat(itemTotalPrice.toFixed(2))
       };
     });
 
