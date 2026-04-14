@@ -30,7 +30,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shipmentCode, setShipmentCode] = useState("SHP-000001");
   const [pickupDate, setPickupDate] = useState("");
-  const [deliveryDate, setDeliveryDate] = useState("");
   const [estimatedDeliveryDate, setEstimatedDeliveryDate] = useState("");
   
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -217,12 +216,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       } else {
         setPickupDate("");
       }
-      if (initialData.delivery_date) {
-        const dateValue = initialData.delivery_date;
-        setDeliveryDate(dateValue.includes('T') ? dateValue.split('T')[0] : dateValue);
-      } else {
-        setDeliveryDate("");
-      }
       if (initialData.estimated_delivery_date) {
         const dateValue = initialData.estimated_delivery_date;
         setEstimatedDeliveryDate(dateValue.includes('T') ? dateValue.split('T')[0] : dateValue);
@@ -369,7 +362,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         origin: formData.origin || (editMode && initialData ? initialData.origin : null),
         destination: formData.destination || (editMode && initialData ? initialData.destination : null),
         pickup_date: pickupDate || (editMode && initialData ? initialData.pickup_date : null),
-        delivery_date: deliveryDate || (editMode && initialData ? initialData.delivery_date : null),
         estimated_delivery_date: estimatedDeliveryDate || (editMode && initialData ? initialData.estimated_delivery_date : null),
         cost: formData.cost ? parseFloat(formData.cost) : (editMode && initialData && initialData.cost ? initialData.cost : null),
         cost_currency: formData.cost_currency,
@@ -449,7 +441,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       toplam_kg_ds: ""
     });
     setPickupDate("");
-    setDeliveryDate("");
     setEstimatedDeliveryDate("");
     setShipmentCode("SHP-000001");
     setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
@@ -763,7 +754,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           </div>
 
           {/* Tarih Bilgileri */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Yükleme Tarihi</Label>
               <Input
@@ -779,15 +770,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 type="date"
                 value={estimatedDeliveryDate}
                 onChange={(e) => setEstimatedDeliveryDate(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Teslim Tarihi</Label>
-              <Input
-                type="date"
-                value={deliveryDate}
-                onChange={(e) => setDeliveryDate(e.target.value)}
                 className="w-full"
               />
             </div>

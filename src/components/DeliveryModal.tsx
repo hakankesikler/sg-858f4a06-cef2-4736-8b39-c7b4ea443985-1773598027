@@ -21,6 +21,10 @@ export function DeliveryModal({ isOpen, onClose, shipmentId, shipmentCode, onSuc
   const [deliveredTo, setDeliveredTo] = useState("");
   const [deliveryFile, setDeliveryFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Delivery date with today as default
+  const today = new Date().toISOString().split('T')[0];
+  const [deliveryDate, setDeliveryDate] = useState(today);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -103,7 +107,8 @@ export function DeliveryModal({ isOpen, onClose, shipmentId, shipmentCode, onSuc
         status: "teslim_edildi",
         delivered_to: deliveredTo,
         delivery_proof_url: deliveryProofUrl,
-        actual_delivery_date: new Date().toISOString()
+        actual_delivery_date: new Date().toISOString(),
+        delivery_date: deliveryDate
       });
 
       toast({
@@ -129,6 +134,8 @@ export function DeliveryModal({ isOpen, onClose, shipmentId, shipmentCode, onSuc
   const resetForm = () => {
     setDeliveredTo("");
     setDeliveryFile(null);
+    const today = new Date().toISOString().split('T')[0];
+    setDeliveryDate(today);
   };
 
   return (
@@ -149,6 +156,17 @@ export function DeliveryModal({ isOpen, onClose, shipmentId, shipmentCode, onSuc
               value={deliveredTo}
               onChange={(e) => setDeliveredTo(e.target.value)}
               placeholder="Örn: Ahmet Yılmaz"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="delivery-date">Teslim Tarihi *</Label>
+            <Input
+              id="delivery-date"
+              type="date"
+              value={deliveryDate}
+              onChange={(e) => setDeliveryDate(e.target.value)}
+              className="w-full"
             />
           </div>
 
