@@ -261,12 +261,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       setDrivers(driversData);
       setVehicles(vehiclesData);
       
-      // Separate customers and suppliers
-      const customersList = customersData.filter(c => c.account_type === "musteri" || !c.account_type);
-      const suppliersList = customersData.filter(c => c.account_type === "tedarikci");
+      // Show ALL customers in customer dropdown (a customer can be both buyer and supplier)
+      setCustomers(customersData);
       
-      setCustomers(customersList);
-      setSuppliers(suppliersList);
+      // Show ALL customers in supplier dropdown as well
+      setSuppliers(customersData);
     } catch (error) {
       console.error("Error loading selection data:", error);
     }
@@ -290,27 +289,27 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       
       const submitData = {
         shipment_code: shipmentCode,
-        supplier_id: formData.supplier_id || null,
-        driver_id: formData.driver_id || null,
-        vehicle_id: formData.vehicle_id || null,
-        customer_id: formData.customer_id || null,
-        origin: formData.origin || null,
-        destination: formData.destination || null,
-        pickup_date: pickupDate || null,
-        delivery_date: deliveryDate || null,
-        estimated_delivery_date: estimatedDeliveryDate || null,
-        cost: formData.cost ? parseFloat(formData.cost) : null,
+        supplier_id: formData.supplier_id || (editMode && initialData ? initialData.supplier_id : null),
+        driver_id: formData.driver_id || (editMode && initialData ? initialData.driver_id : null),
+        vehicle_id: formData.vehicle_id || (editMode && initialData ? initialData.vehicle_id : null),
+        customer_id: formData.customer_id || (editMode && initialData ? initialData.customer_id : null),
+        origin: formData.origin || (editMode && initialData ? initialData.origin : null),
+        destination: formData.destination || (editMode && initialData ? initialData.destination : null),
+        pickup_date: pickupDate || (editMode && initialData ? initialData.pickup_date : null),
+        delivery_date: deliveryDate || (editMode && initialData ? initialData.delivery_date : null),
+        estimated_delivery_date: estimatedDeliveryDate || (editMode && initialData ? initialData.estimated_delivery_date : null),
+        cost: formData.cost ? parseFloat(formData.cost) : (editMode && initialData && initialData.cost ? initialData.cost : null),
         cost_currency: formData.cost_currency,
         currency: formData.currency,
         status: editMode && initialData?.status ? initialData.status : "beklemede",
-        sender_name: formData.sender_name || null,
-        sender_ii: formData.sender_ii || null,
-        receiver: formData.receiver || null,
-        receiver_district: formData.receiver_district || null,
-        receiver_ii: formData.receiver_ii || null,
-        adet: formData.adet ? parseInt(formData.adet) : null,
-        cinsi: formData.cinsi || null,
-        kg_ds: formData.kg_ds ? parseFloat(formData.kg_ds) : null,
+        sender_name: formData.sender_name || (editMode && initialData ? initialData.sender_name : null),
+        sender_ii: formData.sender_ii || (editMode && initialData ? initialData.sender_ii : null),
+        receiver: formData.receiver || (editMode && initialData ? initialData.receiver : null),
+        receiver_district: formData.receiver_district || (editMode && initialData ? initialData.receiver_district : null),
+        receiver_ii: formData.receiver_ii || (editMode && initialData ? initialData.receiver_ii : null),
+        adet: formData.adet ? parseInt(formData.adet) : (editMode && initialData && initialData.adet ? initialData.adet : null),
+        cinsi: formData.cinsi || (editMode && initialData ? initialData.cinsi : null),
+        kg_ds: formData.kg_ds ? parseFloat(formData.kg_ds) : (editMode && initialData && initialData.kg_ds ? initialData.kg_ds : null),
         toplam_kg_ds: totalKgDs
       };
 
