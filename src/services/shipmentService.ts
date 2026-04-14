@@ -61,7 +61,7 @@ export const shipmentService = {
         .from("shipments")
         .select("shipment_code")
         .not("shipment_code", "is", null)
-        .order("shipment_code", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(1);
 
       if (error) {
@@ -83,6 +83,8 @@ export const shipmentService = {
       const lastNumber = parseInt(match[1], 10);
       const nextNumber = lastNumber + 1;
       const nextCode = `SHP-${nextNumber.toString().padStart(6, "0")}`;
+      
+      console.log("Last shipment code:", lastCode, "→ Next code:", nextCode);
       
       return nextCode;
     } catch (error) {
