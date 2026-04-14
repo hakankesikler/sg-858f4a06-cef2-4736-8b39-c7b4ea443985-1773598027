@@ -7,11 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { shipmentService, Shipment } from "@/services/shipmentService";
+import { shipmentCargoService, type CargoItemInput } from "@/services/shipmentCargoService";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { crmService, Customer } from "@/services/crmService";
@@ -37,6 +38,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [customers, setCustomers] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   
+  // Cargo items state
+  const [cargoItems, setCargoItems] = useState<CargoItemInput[]>([
+    { adet: 0, cinsi: "", kg_ds: 0, sira_no: 1 }
+  ]);
+  
   const [formData, setFormData] = useState({
     supplier_id: "",
     driver_id: "",
@@ -59,6 +65,44 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     satis_birim: "",
     satis_tutar: ""
   });
+
+  // Cargo items management functions
+  const addCargoItem = () => {
+    setCargoItems([...cargoItems, { 
+      adet: 0, 
+      cinsi: "", 
+      kg_ds: 0, 
+      sira_no: cargoItems.length + 1 
+    }]);
+  };
+
+  const removeCargoItem = (index: number) => {
+    if (cargoItems.length > 1) {
+      const updated = cargoItems.filter((_, i) => i !== index);
+      // Update sira_no after removal
+      updated.forEach((item, idx) => {
+        item.sira_no = idx + 1;
+      });
+      setCargoItems(updated);
+    }
+  };
+
+  const updateCargoItem = (index: number, field: keyof CargoItemInput, value: string | number) => {
+    const updated = [...cargoItems];
+    if (field === 'adet') {
+      updated[index].adet = typeof value === 'string' ? parseInt(value) || 0 : value;
+    } else if (field === 'cinsi') {
+      updated[index].cinsi = value.toString();
+    } else if (field === 'kg_ds') {
+      updated[index].kg_ds = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    }
+    setCargoItems(updated);
+  };
+
+  // Calculate total KG/DS from all cargo items
+  const totalKgDs = cargoItems.reduce((sum, item) => {
+    return sum + (item.adet * item.kg_ds);
+  }, 0);
 
   useEffect(() => {
     if (isOpen) {
@@ -118,6 +162,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         satis_tutar: initialData.satis_tutar?.toString() || ""
       });
       
+      // Load cargo items
+      loadCargoItems(initialData.id);
+      
       // Handle date conversions
       if (initialData.pickup_date) {
         const dateValue = initialData.pickup_date;
@@ -142,6 +189,25 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       loadNextShipmentCode();
     }
   }, [editMode, initialData, isOpen]);
+
+  const loadCargoItems = async (shipmentId: string) => {
+    try {
+      const items = await shipmentCargoService.getCargoItems(shipmentId);
+      if (items.length > 0) {
+        setCargoItems(items.map(item => ({
+          adet: item.adet,
+          cinsi: item.cinsi,
+          kg_ds: item.kg_ds,
+          sira_no: item.sira_no
+        })));
+      } else {
+        setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, sira_no: 1 }]);
+      }
+    } catch (error) {
+      console.error("Error loading cargo items:", error);
+      setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, sira_no: 1 }]);
+    }
+  };
 
   const loadSelectionData = async () => {
     try {
@@ -203,19 +269,31 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         adet: formData.adet ? parseInt(formData.adet) : null,
         cinsi: formData.cinsi || null,
         kg_ds: formData.kg_ds ? parseFloat(formData.kg_ds) : null,
-        toplam_kg_ds: formData.toplam_kg_ds ? parseFloat(formData.toplam_kg_ds) : null,
+        toplam_kg_ds: totalKgDs,
         satis_birim: formData.satis_birim ? parseFloat(formData.satis_birim) : null,
         satis_tutar: formData.satis_tutar ? parseFloat(formData.satis_tutar) : null
       };
 
+      let shipmentId: string;
+
       if (editMode && initialData) {
         await shipmentService.updateShipment(initialData.id, submitData);
+        shipmentId = initialData.id;
+        
+        // Update cargo items
+        await shipmentCargoService.updateCargoItems(shipmentId, cargoItems);
+        
         toast({
           title: "Başarılı",
           description: "Sevkiyat başarıyla güncellendi",
         });
       } else {
-        await shipmentService.createShipment(submitData);
+        const created = await shipmentService.createShipment(submitData);
+        shipmentId = created.id;
+        
+        // Create cargo items
+        await shipmentCargoService.createCargoItems(shipmentId, cargoItems);
+        
         toast({
           title: "Başarılı",
           description: "Sevkiyat başarıyla oluşturuldu",
@@ -264,6 +342,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     setDeliveryDate("");
     setEstimatedDeliveryDate("");
     setShipmentCode("SHP-000001");
+    setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, sira_no: 1 }]);
   };
 
   return (
@@ -424,48 +503,77 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
           </div>
 
-          {/* Yük Detayları - Adet, Cinsi, KG/DS */}
+          {/* Yük Detayları - Çoklu Satırlar */}
           <div className="border-t pt-4">
-            <h3 className="font-semibold mb-4">Yük Detayları</h3>
-            <div className="grid grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label>Adet</Label>
-                <Input
-                  type="number"
-                  value={formData.adet}
-                  onChange={(e) => setFormData({ ...formData, adet: e.target.value })}
-                  placeholder="Koli/paket sayısı"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Cinsi</Label>
-                <Input
-                  value={formData.cinsi}
-                  onChange={(e) => setFormData({ ...formData, cinsi: e.target.value })}
-                  placeholder="Yük cinsi"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>KG/DS (Birim)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.kg_ds}
-                  onChange={(e) => setFormData({ ...formData, kg_ds: e.target.value })}
-                  placeholder="Birim ağırlık"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Toplam KG/DS</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.toplam_kg_ds}
-                  disabled
-                  className="bg-gray-100"
-                  placeholder="Otomatik hesaplanır"
-                />
-                <p className="text-xs text-gray-500">Adet × KG/DS</p>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Yük Detayları</h3>
+              <Button type="button" variant="outline" size="sm" onClick={addCargoItem}>
+                <Plus className="h-4 w-4 mr-2" />
+                Yeni Satır Ekle
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {cargoItems.map((item, index) => (
+                <div key={index} className="grid grid-cols-5 gap-3 items-end p-3 border rounded-lg bg-gray-50">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Adet</Label>
+                    <Input
+                      type="number"
+                      value={item.adet || ""}
+                      onChange={(e) => updateCargoItem(index, 'adet', e.target.value)}
+                      placeholder="10"
+                      min="1"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Cinsi</Label>
+                    <Input
+                      value={item.cinsi}
+                      onChange={(e) => updateCargoItem(index, 'cinsi', e.target.value)}
+                      placeholder="Koli, Palet..."
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">KG/DS (Birim)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={item.kg_ds || ""}
+                      onChange={(e) => updateCargoItem(index, 'kg_ds', e.target.value)}
+                      placeholder="30.00"
+                      min="0.01"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Alt Toplam</Label>
+                    <div className="px-3 py-2 bg-white border rounded-md font-medium text-sm">
+                      {(item.adet * item.kg_ds).toFixed(2)} kg
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs opacity-0">Sil</Label>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeCargoItem(index)}
+                      disabled={cargoItems.length === 1}
+                      className="w-full"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t">
+              <div className="flex justify-end items-center gap-2">
+                <span className="text-sm font-semibold">TOPLAM KG/DS:</span>
+                <span className="text-lg font-bold text-primary">
+                  {totalKgDs.toFixed(2)} kg
+                </span>
               </div>
             </div>
           </div>
