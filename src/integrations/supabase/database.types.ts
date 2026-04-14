@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -1664,6 +1664,8 @@ export type Database = {
         Row: {
           adet: number
           alt_toplam: number | null
+          alt_toplam_fiyat: number | null
+          birim_fiyat: number | null
           cinsi: string
           created_at: string | null
           id: string
@@ -1675,6 +1677,8 @@ export type Database = {
         Insert: {
           adet: number
           alt_toplam?: number | null
+          alt_toplam_fiyat?: number | null
+          birim_fiyat?: number | null
           cinsi: string
           created_at?: string | null
           id?: string
@@ -1686,6 +1690,8 @@ export type Database = {
         Update: {
           adet?: number
           alt_toplam?: number | null
+          alt_toplam_fiyat?: number | null
+          birim_fiyat?: number | null
           cinsi?: string
           created_at?: string | null
           id?: string
