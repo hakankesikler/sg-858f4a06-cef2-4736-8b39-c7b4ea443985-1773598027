@@ -586,7 +586,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   list="sender-suggestions"
                   value={formData.sender_name}
                   onChange={(e) => setFormData({ ...formData, sender_name: e.target.value })}
-                  placeholder="Gönderici adı veya firma"
+                  placeholder="Örn: Medbar A.Ş"
                 />
                 <datalist id="sender-suggestions">
                   {senderSuggestions.map((suggestion, idx) => (
@@ -603,7 +603,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   list="origin-suggestions"
                   value={formData.origin}
                   onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                  placeholder="İl"
+                  placeholder="Örn: İzmir, Ankara"
                 />
                 <datalist id="origin-suggestions">
                   {originSuggestions.map((suggestion, idx) => (
@@ -625,7 +625,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   list="receiver-suggestions"
                   value={formData.receiver}
                   onChange={(e) => setFormData({ ...formData, receiver: e.target.value })}
-                  placeholder="Alıcı adı veya firma"
+                  placeholder="Örn: ASG Havaleli Depo"
                 />
                 <datalist id="receiver-suggestions">
                   {receiverSuggestions.map((suggestion, idx) => (
@@ -642,7 +642,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   list="district-suggestions"
                   value={formData.receiver_district}
                   onChange={(e) => setFormData({ ...formData, receiver_district: e.target.value })}
-                  placeholder="İlçe"
+                  placeholder="Örn: SANCAKTEPE, KARTAL"
                 />
                 <datalist id="district-suggestions">
                   {districtSuggestions.map((suggestion, idx) => (
@@ -656,7 +656,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   list="destination-suggestions"
                   value={formData.destination}
                   onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                  placeholder="İl"
+                  placeholder="Örn: İstanbul, Ankara"
                 />
                 <datalist id="destination-suggestions">
                   {destinationSuggestions.map((suggestion, idx) => (
