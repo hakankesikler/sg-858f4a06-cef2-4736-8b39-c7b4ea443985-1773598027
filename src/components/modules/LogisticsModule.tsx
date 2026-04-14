@@ -46,6 +46,18 @@ export function LogisticsModule() {
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [deliveringShipment, setDeliveringShipment] = useState<any | null>(null);
 
+  // Column filters
+  const [filters, setFilters] = useState({
+    sender_name: "",
+    origin: "",
+    receiver: "",
+    receiver_district: "",
+    destination: "",
+    driver: "",
+    vehicle: "",
+    status: ""
+  });
+
   useEffect(() => {
     loadData();
   }, []);
@@ -182,6 +194,43 @@ export function LogisticsModule() {
     return labels[status] || status;
   };
 
+  // Normalize Turkish characters for case-insensitive search
+  const normalize = (str: string) => {
+    if (!str) return "";
+    return str
+      .toLowerCase()
+      .replace(/ğ/g, "g")
+      .replace(/ü/g, "u")
+      .replace(/ş/g, "s")
+      .replace(/ı/g, "i")
+      .replace(/ö/g, "o")
+      .replace(/ç/g, "c")
+      .replace(/İ/g, "i");
+  };
+
+  // Filter shipments based on search inputs
+  const filteredShipments = shipments.filter((shipment) => {
+    const matchesSender = normalize(shipment.sender_name || "").includes(normalize(filters.sender_name));
+    const matchesOrigin = normalize(shipment.origin || "").includes(normalize(filters.origin));
+    const matchesReceiver = normalize(shipment.receiver || "").includes(normalize(filters.receiver));
+    const matchesDistrict = normalize(shipment.receiver_district || "").includes(normalize(filters.receiver_district));
+    const matchesDestination = normalize(shipment.destination || "").includes(normalize(filters.destination));
+    const matchesDriver = normalize(shipment.driver?.full_name || "").includes(normalize(filters.driver));
+    const matchesVehicle = normalize(shipment.vehicle?.cekici_plakasi || "").includes(normalize(filters.vehicle));
+    const matchesStatus = normalize(getStatusLabel(shipment.status)).includes(normalize(filters.status));
+
+    return (
+      matchesSender &&
+      matchesOrigin &&
+      matchesReceiver &&
+      matchesDistrict &&
+      matchesDestination &&
+      matchesDriver &&
+      matchesVehicle &&
+      matchesStatus
+    );
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -233,9 +282,87 @@ export function LogisticsModule() {
                     <th className="p-4 text-left text-sm font-semibold">DURUM</th>
                     <th className="p-4 text-left text-sm font-semibold">İŞLEMLER</th>
                   </tr>
+                  <tr>
+                    <th className="p-2"><div className="h-8"></div></th>
+                    <th className="p-2">
+                      <input
+                        type="text"
+                        placeholder="Ara..."
+                        value={filters.sender_name}
+                        onChange={(e) => setFilters({ ...filters, sender_name: e.target.value })}
+                        className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </th>
+                    <th className="p-2">
+                      <input
+                        type="text"
+                        placeholder="Ara..."
+                        value={filters.receiver}
+                        onChange={(e) => setFilters({ ...filters, receiver: e.target.value })}
+                        className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </th>
+                    <th className="p-2">
+                      <input
+                        type="text"
+                        placeholder="Ara..."
+                        value={filters.origin}
+                        onChange={(e) => setFilters({ ...filters, origin: e.target.value })}
+                        className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </th>
+                    <th className="p-2">
+                      <input
+                        type="text"
+                        placeholder="Ara..."
+                        value={filters.receiver_district}
+                        onChange={(e) => setFilters({ ...filters, receiver_district: e.target.value })}
+                        className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </th>
+                    <th className="p-2">
+                      <input
+                        type="text"
+                        placeholder="Ara..."
+                        value={filters.destination}
+                        onChange={(e) => setFilters({ ...filters, destination: e.target.value })}
+                        className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </th>
+                    <th className="p-2">
+                      <input
+                        type="text"
+                        placeholder="Ara..."
+                        value={filters.driver}
+                        onChange={(e) => setFilters({ ...filters, driver: e.target.value })}
+                        className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </th>
+                    <th className="p-2">
+                      <input
+                        type="text"
+                        placeholder="Ara..."
+                        value={filters.vehicle}
+                        onChange={(e) => setFilters({ ...filters, vehicle: e.target.value })}
+                        className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </th>
+                    <th className="p-2"><div className="h-8"></div></th>
+                    <th className="p-2"><div className="h-8"></div></th>
+                    <th className="p-2">
+                      <input
+                        type="text"
+                        placeholder="Ara..."
+                        value={filters.status}
+                        onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                        className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </th>
+                    <th className="p-2"><div className="h-8"></div></th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {shipments.map((shipment) => (
+                  {filteredShipments.map((shipment) => (
                     <tr key={shipment.id} className="border-b hover:bg-gray-50">
                       <td className="p-4">
                         {shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd MMM yyyy", { locale: tr }) : "-"}
