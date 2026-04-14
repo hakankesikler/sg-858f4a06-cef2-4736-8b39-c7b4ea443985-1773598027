@@ -261,11 +261,21 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       setDrivers(driversData);
       setVehicles(vehiclesData);
       
-      // Show ALL customers in customer dropdown (a customer can be both buyer and supplier)
-      setCustomers(customersData);
+      // Filter customers by account_type, but include currently selected ones in edit mode
+      const customersList = customersData.filter(c => {
+        const isMusteri = c.account_type === "musteri" || !c.account_type;
+        const isCurrentlySelected = editMode && initialData?.customer_id === c.id;
+        return isMusteri || isCurrentlySelected;
+      });
       
-      // Show ALL customers in supplier dropdown as well
-      setSuppliers(customersData);
+      const suppliersList = customersData.filter(c => {
+        const isTedarikci = c.account_type === "tedarikci";
+        const isCurrentlySelected = editMode && initialData?.supplier_id === c.id;
+        return isTedarikci || isCurrentlySelected;
+      });
+      
+      setCustomers(customersList);
+      setSuppliers(suppliersList);
     } catch (error) {
       console.error("Error loading selection data:", error);
     }
