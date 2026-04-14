@@ -222,6 +222,9 @@ export function LogisticsModule() {
                     <th className="p-4 text-left text-sm font-semibold">YÜKLEME</th>
                     <th className="p-4 text-left text-sm font-semibold">GÖNDERİCİ</th>
                     <th className="p-4 text-left text-sm font-semibold">ALICI</th>
+                    <th className="p-4 text-left text-sm font-semibold">GÖNDERİCİ İL</th>
+                    <th className="p-4 text-left text-sm font-semibold">ALICI İLÇE</th>
+                    <th className="p-4 text-left text-sm font-semibold">ALICI İL</th>
                     <th className="p-4 text-left text-sm font-semibold">SÜRÜCÜ</th>
                     <th className="p-4 text-left text-sm font-semibold">ARAÇ</th>
                     <th className="p-4 text-left text-sm font-semibold">TESLİM TARİHİ</th>
@@ -238,6 +241,9 @@ export function LogisticsModule() {
                       </td>
                       <td className="p-4">{shipment.sender_name || "-"}</td>
                       <td className="p-4">{shipment.receiver || "-"}</td>
+                      <td className="p-4">{shipment.origin || "-"}</td>
+                      <td className="p-4">{shipment.receiver_district || "-"}</td>
+                      <td className="p-4">{shipment.destination || "-"}</td>
                       <td className="p-4 font-medium">{shipment.driver?.full_name || "-"}</td>
                       <td className="p-4">{shipment.vehicle?.cekici_plakasi || "-"}</td>
                       <td className="p-4">
