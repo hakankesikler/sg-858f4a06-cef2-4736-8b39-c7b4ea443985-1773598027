@@ -64,9 +64,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     adet: "",
     cinsi: "",
     kg_ds: "",
-    toplam_kg_ds: "",
-    satis_birim: "",
-    satis_tutar: ""
+    toplam_kg_ds: ""
   });
 
   // Cargo items management functions
@@ -179,17 +177,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     }
   }, [formData.adet, formData.kg_ds]);
 
-  // Auto-calculate satis_tutar (adet * satis_birim)
-  useEffect(() => {
-    const adet = parseFloat(formData.adet) || 0;
-    const birim = parseFloat(formData.satis_birim) || 0;
-    const tutar = adet * birim;
-    
-    if (tutar > 0 && tutar.toString() !== formData.satis_tutar) {
-      setFormData(prev => ({ ...prev, satis_tutar: tutar.toFixed(2) }));
-    }
-  }, [formData.adet, formData.satis_birim]);
-
   useEffect(() => {
     if (editMode && initialData && isOpen) {
       console.log("Loading shipment data for edit:", initialData);
@@ -212,9 +199,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         adet: initialData.adet?.toString() || "",
         cinsi: initialData.cinsi || "",
         kg_ds: initialData.kg_ds?.toString() || "",
-        toplam_kg_ds: initialData.toplam_kg_ds?.toString() || "",
-        satis_birim: initialData.satis_birim?.toString() || "",
-        satis_tutar: initialData.satis_tutar?.toString() || ""
+        toplam_kg_ds: initialData.toplam_kg_ds?.toString() || ""
       });
       
       // Load cargo items
@@ -326,9 +311,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         adet: formData.adet ? parseInt(formData.adet) : null,
         cinsi: formData.cinsi || null,
         kg_ds: formData.kg_ds ? parseFloat(formData.kg_ds) : null,
-        toplam_kg_ds: totalKgDs,
-        satis_birim: formData.satis_birim ? parseFloat(formData.satis_birim) : null,
-        satis_tutar: formData.satis_tutar ? parseFloat(formData.satis_tutar) : null
+        toplam_kg_ds: totalKgDs
       };
 
       let shipmentId: string;
@@ -391,9 +374,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       adet: "",
       cinsi: "",
       kg_ds: "",
-      toplam_kg_ds: "",
-      satis_birim: "",
-      satis_tutar: ""
+      toplam_kg_ds: ""
     });
     setPickupDate("");
     setDeliveryDate("");
@@ -681,48 +662,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     Otomatik hesaplanan: {totalPrice.toFixed(2)} ₺
                   </p>
                 )}
-              </div>
-            </div>
-          </div>
-
-          {/* Satış Bilgileri */}
-          <div className="border-t pt-4">
-            <h3 className="font-semibold mb-4">Satış Bilgileri</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Satış Birim (Fiyat)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.satis_birim}
-                  onChange={(e) => setFormData({ ...formData, satis_birim: e.target.value })}
-                  placeholder="Birim fiyat"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Satış Tutar (Toplam)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.satis_tutar}
-                  disabled
-                  className="bg-gray-100"
-                  placeholder="Otomatik hesaplanır"
-                />
-                <p className="text-xs text-gray-500">Adet × Birim Fiyat</p>
-              </div>
-              <div className="space-y-2">
-                <Label>Para Birimi</Label>
-                <Select value={formData.currency} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TRY">TRY</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           </div>
