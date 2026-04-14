@@ -27,6 +27,9 @@ export interface Shipment {
   toplam_kg_ds?: number | null;
   satis_birim?: number | null;
   satis_tutar?: number | null;
+  delivered_to?: string | null;
+  delivery_proof_url?: string | null;
+  actual_delivery_date?: string | null;
   created_at?: string;
   updated_at?: string;
 }
