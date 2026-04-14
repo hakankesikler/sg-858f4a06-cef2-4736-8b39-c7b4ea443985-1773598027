@@ -43,6 +43,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     { adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }
   ]);
   
+  // Manual total price for reverse calculation
+  const [manualTotalPrice, setManualTotalPrice] = useState<string>("");
+  
   const [formData, setFormData] = useState({
     supplier_id: "",
     driver_id: "",
@@ -116,6 +119,45 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const totalPrice = cargoItems.reduce((sum, item) => {
     return sum + (item.alt_toplam_fiyat || 0);
   }, 0);
+
+  // Distribute total price across cargo items based on KG/DS weight
+  const distributePrice = () => {
+    const targetTotal = parseFloat(manualTotalPrice);
+    
+    if (!targetTotal || targetTotal <= 0 || totalKgDs <= 0) {
+      return;
+    }
+
+    // Calculate price per kg
+    const pricePerKg = targetTotal / totalKgDs;
+
+    // Update each cargo item
+    const updated = cargoItems.map(item => {
+      const itemTotalKg = item.adet * item.kg_ds;
+      const itemTotalPrice = itemTotalKg * pricePerKg;
+      const itemUnitPrice = item.adet > 0 ? itemTotalPrice / item.adet : 0;
+
+      return {
+        ...item,
+        birim_fiyat: itemUnitPrice,
+        alt_toplam_fiyat: itemTotalPrice
+      };
+    });
+
+    setCargoItems(updated);
+  };
+
+  // Auto-distribute when manual total price changes
+  useEffect(() => {
+    if (manualTotalPrice && parseFloat(manualTotalPrice) > 0) {
+      // Check if all birim_fiyat are zero or empty
+      const allBirimFiyatEmpty = cargoItems.every(item => !item.birim_fiyat || item.birim_fiyat === 0);
+      
+      if (allBirimFiyatEmpty && totalKgDs > 0) {
+        distributePrice();
+      }
+    }
+  }, [manualTotalPrice]);
 
   useEffect(() => {
     if (isOpen) {
@@ -358,6 +400,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     setEstimatedDeliveryDate("");
     setShipmentCode("SHP-000001");
     setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
+    setManualTotalPrice("");
   };
 
   return (
@@ -607,11 +650,37 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   {totalKgDs.toFixed(2)} kg
                 </span>
               </div>
-              <div className="flex justify-end items-center gap-2">
-                <span className="text-sm font-semibold">TOPLAM FİYAT:</span>
-                <span className="text-lg font-bold text-green-600">
-                  {totalPrice.toFixed(2)} ₺
-                </span>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-semibold whitespace-nowrap">TOPLAM FİYAT:</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={manualTotalPrice || totalPrice.toFixed(2)}
+                    onChange={(e) => setManualTotalPrice(e.target.value)}
+                    placeholder="Manuel toplam fiyat girin"
+                    className="font-bold text-green-600"
+                  />
+                  <span className="text-sm font-semibold">₺</span>
+                </div>
+                {manualTotalPrice && parseFloat(manualTotalPrice) !== totalPrice && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={distributePrice}
+                      className="w-full text-xs"
+                    >
+                      Fiyatı Dağıt (KG/DS Ağırlığına Göre)
+                    </Button>
+                  </div>
+                )}
+                {!manualTotalPrice && totalPrice > 0 && (
+                  <p className="text-xs text-gray-500">
+                    Otomatik hesaplanan: {totalPrice.toFixed(2)} ₺
+                  </p>
+                )}
               </div>
             </div>
           </div>
