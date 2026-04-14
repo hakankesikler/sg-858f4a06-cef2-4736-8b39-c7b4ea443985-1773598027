@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Package } from "lucide-react";
+import { Truck, User, Plus, Edit, Trash2, Package, FileText } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService } from "@/services/shipmentService";
 import { DriverForm } from "@/components/DriverForm";
 import { VehicleForm } from "@/components/VehicleForm";
 import { ShipmentForm } from "@/components/ShipmentForm";
+import { DeliveryModal } from "@/components/DeliveryModal";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -39,6 +40,10 @@ export function LogisticsModule() {
   const [deletingShipment, setDeletingShipment] = useState<any | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteType, setDeleteType] = useState<"driver" | "vehicle" | "shipment">("driver");
+  
+  // Delivery modal state
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [deliveringShipment, setDeliveringShipment] = useState<any | null>(null);
 
   useEffect(() => {
     loadData();
@@ -246,9 +251,35 @@ export function LogisticsModule() {
                         {shipment.estimated_delivery_date ? format(new Date(shipment.estimated_delivery_date), "dd MMM yyyy", { locale: tr }) : "-"}
                       </td>
                       <td className="p-4">
-                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(shipment.status)}`}>
-                          {getStatusLabel(shipment.status)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {shipment.status === "beklemede" ? (
+                            <button
+                              onClick={() => {
+                                setDeliveringShipment(shipment);
+                                setIsDeliveryModalOpen(true);
+                              }}
+                              className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(shipment.status)} cursor-pointer hover:opacity-80`}
+                              title="Teslim et"
+                            >
+                              {getStatusLabel(shipment.status)}
+                            </button>
+                          ) : (
+                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(shipment.status)}`}>
+                              {getStatusLabel(shipment.status)}
+                            </span>
+                          )}
+                          {shipment.status === "teslim_edildi" && shipment.delivery_proof_url && (
+                            <a
+                              href={shipment.delivery_proof_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Teslim evrakını görüntüle"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </a>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4">
                         <div className="flex gap-2">
@@ -462,6 +493,17 @@ export function LogisticsModule() {
         onSuccess={loadData}
         editMode={!!editingShipment}
         initialData={editingShipment}
+      />
+
+      <DeliveryModal
+        isOpen={isDeliveryModalOpen}
+        onClose={() => {
+          setIsDeliveryModalOpen(false);
+          setDeliveringShipment(null);
+        }}
+        shipmentId={deliveringShipment?.id || ""}
+        shipmentCode={deliveringShipment?.shipment_code || ""}
+        onSuccess={loadData}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
