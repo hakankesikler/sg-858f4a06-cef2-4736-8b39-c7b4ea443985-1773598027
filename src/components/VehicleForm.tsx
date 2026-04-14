@@ -30,7 +30,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
     kasa_tipi: "",
     tasima_kapasitesi_kg: "",
     yetki_belgesi: "",
-    ruhsat_sahibi: "",
+    ruhsat_sahibi_adi_soyadi: "",
     ruhsat_no: "",
     status: "Aktif"
   });
@@ -46,7 +46,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         kasa_tipi: initialData.kasa_tipi || "",
         tasima_kapasitesi_kg: initialData.tasima_kapasitesi_kg?.toString() || "",
         yetki_belgesi: initialData.yetki_belgesi || "",
-        ruhsat_sahibi: initialData.ruhsat_sahibi || "",
+        ruhsat_sahibi_adi_soyadi: initialData.ruhsat_sahibi_adi_soyadi || "",
         ruhsat_no: initialData.ruhsat_no || "",
         status: initialData.status || "Aktif"
       });
@@ -109,7 +109,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         kasko_bitis_tarihi: kaskoBitisTarihi || null,
         trafik_sigortasi_bitis_tarihi: trafikSigortasiBitisTarihi || null,
         yetki_belgesi: formData.yetki_belgesi || null,
-        ruhsat_sahibi: formData.ruhsat_sahibi || null,
+        ruhsat_sahibi_adi_soyadi: formData.ruhsat_sahibi_adi_soyadi || null,
         ruhsat_no: formData.ruhsat_no || null,
         status: formData.status
       };
@@ -169,7 +169,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
       kasa_tipi: "",
       tasima_kapasitesi_kg: "",
       yetki_belgesi: "",
-      ruhsat_sahibi: "",
+      ruhsat_sahibi_adi_soyadi: "",
       ruhsat_no: "",
       status: "Aktif"
     });
@@ -294,8 +294,8 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
             <div className="space-y-2">
               <Label>Ruhsat Sahibi Adı Soyadı</Label>
               <Input
-                value={formData.ruhsat_sahibi}
-                onChange={(e) => setFormData({ ...formData, ruhsat_sahibi: e.target.value })}
+                value={formData.ruhsat_sahibi_adi_soyadi}
+                onChange={(e) => setFormData({ ...formData, ruhsat_sahibi_adi_soyadi: e.target.value })}
                 placeholder="Ahmet Yılmaz"
               />
             </div>
