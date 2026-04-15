@@ -30,6 +30,26 @@ const toTitleCase = (str: string | null | undefined): string => {
     .join(" ");
 };
 
+// Helper function to normalize Turkish characters for search
+// Converts İ→I, ı→i, I→i to make search case-insensitive for Turkish
+const normalizeTurkish = (str: string): string => {
+  return str
+    .replace(/İ/g, 'I')
+    .replace(/ı/g, 'i')
+    .replace(/I/g, 'i')
+    .replace(/Ş/g, 'S')
+    .replace(/ş/g, 's')
+    .replace(/Ğ/g, 'G')
+    .replace(/ğ/g, 'g')
+    .replace(/Ü/g, 'U')
+    .replace(/ü/g, 'u')
+    .replace(/Ö/g, 'O')
+    .replace(/ö/g, 'o')
+    .replace(/Ç/g, 'C')
+    .replace(/ç/g, 'c')
+    .toLowerCase();
+};
+
 interface ShipmentFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -95,37 +115,37 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   // Filtered lists based on search
   const filteredSuppliers = useMemo(() => {
     if (!searchSupplier) return suppliers;
-    const search = searchSupplier.toLowerCase();
+    const search = normalizeTurkish(searchSupplier);
     return suppliers.filter(s => 
-      s.name?.toLowerCase().includes(search) || 
-      s.customer_code?.toLowerCase().includes(search)
+      normalizeTurkish(s.name || '').includes(search) || 
+      normalizeTurkish(s.customer_code || '').includes(search)
     );
   }, [suppliers, searchSupplier]);
 
   const filteredDrivers = useMemo(() => {
     if (!searchDriver) return drivers;
-    const search = searchDriver.toLowerCase();
+    const search = normalizeTurkish(searchDriver);
     return drivers.filter(d => 
-      d.full_name?.toLowerCase().includes(search) || 
-      d.driver_code?.toLowerCase().includes(search)
+      normalizeTurkish(d.full_name || '').includes(search) || 
+      normalizeTurkish(d.driver_code || '').includes(search)
     );
   }, [drivers, searchDriver]);
 
   const filteredVehicles = useMemo(() => {
     if (!searchVehicle) return vehicles;
-    const search = searchVehicle.toLowerCase();
+    const search = normalizeTurkish(searchVehicle);
     return vehicles.filter(v => 
-      v.cekici_plakasi?.toLowerCase().includes(search) || 
-      v.vehicle_code?.toLowerCase().includes(search)
+      normalizeTurkish(v.cekici_plakasi || '').includes(search) || 
+      normalizeTurkish(v.vehicle_code || '').includes(search)
     );
   }, [vehicles, searchVehicle]);
 
   const filteredCustomers = useMemo(() => {
     if (!searchCustomer) return customers;
-    const search = searchCustomer.toLowerCase();
+    const search = normalizeTurkish(searchCustomer);
     return customers.filter(c => 
-      c.name?.toLowerCase().includes(search) || 
-      c.customer_code?.toLowerCase().includes(search)
+      normalizeTurkish(c.name || '').includes(search) || 
+      normalizeTurkish(c.customer_code || '').includes(search)
     );
   }, [customers, searchCustomer]);
   
