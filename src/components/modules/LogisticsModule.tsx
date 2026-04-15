@@ -11,6 +11,7 @@ import { VehicleForm } from "@/components/VehicleForm";
 import { ShipmentForm } from "@/components/ShipmentForm";
 import { DeliveryModal } from "@/components/DeliveryModal";
 import { generateWaybill } from "@/components/WaybillGenerator";
+import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -952,6 +953,16 @@ export function LogisticsModule() {
         shipmentId={deliveringShipment?.id || ""}
         shipmentCode={deliveringShipment?.shipment_code || ""}
         onSuccess={loadData}
+      />
+
+      <InvoiceDialog
+        isOpen={isInvoiceDialogOpen}
+        onClose={() => {
+          setIsInvoiceDialogOpen(false);
+          setInvoicingShipment(null);
+        }}
+        onSuccess={loadData}
+        shipment={invoicingShipment}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
