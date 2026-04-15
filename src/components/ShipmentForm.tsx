@@ -544,10 +544,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     setShipmentCode("SHP-000001");
     setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
     setManualTotalPrice("");
-    setSearchSupplier("");
-    setSearchDriver("");
-    setSearchVehicle("");
-    setSearchCustomer("");
   };
 
   return (
