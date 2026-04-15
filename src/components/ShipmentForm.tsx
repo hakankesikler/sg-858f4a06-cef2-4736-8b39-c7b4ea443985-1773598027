@@ -534,6 +534,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         const selectedVehicle = vehicles.find(v => v.id === formData.vehicle_id);
         const selectedCustomer = customers.find(c => c.id === formData.customer_id);
         
+        console.log('📞 DEBUG - Selected Driver:', selectedDriver);
+        console.log('📞 DEBUG - Driver Phone:', selectedDriver?.phone);
+        console.log('📞 DEBUG - All Drivers:', drivers);
+        
         if (selectedDriver && selectedVehicle && selectedCustomer) {
           setNotificationData({
             shipment_code: shipmentCode,
