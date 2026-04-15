@@ -112,11 +112,12 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         .from("purchases")
         .insert({
           supplier_id: shipment.supplier_id,
-          invoice_no: purchaseInvoiceNo,
-          invoice_date: new Date().toISOString(),
-          amount: parseFloat(purchaseAmount),
-          currency: shipment.cost_currency || "TRY",
-          payment_status: "beklemede",
+          purchase_no: purchaseInvoiceNo,
+          purchase_date: new Date().toISOString().split('T')[0],
+          due_date: new Date().toISOString().split('T')[0],
+          total: parseFloat(purchaseAmount),
+          subtotal: parseFloat(purchaseAmount),
+          status: "beklemede",
         })
         .select()
         .single();
@@ -129,8 +130,10 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         .insert({
           customer_id: shipment.customer_id,
           invoice_no: salesInvoiceNo,
-          invoice_date: new Date().toISOString(),
-          total_amount: parseFloat(salesAmount),
+          invoice_date: new Date().toISOString().split('T')[0],
+          due_date: new Date().toISOString().split('T')[0],
+          grand_total: parseFloat(salesAmount),
+          subtotal: parseFloat(salesAmount),
           currency: shipment.currency || "TRY",
           status: "beklemede",
         })
