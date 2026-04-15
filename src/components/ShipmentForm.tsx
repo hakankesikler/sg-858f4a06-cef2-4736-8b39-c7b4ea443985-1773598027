@@ -156,10 +156,34 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const filteredCustomers = useMemo(() => {
     if (!searchCustomer) return customers;
     const search = normalizeTurkish(searchCustomer);
+    
+    // Debug: Show first 3 customers with normalization
+    console.log('🔍 İlk 3 Müşteri Debug:', customers.slice(0, 3).map(c => ({
+      code: c.customer_code,
+      name: c.name,
+      normalized: normalizeTurkish(c.name || ''),
+      searchTerm: search,
+      nameMatch: normalizeTurkish(c.name || '').includes(search),
+      codeMatch: normalizeTurkish(c.customer_code || '').includes(search)
+    })));
+    
+    // Check if PROLINE exists
+    const prolineCustomer = customers.find(c => c.name?.toUpperCase().includes('PROLINE'));
+    if (prolineCustomer) {
+      console.log('✅ PROLINE BULUNDU:', {
+        code: prolineCustomer.customer_code,
+        name: prolineCustomer.name,
+        normalized: normalizeTurkish(prolineCustomer.name || ''),
+        searchTerm: search,
+        match: normalizeTurkish(prolineCustomer.name || '').includes(search)
+      });
+    }
+    
     const filtered = customers.filter(c => 
       normalizeTurkish(c.name || '').includes(search) || 
       normalizeTurkish(c.customer_code || '').includes(search)
     );
+    
     console.log('Müşteri filtreleme:', {
       searchCustomer,
       searchNormalized: search,
@@ -168,6 +192,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       firstCustomer: customers[0]?.name,
       firstCustomerNormalized: normalizeTurkish(customers[0]?.name || '')
     });
+    
     return filtered;
   }, [customers, searchCustomer]);
 
