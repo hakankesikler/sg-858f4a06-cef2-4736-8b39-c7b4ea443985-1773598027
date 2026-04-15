@@ -505,21 +505,20 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0" align="start" side="bottom">
-                  <Command shouldFilter={false}>
-                    <CommandInput placeholder="Tedarikçi ara..." autoFocus />
-                    <CommandList className="max-h-[300px] overflow-y-auto">
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Tedarikçi ara..." />
+                    <CommandList>
                       <CommandEmpty>Tedarikçi bulunamadı.</CommandEmpty>
                       <CommandGroup>
                         {suppliers.map((supplier) => (
                           <CommandItem
                             key={supplier.id}
-                            value={`${supplier.customer_code} ${supplier.name}`}
-                            onSelect={() => {
-                              setFormData({ ...formData, supplier_id: supplier.id });
+                            value={supplier.id}
+                            onSelect={(currentValue) => {
+                              setFormData({ ...formData, supplier_id: currentValue });
                               setOpenSupplier(false);
                             }}
-                            className="cursor-pointer"
                           >
                             <Check
                               className={cn(
@@ -552,21 +551,20 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0" align="start" side="bottom">
-                  <Command shouldFilter={false}>
-                    <CommandInput placeholder="Sürücü ara..." autoFocus />
-                    <CommandList className="max-h-[300px] overflow-y-auto">
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Sürücü ara..." />
+                    <CommandList>
                       <CommandEmpty>Sürücü bulunamadı.</CommandEmpty>
                       <CommandGroup>
                         {drivers.map((driver) => (
                           <CommandItem
                             key={driver.id}
-                            value={`${driver.driver_code} ${driver.full_name}`}
-                            onSelect={() => {
-                              setFormData({ ...formData, driver_id: driver.id });
+                            value={driver.id}
+                            onSelect={(currentValue) => {
+                              setFormData({ ...formData, driver_id: currentValue });
                               setOpenDriver(false);
                             }}
-                            className="cursor-pointer"
                           >
                             <Check
                               className={cn(
@@ -599,21 +597,20 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0" align="start" side="bottom">
-                  <Command shouldFilter={false}>
-                    <CommandInput placeholder="Araç ara..." autoFocus />
-                    <CommandList className="max-h-[300px] overflow-y-auto">
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Araç ara..." />
+                    <CommandList>
                       <CommandEmpty>Araç bulunamadı.</CommandEmpty>
                       <CommandGroup>
                         {vehicles.map((vehicle) => (
                           <CommandItem
                             key={vehicle.id}
-                            value={`${vehicle.vehicle_code} ${vehicle.cekici_plakasi}`}
-                            onSelect={() => {
-                              setFormData({ ...formData, vehicle_id: vehicle.id });
+                            value={vehicle.id}
+                            onSelect={(currentValue) => {
+                              setFormData({ ...formData, vehicle_id: currentValue });
                               setOpenVehicle(false);
                             }}
-                            className="cursor-pointer"
                           >
                             <Check
                               className={cn(
@@ -681,21 +678,20 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[500px] p-0" align="start" side="bottom">
-                    <Command shouldFilter={false}>
-                      <CommandInput placeholder="Müşteri ara..." autoFocus />
-                      <CommandList className="max-h-[300px] overflow-y-auto">
+                  <PopoverContent className="w-[500px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Müşteri ara..." />
+                      <CommandList>
                         <CommandEmpty>Müşteri bulunamadı.</CommandEmpty>
                         <CommandGroup>
                           {customers.map((customer) => (
                             <CommandItem
                               key={customer.id}
-                              value={`${customer.customer_code} ${customer.name}`}
-                              onSelect={() => {
-                                handleCustomerChange(customer.id!);
+                              value={customer.id}
+                              onSelect={(currentValue) => {
+                                handleCustomerChange(currentValue);
                                 setOpenCustomer(false);
                               }}
-                              className="cursor-pointer"
                             >
                               <Check
                                 className={cn(
