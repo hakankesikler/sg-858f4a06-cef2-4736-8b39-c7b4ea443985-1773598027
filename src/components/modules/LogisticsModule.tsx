@@ -47,6 +47,10 @@ export function LogisticsModule() {
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [deliveringShipment, setDeliveringShipment] = useState<any | null>(null);
 
+  // Excel import state
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useState<HTMLInputElement | null>(null)[0];
+
   // Column filters
   const [filters, setFilters] = useState({
     sender_name: "",
@@ -338,6 +342,148 @@ export function LogisticsModule() {
     }
   };
 
+  // Download Excel template
+  const downloadExcelTemplate = () => {
+    try {
+      const templateData = [
+        {
+          "Gönderici Adı": "Örn: Medbar A.Ş",
+          "Gönderici İl": "Örn: İzmir",
+          "Alıcı Adı": "Örn: ASG Havaleli Depo",
+          "Alıcı İlçe": "Örn: SANCAKTEPE",
+          "Alıcı İl": "Örn: İstanbul",
+          "Sürücü Adı": "Örn: Enes Özbay",
+          "Araç Plakası": "Örn: 63AJL095",
+          "Yükleme Tarihi": "Örn: 15.04.2026",
+        },
+      ];
+
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sevkiyat Şablonu");
+
+      const fileName = "Sevkiyat_Sablonu.xlsx";
+      XLSX.writeFile(workbook, fileName);
+
+      toast({
+        title: "Başarılı",
+        description: "Excel şablonu indirildi",
+      });
+    } catch (error) {
+      console.error("Template download error:", error);
+      toast({
+        title: "Hata",
+        description: "Şablon indirilirken bir hata oluştu",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle Excel import
+  const handleExcelImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (let i = 0; i < jsonData.length; i++) {
+        const row: any = jsonData[i];
+        
+        try {
+          // Find driver by name
+          const driverName = row["Sürücü Adı"] || row["Sürücü"] || "";
+          const driver = drivers.find((d) => 
+            d.full_name?.toLowerCase().includes(driverName.toLowerCase())
+          );
+
+          // Find vehicle by plate
+          const vehiclePlate = row["Araç Plakası"] || row["Araç"] || "";
+          const vehicle = vehicles.find((v) => 
+            v.cekici_plakasi?.toLowerCase().includes(vehiclePlate.toLowerCase())
+          );
+
+          // Parse date
+          let pickupDate = new Date().toISOString().split("T")[0];
+          if (row["Yükleme Tarihi"]) {
+            const dateParts = row["Yükleme Tarihi"].toString().split(".");
+            if (dateParts.length === 3) {
+              pickupDate = `${dateParts[2]}-${dateParts[1].padStart(2, "0")}-${dateParts[0].padStart(2, "0")}`;
+            }
+          }
+
+          const shipmentData = {
+            sender_name: row["Gönderici Adı"] || row["Gönderici"] || "",
+            origin: row["Gönderici İl"] || "",
+            receiver: row["Alıcı Adı"] || row["Alıcı"] || "",
+            receiver_district: row["Alıcı İlçe"] || "",
+            destination: row["Alıcı İl"] || "",
+            driver_id: driver?.id || null,
+            vehicle_id: vehicle?.id || null,
+            pickup_date: pickupDate,
+            status: "beklemede" as const,
+          };
+
+          // Validate required fields
+          if (!shipmentData.sender_name || !shipmentData.receiver) {
+            errors.push(`Satır ${i + 2}: Gönderici ve Alıcı adı gerekli`);
+            errorCount++;
+            continue;
+          }
+
+          await shipmentService.createShipment(shipmentData);
+          successCount++;
+        } catch (error) {
+          console.error(`Row ${i + 2} error:`, error);
+          errors.push(`Satır ${i + 2}: Hata oluştu`);
+          errorCount++;
+        }
+      }
+
+      // Show results
+      if (successCount > 0) {
+        toast({
+          title: "İçe Aktarma Tamamlandı",
+          description: `${successCount} sevkiyat başarıyla oluşturuldu${errorCount > 0 ? `, ${errorCount} hata` : ""}`,
+        });
+      }
+
+      if (errors.length > 0 && errors.length <= 5) {
+        setTimeout(() => {
+          toast({
+            title: "Hatalar",
+            description: errors.join("\n"),
+            variant: "destructive",
+          });
+        }, 500);
+      }
+
+      // Reload data
+      await loadData();
+    } catch (error) {
+      console.error("Excel import error:", error);
+      toast({
+        title: "Hata",
+        description: "Excel dosyası okunurken bir hata oluştu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+      if (event.target) {
+        event.target.value = "";
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -371,6 +517,25 @@ export function LogisticsModule() {
                 <FileText className="h-4 w-4 mr-2" />
                 CSV İndir
               </Button>
+              <Button onClick={downloadExcelTemplate} variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                Şablon İndir
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => document.getElementById("excel-import-input")?.click()}
+                disabled={isImporting}
+              >
+                <FileDown className="h-4 w-4 mr-2" />
+                {isImporting ? "Yükleniyor..." : "Excel'den Yükle"}
+              </Button>
+              <input
+                id="excel-import-input"
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleExcelImport}
+                style={{ display: "none" }}
+              />
             </div>
             <Button onClick={() => {
               setEditingShipment(undefined);
