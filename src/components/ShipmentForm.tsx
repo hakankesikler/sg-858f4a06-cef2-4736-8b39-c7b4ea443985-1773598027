@@ -542,6 +542,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 placeholder="Tedarikçi ara..."
                 value={searchSupplier}
                 onChange={(e) => setSearchSupplier(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                  }
+                }}
                 className="mb-2"
               />
               <Select value={formData.supplier_id} onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}>
@@ -567,6 +572,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 placeholder="Sürücü ara..."
                 value={searchDriver}
                 onChange={(e) => setSearchDriver(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                  }
+                }}
                 className="mb-2"
               />
               <Select value={formData.driver_id} onValueChange={(value) => setFormData({ ...formData, driver_id: value })}>
@@ -592,6 +602,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 placeholder="Araç ara..."
                 value={searchVehicle}
                 onChange={(e) => setSearchVehicle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                  }
+                }}
                 className="mb-2"
               />
               <Select value={formData.vehicle_id} onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}>
@@ -652,6 +667,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   placeholder="Müşteri ara..."
                   value={searchCustomer}
                   onChange={(e) => setSearchCustomer(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                    }
+                  }}
                   className="mb-2"
                 />
                 <Select value={formData.customer_id} onValueChange={(value) => handleCustomerChange(value)}>
