@@ -157,6 +157,40 @@ export function AccountingModule() {
         console.log(`Customer: ${c.name}, VKN: ${c.vergi_no}, TC: ${c.tc_no}`);
       });
       setCustomers(customersData);
+      
+      // Load purchases
+      const { data: purchasesData, error: purchasesError } = await supabase
+        .from("purchases")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      console.log("=== ACCOUNTING - PURCHASES ===");
+      console.log("Purchases data:", purchasesData);
+      console.log("Purchases error:", purchasesError);
+      console.log("Purchases count:", purchasesData?.length || 0);
+      
+      if (purchasesError) {
+        console.error("Purchases error:", purchasesError);
+      } else {
+        setPurchaseInvoices(purchasesData || []);
+      }
+      
+      // Load sales invoices
+      const { data: salesData, error: salesError } = await supabase
+        .from("sales_invoices")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      console.log("=== ACCOUNTING - SALES INVOICES ===");
+      console.log("Sales data:", salesData);
+      console.log("Sales error:", salesError);
+      console.log("Sales count:", salesData?.length || 0);
+      
+      if (salesError) {
+        console.error("Sales error:", salesError);
+      } else {
+        setSalesInvoices(salesData || []);
+      }
     } catch (error) {
       console.error("Error loading accounting data:", error);
       toast({
