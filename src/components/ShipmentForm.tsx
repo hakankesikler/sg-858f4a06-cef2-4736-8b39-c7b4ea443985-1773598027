@@ -7,8 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { CalendarIcon, Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +30,6 @@ const toTitleCase = (str: string | null | undefined): string => {
 };
 
 // Helper function to normalize Turkish characters for search
-// Converts İ→I, ı→i, I→i to make search case-insensitive for Turkish
 const normalizeTurkish = (str: string): string => {
   return str
     .replace(/İ/g, 'I')
@@ -70,18 +68,18 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [customers, setCustomers] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   
+  // Search states
+  const [searchSupplier, setSearchSupplier] = useState("");
+  const [searchDriver, setSearchDriver] = useState("");
+  const [searchVehicle, setSearchVehicle] = useState("");
+  const [searchCustomer, setSearchCustomer] = useState("");
+  
   // Suggestions from past shipments
   const [senderSuggestions, setSenderSuggestions] = useState<string[]>([]);
   const [receiverSuggestions, setReceiverSuggestions] = useState<string[]>([]);
   const [districtSuggestions, setDistrictSuggestions] = useState<string[]>([]);
   const [originSuggestions, setOriginSuggestions] = useState<string[]>([]);
   const [destinationSuggestions, setDestinationSuggestions] = useState<string[]>([]);
-  
-  // Combobox open states
-  const [openSupplier, setOpenSupplier] = useState(false);
-  const [openDriver, setOpenDriver] = useState(false);
-  const [openVehicle, setOpenVehicle] = useState(false);
-  const [openCustomer, setOpenCustomer] = useState(false);
   
   // Notification dialog state
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
@@ -127,6 +125,43 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     toplam_kg_ds: ""
   });
 
+  // Filtered lists based on search (with Turkish character normalization)
+  const filteredSuppliers = useMemo(() => {
+    if (!searchSupplier) return suppliers;
+    const search = normalizeTurkish(searchSupplier);
+    return suppliers.filter(s => 
+      normalizeTurkish(s.name || '').includes(search) || 
+      normalizeTurkish(s.customer_code || '').includes(search)
+    );
+  }, [suppliers, searchSupplier]);
+
+  const filteredDrivers = useMemo(() => {
+    if (!searchDriver) return drivers;
+    const search = normalizeTurkish(searchDriver);
+    return drivers.filter(d => 
+      normalizeTurkish(d.full_name || '').includes(search) || 
+      normalizeTurkish(d.driver_code || '').includes(search)
+    );
+  }, [drivers, searchDriver]);
+
+  const filteredVehicles = useMemo(() => {
+    if (!searchVehicle) return vehicles;
+    const search = normalizeTurkish(searchVehicle);
+    return vehicles.filter(v => 
+      normalizeTurkish(v.cekici_plakasi || '').includes(search) || 
+      normalizeTurkish(v.vehicle_code || '').includes(search)
+    );
+  }, [vehicles, searchVehicle]);
+
+  const filteredCustomers = useMemo(() => {
+    if (!searchCustomer) return customers;
+    const search = normalizeTurkish(searchCustomer);
+    return customers.filter(c => 
+      normalizeTurkish(c.name || '').includes(search) || 
+      normalizeTurkish(c.customer_code || '').includes(search)
+    );
+  }, [customers, searchCustomer]);
+
   // Cargo items management functions
   const addCargoItem = () => {
     setCargoItems([...cargoItems, { 
@@ -142,7 +177,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const removeCargoItem = (index: number) => {
     if (cargoItems.length > 1) {
       const updated = cargoItems.filter((_, i) => i !== index);
-      // Update sira_no after removal
       updated.forEach((item, idx) => {
         item.sira_no = idx + 1;
       });
@@ -162,23 +196,19 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       updated[index].birim_fiyat = typeof value === 'string' ? parseFloat(value) || 0 : value;
     }
     
-    // Auto-calculate alt_toplam_fiyat (adet × birim_fiyat)
     updated[index].alt_toplam_fiyat = updated[index].adet * (updated[index].birim_fiyat || 0);
     
     setCargoItems(updated);
   };
 
-  // Calculate total KG/DS from all cargo items
   const totalKgDs = cargoItems.reduce((sum, item) => {
     return sum + (item.adet * item.kg_ds);
   }, 0);
 
-  // Calculate total price from all cargo items
   const totalPrice = cargoItems.reduce((sum, item) => {
     return sum + (item.alt_toplam_fiyat || 0);
   }, 0);
 
-  // Distribute total price across cargo items based on KG/DS weight
   const distributePrice = () => {
     const targetTotal = parseFloat(manualTotalPrice);
     
@@ -186,10 +216,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       return;
     }
 
-    // Calculate price per kg
     const pricePerKg = targetTotal / totalKgDs;
 
-    // Update each cargo item
     const updated = cargoItems.map(item => {
       const itemTotalKg = item.adet * item.kg_ds;
       const itemTotalPrice = itemTotalKg * pricePerKg;
@@ -205,10 +233,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     setCargoItems(updated);
   };
 
-  // Auto-distribute when manual total price changes
   useEffect(() => {
     if (manualTotalPrice && parseFloat(manualTotalPrice) > 0) {
-      // Check if all birim_fiyat are zero or empty
       const allBirimFiyatEmpty = cargoItems.every(item => !item.birim_fiyat || item.birim_fiyat === 0);
       
       if (allBirimFiyatEmpty && totalKgDs > 0) {
@@ -226,7 +252,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     }
   }, [isOpen]);
 
-  // Auto-calculate toplam_kg_ds (adet * kg_ds)
   useEffect(() => {
     const adet = parseFloat(formData.adet) || 0;
     const kgDs = parseFloat(formData.kg_ds) || 0;
@@ -242,7 +267,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         drivers.length > 0 && 
         vehicles.length > 0 && 
         customers.length > 0) {
-      console.log("Loading shipment data for edit:", initialData);
       setShipmentCode(initialData.shipment_code || "SHP-000001");
       setFormData({
         supplier_id: initialData.supplier_id || "",
@@ -265,10 +289,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         toplam_kg_ds: initialData.toplam_kg_ds?.toString() || ""
       });
       
-      // Load cargo items
       loadCargoItems(initialData.id);
       
-      // Handle date conversions
       if (initialData.pickup_date) {
         const dateValue = initialData.pickup_date;
         setPickupDate(dateValue.includes('T') ? dateValue.split('T')[0] : dateValue);
@@ -317,7 +339,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       setDrivers(driversData);
       setVehicles(vehiclesData);
       
-      // Filter customers by account_type, but include currently selected ones in edit mode
       const customersList = customersData.filter(c => {
         const isMusteri = c.account_type === "musteri" || !c.account_type;
         const isCurrentlySelected = editMode && initialData?.customer_id === c.id;
@@ -333,7 +354,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       setCustomers(customersList);
       setSuppliers(suppliersList);
       
-      // Load suggestions from past shipments
       await loadSuggestions();
     } catch (error) {
       console.error("Error loading selection data:", error);
@@ -344,35 +364,30 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     try {
       const shipments = await shipmentService.getShipments();
       
-      // Extract unique sender names
       const senders = [...new Set(
         shipments
           .map(s => s.sender_name)
           .filter(Boolean)
       )].sort();
       
-      // Extract unique receiver names
       const receivers = [...new Set(
         shipments
           .map(s => s.receiver)
           .filter(Boolean)
       )].sort();
       
-      // Extract unique receiver districts
       const districts = [...new Set(
         shipments
           .map(s => s.receiver_district)
           .filter(Boolean)
       )].sort();
       
-      // Extract unique origin cities (gönderici il)
       const origins = [...new Set(
         shipments
           .map(s => s.origin)
           .filter(Boolean)
       )].sort();
       
-      // Extract unique destination cities (alıcı il)
       const destinations = [...new Set(
         shipments
           .map(s => s.destination)
@@ -402,15 +417,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const handleCustomerChange = (customerId: string) => {
     setFormData({ ...formData, customer_id: customerId });
     
-    // Auto-fill sender/receiver details from selected customer
     const selectedCustomer = customers.find(c => c.id === customerId);
     if (selectedCustomer && !editMode) {
-      // Only auto-fill if not in edit mode (don't overwrite existing data)
       const customerName = selectedCustomer.name || "";
-      const customerCity = selectedCustomer.city || "";
-      const customerDistrict = selectedCustomer.district || "";
       
-      // Auto-fill sender if empty
       if (!formData.sender_name) {
         setFormData(prev => ({
           ...prev,
@@ -458,7 +468,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         await shipmentService.updateShipment(initialData.id, submitData);
         shipmentId = initialData.id;
         
-        // Update cargo items
         await shipmentCargoService.updateCargoItems(shipmentId, cargoItems);
         
         toast({
@@ -469,10 +478,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         const created = await shipmentService.createShipment(submitData);
         shipmentId = created.id;
         
-        // Create cargo items
         await shipmentCargoService.createCargoItems(shipmentId, cargoItems);
         
-        // Prepare notification data
         const selectedDriver = drivers.find(d => d.id === formData.driver_id);
         const selectedVehicle = vehicles.find(v => v.id === formData.vehicle_id);
         const selectedCustomer = customers.find(c => c.id === formData.customer_id);
@@ -491,7 +498,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             customer_email: selectedCustomer.email || ""
           });
           
-          // Show notification dialog
           setShowNotificationDialog(true);
         }
         
@@ -544,6 +550,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     setShipmentCode("SHP-000001");
     setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
     setManualTotalPrice("");
+    setSearchSupplier("");
+    setSearchDriver("");
+    setSearchVehicle("");
+    setSearchCustomer("");
   };
 
   return (
@@ -554,172 +564,86 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Sevkiyat Kodu */}
           <div className="space-y-2">
             <Label>Sevkiyat Kodu</Label>
             <Input value={shipmentCode} disabled className="bg-gray-50" />
           </div>
 
-          {/* Tedarikçi, Sürücü, Araç Seçimi */}
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Tedarikçi</Label>
-              <Popover open={openSupplier} onOpenChange={setOpenSupplier}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openSupplier}
-                    className="w-full justify-between"
-                  >
-                    {formData.supplier_id
-                      ? suppliers.find((s) => s.id === formData.supplier_id)?.customer_code + " - " + suppliers.find((s) => s.id === formData.supplier_id)?.name?.toUpperCase()
-                      : "Tedarikçi seçin"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[400px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Tedarikçi ara..." />
-                    <CommandList>
-                      <CommandEmpty>Tedarikçi bulunamadı</CommandEmpty>
-                      <CommandGroup>
-                        {suppliers.map((supplier) => (
-                          <CommandItem
-                            key={supplier.id}
-                            value={supplier.id!}
-                            keywords={[normalizeTurkish(supplier.name || ''), normalizeTurkish(supplier.customer_code || '')]}
-                            onSelect={(currentValue) => {
-                              setFormData({ ...formData, supplier_id: currentValue });
-                              setOpenSupplier(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.supplier_id === supplier.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {supplier.customer_code} - {supplier.name?.toUpperCase()}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Input
+                placeholder="Tedarikçi ara..."
+                value={searchSupplier}
+                onChange={(e) => setSearchSupplier(e.target.value)}
+              />
+              <Select value={formData.supplier_id} onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tedarikçi seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredSuppliers.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500">Tedarikçi bulunamadı</div>
+                  ) : (
+                    filteredSuppliers.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id!}>
+                        {supplier.customer_code} - {supplier.name?.toUpperCase()}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Sürücü</Label>
-              <Popover open={openDriver} onOpenChange={setOpenDriver}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openDriver}
-                    className="w-full justify-between"
-                  >
-                    {formData.driver_id
-                      ? drivers.find((d) => d.id === formData.driver_id)?.driver_code + " - " + toTitleCase(drivers.find((d) => d.id === formData.driver_id)?.full_name)
-                      : "Sürücü seçin"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[400px] p-0">
-                  <Command filter={(value, search) => {
-                    const driver = drivers.find(d => d.id === value);
-                    if (!driver) return 0;
-                    const searchNorm = normalizeTurkish(search);
-                    const nameMatch = normalizeTurkish(driver.full_name || '').includes(searchNorm);
-                    const codeMatch = normalizeTurkish(driver.driver_code || '').includes(searchNorm);
-                    return nameMatch || codeMatch ? 1 : 0;
-                  }}>
-                    <CommandInput placeholder="Sürücü ara..." />
-                    <CommandList>
-                      <CommandEmpty>Sürücü bulunamadı</CommandEmpty>
-                      <CommandGroup>
-                        {drivers.map((driver) => (
-                          <CommandItem
-                            key={driver.id}
-                            value={driver.id!}
-                            keywords={[normalizeTurkish(driver.full_name || ''), normalizeTurkish(driver.driver_code || '')]}
-                            onSelect={(currentValue) => {
-                              setFormData({ ...formData, driver_id: currentValue });
-                              setOpenDriver(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.driver_id === driver.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {driver.driver_code} - {toTitleCase(driver.full_name)}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Input
+                placeholder="Sürücü ara..."
+                value={searchDriver}
+                onChange={(e) => setSearchDriver(e.target.value)}
+              />
+              <Select value={formData.driver_id} onValueChange={(value) => setFormData({ ...formData, driver_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sürücü seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredDrivers.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500">Sürücü bulunamadı</div>
+                  ) : (
+                    filteredDrivers.map((driver) => (
+                      <SelectItem key={driver.id} value={driver.id!}>
+                        {driver.driver_code} - {toTitleCase(driver.full_name)}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Araç</Label>
-              <Popover open={openVehicle} onOpenChange={setOpenVehicle}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openVehicle}
-                    className="w-full justify-between"
-                  >
-                    {formData.vehicle_id
-                      ? vehicles.find((v) => v.id === formData.vehicle_id)?.vehicle_code + " - " + vehicles.find((v) => v.id === formData.vehicle_id)?.cekici_plakasi?.toUpperCase()
-                      : "Araç seçin"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[400px] p-0">
-                  <Command filter={(value, search) => {
-                    const vehicle = vehicles.find(v => v.id === value);
-                    if (!vehicle) return 0;
-                    const searchNorm = normalizeTurkish(search);
-                    const plateMatch = normalizeTurkish(vehicle.cekici_plakasi || '').includes(searchNorm);
-                    const codeMatch = normalizeTurkish(vehicle.vehicle_code || '').includes(searchNorm);
-                    return plateMatch || codeMatch ? 1 : 0;
-                  }}>
-                    <CommandInput placeholder="Araç ara..." />
-                    <CommandList>
-                      <CommandEmpty>Araç bulunamadı</CommandEmpty>
-                      <CommandGroup>
-                        {vehicles.map((vehicle) => (
-                          <CommandItem
-                            key={vehicle.id}
-                            value={vehicle.id!}
-                            keywords={[normalizeTurkish(vehicle.cekici_plakasi || ''), normalizeTurkish(vehicle.vehicle_code || '')]}
-                            onSelect={(currentValue) => {
-                              setFormData({ ...formData, vehicle_id: currentValue });
-                              setOpenVehicle(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.vehicle_id === vehicle.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {vehicle.vehicle_code} - {vehicle.cekici_plakasi?.toUpperCase()}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Input
+                placeholder="Araç ara..."
+                value={searchVehicle}
+                onChange={(e) => setSearchVehicle(e.target.value)}
+              />
+              <Select value={formData.vehicle_id} onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Araç seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredVehicles.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500">Araç bulunamadı</div>
+                  ) : (
+                    filteredVehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id!}>
+                        {vehicle.vehicle_code} - {vehicle.cekici_plakasi?.toUpperCase()}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Maliyet Bilgileri */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Maliyet (Size Olan Maliyet)</Label>
@@ -746,62 +670,36 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
           </div>
 
-          {/* Gönderici ve Alıcı Bilgileri */}
           <div className="border-t pt-4">
             <h3 className="font-semibold mb-4">Gönderici ve Alıcı Detayları</h3>
             
-            {/* Müşteri (Ödeme Sorumlusu) */}
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div className="space-y-2">
                 <Label>Müşteri (Ödeme Sorumlusu)</Label>
-                <Popover open={openCustomer} onOpenChange={setOpenCustomer}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={openCustomer}
-                      className="w-full justify-between"
-                    >
-                      {formData.customer_id
-                        ? customers.find((c) => c.id === formData.customer_id)?.customer_code + " - " + customers.find((c) => c.id === formData.customer_id)?.name?.toUpperCase()
-                        : "Müşteri seçin"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput placeholder="Müşteri ara..." />
-                      <CommandList>
-                        <CommandEmpty>Müşteri bulunamadı</CommandEmpty>
-                        <CommandGroup>
-                          {customers.map((customer) => (
-                            <CommandItem
-                              key={customer.id}
-                              value={customer.id!}
-                              keywords={[normalizeTurkish(customer.name || ''), normalizeTurkish(customer.customer_code || '')]}
-                              onSelect={(currentValue) => {
-                                handleCustomerChange(currentValue);
-                                setOpenCustomer(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  formData.customer_id === customer.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {customer.customer_code} - {customer.name?.toUpperCase()}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <Input
+                  placeholder="Müşteri ara..."
+                  value={searchCustomer}
+                  onChange={(e) => setSearchCustomer(e.target.value)}
+                />
+                <Select value={formData.customer_id} onValueChange={handleCustomerChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Müşteri seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCustomers.length === 0 ? (
+                      <div className="p-2 text-sm text-gray-500">Müşteri bulunamadı</div>
+                    ) : (
+                      filteredCustomers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id!}>
+                          {customer.customer_code} - {customer.name?.toUpperCase()}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             
-            {/* Gönderici ve Alıcı */}
             <div className="grid grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label>Gönderici Adı/Firma</Label>
@@ -882,7 +780,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
           </div>
 
-          {/* Yük Detayları - Çoklu Satırlar */}
           <div className="border-t pt-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Yük Detayları</h3>
@@ -1006,7 +903,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
           </div>
 
-          {/* Tarih Bilgileri */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Yükleme Tarihi</Label>
@@ -1039,7 +935,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         </form>
       </DialogContent>
       
-      {/* Notification Dialog */}
       {notificationData && (
         <ShipmentNotificationDialog
           open={showNotificationDialog}
