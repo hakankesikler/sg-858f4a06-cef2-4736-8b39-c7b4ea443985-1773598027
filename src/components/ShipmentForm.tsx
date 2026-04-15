@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { CalendarIcon, Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +17,7 @@ import { shipmentCargoService, type CargoItemInput } from "@/services/shipmentCa
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { crmService, Customer } from "@/services/crmService";
+import { cn } from "@/lib/utils";
 
 interface ShipmentFormProps {
   isOpen: boolean;
@@ -43,6 +45,12 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [districtSuggestions, setDistrictSuggestions] = useState<string[]>([]);
   const [originSuggestions, setOriginSuggestions] = useState<string[]>([]);
   const [destinationSuggestions, setDestinationSuggestions] = useState<string[]>([]);
+  
+  // Combobox open states
+  const [openSupplier, setOpenSupplier] = useState(false);
+  const [openDriver, setOpenDriver] = useState(false);
+  const [openVehicle, setOpenVehicle] = useState(false);
+  const [openCustomer, setOpenCustomer] = useState(false);
   
   // Cargo items state
   const [cargoItems, setCargoItems] = useState<CargoItemInput[]>([
@@ -483,48 +491,141 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Tedarikçi</Label>
-              <Select value={formData.supplier_id} onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tedarikçi seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id!}>
-                      {supplier.customer_code} - {supplier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={openSupplier} onOpenChange={setOpenSupplier}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openSupplier}
+                    className="w-full justify-between"
+                  >
+                    {formData.supplier_id
+                      ? suppliers.find((s) => s.id === formData.supplier_id)?.name
+                      : "Tedarikçi seçin"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Tedarikçi ara..." />
+                    <CommandList>
+                      <CommandEmpty>Tedarikçi bulunamadı.</CommandEmpty>
+                      <CommandGroup>
+                        {suppliers.map((supplier) => (
+                          <CommandItem
+                            key={supplier.id}
+                            value={`${supplier.customer_code} ${supplier.name}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, supplier_id: supplier.id });
+                              setOpenSupplier(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.supplier_id === supplier.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {supplier.customer_code} - {supplier.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>Sürücü</Label>
-              <Select value={formData.driver_id} onValueChange={(value) => setFormData({ ...formData, driver_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sürücü seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {drivers.map((driver) => (
-                    <SelectItem key={driver.id} value={driver.id!}>
-                      {driver.driver_code} - {driver.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={openDriver} onOpenChange={setOpenDriver}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openDriver}
+                    className="w-full justify-between"
+                  >
+                    {formData.driver_id
+                      ? drivers.find((d) => d.id === formData.driver_id)?.full_name
+                      : "Sürücü seçin"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Sürücü ara..." />
+                    <CommandList>
+                      <CommandEmpty>Sürücü bulunamadı.</CommandEmpty>
+                      <CommandGroup>
+                        {drivers.map((driver) => (
+                          <CommandItem
+                            key={driver.id}
+                            value={`${driver.driver_code} ${driver.full_name}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, driver_id: driver.id });
+                              setOpenDriver(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.driver_id === driver.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {driver.driver_code} - {driver.full_name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>Araç</Label>
-              <Select value={formData.vehicle_id} onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Araç seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {vehicles.map((vehicle) => (
-                    <SelectItem key={vehicle.id} value={vehicle.id!}>
-                      {vehicle.vehicle_code} - {vehicle.cekici_plakasi}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={openVehicle} onOpenChange={setOpenVehicle}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openVehicle}
+                    className="w-full justify-between"
+                  >
+                    {formData.vehicle_id
+                      ? vehicles.find((v) => v.id === formData.vehicle_id)?.cekici_plakasi
+                      : "Araç seçin"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Araç ara..." />
+                    <CommandList>
+                      <CommandEmpty>Araç bulunamadı.</CommandEmpty>
+                      <CommandGroup>
+                        {vehicles.map((vehicle) => (
+                          <CommandItem
+                            key={vehicle.id}
+                            value={`${vehicle.vehicle_code} ${vehicle.cekici_plakasi}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, vehicle_id: vehicle.id });
+                              setOpenVehicle(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.vehicle_id === vehicle.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {vehicle.vehicle_code} - {vehicle.cekici_plakasi}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -563,18 +664,49 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div className="space-y-2">
                 <Label>Müşteri (Ödeme Sorumlusu)</Label>
-                <Select value={formData.customer_id} onValueChange={handleCustomerChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Müşteri seçin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id!}>
-                        {customer.customer_code} - {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={openCustomer} onOpenChange={setOpenCustomer}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openCustomer}
+                      className="w-full justify-between"
+                    >
+                      {formData.customer_id
+                        ? customers.find((c) => c.id === formData.customer_id)?.name
+                        : "Müşteri seçin"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[500px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Müşteri ara..." />
+                      <CommandList>
+                        <CommandEmpty>Müşteri bulunamadı.</CommandEmpty>
+                        <CommandGroup>
+                          {customers.map((customer) => (
+                            <CommandItem
+                              key={customer.id}
+                              value={`${customer.customer_code} ${customer.name}`}
+                              onSelect={() => {
+                                handleCustomerChange(customer.id!);
+                                setOpenCustomer(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  formData.customer_id === customer.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {customer.customer_code} - {customer.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             
