@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { VergiDairesiSelect } from "@/components/VergiDairesiSelect";
 import { IlIlceSelect } from "@/components/IlIlceSelect";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CariFormProps {
   isOpen: boolean;
@@ -253,11 +254,43 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     try {
       setIsSubmitting(true);
       
+      const finalName = cariTuru === "gercek" 
+        ? `${formData.name} ${formData.surname}`.trim() 
+        : formData.company_name;
+      
+      // Duplicate check: Same name + vergi_no combination
+      // Only check for tüzel kişi with vergi_no (not for gerçek kişi with TC)
+      if (cariTuru === "tuzel" && formData.vergi_no) {
+        const { data: existingCustomers, error: checkError } = await supabase
+          .from("customers")
+          .select("id, name, vergi_no")
+          .eq("name", finalName)
+          .eq("vergi_no", formData.vergi_no);
+        
+        if (checkError) {
+          console.error("Duplicate check error:", checkError);
+        }
+        
+        if (existingCustomers && existingCustomers.length > 0) {
+          // In edit mode, exclude current record
+          const isDuplicate = editMode && initialData
+            ? existingCustomers.some(c => c.id !== initialData.id)
+            : existingCustomers.length > 0;
+          
+          if (isDuplicate) {
+            toast({
+              title: "Duplicate Kayıt",
+              description: `"${finalName}" ünvanlı ve "${formData.vergi_no}" vergi numaralı cari zaten kayıtlı. Aynı ünvan ve vergi numarası ile tekrar kayıt yapılamaz.`,
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+      }
+      
       const submitData = {
         customer_code: customerCode,
-        name: cariTuru === "gercek" 
-          ? `${formData.name} ${formData.surname}`.trim() 
-          : formData.company_name,
+        name: finalName,
         email: formData.email,
         phone: formData.phone,
         account_type: formData.account_type,
@@ -326,11 +359,20 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       console.error("Error hint:", error?.hint);
       console.error("Error code:", error?.code);
       
-      toast({
-        title: "Hata",
-        description: error?.message || "Cari kaydedilirken bir hata oluştu",
-        variant: "destructive",
-      });
+      // Check if it's a unique constraint violation
+      if (error?.code === "23505" || error?.message?.includes("unique constraint")) {
+        toast({
+          title: "Duplicate Kayıt",
+          description: "Bu ünvan ve vergi numarası kombinasyonu zaten kayıtlı. Lütfen farklı bilgiler girin.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Hata",
+          description: error?.message || "Cari kaydedilirken bir hata oluştu",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
