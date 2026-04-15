@@ -514,9 +514,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                         {suppliers.map((supplier) => (
                           <CommandItem
                             key={supplier.id}
-                            value={supplier.id}
-                            onSelect={(currentValue) => {
-                              setFormData({ ...formData, supplier_id: currentValue });
+                            value={`${supplier.customer_code}-${supplier.name}-${supplier.id}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, supplier_id: supplier.id });
                               setOpenSupplier(false);
                             }}
                           >
@@ -560,9 +560,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                         {drivers.map((driver) => (
                           <CommandItem
                             key={driver.id}
-                            value={driver.id}
-                            onSelect={(currentValue) => {
-                              setFormData({ ...formData, driver_id: currentValue });
+                            value={`${driver.driver_code}-${driver.full_name}-${driver.id}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, driver_id: driver.id });
                               setOpenDriver(false);
                             }}
                           >
@@ -606,9 +606,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                         {vehicles.map((vehicle) => (
                           <CommandItem
                             key={vehicle.id}
-                            value={vehicle.id}
-                            onSelect={(currentValue) => {
-                              setFormData({ ...formData, vehicle_id: currentValue });
+                            value={`${vehicle.vehicle_code}-${vehicle.cekici_plakasi}-${vehicle.id}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, vehicle_id: vehicle.id });
                               setOpenVehicle(false);
                             }}
                           >
@@ -687,9 +687,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                           {customers.map((customer) => (
                             <CommandItem
                               key={customer.id}
-                              value={customer.id}
-                              onSelect={(currentValue) => {
-                                handleCustomerChange(currentValue);
+                              value={`${customer.customer_code}-${customer.name}-${customer.id}`}
+                              onSelect={() => {
+                                handleCustomerChange(customer.id!);
                                 setOpenCustomer(false);
                               }}
                             >
