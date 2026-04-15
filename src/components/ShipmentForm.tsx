@@ -301,6 +301,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         drivers.length > 0 && 
         vehicles.length > 0 && 
         customers.length > 0) {
+      console.log("🔢 SHIPMENT CODE SET (editMode useEffect):", initialData.shipment_code || "SHP-000001");
       setShipmentCode(initialData.shipment_code || "SHP-000001");
       setFormData({
         supplier_id: initialData.supplier_id || "",
@@ -338,6 +339,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         setEstimatedDeliveryDate("");
       }
     } else if (!editMode && isOpen) {
+      console.log("🔄 RESET FORM (not edit mode)");
       resetForm();
     }
   }, [editMode, initialData, isOpen, drivers, vehicles, customers]);
@@ -466,9 +468,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const loadNextShipmentCode = async () => {
     try {
       const nextCode = await shipmentService.getNextShipmentCode();
+      console.log("🔢 SHIPMENT CODE SET (loadNextShipmentCode):", nextCode);
       setShipmentCode(nextCode);
     } catch (error) {
       console.error("Error loading next shipment code:", error);
+      console.log("🔢 SHIPMENT CODE SET (loadNextShipmentCode ERROR):", "SHP-000001");
       setShipmentCode("SHP-000001");
     }
   };
@@ -606,6 +610,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     });
     setPickupDate("");
     setEstimatedDeliveryDate("");
+    console.log("🔢 SHIPMENT CODE RESET (resetForm):", "SHP-000001");
     setShipmentCode("SHP-000001");
     setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
     setManualTotalPrice("");
