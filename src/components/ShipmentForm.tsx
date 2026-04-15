@@ -579,14 +579,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[400px] p-0">
-                  <Command filter={(value, search) => {
-                    const supplier = suppliers.find(s => s.id === value);
-                    if (!supplier) return 0;
-                    const searchNorm = normalizeTurkish(search);
-                    const nameMatch = normalizeTurkish(supplier.name || '').includes(searchNorm);
-                    const codeMatch = normalizeTurkish(supplier.customer_code || '').includes(searchNorm);
-                    return nameMatch || codeMatch ? 1 : 0;
-                  }}>
+                  <Command>
                     <CommandInput placeholder="Tedarikçi ara..." />
                     <CommandList>
                       <CommandEmpty>Tedarikçi bulunamadı</CommandEmpty>
@@ -595,6 +588,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                           <CommandItem
                             key={supplier.id}
                             value={supplier.id!}
+                            keywords={[normalizeTurkish(supplier.name || ''), normalizeTurkish(supplier.customer_code || '')]}
                             onSelect={(currentValue) => {
                               setFormData({ ...formData, supplier_id: currentValue });
                               setOpenSupplier(false);
@@ -648,6 +642,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                           <CommandItem
                             key={driver.id}
                             value={driver.id!}
+                            keywords={[normalizeTurkish(driver.full_name || ''), normalizeTurkish(driver.driver_code || '')]}
                             onSelect={(currentValue) => {
                               setFormData({ ...formData, driver_id: currentValue });
                               setOpenDriver(false);
@@ -701,6 +696,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                           <CommandItem
                             key={vehicle.id}
                             value={vehicle.id!}
+                            keywords={[normalizeTurkish(vehicle.cekici_plakasi || ''), normalizeTurkish(vehicle.vehicle_code || '')]}
                             onSelect={(currentValue) => {
                               setFormData({ ...formData, vehicle_id: currentValue });
                               setOpenVehicle(false);
@@ -773,14 +769,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
-                    <Command filter={(value, search) => {
-                      const customer = customers.find(c => c.id === value);
-                      if (!customer) return 0;
-                      const searchNorm = normalizeTurkish(search);
-                      const nameMatch = normalizeTurkish(customer.name || '').includes(searchNorm);
-                      const codeMatch = normalizeTurkish(customer.customer_code || '').includes(searchNorm);
-                      return nameMatch || codeMatch ? 1 : 0;
-                    }}>
+                    <Command>
                       <CommandInput placeholder="Müşteri ara..." />
                       <CommandList>
                         <CommandEmpty>Müşteri bulunamadı</CommandEmpty>
@@ -789,6 +778,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                             <CommandItem
                               key={customer.id}
                               value={customer.id!}
+                              keywords={[normalizeTurkish(customer.name || ''), normalizeTurkish(customer.customer_code || '')]}
                               onSelect={(currentValue) => {
                                 handleCustomerChange(currentValue);
                                 setOpenCustomer(false);
