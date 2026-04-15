@@ -47,6 +47,10 @@ export function LogisticsModule() {
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [deliveringShipment, setDeliveringShipment] = useState<any | null>(null);
 
+  // Invoice dialog state
+  const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
+  const [invoicingShipment, setInvoicingShipment] = useState<any | null>(null);
+
   // Excel import state
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useState<HTMLInputElement | null>(null)[0];
@@ -714,6 +718,19 @@ export function LogisticsModule() {
                           >
                             <FileDown className="h-4 w-4 text-blue-600" />
                           </Button>
+                          {shipment.status === "teslim_edildi" && shipment.invoice_status !== "faturalandi" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setInvoicingShipment(shipment);
+                                setIsInvoiceDialogOpen(true);
+                              }}
+                              title="Faturalandır"
+                            >
+                              <FileText className="h-4 w-4 text-green-600" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
