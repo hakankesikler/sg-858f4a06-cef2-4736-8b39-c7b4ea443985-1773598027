@@ -612,7 +612,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   ) : (
                     filteredSuppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id!}>
-                        {supplier.customer_code} - {toTitleCase(supplier.name)}
+                        {supplier.customer_code} - {supplier.name?.toUpperCase()}
                       </SelectItem>
                     ))
                   )}
@@ -672,7 +672,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   ) : (
                     filteredVehicles.map((vehicle) => (
                       <SelectItem key={vehicle.id} value={vehicle.id!}>
-                        {vehicle.vehicle_code} - {toTitleCase(vehicle.cekici_plakasi)}
+                        {vehicle.vehicle_code} - {vehicle.cekici_plakasi?.toUpperCase()}
                       </SelectItem>
                     ))
                   )}
@@ -737,7 +737,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     ) : (
                       filteredCustomers.map((customer) => (
                         <SelectItem key={customer.id} value={customer.id!}>
-                          {customer.customer_code} - {toTitleCase(customer.name)}
+                          {customer.customer_code} - {customer.name?.toUpperCase()}
                         </SelectItem>
                       ))
                     )}
