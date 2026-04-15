@@ -15,6 +15,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { bankAccountService, type BankAccount } from "@/services/bankAccountService";
+import * as XLSX from "xlsx";
 
 export function CRMModule() {
   const { toast } = useToast();
@@ -49,6 +50,9 @@ export function CRMModule() {
     is_default: false,
     notes: ""
   });
+  
+  // Import state
+  const [isImporting, setIsImporting] = useState(false);
   
   useEffect(() => {
     loadCustomers();
@@ -177,6 +181,167 @@ export function CRMModule() {
     return filtered;
   }, [customers, filterType, supplierSubCategory, searchTerm]);
 
+  // Download Cari Excel Template
+  const downloadCariTemplate = () => {
+    try {
+      const templateData = [
+        {
+          "Cari Adı": "Örn: Medbar Tıbbi Malzemeler A.Ş",
+          "Cari Tipi": "müşteri (veya: tedarikçi, personel, ortak)",
+          "Kişi Tipi": "tüzel (veya: gerçek)",
+          "Vergi No": "1234567890 (Tüzel kişiler için)",
+          "TC No": "12345678901 (Gerçek kişiler için)",
+          "Vergi Dairesi": "Örn: Konak Vergi Dairesi",
+          "İl": "Örn: İzmir",
+          "İlçe": "Örn: Bornova",
+          "Adres": "Örn: Atatürk Caddesi No:123",
+          "Telefon": "Örn: 0232 123 45 67",
+          "E-posta": "Örn: info@medbar.com",
+        },
+      ];
+
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Cari Şablonu");
+
+      // Auto-size columns
+      const maxWidth = 35;
+      const colWidths = Object.keys(templateData[0]).map(() => ({ wch: maxWidth }));
+      worksheet["!cols"] = colWidths;
+
+      const fileName = "Cari_Sablonu.xlsx";
+      XLSX.writeFile(workbook, fileName);
+
+      toast({
+        title: "Başarılı",
+        description: "Cari şablonu indirildi",
+      });
+    } catch (error) {
+      console.error("Template download error:", error);
+      toast({
+        title: "Hata",
+        description: "Şablon indirilirken bir hata oluştu",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle Cari Excel Import
+  const handleCariImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (let i = 0; i < jsonData.length; i++) {
+        const row: any = jsonData[i];
+        
+        try {
+          // Determine account type
+          const accountTypeRaw = (row["Cari Tipi"] || "müşteri").toString().toLowerCase();
+          let accountType = "musteri";
+          if (accountTypeRaw.includes("tedarik") || accountTypeRaw.includes("tedari")) {
+            accountType = "tedarikci";
+          } else if (accountTypeRaw.includes("personel")) {
+            accountType = "personel";
+          } else if (accountTypeRaw.includes("ortak")) {
+            accountType = "ortak";
+          }
+
+          // Determine person type
+          const personTypeRaw = (row["Kişi Tipi"] || "tüzel").toString().toLowerCase();
+          const isCorporate = personTypeRaw.includes("tüzel") || personTypeRaw.includes("tuzel");
+
+          const customerData: any = {
+            name: row["Cari Adı"] || "",
+            account_type: accountType,
+            tax_office: row["Vergi Dairesi"] || null,
+            city: row["İl"] || null,
+            district: row["İlçe"] || null,
+            address: row["Adres"] || null,
+            phone: row["Telefon"] || null,
+            email: row["E-posta"] || null,
+          };
+
+          // Add tax number or TC number based on person type
+          if (isCorporate) {
+            customerData.vergi_no = row["Vergi No"] || null;
+            customerData.tc_no = null;
+          } else {
+            customerData.tc_no = row["TC No"] || null;
+            customerData.vergi_no = null;
+          }
+
+          // Validate required fields
+          if (!customerData.name) {
+            errors.push(`Satır ${i + 2}: Cari adı gerekli`);
+            errorCount++;
+            continue;
+          }
+
+          await crmService.createCustomer(customerData);
+          successCount++;
+        } catch (error: any) {
+          console.error(`Row ${i + 2} error:`, error);
+          const errorMsg = error?.message || "Hata oluştu";
+          errors.push(`Satır ${i + 2}: ${errorMsg}`);
+          errorCount++;
+        }
+      }
+
+      // Show results
+      if (successCount > 0) {
+        toast({
+          title: "İçe Aktarma Tamamlandı",
+          description: `${successCount} cari başarıyla oluşturuldu${errorCount > 0 ? `, ${errorCount} hata` : ""}`,
+        });
+      }
+
+      if (errors.length > 0 && errors.length <= 5) {
+        setTimeout(() => {
+          toast({
+            title: "Hatalar",
+            description: errors.slice(0, 5).join("\n"),
+            variant: "destructive",
+          });
+        }, 500);
+      } else if (errors.length > 5) {
+        setTimeout(() => {
+          toast({
+            title: "Çok Fazla Hata",
+            description: `${errors.length} satırda hata var. İlk 5 hata:\n${errors.slice(0, 5).join("\n")}`,
+            variant: "destructive",
+          });
+        }, 500);
+      }
+
+      // Reload data
+      await loadCustomers();
+    } catch (error) {
+      console.error("Excel import error:", error);
+      toast({
+        title: "Hata",
+        description: "Excel dosyası okunurken bir hata oluştu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+      if (event.target) {
+        event.target.value = "";
+      }
+    }
+  };
+
   const handleEditCustomer = (customer: any) => {
     console.log("=== EDIT CUSTOMER CLICKED ===", customer);
     setSelectedCustomer(customer);
@@ -234,7 +399,23 @@ export function CRMModule() {
           <Plus className="h-4 w-4 mr-2" />
           Cari Oluştur
         </Button>
-        <Button variant="outline">İçe Aktar</Button>
+        <Button onClick={downloadCariTemplate} variant="outline">
+          Cari Şablon İndir
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => document.getElementById("cari-import-input")?.click()}
+          disabled={isImporting}
+        >
+          {isImporting ? "Yükleniyor..." : "Excel'den Cari Yükle"}
+        </Button>
+        <input
+          id="cari-import-input"
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleCariImport}
+          style={{ display: "none" }}
+        />
         <Button variant="outline">Dışarıya Aktar</Button>
       </div>
 
