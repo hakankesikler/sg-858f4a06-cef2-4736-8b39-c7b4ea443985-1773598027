@@ -20,6 +20,16 @@ import { crmService, Customer } from "@/services/crmService";
 import { cn } from "@/lib/utils";
 import { ShipmentNotificationDialog } from "@/components/ShipmentNotificationDialog";
 
+// Helper function to convert text to title case (Turkish locale aware)
+const toTitleCase = (str: string | null | undefined): string => {
+  if (!str) return "";
+  return str
+    .toLocaleLowerCase("tr-TR")
+    .split(" ")
+    .map(word => word.charAt(0).toLocaleUpperCase("tr-TR") + word.slice(1))
+    .join(" ");
+};
+
 interface ShipmentFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -602,7 +612,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   ) : (
                     filteredSuppliers.map((supplier) => (
                       <SelectItem key={supplier.id} value={supplier.id!}>
-                        {supplier.customer_code} - {supplier.name}
+                        {supplier.customer_code} - {toTitleCase(supplier.name)}
                       </SelectItem>
                     ))
                   )}
@@ -632,7 +642,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   ) : (
                     filteredDrivers.map((driver) => (
                       <SelectItem key={driver.id} value={driver.id!}>
-                        {driver.driver_code} - {driver.full_name}
+                        {driver.driver_code} - {toTitleCase(driver.full_name)}
                       </SelectItem>
                     ))
                   )}
@@ -662,7 +672,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   ) : (
                     filteredVehicles.map((vehicle) => (
                       <SelectItem key={vehicle.id} value={vehicle.id!}>
-                        {vehicle.vehicle_code} - {vehicle.cekici_plakasi}
+                        {vehicle.vehicle_code} - {toTitleCase(vehicle.cekici_plakasi)}
                       </SelectItem>
                     ))
                   )}
@@ -727,7 +737,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     ) : (
                       filteredCustomers.map((customer) => (
                         <SelectItem key={customer.id} value={customer.id!}>
-                          {customer.customer_code} - {customer.name}
+                          {customer.customer_code} - {toTitleCase(customer.name)}
                         </SelectItem>
                       ))
                     )}
