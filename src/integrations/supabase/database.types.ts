@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -1727,12 +1727,15 @@ export type Database = {
           driver_id: string | null
           estimated_delivery_date: string | null
           id: string
+          invoice_status: string | null
           kg_ds: number | null
           origin: string | null
           pickup_date: string | null
+          purchase_invoice_id: string | null
           receiver: string | null
           receiver_district: string | null
           receiver_ii: string | null
+          sale_invoice_id: string | null
           satis_birim: number | null
           satis_tutar: number | null
           sender_ii: string | null
@@ -1760,12 +1763,15 @@ export type Database = {
           driver_id?: string | null
           estimated_delivery_date?: string | null
           id?: string
+          invoice_status?: string | null
           kg_ds?: number | null
           origin?: string | null
           pickup_date?: string | null
+          purchase_invoice_id?: string | null
           receiver?: string | null
           receiver_district?: string | null
           receiver_ii?: string | null
+          sale_invoice_id?: string | null
           satis_birim?: number | null
           satis_tutar?: number | null
           sender_ii?: string | null
@@ -1793,12 +1799,15 @@ export type Database = {
           driver_id?: string | null
           estimated_delivery_date?: string | null
           id?: string
+          invoice_status?: string | null
           kg_ds?: number | null
           origin?: string | null
           pickup_date?: string | null
+          purchase_invoice_id?: string | null
           receiver?: string | null
           receiver_district?: string | null
           receiver_ii?: string | null
+          sale_invoice_id?: string | null
           satis_birim?: number | null
           satis_tutar?: number | null
           sender_ii?: string | null
@@ -1823,6 +1832,20 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipments_purchase_invoice_id_fkey"
+            columns: ["purchase_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipments_sale_invoice_id_fkey"
+            columns: ["sale_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoices"
             referencedColumns: ["id"]
           },
           {
