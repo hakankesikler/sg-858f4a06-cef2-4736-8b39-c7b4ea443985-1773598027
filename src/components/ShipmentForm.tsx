@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,12 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [openVehicle, setOpenVehicle] = useState(false);
   const [openCustomer, setOpenCustomer] = useState(false);
   
+  // Search states for filtering
+  const [searchSupplier, setSearchSupplier] = useState("");
+  const [searchDriver, setSearchDriver] = useState("");
+  const [searchVehicle, setSearchVehicle] = useState("");
+  const [searchCustomer, setSearchCustomer] = useState("");
+  
   // Cargo items state
   const [cargoItems, setCargoItems] = useState<CargoItemInput[]>([
     { adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }
@@ -59,6 +65,43 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   
   // Manual total price for reverse calculation
   const [manualTotalPrice, setManualTotalPrice] = useState<string>("");
+  
+  // Filtered lists based on search
+  const filteredSuppliers = useMemo(() => {
+    if (!searchSupplier) return suppliers;
+    const search = searchSupplier.toLowerCase();
+    return suppliers.filter(s => 
+      s.name?.toLowerCase().includes(search) || 
+      s.customer_code?.toLowerCase().includes(search)
+    );
+  }, [suppliers, searchSupplier]);
+
+  const filteredDrivers = useMemo(() => {
+    if (!searchDriver) return drivers;
+    const search = searchDriver.toLowerCase();
+    return drivers.filter(d => 
+      d.full_name?.toLowerCase().includes(search) || 
+      d.driver_code?.toLowerCase().includes(search)
+    );
+  }, [drivers, searchDriver]);
+
+  const filteredVehicles = useMemo(() => {
+    if (!searchVehicle) return vehicles;
+    const search = searchVehicle.toLowerCase();
+    return vehicles.filter(v => 
+      v.cekici_plakasi?.toLowerCase().includes(search) || 
+      v.vehicle_code?.toLowerCase().includes(search)
+    );
+  }, [vehicles, searchVehicle]);
+
+  const filteredCustomers = useMemo(() => {
+    if (!searchCustomer) return customers;
+    const search = searchCustomer.toLowerCase();
+    return customers.filter(c => 
+      c.name?.toLowerCase().includes(search) || 
+      c.customer_code?.toLowerCase().includes(search)
+    );
+  }, [customers, searchCustomer]);
   
   const [formData, setFormData] = useState({
     supplier_id: "",
@@ -471,6 +514,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     setShipmentCode("SHP-000001");
     setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
     setManualTotalPrice("");
+    setSearchSupplier("");
+    setSearchDriver("");
+    setSearchVehicle("");
+    setSearchCustomer("");
   };
 
   return (
@@ -491,141 +538,78 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Tedarikçi</Label>
-              <Popover open={openSupplier} onOpenChange={setOpenSupplier}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openSupplier}
-                    className="w-full justify-between"
-                  >
-                    {formData.supplier_id
-                      ? suppliers.find((s) => s.id === formData.supplier_id)?.name
-                      : "Tedarikçi seçin"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Tedarikçi ara..." />
-                    <CommandList>
-                      <CommandEmpty>Tedarikçi bulunamadı.</CommandEmpty>
-                      <CommandGroup>
-                        {suppliers.map((supplier) => (
-                          <CommandItem
-                            key={supplier.id}
-                            value={`${supplier.customer_code}-${supplier.name}-${supplier.id}`}
-                            onSelect={() => {
-                              setFormData({ ...formData, supplier_id: supplier.id });
-                              setOpenSupplier(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.supplier_id === supplier.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {supplier.customer_code} - {supplier.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Input
+                placeholder="Tedarikçi ara..."
+                value={searchSupplier}
+                onChange={(e) => setSearchSupplier(e.target.value)}
+                className="mb-2"
+              />
+              <Select value={formData.supplier_id} onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tedarikçi seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredSuppliers.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500">Tedarikçi bulunamadı</div>
+                  ) : (
+                    filteredSuppliers.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id!}>
+                        {supplier.customer_code} - {supplier.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Sürücü</Label>
-              <Popover open={openDriver} onOpenChange={setOpenDriver}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openDriver}
-                    className="w-full justify-between"
-                  >
-                    {formData.driver_id
-                      ? drivers.find((d) => d.id === formData.driver_id)?.full_name
-                      : "Sürücü seçin"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Sürücü ara..." />
-                    <CommandList>
-                      <CommandEmpty>Sürücü bulunamadı.</CommandEmpty>
-                      <CommandGroup>
-                        {drivers.map((driver) => (
-                          <CommandItem
-                            key={driver.id}
-                            value={`${driver.driver_code}-${driver.full_name}-${driver.id}`}
-                            onSelect={() => {
-                              setFormData({ ...formData, driver_id: driver.id });
-                              setOpenDriver(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.driver_id === driver.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {driver.driver_code} - {driver.full_name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Input
+                placeholder="Sürücü ara..."
+                value={searchDriver}
+                onChange={(e) => setSearchDriver(e.target.value)}
+                className="mb-2"
+              />
+              <Select value={formData.driver_id} onValueChange={(value) => setFormData({ ...formData, driver_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sürücü seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredDrivers.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500">Sürücü bulunamadı</div>
+                  ) : (
+                    filteredDrivers.map((driver) => (
+                      <SelectItem key={driver.id} value={driver.id!}>
+                        {driver.driver_code} - {driver.full_name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Araç</Label>
-              <Popover open={openVehicle} onOpenChange={setOpenVehicle}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openVehicle}
-                    className="w-full justify-between"
-                  >
-                    {formData.vehicle_id
-                      ? vehicles.find((v) => v.id === formData.vehicle_id)?.cekici_plakasi
-                      : "Araç seçin"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Araç ara..." />
-                    <CommandList>
-                      <CommandEmpty>Araç bulunamadı.</CommandEmpty>
-                      <CommandGroup>
-                        {vehicles.map((vehicle) => (
-                          <CommandItem
-                            key={vehicle.id}
-                            value={`${vehicle.vehicle_code}-${vehicle.cekici_plakasi}-${vehicle.id}`}
-                            onSelect={() => {
-                              setFormData({ ...formData, vehicle_id: vehicle.id });
-                              setOpenVehicle(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.vehicle_id === vehicle.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {vehicle.vehicle_code} - {vehicle.cekici_plakasi}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Input
+                placeholder="Araç ara..."
+                value={searchVehicle}
+                onChange={(e) => setSearchVehicle(e.target.value)}
+                className="mb-2"
+              />
+              <Select value={formData.vehicle_id} onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Araç seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredVehicles.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500">Araç bulunamadı</div>
+                  ) : (
+                    filteredVehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id!}>
+                        {vehicle.vehicle_code} - {vehicle.cekici_plakasi}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -664,49 +648,28 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div className="space-y-2">
                 <Label>Müşteri (Ödeme Sorumlusu)</Label>
-                <Popover open={openCustomer} onOpenChange={setOpenCustomer}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={openCustomer}
-                      className="w-full justify-between"
-                    >
-                      {formData.customer_id
-                        ? customers.find((c) => c.id === formData.customer_id)?.name
-                        : "Müşteri seçin"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[500px] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Müşteri ara..." />
-                      <CommandList>
-                        <CommandEmpty>Müşteri bulunamadı.</CommandEmpty>
-                        <CommandGroup>
-                          {customers.map((customer) => (
-                            <CommandItem
-                              key={customer.id}
-                              value={`${customer.customer_code}-${customer.name}-${customer.id}`}
-                              onSelect={() => {
-                                handleCustomerChange(customer.id!);
-                                setOpenCustomer(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  formData.customer_id === customer.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {customer.customer_code} - {customer.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <Input
+                  placeholder="Müşteri ara..."
+                  value={searchCustomer}
+                  onChange={(e) => setSearchCustomer(e.target.value)}
+                  className="mb-2"
+                />
+                <Select value={formData.customer_id} onValueChange={(value) => handleCustomerChange(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Müşteri seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCustomers.length === 0 ? (
+                      <div className="p-2 text-sm text-gray-500">Müşteri bulunamadı</div>
+                    ) : (
+                      filteredCustomers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id!}>
+                          {customer.customer_code} - {customer.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             
