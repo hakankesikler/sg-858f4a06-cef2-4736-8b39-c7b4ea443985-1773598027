@@ -241,10 +241,10 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         return;
       }
     } else {
-      if (!formData.company_name || !formData.vergi_no) {
+      if (!formData.company_name || !formData.vergi_no || !formData.tax_office) {
         toast({
           title: "Hata",
-          description: "Lütfen tüm zorunlu alanları doldurun",
+          description: "Tüzel kişi için Ünvan, Vergi Numarası ve Vergi Dairesi zorunludur",
           variant: "destructive",
         });
         return;
@@ -640,7 +640,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Vergi Dairesi</Label>
+                    <Label>Vergi Dairesi <span className="text-red-500">*</span></Label>
                     <VergiDairesiSelect
                       value={formData.tax_office}
                       onChange={(value) => setFormData(prev => ({ ...prev, tax_office: value }))}
