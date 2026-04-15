@@ -18,6 +18,7 @@ import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { crmService, Customer } from "@/services/crmService";
 import { cn } from "@/lib/utils";
+import { ShipmentNotificationDialog } from "@/components/ShipmentNotificationDialog";
 
 interface ShipmentFormProps {
   isOpen: boolean;
@@ -57,6 +58,21 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [searchDriver, setSearchDriver] = useState("");
   const [searchVehicle, setSearchVehicle] = useState("");
   const [searchCustomer, setSearchCustomer] = useState("");
+  
+  // Notification dialog state
+  const [showNotificationDialog, setShowNotificationDialog] = useState(false);
+  const [notificationData, setNotificationData] = useState<{
+    shipment_code: string;
+    driver_name: string;
+    driver_tc: string;
+    driver_phone: string;
+    vehicle_plate: string;
+    trailer_plate: string;
+    origin: string;
+    destination: string;
+    customer_phone?: string;
+    customer_email?: string;
+  } | null>(null);
   
   // Cargo items state
   const [cargoItems, setCargoItems] = useState<CargoItemInput[]>([
@@ -467,6 +483,29 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         // Create cargo items
         await shipmentCargoService.createCargoItems(shipmentId, cargoItems);
         
+        // Prepare notification data
+        const selectedDriver = drivers.find(d => d.id === formData.driver_id);
+        const selectedVehicle = vehicles.find(v => v.id === formData.vehicle_id);
+        const selectedCustomer = customers.find(c => c.id === formData.customer_id);
+        
+        if (selectedDriver && selectedVehicle && selectedCustomer) {
+          setNotificationData({
+            shipment_code: shipmentCode,
+            driver_name: selectedDriver.full_name || "",
+            driver_tc: selectedDriver.tc_no || "",
+            driver_phone: selectedDriver.phone || "",
+            vehicle_plate: selectedVehicle.cekici_plakasi || "",
+            trailer_plate: selectedVehicle.dorse_plakasi || "",
+            origin: formData.origin || "",
+            destination: formData.destination || "",
+            customer_phone: selectedCustomer.phone || "",
+            customer_email: selectedCustomer.email || ""
+          });
+          
+          // Show notification dialog
+          setShowNotificationDialog(true);
+        }
+        
         toast({
           title: "Başarılı",
           description: "Sevkiyat başarıyla oluşturuldu",
@@ -474,7 +513,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       }
 
       onSuccess();
-      onClose();
+      if (!showNotificationDialog) {
+        onClose();
+      }
       resetForm();
     } catch (error: any) {
       console.error("Submit error:", error);
@@ -930,6 +971,19 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           </DialogFooter>
         </form>
       </DialogContent>
+      
+      {/* Notification Dialog */}
+      {notificationData && (
+        <ShipmentNotificationDialog
+          open={showNotificationDialog}
+          onClose={() => {
+            setShowNotificationDialog(false);
+            setNotificationData(null);
+            onClose();
+          }}
+          shipmentData={notificationData}
+        />
+      )}
     </Dialog>
   );
 }
