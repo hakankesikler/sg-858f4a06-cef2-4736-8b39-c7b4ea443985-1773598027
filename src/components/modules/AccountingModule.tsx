@@ -49,6 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { accountingService } from "@/services/accountingService";
 import { crmService } from "@/services/crmService";
 import { CariForm } from "@/components/CariForm";
+import { supabase } from "@/integrations/supabase/client";
 
 type Invoice = {
   id: string;
@@ -735,11 +736,41 @@ export function AccountingModule() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell colSpan={13} className="text-center py-8 text-gray-500">
-                    Toplam 0 kayıt gösteriliyor
-                  </TableCell>
-                </TableRow>
+                {salesInvoices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={13} className="text-center py-8 text-gray-500">
+                      Toplam 0 kayıt gösteriliyor
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  salesInvoices.map((invoice: any) => (
+                    <TableRow key={invoice.id} className="hover:bg-gray-50">
+                      <TableCell>
+                        <input type="checkbox" className="rounded" />
+                      </TableCell>
+                      <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700">e-Fatura</Badge></TableCell>
+                      <TableCell>Satış Faturası</TableCell>
+                      <TableCell className="font-medium">
+                        {customers.find(c => c.id === invoice.customer_id)?.name || 
+                         customers.find(c => c.id === invoice.customer_id)?.company || 
+                         "Bilinmeyen Cari"}
+                      </TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell className="font-mono">{invoice.invoice_no}</TableCell>
+                      <TableCell>
+                        <Badge className={invoice.status === 'beklemede' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}>
+                          {invoice.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(invoice.invoice_date || invoice.created_at).toLocaleDateString("tr-TR")}</TableCell>
+                      <TableCell>{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("tr-TR") : "-"}</TableCell>
+                      <TableCell className="text-right font-semibold">{invoice.grand_total} {invoice.currency || "TRY"}</TableCell>
+                      <TableCell className="text-right">0 {invoice.currency || "TRY"}</TableCell>
+                      <TableCell className="text-right font-semibold">{invoice.grand_total} {invoice.currency || "TRY"}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </Card>
@@ -840,11 +871,37 @@ export function AccountingModule() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8 text-gray-500">
-                    Toplam 0 kayıt gösteriliyor
-                  </TableCell>
-                </TableRow>
+                {purchaseInvoices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                      Toplam 0 kayıt gösteriliyor
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  purchaseInvoices.map((invoice: any) => (
+                    <TableRow key={invoice.id} className="hover:bg-gray-50">
+                      <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700">e-Fatura</Badge></TableCell>
+                      <TableCell>Alış Faturası</TableCell>
+                      <TableCell className="font-medium">
+                        {customers.find(c => c.id === invoice.supplier_id)?.name || 
+                         customers.find(c => c.id === invoice.supplier_id)?.company || 
+                         "Bilinmeyen Tedarikçi"}
+                      </TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell className="font-mono">{invoice.purchase_no || invoice.invoice_no}</TableCell>
+                      <TableCell>
+                        <Badge className={invoice.status === 'beklemede' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}>
+                          {invoice.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(invoice.purchase_date || invoice.created_at).toLocaleDateString("tr-TR")}</TableCell>
+                      <TableCell>{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("tr-TR") : "-"}</TableCell>
+                      <TableCell className="text-right font-semibold">{invoice.total} {invoice.currency || "TRY"}</TableCell>
+                      <TableCell className="text-right font-semibold">{invoice.total} {invoice.currency || "TRY"}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </Card>
