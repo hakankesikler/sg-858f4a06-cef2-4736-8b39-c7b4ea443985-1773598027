@@ -237,7 +237,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         loadNextShipmentCode();
       }
     }
-  }, [isOpen, editMode]);
+  }, [isOpen]);
 
   // Auto-calculate toplam_kg_ds (adet * kg_ds)
   useEffect(() => {
@@ -251,7 +251,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   }, [formData.adet, formData.kg_ds]);
 
   useEffect(() => {
-    if (editMode && initialData && isOpen) {
+    if (editMode && initialData && isOpen && 
+        drivers.length > 0 && 
+        vehicles.length > 0 && 
+        customers.length > 0) {
       console.log("Loading shipment data for edit:", initialData);
       setShipmentCode(initialData.shipment_code || "SHP-000001");
       setFormData({
@@ -293,9 +296,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       }
     } else if (!editMode && isOpen) {
       resetForm();
-      loadNextShipmentCode();
     }
-  }, [editMode, initialData, isOpen]);
+  }, [editMode, initialData, isOpen, drivers, vehicles, customers]);
 
   const loadCargoItems = async (shipmentId: string) => {
     try {
