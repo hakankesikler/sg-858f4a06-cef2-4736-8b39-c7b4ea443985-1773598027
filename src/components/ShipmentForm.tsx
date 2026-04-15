@@ -505,10 +505,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Tedarikçi ara..." />
-                    <CommandList>
+                <PopoverContent className="w-[300px] p-0" align="start" side="bottom">
+                  <Command shouldFilter={false}>
+                    <CommandInput placeholder="Tedarikçi ara..." autoFocus />
+                    <CommandList className="max-h-[300px] overflow-y-auto">
                       <CommandEmpty>Tedarikçi bulunamadı.</CommandEmpty>
                       <CommandGroup>
                         {suppliers.map((supplier) => (
@@ -519,6 +519,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                               setFormData({ ...formData, supplier_id: supplier.id });
                               setOpenSupplier(false);
                             }}
+                            className="cursor-pointer"
                           >
                             <Check
                               className={cn(
@@ -551,10 +552,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Sürücü ara..." />
-                    <CommandList>
+                <PopoverContent className="w-[300px] p-0" align="start" side="bottom">
+                  <Command shouldFilter={false}>
+                    <CommandInput placeholder="Sürücü ara..." autoFocus />
+                    <CommandList className="max-h-[300px] overflow-y-auto">
                       <CommandEmpty>Sürücü bulunamadı.</CommandEmpty>
                       <CommandGroup>
                         {drivers.map((driver) => (
@@ -565,6 +566,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                               setFormData({ ...formData, driver_id: driver.id });
                               setOpenDriver(false);
                             }}
+                            className="cursor-pointer"
                           >
                             <Check
                               className={cn(
@@ -597,10 +599,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Araç ara..." />
-                    <CommandList>
+                <PopoverContent className="w-[300px] p-0" align="start" side="bottom">
+                  <Command shouldFilter={false}>
+                    <CommandInput placeholder="Araç ara..." autoFocus />
+                    <CommandList className="max-h-[300px] overflow-y-auto">
                       <CommandEmpty>Araç bulunamadı.</CommandEmpty>
                       <CommandGroup>
                         {vehicles.map((vehicle) => (
@@ -611,6 +613,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                               setFormData({ ...formData, vehicle_id: vehicle.id });
                               setOpenVehicle(false);
                             }}
+                            className="cursor-pointer"
                           >
                             <Check
                               className={cn(
@@ -678,10 +681,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[500px] p-0">
-                    <Command>
-                      <CommandInput placeholder="Müşteri ara..." />
-                      <CommandList>
+                  <PopoverContent className="w-[500px] p-0" align="start" side="bottom">
+                    <Command shouldFilter={false}>
+                      <CommandInput placeholder="Müşteri ara..." autoFocus />
+                      <CommandList className="max-h-[300px] overflow-y-auto">
                         <CommandEmpty>Müşteri bulunamadı.</CommandEmpty>
                         <CommandGroup>
                           {customers.map((customer) => (
@@ -692,6 +695,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                                 handleCustomerChange(customer.id!);
                                 setOpenCustomer(false);
                               }}
+                              className="cursor-pointer"
                             >
                               <Check
                                 className={cn(
