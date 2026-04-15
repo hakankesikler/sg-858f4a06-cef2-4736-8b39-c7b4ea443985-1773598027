@@ -156,10 +156,19 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const filteredCustomers = useMemo(() => {
     if (!searchCustomer) return customers;
     const search = normalizeTurkish(searchCustomer);
-    return customers.filter(c => 
+    const filtered = customers.filter(c => 
       normalizeTurkish(c.name || '').includes(search) || 
       normalizeTurkish(c.customer_code || '').includes(search)
     );
+    console.log('Müşteri filtreleme:', {
+      searchCustomer,
+      searchNormalized: search,
+      totalCustomers: customers.length,
+      filteredCount: filtered.length,
+      firstCustomer: customers[0]?.name,
+      firstCustomerNormalized: normalizeTurkish(customers[0]?.name || '')
+    });
+    return filtered;
   }, [customers, searchCustomer]);
 
   // Cargo items management functions
@@ -576,6 +585,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 placeholder="Tedarikçi ara..."
                 value={searchSupplier}
                 onChange={(e) => setSearchSupplier(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
               <Select value={formData.supplier_id} onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}>
                 <SelectTrigger>
@@ -600,6 +614,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 placeholder="Sürücü ara..."
                 value={searchDriver}
                 onChange={(e) => setSearchDriver(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
               <Select value={formData.driver_id} onValueChange={(value) => setFormData({ ...formData, driver_id: value })}>
                 <SelectTrigger>
@@ -624,6 +643,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 placeholder="Araç ara..."
                 value={searchVehicle}
                 onChange={(e) => setSearchVehicle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
               <Select value={formData.vehicle_id} onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}>
                 <SelectTrigger>
@@ -679,7 +703,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 <Input
                   placeholder="Müşteri ara..."
                   value={searchCustomer}
-                  onChange={(e) => setSearchCustomer(e.target.value)}
+                  onChange={(e) => {
+                    setSearchCustomer(e.target.value);
+                    console.log('Müşteri arama:', e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
                 />
                 <Select value={formData.customer_id} onValueChange={handleCustomerChange}>
                   <SelectTrigger>
