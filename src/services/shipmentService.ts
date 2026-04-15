@@ -61,7 +61,7 @@ export const shipmentService = {
         .from("shipments")
         .select("shipment_code")
         .not("shipment_code", "is", null)
-        .order("created_at", { ascending: false })
+        .order("shipment_code", { ascending: false })
         .limit(1);
 
       if (error) {
