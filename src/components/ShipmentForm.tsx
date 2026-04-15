@@ -284,17 +284,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         loadNextShipmentCode();
       }
     }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const adet = parseFloat(formData.adet) || 0;
-    const kgDs = parseFloat(formData.kg_ds) || 0;
-    const toplam = adet * kgDs;
-    
-    if (toplam > 0 && toplam.toString() !== formData.toplam_kg_ds) {
-      setFormData(prev => ({ ...prev, toplam_kg_ds: toplam.toFixed(2) }));
-    }
-  }, [formData.adet, formData.kg_ds]);
+  }, [isOpen, editMode]);
 
   useEffect(() => {
     if (editMode && initialData && isOpen && 
@@ -338,9 +328,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       } else {
         setEstimatedDeliveryDate("");
       }
-    } else if (!editMode && isOpen) {
-      console.log("🔄 RESET FORM (not edit mode)");
-      resetForm();
     }
   }, [editMode, initialData, isOpen, drivers, vehicles, customers]);
 
