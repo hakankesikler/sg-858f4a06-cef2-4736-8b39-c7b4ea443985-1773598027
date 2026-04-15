@@ -91,8 +91,8 @@ export function AccountingModule() {
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [cariTab, setCariTab] = useState("genel");
-  const [salesInvoices, setSalesInvoices] = useState<Invoice[]>([]);
-  const [purchaseInvoices, setPurchaseInvoices] = useState<Invoice[]>([]);
+  const [salesInvoices, setSalesInvoices] = useState<any[]>([]);
+  const [purchaseInvoices, setPurchaseInvoices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
   // Category Edit Modal State
