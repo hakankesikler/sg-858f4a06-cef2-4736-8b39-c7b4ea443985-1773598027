@@ -83,12 +83,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [openVehicle, setOpenVehicle] = useState(false);
   const [openCustomer, setOpenCustomer] = useState(false);
   
-  // Search states for filtering
-  const [searchSupplier, setSearchSupplier] = useState("");
-  const [searchDriver, setSearchDriver] = useState("");
-  const [searchVehicle, setSearchVehicle] = useState("");
-  const [searchCustomer, setSearchCustomer] = useState("");
-  
   // Notification dialog state
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
   const [notificationData, setNotificationData] = useState<{
@@ -111,43 +105,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   
   // Manual total price for reverse calculation
   const [manualTotalPrice, setManualTotalPrice] = useState<string>("");
-  
-  // Filtered lists based on search
-  const filteredSuppliers = useMemo(() => {
-    if (!searchSupplier) return suppliers;
-    const search = normalizeTurkish(searchSupplier);
-    return suppliers.filter(s => 
-      normalizeTurkish(s.name || '').includes(search) || 
-      normalizeTurkish(s.customer_code || '').includes(search)
-    );
-  }, [suppliers, searchSupplier]);
-
-  const filteredDrivers = useMemo(() => {
-    if (!searchDriver) return drivers;
-    const search = normalizeTurkish(searchDriver);
-    return drivers.filter(d => 
-      normalizeTurkish(d.full_name || '').includes(search) || 
-      normalizeTurkish(d.driver_code || '').includes(search)
-    );
-  }, [drivers, searchDriver]);
-
-  const filteredVehicles = useMemo(() => {
-    if (!searchVehicle) return vehicles;
-    const search = normalizeTurkish(searchVehicle);
-    return vehicles.filter(v => 
-      normalizeTurkish(v.cekici_plakasi || '').includes(search) || 
-      normalizeTurkish(v.vehicle_code || '').includes(search)
-    );
-  }, [vehicles, searchVehicle]);
-
-  const filteredCustomers = useMemo(() => {
-    if (!searchCustomer) return customers;
-    const search = normalizeTurkish(searchCustomer);
-    return customers.filter(c => 
-      normalizeTurkish(c.name || '').includes(search) || 
-      normalizeTurkish(c.customer_code || '').includes(search)
-    );
-  }, [customers, searchCustomer]);
   
   const [formData, setFormData] = useState({
     supplier_id: "",
@@ -611,93 +568,162 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Tedarikçi</Label>
-              <Input
-                placeholder="Tedarikçi ara..."
-                value={searchSupplier}
-                onChange={(e) => setSearchSupplier(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                  }
-                }}
-                className="mb-2"
-              />
-              <Select value={formData.supplier_id} onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tedarikçi seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredSuppliers.length === 0 ? (
-                    <div className="p-2 text-sm text-gray-500">Tedarikçi bulunamadı</div>
-                  ) : (
-                    filteredSuppliers.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id!}>
-                        {supplier.customer_code} - {supplier.name?.toUpperCase()}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <Popover open={openSupplier} onOpenChange={setOpenSupplier}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openSupplier}
+                    className="w-full justify-between"
+                  >
+                    {formData.supplier_id
+                      ? suppliers.find((s) => s.id === formData.supplier_id)?.customer_code + " - " + suppliers.find((s) => s.id === formData.supplier_id)?.name?.toUpperCase()
+                      : "Tedarikçi seçin"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0">
+                  <Command filter={(value, search) => {
+                    const supplier = suppliers.find(s => s.id === value);
+                    if (!supplier) return 0;
+                    const searchNorm = normalizeTurkish(search);
+                    const nameMatch = normalizeTurkish(supplier.name || '').includes(searchNorm);
+                    const codeMatch = normalizeTurkish(supplier.customer_code || '').includes(searchNorm);
+                    return nameMatch || codeMatch ? 1 : 0;
+                  }}>
+                    <CommandInput placeholder="Tedarikçi ara..." />
+                    <CommandList>
+                      <CommandEmpty>Tedarikçi bulunamadı</CommandEmpty>
+                      <CommandGroup>
+                        {suppliers.map((supplier) => (
+                          <CommandItem
+                            key={supplier.id}
+                            value={supplier.id!}
+                            onSelect={(currentValue) => {
+                              setFormData({ ...formData, supplier_id: currentValue });
+                              setOpenSupplier(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.supplier_id === supplier.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {supplier.customer_code} - {supplier.name?.toUpperCase()}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>Sürücü</Label>
-              <Input
-                placeholder="Sürücü ara..."
-                value={searchDriver}
-                onChange={(e) => setSearchDriver(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                  }
-                }}
-                className="mb-2"
-              />
-              <Select value={formData.driver_id} onValueChange={(value) => setFormData({ ...formData, driver_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sürücü seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredDrivers.length === 0 ? (
-                    <div className="p-2 text-sm text-gray-500">Sürücü bulunamadı</div>
-                  ) : (
-                    filteredDrivers.map((driver) => (
-                      <SelectItem key={driver.id} value={driver.id!}>
-                        {driver.driver_code} - {toTitleCase(driver.full_name)}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <Popover open={openDriver} onOpenChange={setOpenDriver}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openDriver}
+                    className="w-full justify-between"
+                  >
+                    {formData.driver_id
+                      ? drivers.find((d) => d.id === formData.driver_id)?.driver_code + " - " + toTitleCase(drivers.find((d) => d.id === formData.driver_id)?.full_name)
+                      : "Sürücü seçin"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0">
+                  <Command filter={(value, search) => {
+                    const driver = drivers.find(d => d.id === value);
+                    if (!driver) return 0;
+                    const searchNorm = normalizeTurkish(search);
+                    const nameMatch = normalizeTurkish(driver.full_name || '').includes(searchNorm);
+                    const codeMatch = normalizeTurkish(driver.driver_code || '').includes(searchNorm);
+                    return nameMatch || codeMatch ? 1 : 0;
+                  }}>
+                    <CommandInput placeholder="Sürücü ara..." />
+                    <CommandList>
+                      <CommandEmpty>Sürücü bulunamadı</CommandEmpty>
+                      <CommandGroup>
+                        {drivers.map((driver) => (
+                          <CommandItem
+                            key={driver.id}
+                            value={driver.id!}
+                            onSelect={(currentValue) => {
+                              setFormData({ ...formData, driver_id: currentValue });
+                              setOpenDriver(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.driver_id === driver.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {driver.driver_code} - {toTitleCase(driver.full_name)}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>Araç</Label>
-              <Input
-                placeholder="Araç ara..."
-                value={searchVehicle}
-                onChange={(e) => setSearchVehicle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                  }
-                }}
-                className="mb-2"
-              />
-              <Select value={formData.vehicle_id} onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Araç seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredVehicles.length === 0 ? (
-                    <div className="p-2 text-sm text-gray-500">Araç bulunamadı</div>
-                  ) : (
-                    filteredVehicles.map((vehicle) => (
-                      <SelectItem key={vehicle.id} value={vehicle.id!}>
-                        {vehicle.vehicle_code} - {vehicle.cekici_plakasi?.toUpperCase()}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <Popover open={openVehicle} onOpenChange={setOpenVehicle}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openVehicle}
+                    className="w-full justify-between"
+                  >
+                    {formData.vehicle_id
+                      ? vehicles.find((v) => v.id === formData.vehicle_id)?.vehicle_code + " - " + vehicles.find((v) => v.id === formData.vehicle_id)?.cekici_plakasi?.toUpperCase()
+                      : "Araç seçin"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0">
+                  <Command filter={(value, search) => {
+                    const vehicle = vehicles.find(v => v.id === value);
+                    if (!vehicle) return 0;
+                    const searchNorm = normalizeTurkish(search);
+                    const plateMatch = normalizeTurkish(vehicle.cekici_plakasi || '').includes(searchNorm);
+                    const codeMatch = normalizeTurkish(vehicle.vehicle_code || '').includes(searchNorm);
+                    return plateMatch || codeMatch ? 1 : 0;
+                  }}>
+                    <CommandInput placeholder="Araç ara..." />
+                    <CommandList>
+                      <CommandEmpty>Araç bulunamadı</CommandEmpty>
+                      <CommandGroup>
+                        {vehicles.map((vehicle) => (
+                          <CommandItem
+                            key={vehicle.id}
+                            value={vehicle.id!}
+                            onSelect={(currentValue) => {
+                              setFormData({ ...formData, vehicle_id: currentValue });
+                              setOpenVehicle(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.vehicle_id === vehicle.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {vehicle.vehicle_code} - {vehicle.cekici_plakasi?.toUpperCase()}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -736,33 +762,56 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div className="space-y-2">
                 <Label>Müşteri (Ödeme Sorumlusu)</Label>
-                <Input
-                  placeholder="Müşteri ara..."
-                  value={searchCustomer}
-                  onChange={(e) => setSearchCustomer(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                    }
-                  }}
-                  className="mb-2"
-                />
-                <Select value={formData.customer_id} onValueChange={(value) => handleCustomerChange(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Müşteri seçin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredCustomers.length === 0 ? (
-                      <div className="p-2 text-sm text-gray-500">Müşteri bulunamadı</div>
-                    ) : (
-                      filteredCustomers.map((customer) => (
-                        <SelectItem key={customer.id} value={customer.id!}>
-                          {customer.customer_code} - {customer.name?.toUpperCase()}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                <Popover open={openCustomer} onOpenChange={setOpenCustomer}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openCustomer}
+                      className="w-full justify-between"
+                    >
+                      {formData.customer_id
+                        ? customers.find((c) => c.id === formData.customer_id)?.customer_code + " - " + customers.find((c) => c.id === formData.customer_id)?.name?.toUpperCase()
+                        : "Müşteri seçin"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command filter={(value, search) => {
+                      const customer = customers.find(c => c.id === value);
+                      if (!customer) return 0;
+                      const searchNorm = normalizeTurkish(search);
+                      const nameMatch = normalizeTurkish(customer.name || '').includes(searchNorm);
+                      const codeMatch = normalizeTurkish(customer.customer_code || '').includes(searchNorm);
+                      return nameMatch || codeMatch ? 1 : 0;
+                    }}>
+                      <CommandInput placeholder="Müşteri ara..." />
+                      <CommandList>
+                        <CommandEmpty>Müşteri bulunamadı</CommandEmpty>
+                        <CommandGroup>
+                          {customers.map((customer) => (
+                            <CommandItem
+                              key={customer.id}
+                              value={customer.id!}
+                              onSelect={(currentValue) => {
+                                handleCustomerChange(currentValue);
+                                setOpenCustomer(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  formData.customer_id === customer.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {customer.customer_code} - {customer.name?.toUpperCase()}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             
