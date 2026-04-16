@@ -775,7 +775,8 @@ export function AccountingModule() {
                       <TableCell className="text-right">0 {invoice.currency || "TRY"}</TableCell>
                       <TableCell className="text-right font-semibold">{invoice.grand_total} {invoice.currency || "TRY"}</TableCell>
                     </TableRow>
-                  )}
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -907,6 +908,7 @@ export function AccountingModule() {
                       <TableCell className="text-right font-semibold">{invoice.total} {invoice.currency || "TRY"}</TableCell>
                       <TableCell className="text-right font-semibold">{invoice.total} {invoice.currency || "TRY"}</TableCell>
                     </TableRow>
+                    );
                   })
                 )}
               </TableBody>
