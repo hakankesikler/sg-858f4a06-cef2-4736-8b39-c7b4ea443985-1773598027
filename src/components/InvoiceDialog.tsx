@@ -112,6 +112,7 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         .from("purchases")
         .insert({
           supplier_id: shipment.supplier_id,
+          shipment_id: shipment.id,
           purchase_no: purchaseInvoiceNo,
           purchase_date: new Date().toISOString().split('T')[0],
           due_date: new Date().toISOString().split('T')[0],
@@ -129,6 +130,7 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         .from("sales_invoices")
         .insert({
           customer_id: shipment.customer_id,
+          shipment_id: shipment.id,
           invoice_no: salesInvoiceNo,
           invoice_date: new Date().toISOString().split('T')[0],
           due_date: new Date().toISOString().split('T')[0],
