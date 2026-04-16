@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -1455,6 +1455,7 @@ export type Database = {
           payment_method: string | null
           purchase_date: string | null
           purchase_no: string
+          shipment_id: string | null
           status: string | null
           subtotal: number
           supplier_id: string | null
@@ -1472,6 +1473,7 @@ export type Database = {
           payment_method?: string | null
           purchase_date?: string | null
           purchase_no: string
+          shipment_id?: string | null
           status?: string | null
           subtotal?: number
           supplier_id?: string | null
@@ -1489,6 +1491,7 @@ export type Database = {
           payment_method?: string | null
           purchase_date?: string | null
           purchase_no?: string
+          shipment_id?: string | null
           status?: string | null
           subtotal?: number
           supplier_id?: string | null
@@ -1497,6 +1500,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "purchases_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchases_supplier_id_fkey"
             columns: ["supplier_id"]
@@ -1576,6 +1586,7 @@ export type Database = {
           notes: string | null
           payment_method: string | null
           payment_status: string
+          shipment_id: string | null
           shipping_cost: number
           subtotal: number
           total_discount: number
@@ -1596,6 +1607,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           payment_status?: string
+          shipment_id?: string | null
           shipping_cost?: number
           subtotal?: number
           total_discount?: number
@@ -1616,6 +1628,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           payment_status?: string
+          shipment_id?: string | null
           shipping_cost?: number
           subtotal?: number
           total_discount?: number
@@ -1629,6 +1642,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoices_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
             referencedColumns: ["id"]
           },
         ]
