@@ -162,12 +162,7 @@ export function AccountingModule() {
       // Load purchases
       const { data: purchasesData, error: purchasesError } = await supabase
         .from("purchases")
-        .select(`
-          *,
-          shipments!inner(id, status, shipment_code),
-          customers!purchases_supplier_id_fkey(id, name, company)
-        `)
-        .eq('shipments.status', 'teslim_edildi')
+        .select("*")
         .order("created_at", { ascending: false });
       
       console.log("=== ACCOUNTING - PURCHASES ===");
@@ -184,18 +179,18 @@ export function AccountingModule() {
       // Load sales invoices
       const { data: salesData, error: salesError } = await supabase
         .from("sales_invoices")
-        .select(`
-          *,
-          shipments!inner(id, status, shipment_code),
-          customers!sales_invoices_customer_id_fkey(id, name, company)
-        `)
-        .eq('shipments.status', 'teslim_edildi')
+        .select("*")
         .order("created_at", { ascending: false });
       
       console.log("=== ACCOUNTING - SALES INVOICES ===");
       console.log("Sales data:", salesData);
       console.log("Sales error:", salesError);
       console.log("Sales count:", salesData?.length || 0);
+      if (salesData && salesData.length > 0) {
+        console.log("First invoice:", salesData[0]);
+        console.log("First invoice customer_id:", salesData[0].customer_id);
+        console.log("First invoice shipment_id:", salesData[0].shipment_id);
+      }
       
       if (salesError) {
         console.error("Sales error:", salesError);
@@ -753,7 +748,10 @@ export function AccountingModule() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  salesInvoices.map((invoice: any) => (
+                  salesInvoices.map((invoice: any) => {
+                    const customer = customers.find(c => c.id === invoice.customer_id);
+                    console.log(`Invoice ${invoice.invoice_no} - customer_id: ${invoice.customer_id}, found:`, customer);
+                    return (
                     <TableRow key={invoice.id} className="hover:bg-gray-50">
                       <TableCell>
                         <input type="checkbox" className="rounded" />
@@ -761,7 +759,7 @@ export function AccountingModule() {
                       <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700">e-Fatura</Badge></TableCell>
                       <TableCell>Satış Faturası</TableCell>
                       <TableCell className="font-medium">
-                        {invoice.customers?.company || invoice.customers?.name || "Bilinmeyen Cari"}
+                        {customer?.company || customer?.name || "Bilinmeyen Cari"}
                       </TableCell>
                       <TableCell>-</TableCell>
                       <TableCell>-</TableCell>
@@ -777,7 +775,7 @@ export function AccountingModule() {
                       <TableCell className="text-right">0 {invoice.currency || "TRY"}</TableCell>
                       <TableCell className="text-right font-semibold">{invoice.grand_total} {invoice.currency || "TRY"}</TableCell>
                     </TableRow>
-                  ))
+                  )}
                 )}
               </TableBody>
             </Table>
@@ -886,12 +884,15 @@ export function AccountingModule() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  purchaseInvoices.map((invoice: any) => (
+                  purchaseInvoices.map((invoice: any) => {
+                    const supplier = customers.find(c => c.id === invoice.supplier_id);
+                    console.log(`Purchase ${invoice.purchase_no} - supplier_id: ${invoice.supplier_id}, found:`, supplier);
+                    return (
                     <TableRow key={invoice.id} className="hover:bg-gray-50">
                       <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700">e-Fatura</Badge></TableCell>
                       <TableCell>Alış Faturası</TableCell>
                       <TableCell className="font-medium">
-                        {invoice.customers?.company || invoice.customers?.name || "Bilinmeyen Tedarikçi"}
+                        {supplier?.company || supplier?.name || "Bilinmeyen Tedarikçi"}
                       </TableCell>
                       <TableCell>-</TableCell>
                       <TableCell>-</TableCell>
@@ -906,7 +907,7 @@ export function AccountingModule() {
                       <TableCell className="text-right font-semibold">{invoice.total} {invoice.currency || "TRY"}</TableCell>
                       <TableCell className="text-right font-semibold">{invoice.total} {invoice.currency || "TRY"}</TableCell>
                     </TableRow>
-                  ))
+                  })
                 )}
               </TableBody>
             </Table>
