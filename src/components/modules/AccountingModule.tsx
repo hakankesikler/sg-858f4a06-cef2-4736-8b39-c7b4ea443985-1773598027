@@ -162,7 +162,12 @@ export function AccountingModule() {
       // Load purchases
       const { data: purchasesData, error: purchasesError } = await supabase
         .from("purchases")
-        .select("*")
+        .select(`
+          *,
+          shipments!inner(id, status, shipment_code),
+          customers!purchases_supplier_id_fkey(id, name, company)
+        `)
+        .eq('shipments.status', 'teslim_edildi')
         .order("created_at", { ascending: false });
       
       console.log("=== ACCOUNTING - PURCHASES ===");
@@ -179,7 +184,12 @@ export function AccountingModule() {
       // Load sales invoices
       const { data: salesData, error: salesError } = await supabase
         .from("sales_invoices")
-        .select("*")
+        .select(`
+          *,
+          shipments!inner(id, status, shipment_code),
+          customers!sales_invoices_customer_id_fkey(id, name, company)
+        `)
+        .eq('shipments.status', 'teslim_edildi')
         .order("created_at", { ascending: false });
       
       console.log("=== ACCOUNTING - SALES INVOICES ===");
@@ -751,9 +761,7 @@ export function AccountingModule() {
                       <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700">e-Fatura</Badge></TableCell>
                       <TableCell>Satış Faturası</TableCell>
                       <TableCell className="font-medium">
-                        {customers.find(c => c.id === invoice.customer_id)?.name || 
-                         customers.find(c => c.id === invoice.customer_id)?.company || 
-                         "Bilinmeyen Cari"}
+                        {invoice.customers?.company || invoice.customers?.name || "Bilinmeyen Cari"}
                       </TableCell>
                       <TableCell>-</TableCell>
                       <TableCell>-</TableCell>
@@ -883,9 +891,7 @@ export function AccountingModule() {
                       <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700">e-Fatura</Badge></TableCell>
                       <TableCell>Alış Faturası</TableCell>
                       <TableCell className="font-medium">
-                        {customers.find(c => c.id === invoice.supplier_id)?.name || 
-                         customers.find(c => c.id === invoice.supplier_id)?.company || 
-                         "Bilinmeyen Tedarikçi"}
+                        {invoice.customers?.company || invoice.customers?.name || "Bilinmeyen Tedarikçi"}
                       </TableCell>
                       <TableCell>-</TableCell>
                       <TableCell>-</TableCell>
