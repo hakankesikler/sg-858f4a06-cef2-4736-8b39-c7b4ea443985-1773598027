@@ -52,6 +52,7 @@ import { CariForm } from "@/components/CariForm";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoicePreviewDialog } from "@/components/InvoicePreviewDialog";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
+import { PendingInvoicesDialog } from "@/components/PendingInvoicesDialog";
 
 type Invoice = {
   id: string;
@@ -625,6 +626,12 @@ export function AccountingModule() {
     setIsManualInvoiceDialogOpen(true);
   };
 
+  const [showPendingInvoicesDialog, setShowPendingInvoicesDialog] = useState(false);
+
+  const handleShowPendingInvoices = () => {
+    setShowPendingInvoicesDialog(true);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <Tabs defaultValue="panel" className="w-full">
@@ -701,39 +708,35 @@ export function AccountingModule() {
 
           <div className="flex justify-between items-center mb-4">
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <CheckSquare className="mr-2 h-4 w-4" />
-                Toplu Seç
+              <Button 
+                variant="outline"
+                onClick={() => setIsAdvancedSearchOpen(!isAdvancedSearchOpen)}
+                className="bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Detaylı Arama
+                <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
-              <div className="flex items-center gap-2">
-                <Button className="bg-green-600 hover:bg-green-700">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Satış Faturası Oluştur
+              
+              {selectedCustomers.length > 0 && (
+                <Button 
+                  variant="outline"
+                  onClick={toggleSelectAll}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Toplu Seç ({selectedCustomers.length})
                 </Button>
-                <Button variant="outline">
-                  <Mail className="mr-2 h-4 w-4" />
-                  e-Fatura Gelen Kutusu
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Download className="mr-2 h-4 w-4" />
-                  İçe Aktar
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Dışarıya Aktar
-                </Button>
-                <Button variant="outline" size="icon">
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </div>
+              )}
             </div>
+            
+            {/* SADECE BU BUTON KALDI */}
+            <Button 
+              onClick={handleShowPendingInvoices}
+              className="bg-green-600 hover:bg-green-700 gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Satış Faturası Oluştur
+            </Button>
           </div>
-
-          <Card className="p-8">
-            <div className="text-center space-y-4">
-              <p className="text-gray-500">Toplam 0 kayıt gösteriliyor</p>
-            </div>
-          </Card>
 
           <div className="flex items-center justify-between">
             <Button variant="outline" size="sm">
@@ -2101,6 +2104,15 @@ export function AccountingModule() {
         onClose={() => setIsManualInvoiceDialogOpen(false)}
         onSuccess={loadData}
       />
+
+      {/* Pending Invoices Dialog */}
+      {showPendingInvoicesDialog && (
+        <PendingInvoicesDialog
+          isOpen={showPendingInvoicesDialog}
+          onClose={() => setShowPendingInvoicesDialog(false)}
+          onSuccess={loadData}
+        />
+      )}
 
       {showPreviewDialog && (
         <InvoicePreviewDialog
