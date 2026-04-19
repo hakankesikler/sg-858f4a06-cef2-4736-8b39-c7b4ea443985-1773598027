@@ -50,6 +50,7 @@ import { accountingService } from "@/services/accountingService";
 import { crmService } from "@/services/crmService";
 import { CariForm } from "@/components/CariForm";
 import { supabase } from "@/integrations/supabase/client";
+import { InvoiceDialog } from "@/components/InvoiceDialog";
 
 type Invoice = {
   id: string;
@@ -608,6 +609,14 @@ export function AccountingModule() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const [previewInvoice, setPreviewInvoice] = useState<any>(null);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+
+  const handlePreviewInvoice = (invoice: any) => {
+    setPreviewInvoice(invoice);
+    setShowPreviewDialog(true);
   };
 
   return (
@@ -2019,6 +2028,17 @@ export function AccountingModule() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {showPreviewDialog && (
+        <InvoiceDialog
+          open={showPreviewDialog}
+          onClose={() => {
+            setShowPreviewDialog(false);
+            setPreviewInvoice(null);
+          }}
+          invoiceData={previewInvoice}
+        />
+      )}
     </div>
   );
 }
