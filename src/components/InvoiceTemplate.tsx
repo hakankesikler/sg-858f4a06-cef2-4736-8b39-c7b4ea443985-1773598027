@@ -244,27 +244,18 @@ export function InvoiceTemplate({ data }: InvoiceTemplateProps) {
         </div>
       </div>
 
-      {/* FOOTER NOTES */}
-      <div className="text-xs space-y-1 border-t pt-4">
-        <p>
-          * * Taşıma İşleri Organizatörlüğü Belge Numarası : İZM.U-NET.TİO.35.6323
-        </p>
-        <p>
-          * * Taşımalarınız Rex Lojistik güvencesinde ve sigortalıdır.
-        </p>
-        <p>* * İrsaliye yerine geçmektedir.</p>
-        <p>
-          * * Faturaya 8 gün içerisinde itiraz edilmezse kabul edilmiş sayılır.
-        </p>
-        <p>
-          * * BU FATURA MUHTEVİYATI ALT YÜKLEMECİLER İLE YAPILDIĞINDAN DOLAYI, KDV G.U.T
-          (I/C-2.1.3.11.2.) KANUN GEREĞİ TEVKİFAT UYGULANMAMIŞTIR
-        </p>
-        <p>* * Banka Bilgilerimiz :</p>
-        <p>* * REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ</p>
-        <p>* * TR24 0001 5001 5800 7355 9235 06</p>
-        <p>* Yalınızca,</p>
-        <p>* Sicil Numarası: 240976, İşletme Merkezi: İzmir</p>
+      {/* ALT NOTLAR */}
+      <div className="text-xs text-gray-700 space-y-1 leading-relaxed border-t pt-4 whitespace-pre-line">
+        {data.notes || `** Taşıma İşleri Organizatörlüğü Belge Numarası: İZM.U-NET.TİO.35.6323
+** Taşımalarınız Rex Lojistik güvencesinde ve sigortalıdır.
+** İrsaliye yerine geçmektedir.
+** Faturaya 8 gün içerisinde itiraz edilmezse kabul edilmiş sayılır.
+** BU FATURA MUHTEVİYATI ALT YÜKLEMECİLER İLE YAPILDIĞINDAN DOLAYI, KDV G.U.T (I/C-2.1.3.11.2.) KANUN GEREĞİ TEVKİFAT UYGULANMAMIŞTIR
+** Banka Bilgilerimiz:
+** REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ
+** TR24 0001 5001 5800 7355 9235 06
+* Yalınızca,
+* Sicil Numarası: 240976, İşletme Merkezi: İzmir`}
       </div>
 
       {/* PRINT/DOWNLOAD BUTTONS */}

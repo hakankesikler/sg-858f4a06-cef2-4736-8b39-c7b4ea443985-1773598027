@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 interface InvoiceDialogProps {
   isOpen: boolean;
@@ -25,6 +26,17 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
   // Sales invoice (Satış Faturası - Müşteriye kesilen)
   const [salesInvoiceNo, setSalesInvoiceNo] = useState("");
   const [salesAmount, setSalesAmount] = useState("");
+
+  const defaultNotes = `** Taşıma İşleri Organizatörlüğü Belge Numarası: İZM.U-NET.TİO.35.6323
+** Taşımalarınız Rex Lojistik güvencesinde ve sigortalıdır.
+** İrsaliye yerine geçmektedir.
+** Faturaya 8 gün içerisinde itiraz edilmezse kabul edilmiş sayılır.
+** BU FATURA MUHTEVİYATI ALT YÜKLEMECİLER İLE YAPILDIĞINDAN DOLAYI, KDV G.U.T (I/C-2.1.3.11.2.) KANUN GEREĞİ TEVKİFAT UYGULANMAMIŞTIR
+** Banka Bilgilerimiz:
+** REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ
+** TR24 0001 5001 5800 7355 9235 06
+* Yalınızca,
+* Sicil Numarası: 240976, İşletme Merkezi: İzmir`;
 
   useEffect(() => {
     if (isOpen && shipment) {
