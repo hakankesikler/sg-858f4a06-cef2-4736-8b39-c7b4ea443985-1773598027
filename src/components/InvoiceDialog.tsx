@@ -126,22 +126,41 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         invoiceNo = `SF-2024-${String(lastNum + 1).padStart(3, "0")}`;
       }
 
-      // Create invoice
-      const { error: invoiceError } = await supabase.from("sales_invoices").insert({
+      // Create invoice (Ana fatura kaydı)
+      const { data: invoiceData, error: invoiceError } = await supabase.from("sales_invoices").insert({
         invoice_no: invoiceNo,
         customer_id: selectedCustomerId,
-        shipment_id: shipment?.id || null,
+        shipment_id: shipment?.id || null,  // null for manual invoices
         invoice_date: formData.invoiceDate,
-        items: formData.items as any,
+        due_date: formData.invoiceDate, // Zorunlu alan
         subtotal,
-        total_vat: totalVat,
+        total_tax: totalVat,
         grand_total: grandTotal,
-        payment_status: "pending",
+        payment_status: "Bekliyor",
         currency: "TRY",
         notes: formData.notes,
-      } as any);
+      }).select().single();
 
       if (invoiceError) throw invoiceError;
+
+      // Fatura kalemlerini ekle
+      if (invoiceData) {
+        const invoiceItems = formData.items.map(item => ({
+          invoice_id: invoiceData.id,
+          product_code: "HİZMET",
+          description: item.description,
+          quantity: item.quantity,
+          unit: "Adet",
+          unit_price: item.unitPrice,
+          subtotal: item.quantity * item.unitPrice,
+          tax_rate: item.vatRate,
+          tax_amount: (item.quantity * item.unitPrice * item.vatRate) / 100,
+          total: (item.quantity * item.unitPrice) * (1 + item.vatRate / 100),
+        }));
+
+        const { error: itemsError } = await supabase.from("sales_invoice_items").insert(invoiceItems);
+        if (itemsError) throw itemsError;
+      }
 
       // Update shipment invoice status if shipment exists
       if (shipment?.id) {
