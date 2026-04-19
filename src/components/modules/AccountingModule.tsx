@@ -50,7 +50,7 @@ import { accountingService } from "@/services/accountingService";
 import { crmService } from "@/services/crmService";
 import { CariForm } from "@/components/CariForm";
 import { supabase } from "@/integrations/supabase/client";
-import { InvoiceDialog } from "@/components/InvoiceDialog";
+import { InvoicePreviewDialog } from "@/components/InvoicePreviewDialog";
 
 type Invoice = {
   id: string;
@@ -2030,7 +2030,7 @@ export function AccountingModule() {
       </AlertDialog>
 
       {showPreviewDialog && (
-        <InvoiceDialog
+        <InvoicePreviewDialog
           open={showPreviewDialog}
           onClose={() => {
             setShowPreviewDialog(false);
