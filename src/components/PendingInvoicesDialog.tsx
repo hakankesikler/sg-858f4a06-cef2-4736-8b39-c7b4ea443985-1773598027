@@ -81,6 +81,11 @@ export function PendingInvoicesDialog({
             name,
             company,
             vergi_no
+          ),
+          shipment_cargo (
+            id,
+            quantity,
+            unit_price
           )
         `)
         .eq("status", "teslim_edildi")
@@ -104,9 +109,23 @@ export function PendingInvoicesDialog({
         throw error;
       }
 
-      console.log("🟢 Shipments loaded successfully:", data?.length || 0);
-      setShipments(data || []);
-      setFilteredShipments(data || []);
+      // Calculate totalAmount for each shipment
+      const shipmentsWithTotal = (data || []).map(shipment => {
+        const totalAmount = Array.isArray(shipment.shipment_cargo)
+          ? shipment.shipment_cargo.reduce((sum: number, cargo: any) => {
+              return sum + (cargo.quantity || 0) * (cargo.unit_price || 0);
+            }, 0)
+          : 0;
+        
+        return {
+          ...shipment,
+          totalAmount
+        };
+      });
+
+      console.log("🟢 Shipments loaded successfully:", shipmentsWithTotal.length);
+      setShipments(shipmentsWithTotal);
+      setFilteredShipments(shipmentsWithTotal);
     } catch (error: any) {
       console.error("🔴 Error loading pending shipments:", error);
       toast({
