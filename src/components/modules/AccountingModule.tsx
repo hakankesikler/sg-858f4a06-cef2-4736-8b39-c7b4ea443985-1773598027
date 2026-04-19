@@ -51,6 +51,7 @@ import { crmService } from "@/services/crmService";
 import { CariForm } from "@/components/CariForm";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoicePreviewDialog } from "@/components/InvoicePreviewDialog";
+import { InvoiceDialog } from "@/components/InvoiceDialog";
 
 type Invoice = {
   id: string;
@@ -148,6 +149,7 @@ export function AccountingModule() {
   const [isAddExpenseTypeDialogOpen, setIsAddExpenseTypeDialogOpen] = useState(false);
   const [selectedCategoryForType, setSelectedCategoryForType] = useState("");
   const [newExpenseTypeName, setNewExpenseTypeName] = useState("");
+  const [isManualInvoiceDialogOpen, setIsManualInvoiceDialogOpen] = useState(false);
 
   const loadData = async () => {
     try {
@@ -619,6 +621,10 @@ export function AccountingModule() {
     setShowPreviewDialog(true);
   };
 
+  const handleCreateManualInvoice = () => {
+    setIsManualInvoiceDialogOpen(true);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <Tabs defaultValue="panel" className="w-full">
@@ -693,6 +699,36 @@ export function AccountingModule() {
             </div>
           </div>
 
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <CheckSquare className="mr-2 h-4 w-4" />
+                Toplu Seç
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button className="bg-green-600 hover:bg-green-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Satış Faturası Oluştur
+                </Button>
+                <Button variant="outline">
+                  <Mail className="mr-2 h-4 w-4" />
+                  e-Fatura Gelen Kutusu
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  İçe Aktar
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Upload className="mr-2 h-4 w-4" />
+                  Dışarıya Aktar
+                </Button>
+                <Button variant="outline" size="icon">
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <Card className="p-8">
             <div className="text-center space-y-4">
               <p className="text-gray-500">Toplam 0 kayıt gösteriliyor</p>
@@ -726,6 +762,36 @@ export function AccountingModule() {
                 <Filter className="h-4 w-4" />
               </Button>
             </div>
+          </div>
+
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => setIsAdvancedSearchOpen(!isAdvancedSearchOpen)}
+                className="bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Detaylı Arama
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </Button>
+              
+              {selectedCustomers.length > 0 && (
+                <Button 
+                  variant="outline"
+                  onClick={toggleSelectAll}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Toplu Seç ({selectedCustomers.length})
+                </Button>
+              )}
+            </div>
+            <Button 
+              onClick={handleCreateManualInvoice}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Satış Faturası Oluştur
+            </Button>
           </div>
 
           <Card>
@@ -2028,6 +2094,13 @@ export function AccountingModule() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Manual Invoice Dialog */}
+      <InvoiceDialog
+        isOpen={isManualInvoiceDialogOpen}
+        onClose={() => setIsManualInvoiceDialogOpen(false)}
+        onSuccess={loadSalesData}
+      />
 
       {showPreviewDialog && (
         <InvoicePreviewDialog
