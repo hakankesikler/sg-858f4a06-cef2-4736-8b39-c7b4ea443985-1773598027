@@ -80,8 +80,8 @@ export function PendingInvoicesDialog({
 
       if (error) throw error;
 
-      setShipments(data || []);
-      setFilteredShipments(data || []);
+      setShipments(shipments || []);
+      setFilteredShipments(shipments || []);
     } catch (error: any) {
       console.error("Error loading pending shipments:", error);
       toast({
