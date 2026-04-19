@@ -57,31 +57,26 @@ export function PendingInvoicesDialog({
   }, [searchTerm, shipments]);
 
   const loadPendingShipments = async () => {
-    setLoading(true);
     try {
-      // Fetch delivered shipments that haven't been invoiced yet
-      const { data, error } = await supabase
+      setLoading(true);
+
+      const { data: shipments, error } = await supabase
         .from("shipments")
         .select(`
-          *,
-          customers:customer_id (
+          id,
+          shipment_code,
+          customer_id,
+          actual_delivery_date,
+          customers (
             id,
             name,
             company,
-            tax_number,
-            tax_office
-          ),
-          shipment_cargo (
-            id,
-            cargo_name,
-            quantity,
-            unit_price,
-            total_price
+            vergi_no
           )
         `)
         .eq("status", "teslim_edildi")
         .or("invoice_status.is.null,invoice_status.neq.faturalandi")
-        .order("actual_delivery_date", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
@@ -206,15 +201,15 @@ export function PendingInvoicesDialog({
                           <div className="font-medium text-gray-900">
                             {shipment.customers?.company || shipment.customers?.name || "Bilinmeyen"}
                           </div>
-                          {shipment.customers?.tax_number && (
+                          {shipment.customers?.vergi_no && (
                             <div className="text-xs text-gray-500">
-                              VKN: {shipment.customers.tax_number}
+                              VKN: {shipment.customers.vergi_no}
                             </div>
                           )}
                         </td>
                         <td className="px-4 py-3">
                           <div className="font-mono text-sm text-gray-900">
-                            {shipment.tracking_number || "-"}
+                            {shipment.shipment_code || "-"}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right">
