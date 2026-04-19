@@ -69,11 +69,11 @@ export function PendingInvoicesDialog({
           shipment_code,
           customer_id,
           actual_delivery_date,
-          customers (
+          customers!shipments_customer_id_fkey (
             id,
             name,
             company,
-            tax_id
+            vergi_no
           )
         `)
         .eq("status", "teslim_edildi")
