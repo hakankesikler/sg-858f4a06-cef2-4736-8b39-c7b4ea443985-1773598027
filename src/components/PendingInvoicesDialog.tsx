@@ -57,6 +57,8 @@ export function PendingInvoicesDialog({
   }, [searchTerm, shipments]);
 
   const loadPendingShipments = async () => {
+    console.log("🔵 PendingInvoicesDialog: Starting to load shipments...");
+    
     try {
       setLoading(true);
 
@@ -71,27 +73,38 @@ export function PendingInvoicesDialog({
             id,
             name,
             company,
-            vergi_no
+            tax_id
           )
         `)
         .eq("status", "teslim_edildi")
         .or("invoice_status.is.null,invoice_status.neq.faturalandi")
         .order("created_at", { ascending: false });
 
-      console.log("Pending shipments query result:", { data, error });
+      console.log("🔵 Pending shipments query result:", { 
+        dataCount: data?.length || 0,
+        data, 
+        error,
+        errorDetails: error ? {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        } : null
+      });
 
       if (error) {
-        console.error("Query error:", error);
+        console.error("🔴 Query error:", error);
         throw error;
       }
 
+      console.log("🟢 Shipments loaded successfully:", data?.length || 0);
       setShipments(data || []);
       setFilteredShipments(data || []);
     } catch (error: any) {
-      console.error("Error loading pending shipments:", error);
+      console.error("🔴 Error loading pending shipments:", error);
       toast({
         title: "Hata",
-        description: "Sevkiyatlar yüklenirken bir hata oluştu",
+        description: error.message || "Sevkiyatlar yüklenirken bir hata oluştu",
         variant: "destructive",
       });
     } finally {
@@ -207,9 +220,10 @@ export function PendingInvoicesDialog({
                             {shipment.customers?.company || shipment.customers?.name || "Bilinmeyen"}
                           </div>
                           {shipment.customers?.vergi_no && (
-                            <div className="text-xs text-gray-500">
-                              VKN: {shipment.customers.vergi_no}
-                            </div>
+                            <div className="text-xs text-gray-500">VKN: {shipment.customers.vergi_no}</div>
+                          )}
+                          {shipment.customers?.tax_id && (
+                            <div className="text-xs text-gray-500">VKN: {shipment.customers.tax_id}</div>
                           )}
                         </td>
                         <td className="px-4 py-3">
