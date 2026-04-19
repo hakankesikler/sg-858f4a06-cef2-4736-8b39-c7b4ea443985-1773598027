@@ -957,7 +957,7 @@ export function LogisticsModule() {
 
       {isInvoiceDialogOpen && invoicingShipment && (
         <InvoiceDialog
-          open={isInvoiceDialogOpen}
+          isOpen={isInvoiceDialogOpen}
           onClose={() => {
             setIsInvoiceDialogOpen(false);
             setInvoicingShipment(null);
