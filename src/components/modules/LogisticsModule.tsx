@@ -955,15 +955,17 @@ export function LogisticsModule() {
         onSuccess={loadData}
       />
 
-      <InvoiceDialog
-        isOpen={isInvoiceDialogOpen}
-        onClose={() => {
-          setIsInvoiceDialogOpen(false);
-          setInvoicingShipment(null);
-        }}
-        onSuccess={loadData}
-        shipment={invoicingShipment}
-      />
+      {isInvoiceDialogOpen && invoicingShipment && (
+        <InvoiceDialog
+          open={isInvoiceDialogOpen}
+          onClose={() => {
+            setIsInvoiceDialogOpen(false);
+            setInvoicingShipment(null);
+          }}
+          onSuccess={loadData}
+          shipment={invoicingShipment}
+        />
+      )}
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
