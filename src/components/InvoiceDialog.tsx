@@ -130,14 +130,13 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
       const { error: invoiceError } = await supabase.from("sales_invoices").insert({
         invoice_no: invoiceNo,
         customer_id: selectedCustomerId,
-        shipment_id: shipment?.id || null,  // null for manual invoices
+        shipment_id: shipment?.id || null,
         invoice_date: formData.invoiceDate,
         items: formData.items as any,
         subtotal,
         total_vat: totalVat,
         grand_total: grandTotal,
         payment_status: "pending",
-        invoice_type: "sales",
         currency: "TRY",
         notes: formData.notes,
       } as any);

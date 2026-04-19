@@ -9,10 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, FileText, Search, X } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
-import { InvoiceDialog } from "@/components/InvoiceDialog";
+import { X, Search, Loader2, FileText } from "lucide-react";
+import { InvoiceDialog } from "./InvoiceDialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PendingInvoicesDialogProps {
   isOpen: boolean;
@@ -29,11 +28,14 @@ export function PendingInvoicesDialog({
   const [loading, setLoading] = useState(false);
   const [shipments, setShipments] = useState<any[]>([]);
   const [filteredShipments, setFilteredShipments] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  
-  // Invoice dialog state
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedShipment, setSelectedShipment] = useState<any>(null);
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  
+  // Çoklu seçim için yeni state'ler
+  const [selectedShipmentIds, setSelectedShipmentIds] = useState<string[]>([]);
+  const [showBulkInvoiceDialog, setShowBulkInvoiceDialog] = useState(false);
+  const [bulkShipments, setBulkShipments] = useState<any[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -42,19 +44,19 @@ export function PendingInvoicesDialog({
   }, [isOpen]);
 
   useEffect(() => {
-    if (searchTerm.trim() === "") {
+    if (searchQuery.trim() === "") {
       setFilteredShipments(shipments);
     } else {
       const filtered = shipments.filter((shipment) => {
         const customerName = (shipment.customers?.company || shipment.customers?.name || "").toLowerCase();
         const trackingNumber = (shipment.tracking_number || "").toLowerCase();
-        const search = searchTerm.toLowerCase();
+        const search = searchQuery.toLowerCase();
         
         return customerName.includes(search) || trackingNumber.includes(search);
       });
       setFilteredShipments(filtered);
     }
-  }, [searchTerm, shipments]);
+  }, [searchQuery, shipments]);
 
   const loadPendingShipments = async () => {
     console.log("🔵 PendingInvoicesDialog: Starting to load shipments...");
@@ -112,6 +114,54 @@ export function PendingInvoicesDialog({
     }
   };
 
+  // Çoklu seçim toggle
+  const toggleShipmentSelection = (shipmentId: string) => {
+    setSelectedShipmentIds(prev => {
+      if (prev.includes(shipmentId)) {
+        return prev.filter(id => id !== shipmentId);
+      } else {
+        return [...prev, shipmentId];
+      }
+    });
+  };
+
+  // Tüm seçim toggle
+  const toggleSelectAll = () => {
+    if (selectedShipmentIds.length === filteredShipments.length) {
+      setSelectedShipmentIds([]);
+    } else {
+      setSelectedShipmentIds(filteredShipments.map(s => s.id));
+    }
+  };
+
+  // Seçilileri faturalandır
+  const handleBulkInvoice = () => {
+    if (selectedShipmentIds.length === 0) {
+      toast({
+        title: "Uyarı",
+        description: "Lütfen en az bir sevkiyat seçin",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Seçili sevkiyatların aynı müşteriye ait olup olmadığını kontrol et
+    const selectedShipmentsData = shipments.filter(s => selectedShipmentIds.includes(s.id));
+    const customerIds = [...new Set(selectedShipmentsData.map(s => s.customer_id))];
+    
+    if (customerIds.length > 1) {
+      toast({
+        title: "Uyarı",
+        description: "Farklı müşterilere ait sevkiyatlar tek faturada birleştirilemez",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setBulkShipments(selectedShipmentsData);
+    setShowBulkInvoiceDialog(true);
+  };
+
   const handleCreateInvoice = (shipment: any) => {
     setSelectedShipment(shipment);
     setShowInvoiceDialog(true);
@@ -150,136 +200,145 @@ export function PendingInvoicesDialog({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-6xl max-h-[90vh]">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                Faturalanmayı Bekleyen Sevkiyatlar
-              </span>
+                <span>Faturalanmayı Bekleyen Sevkiyatlar</span>
+              </div>
               <Button variant="ghost" size="icon" onClick={onClose}>
                 <X className="h-4 w-4" />
               </Button>
             </DialogTitle>
           </DialogHeader>
 
-          {/* Search */}
+          {/* ARAMA */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
-              type="text"
               placeholder="Müşteri veya sevkiyat numarasına göre ara..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
 
-          {/* Table */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 sticky top-0">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Müşteri
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Sevkiyat No
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
-                      Tutar
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Teslim Tarihi
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
-                      İşlem
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
-                        <p className="text-sm text-gray-500 mt-2">Yükleniyor...</p>
-                      </td>
-                    </tr>
-                  ) : filteredShipments.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                        {searchTerm ? "Arama sonucu bulunamadı" : "Faturalanmayı bekleyen sevkiyat bulunmuyor"}
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredShipments.map((shipment) => (
-                      <tr key={shipment.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-gray-900">
-                            {shipment.customers?.company || shipment.customers?.name || "Bilinmeyen"}
-                          </div>
-                          {shipment.customers?.vergi_no && (
-                            <div className="text-xs text-gray-500">VKN: {shipment.customers.vergi_no}</div>
-                          )}
-                          {shipment.customers?.tax_id && (
-                            <div className="text-xs text-gray-500">VKN: {shipment.customers.tax_id}</div>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="font-mono text-sm text-gray-900">
-                            {shipment.shipment_code || "-"}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="font-semibold text-gray-900">
-                            {formatCurrency(calculateShipmentTotal(shipment))}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm text-gray-900">
-                            {formatDate(shipment.actual_delivery_date)}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <Button
-                            size="sm"
-                            onClick={() => handleCreateInvoice(shipment)}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <FileText className="w-4 h-4 mr-2" />
-                            Fatura Oluştur
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+          {/* SEÇİLİ SEVKIYAT SAYISI VE TOPLU İŞLEM */}
+          {selectedShipmentIds.length > 0 && (
+            <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedShipmentIds.length} sevkiyat seçildi
+              </span>
+              <Button
+                onClick={handleBulkInvoice}
+                className="bg-blue-600 hover:bg-blue-700"
+                size="sm"
+              >
+                Seçilileri Faturalandır
+              </Button>
             </div>
-          </div>
+          )}
 
-          {/* Summary */}
-          {!loading && filteredShipments.length > 0 && (
-            <div className="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600">
-                Toplam {filteredShipments.length} sevkiyat
-              </div>
-              <div className="font-semibold text-gray-900">
-                Toplam Tutar:{" "}
-                {formatCurrency(
-                  filteredShipments.reduce(
-                    (sum, shipment) => sum + calculateShipmentTotal(shipment),
-                    0
-                  )
-                )}
-              </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
             </div>
+          ) : filteredShipments.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              Faturalanmayı bekleyen sevkiyat bulunmuyor
+            </div>
+          ) : (
+            <>
+              {/* HEADER */}
+              <div className="grid grid-cols-[auto_1fr_150px_150px_150px_150px] gap-4 pb-3 border-b font-semibold text-sm text-gray-700">
+                <div className="flex items-center">
+                  <Checkbox
+                    checked={selectedShipmentIds.length === filteredShipments.length}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </div>
+                <div>MÜŞTERİ</div>
+                <div>SEVKİYAT NO</div>
+                <div className="text-right">TUTAR</div>
+                <div>TESLİM TARİHİ</div>
+                <div>İŞLEM</div>
+              </div>
+
+              {/* SEVKIYAT LİSTESİ */}
+              <div className="space-y-2">
+                {filteredShipments.map((shipment) => (
+                  <div
+                    key={shipment.id}
+                    className={`grid grid-cols-[auto_1fr_150px_150px_150px_150px] gap-4 p-4 rounded-lg transition-colors ${
+                      selectedShipmentIds.includes(shipment.id)
+                        ? "bg-blue-50 border border-blue-200"
+                        : "bg-gray-50 hover:bg-gray-100"
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <Checkbox
+                        checked={selectedShipmentIds.includes(shipment.id)}
+                        onCheckedChange={() => toggleShipmentSelection(shipment.id)}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {shipment.customers?.company || shipment.customers?.name || "Bilinmeyen Müşteri"}
+                      </div>
+                      {shipment.customers?.vergi_no && (
+                        <div className="text-xs text-gray-500">VKN: {shipment.customers.vergi_no}</div>
+                      )}
+                    </div>
+
+                    <div>
+                      <div className="text-sm font-medium text-gray-700">
+                        {shipment.shipment_code}
+                      </div>
+                    </div>
+
+                    <div className="text-sm font-semibold text-gray-900 text-right">
+                      {shipment.totalAmount.toLocaleString("tr-TR")}₺
+                    </div>
+
+                    <div className="text-sm text-gray-600">
+                      {shipment.actual_delivery_date
+                        ? new Date(shipment.actual_delivery_date).toLocaleDateString("tr-TR")
+                        : "-"}
+                    </div>
+
+                    <div>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedShipment(shipment);
+                          setShowInvoiceDialog(true);
+                        }}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        Fatura Oluştur
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ÖZET */}
+              <div className="flex justify-between items-center pt-4 border-t mt-4">
+                <span className="text-sm text-gray-600">
+                  Toplam {filteredShipments.length} sevkiyat
+                </span>
+                <span className="text-lg font-bold text-gray-900">
+                  Toplam Tutar: {totalAmount.toLocaleString("tr-TR")}₺
+                </span>
+              </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Invoice Dialog */}
+      {/* TEK SEVKİYAT FATURA DİALOĞU */}
       {showInvoiceDialog && selectedShipment && (
         <InvoiceDialog
           isOpen={showInvoiceDialog}
@@ -291,6 +350,181 @@ export function PendingInvoicesDialog({
           shipment={selectedShipment}
         />
       )}
+
+      {/* TOPLU SEVKİYAT FATURA DİALOĞU */}
+      {showBulkInvoiceDialog && bulkShipments.length > 0 && (
+        <BulkInvoiceDialog
+          isOpen={showBulkInvoiceDialog}
+          onClose={() => {
+            setShowBulkInvoiceDialog(false);
+            setBulkShipments([]);
+          }}
+          onSuccess={() => {
+            setShowBulkInvoiceDialog(false);
+            setBulkShipments([]);
+            setSelectedShipmentIds([]);
+            handleInvoiceSuccess();
+          }}
+          shipments={bulkShipments}
+        />
+      )}
     </>
+  );
+}
+
+// TOPLU FATURA DİALOĞU
+function BulkInvoiceDialog({ isOpen, onClose, onSuccess, shipments }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  shipments: any[];
+}) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
+
+  const defaultNotes = `** Taşıma İşleri Organizatörlüğü Belge Numarası: İZM.U-NET.TİO.35.6323
+** Taşımalarınız Rex Lojistik güvencesinde ve sigortalıdır.
+** İrsaliye yerine geçmektedir.
+** Faturaya 8 gün içerisinde itiraz edilmezse kabul edilmiş sayılır.
+** BU FATURA MUHTEVİYATI ALT YÜKLEMECİLER İLE YAPILDIĞINDAN DOLAYI, KDV G.U.T (I/C-2.1.3.11.2.) KANUN GEREĞİ TEVKİFAT UYGULANMAMIŞTIR
+** Banka Bilgilerimiz:
+** REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ
+** TR24 0001 5001 5800 7355 9235 06
+* Yalınızca,
+* Sicil Numarası: 240976, İşletme Merkezi: İzmir`;
+
+  const [notes, setNotes] = useState(defaultNotes);
+
+  // Toplam tutarları hesapla
+  const totalAmount = shipments.reduce((sum, s) => sum + s.totalAmount, 0);
+  const subtotal = totalAmount / 1.2; // KDV hariç
+  const totalVat = totalAmount - subtotal;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Fatura numarası oluştur
+      const { data: lastInvoice } = await supabase
+        .from("sales_invoices")
+        .select("invoice_no")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      let invoiceNo = "SF-2024-001";
+      if (lastInvoice?.invoice_no) {
+        const lastNum = parseInt(lastInvoice.invoice_no.split("-")[2]);
+        invoiceNo = `SF-2024-${String(lastNum + 1).padStart(3, "0")}`;
+      }
+
+      // Fatura kalemlerini oluştur (her sevkiyat bir kalem)
+      const items = shipments.map(shipment => ({
+        description: `Taşıma Hizmeti - ${shipment.shipment_code}`,
+        notes: `Müşteri: ${shipment.customers?.company || shipment.customers?.name}`,
+        quantity: 1,
+        unitPrice: shipment.totalAmount / 1.2, // KDV hariç
+        vatRate: 20,
+      }));
+
+      // Fatura oluştur
+      const { error: invoiceError } = await supabase.from("sales_invoices").insert({
+        invoice_no: invoiceNo,
+        customer_id: shipments[0].customer_id,
+        shipment_id: null, // Çoklu sevkiyat için null
+        invoice_date: invoiceDate,
+        items: items as any,
+        subtotal,
+        total_vat: totalVat,
+        grand_total: totalAmount,
+        payment_status: "pending",
+        currency: "TRY",
+        notes: notes,
+      } as any);
+
+      if (invoiceError) throw invoiceError;
+
+      // Tüm sevkiyatları "faturalandi" olarak işaretle
+      const { error: updateError } = await supabase
+        .from("shipments")
+        .update({ invoice_status: "faturalandi" })
+        .in("id", shipments.map(s => s.id));
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Başarılı",
+        description: `${shipments.length} sevkiyat için fatura ${invoiceNo} oluşturuldu`,
+      });
+
+      onSuccess();
+    } catch (error: any) {
+      console.error("Error creating bulk invoice:", error);
+      toast({
+        title: "Hata",
+        description: error.message || "Fatura oluşturulurken bir hata oluştu",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Toplu Fatura Oluştur</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-semibold text-blue-900 mb-2">Seçili Sevkiyatlar:</h3>
+            <ul className="space-y-1 text-sm text-blue-800">
+              {shipments.map(s => (
+                <li key={s.id}>
+                  • {s.shipment_code} - {s.totalAmount.toLocaleString("tr-TR")}₺
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 pt-3 border-t border-blue-300 font-bold text-blue-900">
+              Toplam: {totalAmount.toLocaleString("tr-TR")}₺
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Fatura Tarihi</label>
+            <Input
+              type="date"
+              value={invoiceDate}
+              onChange={(e) => setInvoiceDate(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Alt Notlar</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={8}
+              className="w-full p-3 border rounded-lg text-sm font-mono"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              İptal
+            </Button>
+            <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700">
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Faturalandır
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
