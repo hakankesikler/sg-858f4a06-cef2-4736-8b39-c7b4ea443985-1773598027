@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Loader2 } from "lucide-react";
 
 interface InvoiceDialogProps {
   isOpen: boolean;
@@ -132,7 +132,7 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         customer_id: selectedCustomerId,
         shipment_id: shipment?.id || null,  // null for manual invoices
         invoice_date: formData.invoiceDate,
-        items: formData.items,
+        items: formData.items as any,
         subtotal,
         total_vat: totalVat,
         grand_total: grandTotal,
@@ -140,7 +140,7 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         invoice_type: "sales",
         currency: "TRY",
         notes: formData.notes,
-      });
+      } as any);
 
       if (invoiceError) throw invoiceError;
 

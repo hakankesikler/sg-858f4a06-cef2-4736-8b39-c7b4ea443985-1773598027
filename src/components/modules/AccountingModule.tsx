@@ -2099,7 +2099,7 @@ export function AccountingModule() {
       <InvoiceDialog
         isOpen={isManualInvoiceDialogOpen}
         onClose={() => setIsManualInvoiceDialogOpen(false)}
-        onSuccess={loadSalesData}
+        onSuccess={loadData}
       />
 
       {showPreviewDialog && (
