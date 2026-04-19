@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { X, Search, Loader2, FileText } from "lucide-react";
 import { InvoiceDialog } from "./InvoiceDialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
 
 interface PendingInvoicesDialogProps {
   isOpen: boolean;
@@ -307,7 +309,7 @@ export function PendingInvoicesDialog({
 
                     <div className="text-sm text-gray-600">
                       {shipment.actual_delivery_date
-                        ? new Date(shipment.actual_delivery_date).toLocaleDateString("tr-TR")
+                        ? format(new Date(shipment.actual_delivery_date), "dd.MM.yyyy", { locale: tr })
                         : "-"}
                     </div>
 
