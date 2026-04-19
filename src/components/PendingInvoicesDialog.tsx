@@ -60,7 +60,7 @@ export function PendingInvoicesDialog({
     try {
       setLoading(true);
 
-      const { data: shipments, error } = await supabase
+      const { data, error } = await supabase
         .from("shipments")
         .select(`
           id,
@@ -78,10 +78,15 @@ export function PendingInvoicesDialog({
         .or("invoice_status.is.null,invoice_status.neq.faturalandi")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      console.log("Pending shipments query result:", { data, error });
 
-      setShipments(shipments || []);
-      setFilteredShipments(shipments || []);
+      if (error) {
+        console.error("Query error:", error);
+        throw error;
+      }
+
+      setShipments(data || []);
+      setFilteredShipments(data || []);
     } catch (error: any) {
       console.error("Error loading pending shipments:", error);
       toast({
