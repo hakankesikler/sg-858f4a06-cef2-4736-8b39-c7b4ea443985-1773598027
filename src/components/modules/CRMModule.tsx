@@ -19,21 +19,24 @@ import * as XLSX from "xlsx";
 
 // Helper function to normalize Turkish characters for search
 const normalizeTurkish = (str: string): string => {
-  return str
-    .replace(/İ/g, 'I')
-    .replace(/ı/g, 'i')
-    .replace(/I/g, 'i')
-    .replace(/Ş/g, 'S')
+  const normalized = str
+    .replace(/İ/g, 'i')  // FIXED: İ (capital Turkish i) -> i (lowercase)
+    .replace(/ı/g, 'i')  // ı (lowercase Turkish i) -> i
+    .replace(/I/g, 'i')  // I (English capital i) -> i
+    .replace(/Ş/g, 's')
     .replace(/ş/g, 's')
-    .replace(/Ğ/g, 'G')
+    .replace(/Ğ/g, 'g')
     .replace(/ğ/g, 'g')
-    .replace(/Ü/g, 'U')
+    .replace(/Ü/g, 'u')
     .replace(/ü/g, 'u')
-    .replace(/Ö/g, 'O')
+    .replace(/Ö/g, 'o')
     .replace(/ö/g, 'o')
-    .replace(/Ç/g, 'C')
+    .replace(/Ç/g, 'c')
     .replace(/ç/g, 'c')
     .toLowerCase();
+  
+  console.log(`normalizeTurkish: "${str}" -> "${normalized}"`);
+  return normalized;
 };
 
 export function CRMModule() {
@@ -85,17 +88,27 @@ export function CRMModule() {
       console.log("Total customers loaded:", data.length);
       console.log("Account types:", [...new Set(data.map(c => c.account_type))]);
       
-      const teknikIstif = data.find(c => c.name?.includes('TEKNİK İSTİF'));
-      if (teknikIstif) {
-        console.log("✅ TEKNİK İSTİF FOUND IN LOADED DATA:", {
-          id: teknikIstif.id,
-          code: teknikIstif.customer_code,
-          name: teknikIstif.name,
-          account_type: teknikIstif.account_type
+      // Search for TEKNİK İSTİF by customer code
+      const teknikIstifByCode = data.find(c => c.customer_code === 'CST-000414');
+      console.log("TEKNİK İSTİF search by code (CST-000414):", teknikIstifByCode ? "FOUND ✅" : "NOT FOUND ❌");
+      if (teknikIstifByCode) {
+        console.log("TEKNİK İSTİF data:", {
+          id: teknikIstifByCode.id,
+          code: teknikIstifByCode.customer_code,
+          name: teknikIstifByCode.name,
+          account_type: teknikIstifByCode.account_type,
+          name_normalized: normalizeTurkish(teknikIstifByCode.name || '')
         });
-      } else {
-        console.log("❌ TEKNİK İSTİF NOT FOUND IN LOADED DATA");
       }
+      
+      // Search for TEKNİK İSTİF by name
+      const teknikIstifByName = data.find(c => c.name?.includes('İSTİF'));
+      console.log("TEKNİK İSTİF search by name (contains 'İSTİF'):", teknikIstifByName ? "FOUND ✅" : "NOT FOUND ❌");
+      
+      // List all customers with TEKNİK in name
+      const allTeknik = data.filter(c => c.name?.includes('TEKNİK') || c.name?.includes('TEKNIK'));
+      console.log("All customers with TEKNİK/TEKNIK:", allTeknik.length);
+      console.log("TEKNİK customer codes:", allTeknik.map(c => c.customer_code));
       
       setCustomers(data);
     } catch (error) {
@@ -182,18 +195,21 @@ export function CRMModule() {
   };
 
   const filteredCustomers = useMemo(() => {
-    console.log("=== FILTEREDCUSTOMERS MEMO BAŞLADI ===");
+    console.log("=== FILTERED CUSTOMERS MEMO ===");
     console.log("Total customers:", customers.length);
     console.log("Filter Type:", filterType);
-    console.log("Supplier Sub-Category:", supplierSubCategory);
     console.log("Search Term:", searchTerm);
     
     let filtered = customers;
 
-    // Filter by main account type - 'musteri' is the default, others are specific
+    // Filter by main account type
     if (filterType === "musteri") {
       filtered = filtered.filter(c => c.account_type === "musteri" || !c.account_type);
       console.log("After musteri filter:", filtered.length);
+      
+      // Check if TEKNİK İSTİF is in musteri filtered list
+      const teknikIstif = filtered.find(c => c.customer_code === 'CST-000414');
+      console.log("TEKNİK İSTİF in musteri filter:", teknikIstif ? "YES ✅" : "NO ❌");
     } else if (filterType !== "all") {
       filtered = filtered.filter(c => c.account_type === filterType);
       console.log(`After ${filterType} filter:`, filtered.length);
@@ -208,38 +224,38 @@ export function CRMModule() {
     // Filter by search term with Turkish character normalization
     if (searchTerm) {
       const search = normalizeTurkish(searchTerm);
-      console.log("Normalized search term:", search);
+      console.log(`Searching for: "${searchTerm}" (normalized: "${search}")`);
+      
+      const beforeSearchCount = filtered.length;
       
       filtered = filtered.filter(c => {
-        const nameMatch = normalizeTurkish(c.name || '').includes(search);
-        const emailMatch = normalizeTurkish(c.email || '').includes(search);
-        const phoneMatch = normalizeTurkish(c.phone || '').includes(search);
-        const codeMatch = normalizeTurkish(c.customer_code || '').includes(search);
+        const nameNorm = normalizeTurkish(c.name || '');
+        const emailNorm = normalizeTurkish(c.email || '');
+        const phoneNorm = normalizeTurkish(c.phone || '');
+        const codeNorm = normalizeTurkish(c.customer_code || '');
         
-        const matches = nameMatch || emailMatch || phoneMatch || codeMatch;
+        const matches = nameNorm.includes(search) || emailNorm.includes(search) || phoneNorm.includes(search) || codeNorm.includes(search);
         
-        if (matches && search.includes('teknik')) {
-          console.log("FOUND TEKNIK MATCH:", {
-            name: c.name,
+        // Log TEKNİK İSTİF specifically
+        if (c.customer_code === 'CST-000414') {
+          console.log("🔍 TEKNİK İSTİF match check:", {
             code: c.customer_code,
-            nameMatch,
-            emailMatch,
-            phoneMatch,
-            codeMatch
+            name: c.name,
+            nameNorm,
+            search,
+            nameIncludes: nameNorm.includes(search),
+            matches
           });
         }
         
         return matches;
       });
       
-      console.log("After search filter:", filtered.length);
-      if (filtered.length > 0 && searchTerm.toLowerCase().includes('teknik')) {
-        console.log("Filtered results with 'teknik':", filtered.map(c => ({
-          code: c.customer_code,
-          name: c.name,
-          account_type: c.account_type
-        })));
-      }
+      console.log(`After search filter: ${beforeSearchCount} -> ${filtered.length}`);
+      
+      // Check if TEKNİK İSTİF survived the search filter
+      const teknikIstifAfterSearch = filtered.find(c => c.customer_code === 'CST-000414');
+      console.log("TEKNİK İSTİF after search filter:", teknikIstifAfterSearch ? "YES ✅" : "NO ❌");
     }
 
     console.log("=== FINAL FILTERED COUNT:", filtered.length, "===");
