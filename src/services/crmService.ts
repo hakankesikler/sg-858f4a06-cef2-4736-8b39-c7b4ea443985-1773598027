@@ -53,30 +53,59 @@ export interface Customer {
 export const crmService = {
   // Get all customers
   async getCustomers() {
+    console.log("=== CRM SERVICE GET CUSTOMERS START ===");
+    
     const { data, error } = await supabase
       .from("customers")
       .select("*")
       .order("name", { ascending: true });
 
+    console.log("=== RAW SUPABASE QUERY RESULT ===");
+    console.log("Error:", error);
+    console.log("Data count:", data?.length || 0);
+    
     if (error) {
       console.error("Error fetching customers:", error);
       throw error;
     }
 
-    console.log("=== CRM SERVICE GET CUSTOMERS ===");
-    console.log("Total customers from DB:", data?.length || 0);
+    console.log("=== SEARCHING FOR TEKNİK İSTİF ===");
     
-    const teknikIstif = data?.find(c => c.vergi_no === '8360477578');
-    if (teknikIstif) {
-      console.log("✅ TEKNİK İSTİF FOUND IN DB QUERY:", {
-        id: teknikIstif.id,
-        code: teknikIstif.customer_code,
-        name: teknikIstif.name,
-        account_type: teknikIstif.account_type,
-        vergi_no: teknikIstif.vergi_no
+    // Search with exact vergi_no
+    const byVergiNo = data?.find(c => c.vergi_no === '8360477578');
+    console.log("Search by vergi_no '8360477578':", byVergiNo ? "FOUND" : "NOT FOUND");
+    if (byVergiNo) {
+      console.log("✅ FOUND BY VERGI NO:", {
+        id: byVergiNo.id,
+        code: byVergiNo.customer_code,
+        name: byVergiNo.name,
+        account_type: byVergiNo.account_type
       });
-    } else {
-      console.log("❌ TEKNİK İSTİF NOT FOUND IN DB QUERY");
+    }
+    
+    // Search by name containing "TEKNİK"
+    const byName = data?.filter(c => c.name?.includes('TEKNİK'));
+    console.log("Search by name containing 'TEKNİK':", byName?.length || 0, "results");
+    if (byName && byName.length > 0) {
+      console.log("First match:", byName[0].name);
+    }
+    
+    // Search by name containing "ISTIF" (without İ)
+    const byNameAlt = data?.filter(c => c.name?.includes('ISTIF') || c.name?.includes('İSTİF'));
+    console.log("Search by name containing 'ISTIF/İSTİF':", byNameAlt?.length || 0, "results");
+    
+    // List first 20 customer codes to see the pattern
+    console.log("First 20 customer codes:", data?.slice(0, 20).map(c => c.customer_code));
+    
+    // Check CST-000306 specifically
+    const byCode = data?.find(c => c.customer_code === 'CST-000306');
+    console.log("Search by customer_code 'CST-000306':", byCode ? "FOUND" : "NOT FOUND");
+    if (byCode) {
+      console.log("✅ FOUND BY CODE:", {
+        id: byCode.id,
+        name: byCode.name,
+        account_type: byCode.account_type
+      });
     }
 
     return data || [];
