@@ -41,7 +41,7 @@ export function CRMModule() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [filterType, setFilterType] = useState("musteri");
   const [supplierSubCategory, setSupplierSubCategory] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   
@@ -173,8 +173,10 @@ export function CRMModule() {
   const filteredCustomers = useMemo(() => {
     let filtered = customers;
 
-    // Filter by main account type
-    if (filterType !== "all") {
+    // Filter by main account type - 'musteri' is the default, others are specific
+    if (filterType === "musteri") {
+      filtered = filtered.filter(c => c.account_type === "musteri" || !c.account_type);
+    } else if (filterType !== "all") {
       filtered = filtered.filter(c => c.account_type === filterType);
     }
 
@@ -448,11 +450,11 @@ export function CRMModule() {
       <div className="flex items-center gap-3 overflow-x-auto pb-2">
         <button
           onClick={() => {
-            setFilterType("all");
+            setFilterType("musteri");
             setSupplierSubCategory("all");
           }}
           className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-            filterType === "all"
+            filterType === "musteri"
               ? "bg-gray-900 text-white shadow-lg"
               : "bg-white text-gray-700 hover:bg-gray-50 border"
           }`}
