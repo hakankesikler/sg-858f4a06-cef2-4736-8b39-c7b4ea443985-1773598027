@@ -371,34 +371,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       
       console.log('📦 API\'den gelen TÜM müşteriler:', customersData.length);
       
-      // Check for PROLINE before filtering
-      const prolineBeforeFilter = customersData.find(c => c.name?.toUpperCase().includes('PROLINE'));
-      if (prolineBeforeFilter) {
-        console.log('🔍 PROLINE (filter ÖNCE):', {
-          code: prolineBeforeFilter.customer_code,
-          name: prolineBeforeFilter.name,
-          account_type: prolineBeforeFilter.account_type,
-          account_type_type: typeof prolineBeforeFilter.account_type
-        });
-      } else {
-        console.log('❌ PROLINE API\'den gelmedi!');
-      }
+      // REMOVED FILTER - Show ALL customers in shipment form (any cari can be a customer)
+      const customersList = customersData;
       
-      const customersList = customersData.filter(c => {
-        const isMusteri = c.account_type === "musteri" || !c.account_type;
-        const isCurrentlySelected = editMode && initialData?.customer_id === c.id;
-        return isMusteri || isCurrentlySelected;
-      });
-      
-      console.log('✅ Filter SONRASI müşteriler:', customersList.length);
-      
-      // Check for PROLINE after filtering
-      const prolineAfterFilter = customersList.find(c => c.name?.toUpperCase().includes('PROLINE'));
-      if (prolineAfterFilter) {
-        console.log('✅ PROLINE (filter SONRA) - MEVCUT!');
-      } else {
-        console.log('❌ PROLINE (filter SONRA) - FİLTRELENDİ!');
-      }
+      console.log('✅ Tüm cariler müşteri olarak gösterilecek:', customersList.length);
       
       const suppliersList = customersData.filter(c => {
         const isTedarikci = c.account_type === "tedarikci";
