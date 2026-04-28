@@ -556,17 +556,21 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
 
                 {/* Row 2: TC Kimlik, Vergi Dairesi, Mersis No */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>T.C. Kimlik No *</Label>
-                    <Input 
-                      placeholder="" 
-                      maxLength={11}
-                      pattern="[1-9][0-9]{10}"
-                      title="11 haneli TC Kimlik No (ilk rakam 0 olamaz)"
+                  <div>
+                    <Label htmlFor="tc_no">TC Kimlik No</Label>
+                    <Input
+                      id="tc_no"
                       value={formData.tc_no}
-                      onChange={(e) => setFormData({ ...formData, tc_no: e.target.value })}
-                      required
+                      onChange={(e) => {
+                        const value = e.target.value.trim(); // Remove whitespace
+                        setFormData({ ...formData, tc_no: value });
+                      }}
+                      placeholder="11 haneli TC kimlik numarası"
+                      maxLength={11}
                     />
+                    {formData.tc_no && formData.tc_no.length !== 11 && (
+                      <p className="text-sm text-red-600 mt-1">TC Kimlik no 11 haneli olmalıdır</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi</Label>
@@ -663,15 +667,22 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Vergi Numarası *</Label>
-                    <Input 
-                      placeholder="" 
-                      maxLength={10}
-                      pattern="[0-9]{10}"
-                      title="10 haneli Vergi Numarası"
-                      value={formData.vergi_no}
-                      onChange={(e) => setFormData({ ...formData, vergi_no: e.target.value })}
-                      required
-                    />
+                    <div>
+                      <Label htmlFor="vergi_no">Vergi No</Label>
+                      <Input
+                        id="vergi_no"
+                        value={formData.vergi_no}
+                        onChange={(e) => {
+                          const value = e.target.value.trim(); // Remove whitespace
+                          setFormData({ ...formData, vergi_no: value });
+                        }}
+                        placeholder="10 haneli vergi numarası"
+                        maxLength={10}
+                      />
+                      {formData.vergi_no && formData.vergi_no.length !== 10 && (
+                        <p className="text-sm text-red-600 mt-1">Vergi no 10 haneli olmalıdır</p>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Vergi Dairesi <span className="text-red-500">*</span></Label>
