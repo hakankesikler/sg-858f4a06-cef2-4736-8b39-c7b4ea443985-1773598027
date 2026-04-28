@@ -369,7 +369,20 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       setDrivers(driversData);
       setVehicles(vehiclesData);
       
+      console.log('=== SHIPMENT FORM CUSTOMER LOADING ===');
       console.log('📦 API\'den gelen TÜM müşteriler:', customersData.length);
+      
+      const teknikIstif = customersData.find(c => c.vergi_no === '8360477578');
+      if (teknikIstif) {
+        console.log('✅ TEKNİK İSTİF FOUND IN SHIPMENT FORM:', {
+          id: teknikIstif.id,
+          code: teknikIstif.customer_code,
+          name: teknikIstif.name,
+          account_type: teknikIstif.account_type
+        });
+      } else {
+        console.log('❌ TEKNİK İSTİF NOT FOUND IN SHIPMENT FORM DATA');
+      }
       
       // REMOVED FILTER - Show ALL customers in shipment form (any cari can be a customer)
       const customersList = customersData;

@@ -63,6 +63,22 @@ export const crmService = {
       throw error;
     }
 
+    console.log("=== CRM SERVICE GET CUSTOMERS ===");
+    console.log("Total customers from DB:", data?.length || 0);
+    
+    const teknikIstif = data?.find(c => c.vergi_no === '8360477578');
+    if (teknikIstif) {
+      console.log("✅ TEKNİK İSTİF FOUND IN DB QUERY:", {
+        id: teknikIstif.id,
+        code: teknikIstif.customer_code,
+        name: teknikIstif.name,
+        account_type: teknikIstif.account_type,
+        vergi_no: teknikIstif.vergi_no
+      });
+    } else {
+      console.log("❌ TEKNİK İSTİF NOT FOUND IN DB QUERY");
+    }
+
     return data || [];
   },
 
