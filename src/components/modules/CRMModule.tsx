@@ -78,20 +78,31 @@ export function CRMModule() {
   }, []);
 
   const loadCustomers = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const data = await crmService.getCustomers();
-      console.log("=== LOADED CUSTOMERS ===");
-      console.log("Total:", data.length);
-      data.forEach(c => {
-        console.log(`${c.name}: vergi_no=${c.vergi_no}, tc_no=${c.tc_no}`);
-      });
+      console.log("=== CRM MODULE LOADED CUSTOMERS ===");
+      console.log("Total customers loaded:", data.length);
+      console.log("Account types:", [...new Set(data.map(c => c.account_type))]);
+      
+      const teknikIstif = data.find(c => c.name?.includes('TEKNİK İSTİF'));
+      if (teknikIstif) {
+        console.log("✅ TEKNİK İSTİF FOUND IN LOADED DATA:", {
+          id: teknikIstif.id,
+          code: teknikIstif.customer_code,
+          name: teknikIstif.name,
+          account_type: teknikIstif.account_type
+        });
+      } else {
+        console.log("❌ TEKNİK İSTİF NOT FOUND IN LOADED DATA");
+      }
+      
       setCustomers(data);
     } catch (error) {
       console.error("Error loading customers:", error);
       toast({
         title: "Hata",
-        description: "Cari verileri yüklenirken bir hata oluştu",
+        description: "Müşteriler yüklenirken bir hata oluştu",
         variant: "destructive",
       });
     } finally {
@@ -171,40 +182,68 @@ export function CRMModule() {
   };
 
   const filteredCustomers = useMemo(() => {
+    console.log("=== FILTEREDCUSTOMERS MEMO BAŞLADI ===");
+    console.log("Total customers:", customers.length);
+    console.log("Filter Type:", filterType);
+    console.log("Supplier Sub-Category:", supplierSubCategory);
+    console.log("Search Term:", searchTerm);
+    
     let filtered = customers;
 
     // Filter by main account type - 'musteri' is the default, others are specific
     if (filterType === "musteri") {
       filtered = filtered.filter(c => c.account_type === "musteri" || !c.account_type);
+      console.log("After musteri filter:", filtered.length);
     } else if (filterType !== "all") {
       filtered = filtered.filter(c => c.account_type === filterType);
+      console.log(`After ${filterType} filter:`, filtered.length);
     }
 
     // Filter by supplier sub-category if in tedarikci tab
     if (filterType === "tedarikci" && supplierSubCategory !== "all") {
       filtered = filtered.filter(c => c.supplier_category === supplierSubCategory);
+      console.log("After supplier sub-category filter:", filtered.length);
     }
 
     // Filter by search term with Turkish character normalization
     if (searchTerm) {
       const search = normalizeTurkish(searchTerm);
-      filtered = filtered.filter(c =>
-        normalizeTurkish(c.name || '').includes(search) ||
-        normalizeTurkish(c.email || '').includes(search) ||
-        normalizeTurkish(c.phone || '').includes(search) ||
-        normalizeTurkish(c.customer_code || '').includes(search)
-      );
+      console.log("Normalized search term:", search);
+      
+      filtered = filtered.filter(c => {
+        const nameMatch = normalizeTurkish(c.name || '').includes(search);
+        const emailMatch = normalizeTurkish(c.email || '').includes(search);
+        const phoneMatch = normalizeTurkish(c.phone || '').includes(search);
+        const codeMatch = normalizeTurkish(c.customer_code || '').includes(search);
+        
+        const matches = nameMatch || emailMatch || phoneMatch || codeMatch;
+        
+        if (matches && search.includes('teknik')) {
+          console.log("FOUND TEKNIK MATCH:", {
+            name: c.name,
+            code: c.customer_code,
+            nameMatch,
+            emailMatch,
+            phoneMatch,
+            codeMatch
+          });
+        }
+        
+        return matches;
+      });
+      
+      console.log("After search filter:", filtered.length);
+      if (filtered.length > 0 && searchTerm.toLowerCase().includes('teknik')) {
+        console.log("Filtered results with 'teknik':", filtered.map(c => ({
+          code: c.customer_code,
+          name: c.name,
+          account_type: c.account_type
+        })));
+      }
     }
 
-    console.log("=== FILTERED CUSTOMERS ===");
-    console.log("Filter Type:", filterType);
-    console.log("Supplier Sub-Category:", supplierSubCategory);
-    console.log("Search Term:", searchTerm);
-    console.log("Filtered Count:", filtered.length);
-    if (searchTerm && filtered.length > 0) {
-      console.log("First 3 results:", filtered.slice(0, 3).map(c => c.name));
-    }
-
+    console.log("=== FINAL FILTERED COUNT:", filtered.length, "===");
+    
     return filtered;
   }, [customers, filterType, supplierSubCategory, searchTerm]);
 
