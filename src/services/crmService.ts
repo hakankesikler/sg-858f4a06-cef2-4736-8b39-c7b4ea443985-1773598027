@@ -58,7 +58,8 @@ export const crmService = {
     const { data, error } = await supabase
       .from("customers")
       .select("*")
-      .order("name", { ascending: true });
+      .range(0, 9999)  // Get up to 10000 records (remove 1000 default limit)
+      .order("created_at", { ascending: false });  // Newest first instead of alphabetical
 
     console.log("=== RAW SUPABASE QUERY RESULT ===");
     console.log("Error:", error);
