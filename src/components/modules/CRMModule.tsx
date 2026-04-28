@@ -17,6 +17,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { bankAccountService, type BankAccount } from "@/services/bankAccountService";
 import * as XLSX from "xlsx";
 
+// Helper function to normalize Turkish characters for search
+const normalizeTurkish = (str: string): string => {
+  return str
+    .replace(/İ/g, 'I')
+    .replace(/ı/g, 'i')
+    .replace(/I/g, 'i')
+    .replace(/Ş/g, 'S')
+    .replace(/ş/g, 's')
+    .replace(/Ğ/g, 'G')
+    .replace(/ğ/g, 'g')
+    .replace(/Ü/g, 'U')
+    .replace(/ü/g, 'u')
+    .replace(/Ö/g, 'O')
+    .replace(/ö/g, 'o')
+    .replace(/Ç/g, 'C')
+    .replace(/ç/g, 'c')
+    .toLowerCase();
+};
+
 export function CRMModule() {
   const { toast } = useToast();
   const [customers, setCustomers] = useState<any[]>([]);
@@ -164,19 +183,25 @@ export function CRMModule() {
       filtered = filtered.filter(c => c.supplier_category === supplierSubCategory);
     }
 
-    // Filter by search term
+    // Filter by search term with Turkish character normalization
     if (searchTerm) {
+      const search = normalizeTurkish(searchTerm);
       filtered = filtered.filter(c =>
-        c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+        normalizeTurkish(c.name || '').includes(search) ||
+        normalizeTurkish(c.email || '').includes(search) ||
+        normalizeTurkish(c.phone || '').includes(search) ||
+        normalizeTurkish(c.customer_code || '').includes(search)
       );
     }
 
     console.log("=== FILTERED CUSTOMERS ===");
     console.log("Filter Type:", filterType);
     console.log("Supplier Sub-Category:", supplierSubCategory);
+    console.log("Search Term:", searchTerm);
     console.log("Filtered Count:", filtered.length);
+    if (searchTerm && filtered.length > 0) {
+      console.log("First 3 results:", filtered.slice(0, 3).map(c => c.name));
+    }
 
     return filtered;
   }, [customers, filterType, supplierSubCategory, searchTerm]);
