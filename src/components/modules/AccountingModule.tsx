@@ -151,6 +151,7 @@ export function AccountingModule() {
   const [selectedCategoryForType, setSelectedCategoryForType] = useState("");
   const [newExpenseTypeName, setNewExpenseTypeName] = useState("");
   const [isManualInvoiceDialogOpen, setIsManualInvoiceDialogOpen] = useState(false);
+  const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
 
   const loadData = async () => {
     try {
@@ -632,6 +633,46 @@ export function AccountingModule() {
     setShowPendingInvoicesDialog(true);
   };
 
+  const handleConfirmDraftInvoices = async () => {
+    if (selectedInvoices.length === 0) {
+      toast({
+        title: "Uyarı",
+        description: "Lütfen onaylamak için en az bir taslak fatura seçin",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Update selected invoices to 'oluşturuldu' status
+      const { error } = await supabase
+        .from("sales_invoices")
+        .update({ e_invoice_status: "oluşturuldu" })
+        .in("id", selectedInvoices);
+
+      if (error) throw error;
+
+      toast({
+        title: "Başarılı",
+        description: `${selectedInvoices.length} fatura onaylandı ve e-Fatura olarak oluşturuldu`,
+      });
+
+      setSelectedInvoices([]);
+      loadData();
+    } catch (error: any) {
+      console.error("Error confirming invoices:", error);
+      toast({
+        title: "Hata",
+        description: error.message || "Faturalar onaylanırken bir hata oluştu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <Tabs defaultValue="panel" className="w-full">
@@ -774,9 +815,26 @@ export function AccountingModule() {
                     return (
                     <TableRow key={invoice.id} className="hover:bg-gray-50">
                       <TableCell>
-                        <input type="checkbox" className="rounded" />
+                        <input 
+                          type="checkbox" 
+                          className="rounded" 
+                          checked={selectedInvoices.includes(invoice.id)}
+                          onChange={() => {
+                            if (selectedInvoices.includes(invoice.id)) {
+                              setSelectedInvoices(selectedInvoices.filter(id => id !== invoice.id));
+                            } else {
+                              setSelectedInvoices([...selectedInvoices, invoice.id]);
+                            }
+                          }}
+                        />
                       </TableCell>
-                      <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700">e-Fatura</Badge></TableCell>
+                      <TableCell><Badge variant="outline" className={
+                          invoice.e_invoice_status === 'oluşturuldu' 
+                            ? "bg-blue-50 text-blue-700 border-blue-200" 
+                            : "bg-gray-50 text-gray-700 border-gray-200"
+                        }>
+                          {invoice.e_invoice_status === 'oluşturuldu' ? 'e-Fatura' : 'Taslak'}
+                        </Badge></TableCell>
                       <TableCell>Satış Faturası</TableCell>
                       <TableCell className="font-medium">
                         {customer?.company || customer?.name || "Bilinmeyen Cari"}

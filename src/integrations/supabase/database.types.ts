@@ -1578,6 +1578,7 @@ export type Database = {
           currency: string
           customer_id: string | null
           due_date: string
+          e_invoice_status: string | null
           general_discount: number
           grand_total: number
           id: string
@@ -1599,6 +1600,7 @@ export type Database = {
           currency?: string
           customer_id?: string | null
           due_date: string
+          e_invoice_status?: string | null
           general_discount?: number
           grand_total?: number
           id?: string
@@ -1620,6 +1622,7 @@ export type Database = {
           currency?: string
           customer_id?: string | null
           due_date?: string
+          e_invoice_status?: string | null
           general_discount?: number
           grand_total?: number
           id?: string

@@ -126,55 +126,68 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         invoiceNo = `SF-2024-${String(lastNum + 1).padStart(3, "0")}`;
       }
 
-      // Create invoice (Ana fatura kaydı)
-      const { data: invoiceData, error: invoiceError } = await supabase.from("sales_invoices").insert({
-        invoice_no: invoiceNo,
-        customer_id: selectedCustomerId,
-        shipment_id: shipment?.id || null,  // null for manual invoices
-        invoice_date: formData.invoiceDate,
-        due_date: formData.invoiceDate, // Zorunlu alan
-        subtotal,
-        total_tax: totalVat,
-        grand_total: grandTotal,
-        payment_status: "Bekliyor",
-        currency: "TRY",
-        notes: formData.notes,
-      }).select().single();
+      // Create invoice with TASLAK status
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from("sales_invoices")
+        .insert({
+          invoice_no: invoiceNo,
+          customer_id: shipment.customer_id,
+          shipment_id: shipment.id,
+          invoice_date: formData.invoiceDate,
+          due_date: formData.invoiceDate,
+          subtotal: subtotal,
+          total_tax: totalVat,
+          grand_total: grandTotal,
+          payment_status: "Bekliyor",
+          currency: "TRY",
+          notes: formData.notes,
+          e_invoice_status: "taslak", // TASLAK status
+        })
+        .select()
+        .single();
 
       if (invoiceError) throw invoiceError;
 
-      // Fatura kalemlerini ekle
-      if (invoiceData) {
-        const invoiceItems = formData.items.map(item => ({
+      // Get cargo items using correct table name
+      const { data: cargoItems } = await supabase
+        .from("shipment_cargo_items")
+        .select("*")
+        .eq("shipment_id", shipment.id);
+
+      // Create invoice items from cargo
+      if (invoiceData && cargoItems && cargoItems.length > 0) {
+        const items = cargoItems.map((cargo: any) => ({
           invoice_id: invoiceData.id,
-          product_code: "HİZMET",
-          description: item.description,
-          quantity: item.quantity,
-          unit: "Adet",
-          unit_price: item.unitPrice,
-          subtotal: item.quantity * item.unitPrice,
-          tax_rate: item.vatRate,
-          tax_amount: (item.quantity * item.unitPrice * item.vatRate) / 100,
-          total: (item.quantity * item.unitPrice) * (1 + item.vatRate / 100),
+          product_code: shipment.shipment_code,
+          description: `Taşıma Hizmeti - ${cargo.description || shipment.shipment_code}`,
+          quantity: cargo.quantity || 1,
+          unit: cargo.unit || "Adet",
+          unit_price: cargo.unit_price || 0,
+          subtotal: (cargo.quantity || 1) * (cargo.unit_price || 0),
+          tax_rate: 20,
+          tax_amount: ((cargo.quantity || 1) * (cargo.unit_price || 0)) * 0.20,
+          total: ((cargo.quantity || 1) * (cargo.unit_price || 0)) * 1.20,
         }));
 
-        const { error: itemsError } = await supabase.from("sales_invoice_items").insert(invoiceItems);
+        const { error: itemsError } = await supabase
+          .from("sales_invoice_items")
+          .insert(items);
+
         if (itemsError) throw itemsError;
       }
 
-      // Update shipment invoice status if shipment exists
-      if (shipment?.id) {
-        const { error: updateError } = await supabase
-          .from("shipments")
-          .update({ invoice_status: "faturalandi" })
-          .eq("id", shipment.id);
-
-        if (updateError) throw updateError;
-      }
+      // Update shipment status
+      await supabase
+        .from("shipments")
+        .update({ 
+          invoice_status: "faturalandi",
+          sale_invoice_id: invoiceData?.id 
+        })
+        .eq("id", shipment.id);
 
       toast({
         title: "Başarılı",
-        description: `Fatura ${invoiceNo} oluşturuldu`,
+        description: `TASLAK fatura ${invoiceNo} oluşturuldu. Satış listesinde görüntüleyebilirsiniz.`,
       });
 
       onSuccess();
