@@ -841,6 +841,7 @@ export function AccountingModule() {
                   salesInvoices.map((invoice: any) => {
                     const customer = customers.find(c => c.id === invoice.customer_id);
                     console.log(`Invoice ${invoice.invoice_no} - customer_id: ${invoice.customer_id}, found:`, customer);
+                    console.log(`Invoice ${invoice.invoice_no} - e_invoice_status: "${invoice.e_invoice_status}"`);
                     return (
                     <TableRow key={invoice.id} className="hover:bg-gray-50">
                       <TableCell>
