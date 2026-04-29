@@ -159,14 +159,14 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         const items = cargoItems.map((cargo: any) => ({
           invoice_id: invoiceData.id,
           product_code: shipment.shipment_code,
-          description: `Taşıma Hizmeti - ${cargo.description || shipment.shipment_code}`,
-          quantity: cargo.quantity || 1,
-          unit: cargo.unit || "Adet",
-          unit_price: cargo.unit_price || 0,
-          subtotal: (cargo.quantity || 1) * (cargo.unit_price || 0),
+          description: `Taşıma Hizmeti - ${cargo.cinsi || shipment.shipment_code}`,
+          quantity: cargo.adet || 1,
+          unit: cargo.cinsi || "Adet",
+          unit_price: cargo.birim_fiyat || 0,
+          subtotal: cargo.alt_toplam_fiyat || 0,
           tax_rate: 20,
-          tax_amount: ((cargo.quantity || 1) * (cargo.unit_price || 0)) * 0.20,
-          total: ((cargo.quantity || 1) * (cargo.unit_price || 0)) * 1.20,
+          tax_amount: (cargo.alt_toplam_fiyat || 0) * 0.20,
+          total: (cargo.alt_toplam_fiyat || 0) * 1.20,
         }));
 
         const { error: itemsError } = await supabase
