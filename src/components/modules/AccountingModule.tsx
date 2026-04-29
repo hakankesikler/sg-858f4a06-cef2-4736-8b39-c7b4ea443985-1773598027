@@ -767,30 +767,20 @@ export function AccountingModule() {
 
             <div className="flex items-center gap-2">
               <Button 
-                onClick={handleShowPendingInvoices}
+                onClick={handleConfirmDraftInvoices}
+                disabled={selectedInvoices.length === 0 || isLoading}
                 className="bg-green-600 hover:bg-green-700"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Satış Faturası Oluştur
               </Button>
-              <Button variant="outline">
-                <Mail className="mr-2 h-4 w-4" />
-                e-Fatura Gelen Kutusu
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleCheckPendingInvoices}>
+              <Button variant="outline" size="sm" onClick={() => toast({ title: "Bilgi", description: "e-Fatura entegrasyonu yakında aktif edilecek." })}>
                 <Mail className="h-4 w-4 mr-2" />
                 e-Fatura Giden Kutusu
               </Button>
               <Button variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />
                 İçe Aktar
-              </Button>
-              <Button variant="outline" size="sm">
-                <Upload className="mr-2 h-4 w-4" />
-                Dışarıya Aktar
-              </Button>
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
               </Button>
             </div>
           </div>
