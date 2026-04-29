@@ -816,7 +816,7 @@ export function AccountingModule() {
                   <TableHead className="w-12">
                     <input type="checkbox" className="rounded" />
                   </TableHead>
-                  <TableHead>E-Fatura Durumu</TableHead>
+                  <TableHead>e-Fatura Durumu</TableHead>
                   <TableHead>Belge Tipi</TableHead>
                   <TableHead>Cari Bilgisi</TableHead>
                   <TableHead>Proje</TableHead>
@@ -825,9 +825,10 @@ export function AccountingModule() {
                   <TableHead>Durum</TableHead>
                   <TableHead>Düzenlenme Tarihi</TableHead>
                   <TableHead>Vade Tarihi</TableHead>
-                  <TableHead>Fatura Tutarı</TableHead>
-                  <TableHead>Takip Tutarı</TableHead>
-                  <TableHead>Bakiye</TableHead>
+                  <TableHead className="text-right">Fatura Tutarı</TableHead>
+                  <TableHead className="text-right">Tahsilat Tutarı</TableHead>
+                  <TableHead className="text-right">Bakiye</TableHead>
+                  <TableHead>İşlemler</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
