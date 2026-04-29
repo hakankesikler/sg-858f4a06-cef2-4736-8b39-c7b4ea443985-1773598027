@@ -883,16 +883,14 @@ export function AccountingModule() {
                       <TableCell className="text-right font-semibold">{invoice.grand_total} {invoice.currency || "TRY"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {invoice.e_invoice_status === 'taslak' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEditInvoice(invoice)}
-                              title="Düzenle"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEditInvoice(invoice)}
+                            title="Düzenle"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                           <Button
                             size="sm"
                             variant="ghost"
