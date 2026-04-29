@@ -53,6 +53,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { InvoicePreviewDialog } from "@/components/InvoicePreviewDialog";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { PendingInvoicesDialog } from "@/components/PendingInvoicesDialog";
+import { EditInvoiceDialog } from "@/components/EditInvoiceDialog";
 
 type Invoice = {
   id: string;
@@ -152,6 +153,7 @@ export function AccountingModule() {
   const [newExpenseTypeName, setNewExpenseTypeName] = useState("");
   const [isManualInvoiceDialogOpen, setIsManualInvoiceDialogOpen] = useState(false);
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
+  const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
 
   const loadData = async () => {
     try {
@@ -674,6 +676,11 @@ export function AccountingModule() {
     }
   };
 
+  const handleEditInvoice = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setIsEditDialogOpen(true);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <Tabs defaultValue="panel" className="w-full">
@@ -857,6 +864,36 @@ export function AccountingModule() {
                       <TableCell className="text-right font-semibold">{invoice.grand_total} {invoice.currency || "TRY"}</TableCell>
                       <TableCell className="text-right">0 {invoice.currency || "TRY"}</TableCell>
                       <TableCell className="text-right font-semibold">{invoice.grand_total} {invoice.currency || "TRY"}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {invoice.e_invoice_status === 'taslak' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditInvoice(invoice)}
+                              title="Düzenle"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleViewInvoice(invoice)}
+                            title="Görüntüle"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteInvoice(invoice.id)}
+                            title="Sil"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                     );
                   })
@@ -2125,6 +2162,29 @@ export function AccountingModule() {
           onClose={() => {
             setShowPreviewDialog(false);
             setPreviewInvoice(null);
+          }}
+          invoiceData={previewInvoice}
+        />
+      )}
+
+      {selectedInvoice && (
+        <EditInvoiceDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          invoice={selectedInvoice}
+          onSaved={() => {
+            loadData();
+            setSelectedInvoice(null);
+          }}
+        />
+      )}
+
+      {showInvoicePreview && previewInvoice && (
+        <InvoicePreviewDialog
+          open={showInvoicePreview}
+          onOpenChange={(open) => {
+            setShowInvoicePreview(open);
+            if (!open) setPreviewInvoice(null);
           }}
           invoiceData={previewInvoice}
         />
