@@ -706,38 +706,7 @@ export function AccountingModule() {
             </div>
           </div>
 
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex gap-2">
-              <Button 
-                variant="outline"
-                onClick={() => setIsAdvancedSearchOpen(!isAdvancedSearchOpen)}
-                className="bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Detaylı Arama
-                <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-              
-              {selectedCustomers.length > 0 && (
-                <Button 
-                  variant="outline"
-                  onClick={toggleSelectAll}
-                  className="bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Toplu Seç ({selectedCustomers.length})
-                </Button>
-              )}
-            </div>
-            
-            {/* SADECE BU BUTON KALDI */}
-            <Button 
-              onClick={handleShowPendingInvoices}
-              className="bg-green-600 hover:bg-green-700 gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Satış Faturası Oluştur
-            </Button>
-          </div>
-
+          {/* SINGLE BUTTON ROW - ALL DUPLICATES REMOVED */}
           <div className="flex items-center justify-between">
             <Button variant="outline" size="sm">
               <CheckSquare className="mr-2 h-4 w-4" />
@@ -745,7 +714,10 @@ export function AccountingModule() {
             </Button>
 
             <div className="flex items-center gap-2">
-              <Button className="bg-green-600 hover:bg-green-700">
+              <Button 
+                onClick={handleShowPendingInvoices}
+                className="bg-green-600 hover:bg-green-700"
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Satış Faturası Oluştur
               </Button>
@@ -765,36 +737,6 @@ export function AccountingModule() {
                 <Filter className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex gap-2">
-              <Button 
-                variant="outline"
-                onClick={() => setIsAdvancedSearchOpen(!isAdvancedSearchOpen)}
-                className="bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Detaylı Arama
-                <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-              
-              {selectedCustomers.length > 0 && (
-                <Button 
-                  variant="outline"
-                  onClick={toggleSelectAll}
-                  className="bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Toplu Seç ({selectedCustomers.length})
-                </Button>
-              )}
-            </div>
-            <Button 
-              onClick={handleCreateManualInvoice}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Satış Faturası Oluştur
-            </Button>
           </div>
 
           <Card>
