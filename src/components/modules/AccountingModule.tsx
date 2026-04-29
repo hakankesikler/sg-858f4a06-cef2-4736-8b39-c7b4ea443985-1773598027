@@ -629,9 +629,10 @@ export function AccountingModule() {
 
   const [showPendingInvoicesDialog, setShowPendingInvoicesDialog] = useState(false);
 
-  const handleShowPendingInvoices = () => {
-    setShowPendingInvoicesDialog(true);
-  };
+  // Remove or comment out handleShowPendingInvoices if it exists
+  // const handleShowPendingInvoices = () => {
+  //   setShowPendingInvoicesDialog(true);
+  // };
 
   const handleConfirmDraftInvoices = async () => {
     if (selectedInvoices.length === 0) {
@@ -748,9 +749,19 @@ export function AccountingModule() {
           </div>
 
           {/* SINGLE BUTTON ROW - ALL DUPLICATES REMOVED */}
-          <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm">
-              <CheckSquare className="mr-2 h-4 w-4" />
+          <div className="flex flex-wrap items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (selectedInvoices.length === salesInvoices.length && salesInvoices.length > 0) {
+                  setSelectedInvoices([]);
+                } else {
+                  setSelectedInvoices(salesInvoices.map((inv) => inv.id));
+                }
+              }}
+            >
+              <CheckSquare className="h-4 w-4 mr-2" />
               Toplu Seç
             </Button>
 
@@ -765,6 +776,10 @@ export function AccountingModule() {
               <Button variant="outline">
                 <Mail className="mr-2 h-4 w-4" />
                 e-Fatura Gelen Kutusu
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleCheckPendingInvoices}>
+                <Mail className="h-4 w-4 mr-2" />
+                e-Fatura Giden Kutusu
               </Button>
               <Button variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />
