@@ -681,6 +681,23 @@ export function AccountingModule() {
     setIsEditDialogOpen(true);
   };
 
+  const handleDeleteInvoice = async (id: string) => {
+    if (!window.confirm("Faturayı silmek istediğinize emin misiniz?")) return;
+    try {
+      setIsLoading(true);
+      await supabase.from("sales_invoice_items").delete().eq("invoice_id", id);
+      const { error } = await supabase.from("sales_invoices").delete().eq("id", id);
+      if (error) throw error;
+      toast({ title: "Başarılı", description: "Fatura silindi" });
+      loadData();
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Hata", description: "Silinirken hata oluştu", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <Tabs defaultValue="panel" className="w-full">
@@ -879,7 +896,7 @@ export function AccountingModule() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleViewInvoice(invoice)}
+                            onClick={() => handlePreviewInvoice(invoice)}
                             title="Görüntüle"
                           >
                             <Eye className="h-4 w-4" />
@@ -2176,17 +2193,6 @@ export function AccountingModule() {
             loadData();
             setSelectedInvoice(null);
           }}
-        />
-      )}
-
-      {showInvoicePreview && previewInvoice && (
-        <InvoicePreviewDialog
-          open={showInvoicePreview}
-          onOpenChange={(open) => {
-            setShowInvoicePreview(open);
-            if (!open) setPreviewInvoice(null);
-          }}
-          invoiceData={previewInvoice}
         />
       )}
     </div>
