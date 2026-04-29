@@ -126,7 +126,28 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         invoiceNo = `SF-2024-${String(lastNum + 1).padStart(3, "0")}`;
       }
 
-      // Create invoice with TASLAK status
+      // Get cargo items first to calculate totals
+      const { data: cargoItems } = await supabase
+        .from("shipment_cargo_items")
+        .select("*")
+        .eq("shipment_id", shipment.id);
+
+      // Calculate totals from cargo items
+      let calculatedSubtotal = 0;
+      let calculatedTax = 0;
+      let calculatedGrandTotal = 0;
+
+      if (cargoItems && cargoItems.length > 0) {
+        cargoItems.forEach((cargo: any) => {
+          const itemSubtotal = cargo.alt_toplam_fiyat || 0;
+          const itemTax = itemSubtotal * 0.20;
+          calculatedSubtotal += itemSubtotal;
+          calculatedTax += itemTax;
+          calculatedGrandTotal += (itemSubtotal + itemTax);
+        });
+      }
+
+      // Create invoice with calculated totals
       const { data: invoiceData, error: invoiceError } = await supabase
         .from("sales_invoices")
         .insert({
@@ -135,9 +156,9 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
           shipment_id: shipment.id,
           invoice_date: formData.invoiceDate,
           due_date: formData.invoiceDate,
-          subtotal: subtotal,
-          total_tax: totalVat,
-          grand_total: grandTotal,
+          subtotal: calculatedSubtotal,
+          total_tax: calculatedTax,
+          grand_total: calculatedGrandTotal,
           payment_status: "Bekliyor",
           currency: "TRY",
           notes: formData.notes,
@@ -147,12 +168,6 @@ export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceD
         .single();
 
       if (invoiceError) throw invoiceError;
-
-      // Get cargo items using correct table name
-      const { data: cargoItems } = await supabase
-        .from("shipment_cargo_items")
-        .select("*")
-        .eq("shipment_id", shipment.id);
 
       // Create invoice items from cargo
       if (invoiceData && cargoItems && cargoItems.length > 0) {
