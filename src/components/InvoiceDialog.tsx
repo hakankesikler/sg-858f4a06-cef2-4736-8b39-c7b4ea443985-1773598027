@@ -273,7 +273,13 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         description: `Satış faturası ${invoiceNo} oluşturuldu`,
       });
 
-      if (onSuccess) onSuccess();
+      console.log("Invoice saved successfully, calling onSuccess...");
+      if (onSuccess) {
+        console.log("onSuccess exists, calling it now...");
+        onSuccess();
+      } else {
+        console.log("onSuccess is not defined!");
+      }
       onClose();
     } catch (error: any) {
       console.error("Error creating invoice:", error);
