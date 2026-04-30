@@ -99,17 +99,14 @@ export function AccountingModule() {
   const [purchaseInvoices, setPurchaseInvoices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
-  // Category Edit Modal State
   const [editCategoryModal, setEditCategoryModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<ExpenseCategory | null>(null);
   const [editedCategoryName, setEditedCategoryName] = useState("");
 
-  // Add New Type Modal State
   const [addTypeModal, setAddTypeModal] = useState(false);
   const [currentCategoryForType, setCurrentCategoryForType] = useState<ExpenseCategory | null>(null);
   const [newTypeName, setNewTypeName] = useState("");
 
-  // Edit Type Modal State
   const [editTypeModal, setEditTypeModal] = useState(false);
   const [currentTypeForEdit, setCurrentTypeForEdit] = useState<{ 
     categoryId: string; 
@@ -118,14 +115,11 @@ export function AccountingModule() {
   } | null>(null);
   const [editedTypeName, setEditedTypeName] = useState("");
 
-  // Add New Category Modal State
   const [addCategoryModal, setAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  // Expense Categories State
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
 
-  // CRM-specific states
   const [activeTab, setActiveTab] = useState("sales");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -154,6 +148,9 @@ export function AccountingModule() {
   const [isManualInvoiceDialogOpen, setIsManualInvoiceDialogOpen] = useState(false);
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
+  const [previewInvoice, setPreviewInvoice] = useState<any>(null);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [showPendingInvoicesDialog, setShowPendingInvoicesDialog] = useState(false);
 
   const loadData = async () => {
     try {
@@ -166,7 +163,6 @@ export function AccountingModule() {
       });
       setCustomers(customersData);
       
-      // Load purchases
       const { data: purchasesData, error: purchasesError } = await supabase
         .from("purchases")
         .select("*")
@@ -183,7 +179,6 @@ export function AccountingModule() {
         setPurchaseInvoices(purchasesData || []);
       }
       
-      // Load sales invoices
       const { data: salesData, error: salesError } = await supabase
         .from("sales_invoices")
         .select("*")
@@ -316,7 +311,6 @@ export function AccountingModule() {
     return configs[status as keyof typeof configs] || configs["Potansiyel"];
   };
 
-  // Apply filters
   let filteredCustomers = customers.filter(customer => {
     const accountType = customer.account_type || "musteri";
     if (accountType !== activeTab) return false;
@@ -353,7 +347,6 @@ export function AccountingModule() {
     );
   }
 
-  // Category handlers
   const handleUpdateCategory = async () => {
     if (!currentCategory || !editedCategoryName.trim()) {
       toast({
@@ -617,9 +610,6 @@ export function AccountingModule() {
     }
   };
 
-  const [previewInvoice, setPreviewInvoice] = useState<any>(null);
-  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
-
   const handlePreviewInvoice = (invoice: any) => {
     setPreviewInvoice(invoice);
     setShowPreviewDialog(true);
@@ -628,13 +618,6 @@ export function AccountingModule() {
   const handleCreateManualInvoice = () => {
     setIsManualInvoiceDialogOpen(true);
   };
-
-  const [showPendingInvoicesDialog, setShowPendingInvoicesDialog] = useState(false);
-
-  // Remove or comment out handleShowPendingInvoices if it exists
-  // const handleShowPendingInvoices = () => {
-  //   setShowPendingInvoicesDialog(true);
-  // };
 
   const handleConfirmDraftInvoices = async () => {
     if (selectedInvoices.length === 0) {
@@ -649,7 +632,6 @@ export function AccountingModule() {
     try {
       setIsLoading(true);
 
-      // Update selected invoices to 'oluşturuldu' status
       const { error } = await supabase
         .from("sales_invoices")
         .update({ e_invoice_status: "oluşturuldu" })
@@ -710,7 +692,6 @@ export function AccountingModule() {
           <TabsTrigger value="accounts">Hesaplar</TabsTrigger>
         </TabsList>
 
-        {/* Panel - Dashboard */}
         <TabsContent value="panel" className="space-y-4">
           <h2 className="text-2xl font-bold">Muhasebe Paneli</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -729,325 +710,122 @@ export function AccountingModule() {
           </div>
         </TabsContent>
 
-        {/* Satış Faturaları */}
         <TabsContent value="sales" className="space-y-4">
-          {activeTab === "sales" && (
-            <div className="space-y-6">
-              {/* Dashboard Statistics */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                {/* Total Invoices */}
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setStatusFilter(null)}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-gray-600">Toplam Faturalar</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {salesInvoices.reduce((sum, inv) => sum + (inv.grand_total || 0), 0).toLocaleString('tr-TR')} TRY
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">{salesInvoices.length} adet</p>
-                  </CardContent>
-                </Card>
-
-                {/* Paid Invoices */}
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-green-500" onClick={() => setStatusFilter('Ödendi')}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-green-700">Ödenen</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-green-600">
-                      {salesInvoices.filter(i => i.payment_status === 'Ödendi').reduce((sum, inv) => sum + (inv.grand_total || 0), 0).toLocaleString('tr-TR')} TRY
-                    </div>
-                    <p className="text-xs text-green-600 mt-1">{salesInvoices.filter(i => i.payment_status === 'Ödendi').length} adet</p>
-                  </CardContent>
-                </Card>
-
-                {/* Pending Invoices */}
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500" onClick={() => setStatusFilter('Bekliyor')}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-orange-700">Bekleyen</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-orange-600">
-                      {salesInvoices.filter(i => i.payment_status === 'Bekliyor').reduce((sum, inv) => sum + (inv.grand_total || 0), 0).toLocaleString('tr-TR')} TRY
-                    </div>
-                    <p className="text-xs text-orange-600 mt-1">{salesInvoices.filter(i => i.payment_status === 'Bekliyor').length} adet</p>
-                  </CardContent>
-                </Card>
-
-                {/* Cancelled Invoices */}
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-red-500" onClick={() => setStatusFilter('İptal')}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-red-700">İptal</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-red-600">
-                      {salesInvoices.filter(i => i.payment_status === 'İptal').reduce((sum, inv) => sum + (inv.grand_total || 0), 0).toLocaleString('tr-TR')} TRY
-                    </div>
-                    <p className="text-xs text-red-600 mt-1">{salesInvoices.filter(i => i.payment_status === 'İptal').length} adet</p>
-                  </CardContent>
-                </Card>
-
-                {/* Overdue Invoices */}
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-red-700">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-red-800">Vadesi Geçen</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-red-700">
-                      {salesInvoices.filter(i => i.due_date && new Date(i.due_date) < new Date() && i.payment_status === 'Bekliyor').reduce((sum, inv) => sum + (inv.grand_total || 0), 0).toLocaleString('tr-TR')} TRY
-                    </div>
-                    <p className="text-xs text-red-700 mt-1">{salesInvoices.filter(i => i.due_date && new Date(i.due_date) < new Date() && i.payment_status === 'Bekliyor').length} adet</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-between">
-                <div className="flex flex-wrap items-center gap-4">
-                  {statusFilter && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setStatusFilter(null)}
-                    >
-                      <Filter className="h-4 w-4 mr-2" />
-                      Filtreyi Temizle ({statusFilter})
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (selectedInvoices.length === salesInvoices.length && salesInvoices.length > 0) {
-                        setSelectedInvoices([]);
-                      } else {
-                        setSelectedInvoices(salesInvoices.map((inv) => inv.id));
-                      }
-                    }}
-                  >
-                    <CheckSquare className="h-4 w-4 mr-2" />
-                    Toplu Seç
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="p-4 border-l-4 border-l-green-500">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500">Toplam Ciro</p>
-                      <p className="text-2xl font-bold text-green-600">₺0</p>
-                    </div>
-                    <TrendingUp className="h-8 w-8 text-green-500" />
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setStatusFilter(null)}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-600">Toplam Faturalar</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {salesInvoices.reduce((sum, inv) => sum + (inv.grand_total || 0), 0).toLocaleString('tr-TR')} TRY
                   </div>
-                </Card>
-
-                <Card className="p-4 border-l-4 border-l-blue-500">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500">Aylık Ciro</p>
-                      <p className="text-2xl font-bold text-blue-600">₺0</p>
-                    </div>
-                    <Calendar className="h-8 w-8 text-blue-500" />
-                  </div>
-                </Card>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Satış Faturaları</h2>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
-                    <Search className="mr-2 h-4 w-4" />
-                    Detaylı Arama
-                  </Button>
-                  <div className="relative w-64">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <Input
-                      placeholder="Ara..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <Card>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <input type="checkbox" className="rounded" />
-                      </TableHead>
-                      <TableHead>e-Fatura Durumu</TableHead>
-                      <TableHead>Belge Tipi</TableHead>
-                      <TableHead>Cari Bilgisi</TableHead>
-                      <TableHead>Proje</TableHead>
-                      <TableHead>Etiketler</TableHead>
-                      <TableHead>Seri No</TableHead>
-                      <TableHead>Durum</TableHead>
-                      <TableHead>Düzenlenme Tarihi</TableHead>
-                      <TableHead>Vade Tarihi</TableHead>
-                      <TableHead className="text-right">Fatura Tutarı</TableHead>
-                      <TableHead className="text-right">Tahsilat Tutarı</TableHead>
-                      <TableHead className="text-right">Bakiye</TableHead>
-                      <TableHead>İşlemler</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(statusFilter 
-                      ? salesInvoices.filter(inv => inv.payment_status === statusFilter)
-                      : salesInvoices
-                    ).map((invoice: any) => {
-                      const customer = customers.find(c => c.id === invoice.customer_id);
-                      console.log(`Invoice ${invoice.invoice_no} - customer_id: ${invoice.customer_id}, found:`, customer);
-                      console.log(`Invoice ${invoice.invoice_no} - e_invoice_status: "${invoice.e_invoice_status}"`);
-                      return (
-                      <TableRow key={invoice.id} className="hover:bg-gray-50">
-                        <TableCell>
-                          <input 
-                            type="checkbox" 
-                            className="rounded" 
-                            checked={selectedInvoices.includes(invoice.id)}
-                            onChange={() => {
-                              if (selectedInvoices.includes(invoice.id)) {
-                                setSelectedInvoices(selectedInvoices.filter(id => id !== invoice.id));
-                              } else {
-                                setSelectedInvoices([...selectedInvoices, invoice.id]);
-                              }
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell><Badge variant="outline" className={
-                            invoice.e_invoice_status === 'oluşturuldu' 
-                              ? "bg-blue-50 text-blue-700 border-blue-200" 
-                              : "bg-gray-50 text-gray-700 border-gray-200"
-                          }>
-                            {invoice.e_invoice_status === 'oluşturuldu' ? 'e-Fatura' : 'Taslak'}
-                          </Badge></TableCell>
-                        <TableCell>Satış Faturası</TableCell>
-                        <TableCell className="font-medium">
-                          {customer?.company || customer?.name || "Bilinmeyen Cari"}
-                        </TableCell>
-                        <TableCell>-</TableCell>
-                        <TableCell>-</TableCell>
-                        <TableCell className="font-mono">{invoice.invoice_no}</TableCell>
-                        <TableCell>
-                          <Badge className={invoice.status === 'beklemede' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}>
-                            {invoice.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(invoice.invoice_date || invoice.created_at).toLocaleDateString("tr-TR")}</TableCell>
-                        <TableCell>{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("tr-TR") : "-"}</TableCell>
-                        <TableCell className="text-right font-semibold">{invoice.grand_total} {invoice.currency || "TRY"}</TableCell>
-                        <TableCell className="text-right">0 {invoice.currency || "TRY"}</TableCell>
-                        <TableCell className="text-right font-semibold">{invoice.grand_total} {invoice.currency || "TRY"}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEditInvoice(invoice)}
-                              title="Düzenle"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handlePreviewInvoice(invoice)}
-                              title="Görüntüle"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDeleteInvoice(invoice.id)}
-                              title="Sil"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
-
-          {/* Alış Faturaları */}
-          <TabsContent value="purchase" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-4 border-l-4 border-l-green-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">Ödenen Faturalar</p>
-                    <p className="text-2xl font-bold">0</p>
-                  </div>
-                  <CheckCircle2 className="h-8 w-8 text-green-500" />
-                </div>
+                  <p className="text-xs text-gray-500 mt-1">{salesInvoices.length} adet</p>
+                </CardContent>
               </Card>
 
-              <Card className="p-4 border-l-4 border-l-orange-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">Bekleyen</p>
-                    <p className="text-2xl font-bold text-orange-600">0</p>
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-green-500" onClick={() => setStatusFilter('Ödendi')}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-green-700">Ödenen</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {salesInvoices.filter(i => i.payment_status === 'Ödendi').reduce((sum, inv) => sum + (inv.grand_total || 0), 0).toLocaleString('tr-TR')} TRY
                   </div>
-                  <Clock className="h-8 w-8 text-orange-500" />
-                </div>
+                  <p className="text-xs text-green-600 mt-1">{salesInvoices.filter(i => i.payment_status === 'Ödendi').length} adet</p>
+                </CardContent>
               </Card>
-            </div>
 
-            <div className="border-b border-gray-200 pb-2">
-              <h2 className="text-2xl font-semibold border-b-4 border-blue-500 inline-block pb-2">
-                Alış Faturaları
-              </h2>
-            </div>
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500" onClick={() => setStatusFilter('Bekliyor')}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-orange-700">Bekleyen</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {salesInvoices.filter(i => i.payment_status === 'Bekliyor').reduce((sum, inv) => sum + (inv.grand_total || 0), 0).toLocaleString('tr-TR')} TRY
+                  </div>
+                  <p className="text-xs text-orange-600 mt-1">{salesInvoices.filter(i => i.payment_status === 'Bekliyor').length} adet</p>
+                </CardContent>
+              </Card>
 
-            <div>
-              <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
-                Detaylı Arama
-              </Button>
-            </div>
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-red-500" onClick={() => setStatusFilter('İptal')}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-red-700">İptal</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">
+                    {salesInvoices.filter(i => i.payment_status === 'İptal').reduce((sum, inv) => sum + (inv.grand_total || 0), 0).toLocaleString('tr-TR')} TRY
+                  </div>
+                  <p className="text-xs text-red-600 mt-1">{salesInvoices.filter(i => i.payment_status === 'İptal').length} adet</p>
+                </CardContent>
+              </Card>
 
-            <div className="text-sm text-gray-600 italic">
-              1000 adet kayıt listelenmektedir. Daha fazlası için detaylı arama yapabilirsiniz.
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-red-700">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-red-800">Vadesi Geçen</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-700">
+                    {salesInvoices.filter(i => i.due_date && new Date(i.due_date) < new Date() && i.payment_status === 'Bekliyor').reduce((sum, inv) => sum + (inv.grand_total || 0), 0).toLocaleString('tr-TR')} TRY
+                  </div>
+                  <p className="text-xs text-red-700 mt-1">{salesInvoices.filter(i => i.due_date && new Date(i.due_date) < new Date() && i.payment_status === 'Bekliyor').length} adet</p>
+                </CardContent>
+              </Card>
             </div>
 
             <div className="flex items-center justify-between">
-              <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
-                <Info className="mr-2 h-4 w-4" />
-                Toplu Seç
-              </Button>
-
+              <div className="flex flex-wrap items-center gap-4">
+                {statusFilter && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStatusFilter(null)}
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filtreyi Temizle ({statusFilter})
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (selectedInvoices.length === salesInvoices.length && salesInvoices.length > 0) {
+                      setSelectedInvoices([]);
+                    } else {
+                      setSelectedInvoices(salesInvoices.map((inv) => inv.id));
+                    }
+                  }}
+                >
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  Toplu Seç
+                </Button>
+              </div>
               <div className="flex items-center gap-2">
-                <Button className="bg-green-600 hover:bg-green-700">
-                  Alış Faturası Oluştur
+                <Button 
+                  onClick={handleConfirmDraftInvoices}
+                  disabled={selectedInvoices.length === 0 || isLoading}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Satış Faturası Oluştur
                 </Button>
-                <Button className="bg-green-600 hover:bg-green-700">
-                  Satış İade Faturası Oluştur
+                <Button variant="outline" size="sm" onClick={() => toast({ title: "Bilgi", description: "e-Fatura entegrasyonu yakında aktif edilecek." })}>
+                  <Mail className="h-4 w-4 mr-2" />
+                  e-Fatura Giden Kutusu
                 </Button>
-                <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
-                  e-Fatura Gelen Kutusu
-                </Button>
-                <Button variant="outline">
+                <Button variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
                   İçe Aktar
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" size="sm">
+                  <Upload className="mr-2 h-4 w-4" />
                   Dışarıya Aktar
                 </Button>
-                <Button variant="outline" size="icon">
-                  <Filter className="h-4 w-4" />
-                </Button>
-                <div className="relative w-48">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
-                    placeholder="Ara"
+                    placeholder="Ara..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -1059,7 +837,10 @@ export function AccountingModule() {
             <Card>
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50">
+                  <TableRow>
+                    <TableHead className="w-12">
+                      <input type="checkbox" className="rounded" />
+                    </TableHead>
                     <TableHead>e-Fatura Durumu</TableHead>
                     <TableHead>Belge Tipi</TableHead>
                     <TableHead>Cari Bilgisi</TableHead>
@@ -1069,1191 +850,465 @@ export function AccountingModule() {
                     <TableHead>Durum</TableHead>
                     <TableHead>Düzenlenme Tarihi</TableHead>
                     <TableHead>Vade Tarihi</TableHead>
-                    <TableHead>Fatura Tutarı</TableHead>
-                    <TableHead>Bakiye</TableHead>
+                    <TableHead className="text-right">Fatura Tutarı</TableHead>
+                    <TableHead className="text-right">Tahsilat Tutarı</TableHead>
+                    <TableHead className="text-right">Bakiye</TableHead>
+                    <TableHead>İşlemler</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {purchaseInvoices.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={11} className="text-center py-8 text-gray-500">
-                        Toplam 0 kayıt gösteriliyor
+                  {(statusFilter 
+                    ? salesInvoices.filter(inv => inv.payment_status === statusFilter)
+                    : salesInvoices
+                  ).map((invoice: any) => {
+                    const customer = customers.find(c => c.id === invoice.customer_id);
+                    console.log(`Invoice ${invoice.invoice_no} - customer_id: ${invoice.customer_id}, found:`, customer);
+                    console.log(`Invoice ${invoice.invoice_no} - e_invoice_status: "${invoice.e_invoice_status}"`);
+                    return (
+                    <TableRow key={invoice.id} className="hover:bg-gray-50">
+                      <TableCell>
+                        <input 
+                          type="checkbox" 
+                          className="rounded" 
+                          checked={selectedInvoices.includes(invoice.id)}
+                          onChange={() => {
+                            if (selectedInvoices.includes(invoice.id)) {
+                              setSelectedInvoices(selectedInvoices.filter(id => id !== invoice.id));
+                            } else {
+                              setSelectedInvoices([...selectedInvoices, invoice.id]);
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={
+                          invoice.e_invoice_status === 'oluşturuldu' 
+                            ? "bg-blue-50 text-blue-700 border-blue-200" 
+                            : "bg-gray-50 text-gray-700 border-gray-200"
+                        }>
+                          {invoice.e_invoice_status === 'oluşturuldu' ? 'e-Fatura' : 'Taslak'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>Satış Faturası</TableCell>
+                      <TableCell className="font-medium">
+                        {customer?.company || customer?.name || "Bilinmeyen Cari"}
+                      </TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell className="font-mono">{invoice.invoice_no}</TableCell>
+                      <TableCell>
+                        <Badge className={invoice.payment_status === 'Bekliyor' ? 'bg-orange-100 text-orange-700' : invoice.payment_status === 'Ödendi' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+                          {invoice.payment_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(invoice.invoice_date || invoice.created_at).toLocaleDateString("tr-TR")}</TableCell>
+                      <TableCell>{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("tr-TR") : "-"}</TableCell>
+                      <TableCell className="text-right font-semibold">{invoice.grand_total.toLocaleString('tr-TR')} {invoice.currency || "TRY"}</TableCell>
+                      <TableCell className="text-right">0 {invoice.currency || "TRY"}</TableCell>
+                      <TableCell className="text-right font-semibold">{invoice.grand_total.toLocaleString('tr-TR')} {invoice.currency || "TRY"}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {invoice.e_invoice_status === 'taslak' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditInvoice(invoice)}
+                              title="Düzenle"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handlePreviewInvoice(invoice)}
+                            title="Görüntüle"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteInvoice(invoice.id)}
+                            title="Sil"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    purchaseInvoices.map((invoice: any) => {
-                      const supplier = customers.find(c => c.id === invoice.supplier_id);
-                      console.log(`Purchase ${invoice.purchase_no} - supplier_id: ${invoice.supplier_id}, found:`, supplier);
-                      return (
-                      <TableRow key={invoice.id} className="hover:bg-gray-50">
-                        <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700">e-Fatura</Badge></TableCell>
-                        <TableCell>Alış Faturası</TableCell>
-                        <TableCell className="font-medium">
-                          {supplier?.company || supplier?.name || "Bilinmeyen Tedarikçi"}
-                        </TableCell>
-                        <TableCell>-</TableCell>
-                        <TableCell>-</TableCell>
-                        <TableCell className="font-mono">{invoice.purchase_no || invoice.invoice_no}</TableCell>
-                        <TableCell>
-                          <Badge className={invoice.status === 'beklemede' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}>
-                            {invoice.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(invoice.purchase_date || invoice.created_at).toLocaleDateString("tr-TR")}</TableCell>
-                        <TableCell>{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("tr-TR") : "-"}</TableCell>
-                        <TableCell className="text-right font-semibold">{invoice.total} {invoice.currency || "TRY"}</TableCell>
-                        <TableCell className="text-right font-semibold">{invoice.total} {invoice.currency || "TRY"}</TableCell>
-                      </TableRow>
-                      );
-                    })
-                  )}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </Card>
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          {/* Cari Hesaplar - EXACTLY THE SAME AS CRM */}
-          <TabsContent value="cari" className="space-y-4">
-            <div className="space-y-6">
+        <TabsContent value="purchase" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 border-l-4 border-l-green-500">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Genel Cari Hesapları</h2>
-                  <p className="text-gray-600 mt-1">Müşteri, tedarikçi, personel ve ortak cari hesaplarını yönetin</p>
+                  <p className="text-sm text-gray-500">Ödenen Faturalar</p>
+                  <p className="text-2xl font-bold">0</p>
                 </div>
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
               </div>
+            </Card>
 
-              <div className="flex gap-2 flex-wrap">
-                <Button 
-                  variant="outline"
-                  onClick={() => setIsAdvancedSearchOpen(!isAdvancedSearchOpen)}
-                  className="bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Detaylı Arama
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-                
-                {selectedCustomers.length > 0 && (
-                  <Button 
-                    variant="outline"
-                    onClick={toggleSelectAll}
-                    className="bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    Toplu Seç ({selectedCustomers.length})
-                  </Button>
+            <Card className="p-4 border-l-4 border-l-orange-500">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Bekleyen</p>
+                  <p className="text-2xl font-bold text-orange-600">0</p>
+                </div>
+                <Clock className="h-8 w-8 text-orange-500" />
+              </div>
+            </Card>
+          </div>
+
+          <div className="border-b border-gray-200 pb-2">
+            <h2 className="text-2xl font-semibold border-b-4 border-blue-500 inline-block pb-2">
+              Alış Faturaları
+            </h2>
+          </div>
+
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead>e-Fatura Durumu</TableHead>
+                  <TableHead>Belge Tipi</TableHead>
+                  <TableHead>Cari Bilgisi</TableHead>
+                  <TableHead>Proje</TableHead>
+                  <TableHead>Etiketler</TableHead>
+                  <TableHead>Seri No</TableHead>
+                  <TableHead>Durum</TableHead>
+                  <TableHead>Düzenlenme Tarihi</TableHead>
+                  <TableHead>Vade Tarihi</TableHead>
+                  <TableHead>Fatura Tutarı</TableHead>
+                  <TableHead>Bakiye</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {purchaseInvoices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                      Toplam 0 kayıt gösteriliyor
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  purchaseInvoices.map((invoice: any) => {
+                    const supplier = customers.find(c => c.id === invoice.supplier_id);
+                    return (
+                    <TableRow key={invoice.id} className="hover:bg-gray-50">
+                      <TableCell><Badge variant="outline" className="bg-blue-50 text-blue-700">e-Fatura</Badge></TableCell>
+                      <TableCell>Alış Faturası</TableCell>
+                      <TableCell className="font-medium">
+                        {supplier?.company || supplier?.name || "Bilinmeyen Tedarikçi"}
+                      </TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell className="font-mono">{invoice.purchase_no || invoice.invoice_no}</TableCell>
+                      <TableCell>
+                        <Badge className={invoice.status === 'beklemede' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}>
+                          {invoice.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(invoice.purchase_date || invoice.created_at).toLocaleDateString("tr-TR")}</TableCell>
+                      <TableCell>{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("tr-TR") : "-"}</TableCell>
+                      <TableCell className="text-right font-semibold">{invoice.total} {invoice.currency || "TRY"}</TableCell>
+                      <TableCell className="text-right font-semibold">{invoice.total} {invoice.currency || "TRY"}</TableCell>
+                    </TableRow>
+                    );
+                  })
                 )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="cari" className="space-y-4">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Genel Cari Hesapları</h2>
+                <p className="text-gray-600 mt-1">Müşteri, tedarikçi, personel ve ortak cari hesaplarını yönetin</p>
+              </div>
+            </div>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={openAddDialog}
+                    className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded"
+                  >
+                    Cari Oluştur
+                  </Button>
+                </div>
+                
+                <div className="relative flex-1 max-w-md ml-auto">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Ara"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
 
-              {isAdvancedSearchOpen && (
-                <Card className="p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Durum</Label>
-                      <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Tümü</SelectItem>
-                          <SelectItem value="Aktif">Aktif</SelectItem>
-                          <SelectItem value="Potansiyel">Potansiyel</SelectItem>
-                          <SelectItem value="Eski Müşteri">Eski Müşteri</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Şehir</Label>
-                      <Select value={filters.city} onValueChange={(value) => setFilters({...filters, city: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Tüm Şehirler</SelectItem>
-                          {cities.map(city => (
-                            <SelectItem key={city} value={city}>{city}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Tarih Aralığı</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          type="date" 
-                          value={filters.dateFrom}
-                          onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
-                          className="w-full"
-                        />
-                        <Input 
-                          type="date" 
-                          value={filters.dateTo}
-                          onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              )}
-
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={openAddDialog}
-                      className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded"
-                    >
-                      Cari Oluştur
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toast({
-                          title: "Bilgi",
-                          description: "İçe aktarma özelliği yakında eklenecek",
-                        });
-                      }}
-                      className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
-                    >
-                      İçe Aktar
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleExportExcel();
-                      }}
-                      className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded"
-                    >
-                      Dışarıya Aktar
-                    </Button>
-                  </div>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={() => setIsFilterOpen(!isFilterOpen)}
-                    className="ml-auto"
+              <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                <div className="flex gap-2">
+                  <Button
+                    variant={activeTab === "musteri" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("musteri")}
+                    className="flex items-center gap-2"
                   >
-                    <Filter className="w-4 h-4" />
+                    <Building2 className="w-4 h-4" />
+                    Müşteri Cari
                   </Button>
-
-                  <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      placeholder="Ara"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-3 rounded-lg mb-4">
-                  <div className="flex gap-2">
-                    <Button
-                      variant={activeTab === "musteri" ? "default" : "ghost"}
-                      onClick={() => setActiveTab("musteri")}
-                      className="flex items-center gap-2"
-                    >
-                      <Building2 className="w-4 h-4" />
-                      Müşteri Cari
-                    </Button>
-                    <Button
-                      variant={activeTab === "tedarikci" ? "default" : "ghost"}
-                      onClick={() => setActiveTab("tedarikci")}
-                      className="flex items-center gap-2"
-                    >
-                      <Briefcase className="w-4 h-4" />
-                      Tedarikçi Cari
-                    </Button>
-                    <Button
-                      variant={activeTab === "personel" ? "default" : "ghost"}
-                      onClick={() => setActiveTab("personel")}
-                      className="flex items-center gap-2"
-                    >
-                      <UserCircle2 className="w-4 h-4" />
-                      Personel Cari
-                    </Button>
-                    <Button
-                      variant={activeTab === "ortak" ? "default" : "ghost"}
-                      onClick={() => setActiveTab("ortak")}
-                      className="flex items-center gap-2"
-                    >
-                      <UserCircle2 className="w-4 h-4" />
-                      Ortak Cari
-                    </Button>
-                  </div>
-                </div>
-
-                <TabsContent value={activeTab} className="mt-0">
-                  <Card>
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50">
-                          <TableHead className="w-12">
-                            <Checkbox
-                              checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
-                              onCheckedChange={toggleSelectAll}
-                            />
-                          </TableHead>
-                          <TableHead>Kod</TableHead>
-                          <TableHead>Unvan</TableHead>
-                          <TableHead>Cari Tipi</TableHead>
-                          <TableHead>Telefon Numarası</TableHead>
-                          <TableHead>Etiketler</TableHead>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">VKN/TCKN</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredCustomers.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={9} className="text-center py-12 text-gray-500">
-                              <div className="flex flex-col items-center gap-2">
-                                <Search className="w-12 h-12 opacity-50" />
-                                <p>Kayıt bulunamadı</p>
-                                <Button onClick={openAddDialog} className="mt-2">
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  Yeni {getAccountTypeLabel(activeTab)} Ekle
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredCustomers.map((customer) => {
-                            const AccountIcon = getAccountTypeIcon(customer.account_type || "musteri");
-                            return (
-                              <TableRow key={customer.id} className="hover:bg-gray-50">
-                                <TableCell>
-                                  <Checkbox
-                                    checked={selectedCustomers.includes(customer.id)}
-                                    onCheckedChange={() => toggleCustomerSelection(customer.id)}
-                                  />
-                                </TableCell>
-                                <TableCell className="font-mono text-sm text-gray-600">
-                                  {customer.id.substring(0, 8)}
-                                </TableCell>
-                                <TableCell>
-                                  <div>
-                                    <p className="font-semibold">{customer.company || customer.name}</p>
-                                    {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    <AccountIcon className="w-4 h-4 text-gray-600" />
-                                    <span>{getAccountTypeLabel(customer.account_type || "musteri")}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell>{customer.phone || "-"}</TableCell>
-                                <TableCell>
-                                  <Badge className={getStatusBadge(customer.status)}>
-                                    {customer.status}
-                                  </Badge>
-                                </TableCell>
-                                <td className="px-6 py-4 text-sm text-gray-900">
-                                  {(() => {
-                                    const vkn = customer.vergi_no || customer.tc_no;
-                                    console.log(`=== VKN/TCKN for ${customer.name} ===`, {
-                                      id: customer.id,
-                                      vergi_no: customer.vergi_no,
-                                      tc_no: customer.tc_no,
-                                      vkn: vkn,
-                                      fullCustomer: customer
-                                    });
-                                    return vkn || "-";
-                                  })()}
-                                </td>
-                                <TableCell className="text-right font-semibold">
-                                  ₺0,00
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        console.log("=== VIEW CUSTOMER CLICKED (Accounting) ===", customer);
-                                        setDetailCustomer(customer);
-                                        setIsDetailDialogOpen(true);
-                                      }}
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        console.log("=== EDIT CUSTOMER CLICKED (Accounting) ===", customer);
-                                        setEditingCustomer(customer);
-                                        setIsEditDialogOpen(true);
-                                      }}
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        console.log("=== DELETE CUSTOMER CLICKED (Accounting) ===", customer);
-                                        handleDeleteCustomerClick(customer);
-                                      }}
-                                    >
-                                      <Trash2 className="w-4 h-4 text-red-600" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
-                  </Card>
-
-                  {filteredCustomers.length > 0 && (
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>Toplam {filteredCustomers.length} kayıt listelenmektedir.</span>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">Önceki</Button>
-                        <Button variant="outline" size="sm">Sonraki</Button>
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </div>
-          </TabsContent>
-
-          {/* Giderler */}
-          <TabsContent value="expenses" className="space-y-4">
-            <Tabs defaultValue="expenses">
-              <TabsList>
-                <TabsTrigger value="expenses">Genel Giderler</TabsTrigger>
-                <TabsTrigger value="types">Genel Gider Tipleri</TabsTrigger>
-                <TabsTrigger value="recurring">Tekrarlı Genel Giderler</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="expenses" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Card className="p-4 border-l-4 border-l-orange-500">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-500">Toplam Gider</p>
-                        <p className="text-2xl font-bold text-orange-600">₺40.200</p>
-                      </div>
-                      <Receipt className="h-8 w-8 text-orange-500" />
-                    </div>
-                  </Card>
-
-                  <Card className="p-4 border-l-4 border-l-orange-500">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-500">Bu Ay</p>
-                        <p className="text-2xl font-bold text-orange-600">₺0</p>
-                      </div>
-                      <Calendar className="h-8 w-8 text-orange-500" />
-                    </div>
-                  </Card>
-
-                  <Card className="p-4 border-l-4 border-l-yellow-500">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-500">Bekleyen Ödemeler</p>
-                        <p className="text-2xl font-bold">1</p>
-                      </div>
-                      <Clock className="h-8 w-8 text-yellow-500" />
-                    </div>
-                  </Card>
-
-                  <Card className="p-4 border-l-4 border-l-green-500">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-500">Ödenen Giderler</p>
-                        <p className="text-2xl font-bold">6</p>
-                      </div>
-                      <CheckCircle2 className="h-8 w-8 text-green-500" />
-                    </div>
-                  </Card>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">Genel Giderler</h2>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Search className="mr-2 h-4 w-4" />
-                      Detaylı Arama
-                    </Button>
-                    <div className="relative w-64">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                      <Input
-                        placeholder="Ara..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-sm text-gray-600">
-                  7 adet kayıt listelenmektedir.
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Button variant="outline" size="sm">
-                    <CheckSquare className="mr-2 h-4 w-4" />
-                    Toplu Seç
+                  <Button
+                    variant={activeTab === "tedarikci" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("tedarikci")}
+                    className="flex items-center gap-2"
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    Tedarikçi Cari
                   </Button>
-
-                  <div className="flex items-center gap-2">
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Genel Gider Oluştur
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      İçe Aktar
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Upload className="mr-2 h-4 w-4" />
-                      Dışarıya Aktar
-                    </Button>
-                    <Button variant="outline" size="icon">
-                      <Filter className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant={activeTab === "personel" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("personel")}
+                    className="flex items-center gap-2"
+                  >
+                    <UserCircle2 className="w-4 h-4" />
+                    Personel Cari
+                  </Button>
+                  <Button
+                    variant={activeTab === "ortak" ? "default" : "ghost"}
+                    onClick={() => setActiveTab("ortak")}
+                    className="flex items-center gap-2"
+                  >
+                    <UserCircle2 className="w-4 h-4" />
+                    Ortak Cari
+                  </Button>
                 </div>
+              </div>
 
+              <TabsContent value={activeTab} className="mt-0">
                 <Card>
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
-                          <input type="checkbox" className="rounded" />
-                        </TableHead>
-                        <TableHead>Cari Bilgisi</TableHead>
+                      <TableRow className="bg-gray-50">
+                        <TableHead>Kod</TableHead>
+                        <TableHead>Unvan</TableHead>
+                        <TableHead>Cari Tipi</TableHead>
+                        <TableHead>Telefon Numarası</TableHead>
                         <TableHead>Etiketler</TableHead>
-                        <TableHead>Kategori</TableHead>
-                        <TableHead>Gider Tipi</TableHead>
-                        <TableHead>Seri No</TableHead>
-                        <TableHead>Proje</TableHead>
-                        <TableHead>Durum</TableHead>
-                        <TableHead>Düzenlenme Tarihi</TableHead>
-                        <TableHead>Son Ödeme Tarihi</TableHead>
-                        <TableHead>Genel İskonto</TableHead>
-                        <TableHead>Fatura Tutarı</TableHead>
-                        <TableHead>Takip Tutarı</TableHead>
-                        <TableHead>Bakiye</TableHead>
+                        <TableHead>VKN/TCKN</TableHead>
                         <TableHead>İşlemler</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      <TableRow>
-                        <TableCell colSpan={15} className="text-center py-8 text-gray-500">
-                          Toplam 7 kayıt gösteriliyor
-                        </TableCell>
-                      </TableRow>
+                      {filteredCustomers.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-12 text-gray-500">
+                            <div className="flex flex-col items-center gap-2">
+                              <Search className="w-12 h-12 opacity-50" />
+                              <p>Kayıt bulunamadı</p>
+                              <Button onClick={openAddDialog} className="mt-2">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Yeni {getAccountTypeLabel(activeTab)} Ekle
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredCustomers.map((customer) => {
+                          const AccountIcon = getAccountTypeIcon(customer.account_type || "musteri");
+                          return (
+                            <TableRow key={customer.id} className="hover:bg-gray-50">
+                              <TableCell className="font-mono text-sm text-gray-600">
+                                {customer.id.substring(0, 8)}
+                              </TableCell>
+                              <TableCell>
+                                <div>
+                                  <p className="font-semibold">{customer.company || customer.name}</p>
+                                  {customer.company && <p className="text-sm text-gray-600">{customer.name}</p>}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <AccountIcon className="w-4 h-4 text-gray-600" />
+                                  <span>{getAccountTypeLabel(customer.account_type || "musteri")}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>{customer.phone || "-"}</TableCell>
+                              <TableCell>
+                                <Badge className={getStatusBadge(customer.status)}>
+                                  {customer.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-gray-900">
+                                {customer.vergi_no || customer.tc_no || "-"}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => openDetailDialog(customer)}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => openEditDialog(customer)}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleDeleteCustomerClick(customer)}
+                                  >
+                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
                     </TableBody>
                   </Table>
                 </Card>
               </TabsContent>
-
-              <TabsContent value="types" className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">Genel Gider Tipleri</h2>
-                  <Button onClick={() => setAddCategoryModal(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Yeni Kategori Ekle
-                  </Button>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h2 className="text-2xl font-bold">Genel Gider Tipleri</h2>
-                    </div>
-                    <Button className="gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Yeni Kategori Ekle
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Kategorisiz Genel Gider Tipleri */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Kategorisiz Genel Gider Tipleri</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Yiyecek</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-blue-600 border-blue-600"
-                          onClick={() => openEditCategoryDialog("Kategorisiz Genel Gider Tipleri", "1")}
-                        >
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => openAddExpenseTypeDialog("Kategorisiz Genel Gider Tipleri")}
-                        >
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Araç Bakım Onarım */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Araç Bakım Onarım</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Araç Tamir ve Bakım Giderleri</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Araç Donanım Giderleri</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-blue-600 border-blue-600"
-                          onClick={() => openEditCategoryDialog("Araç Bakım Onarım", "2")}
-                        >
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => openAddExpenseTypeDialog("Araç Bakım Onarım")}
-                        >
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Yazılım */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Yazılım</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Freight Forwarding Yazılım</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-blue-600 border-blue-600"
-                          onClick={() => openEditCategoryDialog("Yazılım", "3")}
-                        >
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => openAddExpenseTypeDialog("Yazılım")}
-                        >
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Taşıma Faturaları */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Taşıma Faturaları</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">FULL TRACK TAŞIMA</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Parsiyel Taşıma</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-blue-600 border-blue-600"
-                          onClick={() => openEditCategoryDialog("Taşıma Faturaları", "4")}
-                        >
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => openAddExpenseTypeDialog("Taşıma Faturaları")}
-                        >
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Kurumsal Giderler */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Kurumsal Giderler</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">İç Sağlık Güvenlik Danışmanlık Hizmeti</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Freight Forwarding Sigortası</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Ticaret Odası Giderleri</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Noter Giderleri</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Elektrik</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-blue-600 border-blue-600"
-                          onClick={() => openEditCategoryDialog("Kurumsal Giderler", "5")}
-                        >
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => openAddExpenseTypeDialog("Kurumsal Giderler")}
-                        >
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Finansal */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Finansal</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Yakıtbank Sky Koli Dijital Kredi</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Yakıtbank Tam Esnek Standart Kredi</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Halkbank İhtiyaç Kredisi</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">EFT</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Havale</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-blue-600 border-blue-600"
-                          onClick={() => openEditCategoryDialog("Finansal", "6")}
-                        >
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => openAddExpenseTypeDialog("Finansal")}
-                        >
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Demirbaş */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Demirbaş</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Mobilya</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Ofis Eşyası</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Donanım</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Temizlik</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-blue-600 border-blue-600"
-                          onClick={() => openEditCategoryDialog("Demirbaş", "7")}
-                        >
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => openAddExpenseTypeDialog("Demirbaş")}
-                        >
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Ulaşım/Konaklama */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Ulaşım/Konaklama</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Seyahat Harcaması</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Akaryakıt</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Araç Kiralama</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Otopark Ücreti</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Taksi</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-blue-600 border-blue-600"
-                          onClick={() => openEditCategoryDialog("Ulaşım/Konaklama", "8")}
-                        >
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => openAddExpenseTypeDialog("Ulaşım/Konaklama")}
-                        >
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-
-                    {/* Temel Giderler */}
-                    <Card className="p-6">
-                      <h3 className="font-semibold text-lg mb-1">Temel Giderler</h3>
-                      <div className="border-b-2 border-blue-600 w-8 mb-4"></div>
-                      <div className="space-y-2 mb-6 min-h-[120px]">
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Kargo Ödemesi</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Kira</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Yemek Harcaması</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">Muhasebe/Mali Müşavir</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                        <div className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                          <span className="text-sm">İletişim Gideri</span>
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1 text-blue-600 border-blue-600"
-                          onClick={() => openEditCategoryDialog("Temel Giderler", "9")}
-                        >
-                          Kategoriyi Düzenle
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => openAddExpenseTypeDialog("Temel Giderler")}
-                        >
-                          + Yeni Tip Ekle
-                        </Button>
-                      </div>
-                    </Card>
-                  </div>
-                </div>
-              </TabsContent>
             </Tabs>
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          {/* Hesaplar */}
-          <TabsContent value="accounts" className="space-y-4">
-            <h2 className="text-2xl font-bold">Hesap Hareketleri</h2>
-            <Card className="p-6">
-              <p className="text-gray-500">Hesap hareketleri yakında eklenecek...</p>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <TabsContent value="expenses" className="space-y-4">
+          <h2 className="text-2xl font-bold">Giderler</h2>
+          <Card className="p-6">
+            <p className="text-gray-500">Gider yönetimi yakında eklenecek...</p>
+          </Card>
+        </TabsContent>
 
-        {/* Modals */}
-        <Dialog open={editCategoryModal} onOpenChange={setEditCategoryModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Kategoriyi Düzenle</DialogTitle>
-            </DialogHeader>
+        <TabsContent value="accounts" className="space-y-4">
+          <h2 className="text-2xl font-bold">Hesap Hareketleri</h2>
+          <Card className="p-6">
+            <p className="text-gray-500">Hesap hareketleri yakında eklenecek...</p>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <CariForm
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSuccess={() => {
+          loadData();
+          setIsAddDialogOpen(false);
+        }}
+      />
+
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Cari Detayları</DialogTitle>
+          </DialogHeader>
+          {detailCustomer && (
             <div className="space-y-4">
-              <div>
-                <Label>Kategori Adı</Label>
-                <Input
-                  value={editedCategoryName}
-                  onChange={(e) => setEditedCategoryName(e.target.value)}
-                  placeholder="Kategori adını girin"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditCategoryModal(false)}>İptal</Button>
-              <Button variant="destructive" onClick={handleDeleteCategory}>Sil</Button>
-              <Button onClick={handleUpdateCategory}>Güncelle</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={addTypeModal} onOpenChange={setAddTypeModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Yeni Gider Tipi Ekle</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Gider Tipi Adı</Label>
-                <Input
-                  value={newTypeName}
-                  onChange={(e) => setNewTypeName(e.target.value)}
-                  placeholder="Gider tipi adını girin"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setAddTypeModal(false)}>İptal</Button>
-              <Button onClick={handleSaveNewType}>Kaydet</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={editTypeModal} onOpenChange={setEditTypeModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Gider Tipini Düzenle</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Gider Tipi Adı</Label>
-                <Input
-                  value={editedTypeName}
-                  onChange={(e) => setEditedTypeName(e.target.value)}
-                  placeholder="Gider tipi adını girin"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditTypeModal(false)}>İptal</Button>
-              <Button variant="destructive" onClick={handleDeleteType}>Sil</Button>
-              <Button onClick={handleUpdateType}>Güncelle</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={addCategoryModal} onOpenChange={setAddCategoryModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Yeni Kategori Ekle</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Kategori Adı</Label>
-                <Input
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="Kategori adını girin"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setAddCategoryModal(false)}>İptal</Button>
-              <Button onClick={handleSaveNewCategory}>Kaydet</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Cari Form */}
-        <CariForm
-          isOpen={isAddDialogOpen}
-          onClose={() => setIsAddDialogOpen(false)}
-          onSuccess={() => {
-            loadData();
-            setIsAddDialogOpen(false);
-          }}
-        />
-
-        {/* View Customer Dialog */}
-        <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Cari Detayları</DialogTitle>
-            </DialogHeader>
-            {detailCustomer && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-gray-500">Ünvan</Label>
-                    <p className="font-medium">{detailCustomer.name}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-500">Cari Tipi</Label>
-                    <p className="font-medium">
-                      {detailCustomer.account_type === "musteri" ? "Müşteri" : 
-                       detailCustomer.account_type === "tedarikci" ? "Tedarikçi" :
-                       detailCustomer.account_type === "personel" ? "Personel" :
-                       detailCustomer.account_type === "ortak" ? "Ortak" : "Müşteri"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-500">Email</Label>
-                    <p className="font-medium">{detailCustomer.email}</p>
-                  </div>
-                  <div>
-                    <Label className="text-gray-500">Telefon</Label>
-                    <p className="font-medium">{detailCustomer.phone}</p>
-                  </div>
-                  {detailCustomer.vergi_no && (
-                    <div>
-                      <Label className="text-gray-500">Vergi No</Label>
-                      <p className="font-medium">{detailCustomer.vergi_no}</p>
-                    </div>
-                  )}
-                  {detailCustomer.tc_no && (
-                    <div>
-                      <Label className="text-gray-500">TC No</Label>
-                      <p className="font-medium">{detailCustomer.tc_no}</p>
-                    </div>
-                  )}
-                  {detailCustomer.tax_office && (
-                    <div>
-                      <Label className="text-gray-500">Vergi Dairesi</Label>
-                      <p className="font-medium">{detailCustomer.tax_office}</p>
-                    </div>
-                  )}
-                  {detailCustomer.city && (
-                    <div>
-                      <Label className="text-gray-500">İl</Label>
-                      <p className="font-medium">{detailCustomer.city}</p>
-                    </div>
-                  )}
-                  {detailCustomer.district && (
-                    <div>
-                      <Label className="text-gray-500">İlçe</Label>
-                      <p className="font-medium">{detailCustomer.district}</p>
-                    </div>
-                  )}
-                  {detailCustomer.address && (
-                    <div className="col-span-2">
-                      <Label className="text-gray-500">Adres</Label>
-                      <p className="font-medium">{detailCustomer.address}</p>
-                    </div>
-                  )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-500">Ünvan</Label>
+                  <p className="font-medium">{detailCustomer.name}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Email</Label>
+                  <p className="font-medium">{detailCustomer.email}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Telefon</Label>
+                  <p className="font-medium">{detailCustomer.phone}</p>
                 </div>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
-        {/* Edit Customer Dialog - Now using CariForm */}
-        <CariForm
-          isOpen={isEditDialogOpen}
+      <CariForm
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setEditingCustomer(null);
+        }}
+        onSuccess={loadData}
+        editMode={true}
+        initialData={editingCustomer}
+      />
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cariyi Sil</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{deletingCustomer?.name}" carisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>İptal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCustomer}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isSubmitting ? "Siliniyor..." : "Sil"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <InvoiceDialog
+        isOpen={isManualInvoiceDialogOpen}
+        onClose={() => setIsManualInvoiceDialogOpen(false)}
+        onSuccess={loadData}
+      />
+
+      {showPendingInvoicesDialog && (
+        <PendingInvoicesDialog
+          isOpen={showPendingInvoicesDialog}
+          onClose={() => setShowPendingInvoicesDialog(false)}
+          onSuccess={loadData}
+        />
+      )}
+
+      {showPreviewDialog && (
+        <InvoicePreviewDialog
+          open={showPreviewDialog}
           onClose={() => {
-            setIsEditDialogOpen(false);
-            setEditingCustomer(null);
+            setShowPreviewDialog(false);
+            setPreviewInvoice(null);
           }}
-          onSuccess={loadData}
-          editMode={true}
-          initialData={editingCustomer}
+          invoiceData={previewInvoice}
         />
+      )}
 
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Cariyi Sil</AlertDialogTitle>
-              <AlertDialogDescription>
-                "{deletingCustomer?.name}" carisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isSubmitting}>İptal</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteCustomer}
-                disabled={isSubmitting}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                {isSubmitting ? "Siliniyor..." : "Sil"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Manual Invoice Dialog */}
-        <InvoiceDialog
-          isOpen={isManualInvoiceDialogOpen}
-          onClose={() => setIsManualInvoiceDialogOpen(false)}
-          onSuccess={loadData}
+      {selectedInvoice && (
+        <EditInvoiceDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          invoice={selectedInvoice}
+          onSaved={() => {
+            loadData();
+            setSelectedInvoice(null);
+          }}
         />
-
-        {/* Pending Invoices Dialog */}
-        {showPendingInvoicesDialog && (
-          <PendingInvoicesDialog
-            isOpen={showPendingInvoicesDialog}
-            onClose={() => setShowPendingInvoicesDialog(false)}
-            onSuccess={loadData}
-          />
-        )}
-
-        {showPreviewDialog && (
-          <InvoicePreviewDialog
-            open={showPreviewDialog}
-            onClose={() => {
-              setShowPreviewDialog(false);
-              setPreviewInvoice(null);
-            }}
-            invoiceData={previewInvoice}
-          />
-        )}
-
-        {selectedInvoice && (
-          <EditInvoiceDialog
-            open={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-            invoice={selectedInvoice}
-            onSaved={() => {
-              loadData();
-              setSelectedInvoice(null);
-            }}
-          />
-        )}
-      </div>
-    );
+      )}
+    </div>
+  );
 }
