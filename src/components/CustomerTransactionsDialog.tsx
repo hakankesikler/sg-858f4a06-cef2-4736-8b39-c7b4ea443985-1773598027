@@ -649,6 +649,9 @@ export function CustomerTransactionsDialog({
           isOpen={showSalesInvoiceDialog}
           onClose={() => {
             setShowSalesInvoiceDialog(false);
+          }}
+          onSuccess={() => {
+            setShowSalesInvoiceDialog(false);
             loadTransactions();
           }}
           preSelectedCustomer={customer}
@@ -666,6 +669,9 @@ export function CustomerTransactionsDialog({
               onSuccess={() => {
                 setShowPurchaseInvoiceDialog(false);
                 loadTransactions();
+              }}
+              onClose={() => {
+                setShowPurchaseInvoiceDialog(false);
               }}
               preSelectedSupplier={customer}
             />
