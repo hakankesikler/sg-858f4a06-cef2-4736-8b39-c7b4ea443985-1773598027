@@ -99,6 +99,8 @@ export function AccountingModule() {
   const [salesInvoices, setSalesInvoices] = useState<any[]>([]);
   const [purchaseInvoices, setPurchaseInvoices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [sortBy, setSortBy] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const [editCategoryModal, setEditCategoryModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<ExpenseCategory | null>(null);
@@ -215,6 +217,17 @@ export function AccountingModule() {
     loadData();
   }, []);
 
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      // Toggle order if same column
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // New column, default to ascending
+      setSortBy(column);
+      setSortOrder("asc");
+    }
+  };
+
   const openEditCategoryDialog = (categoryName: string, categoryId: string) => {
     setEditingCategory({ name: categoryName, id: categoryId });
     setIsEditCategoryDialogOpen(true);
@@ -329,7 +342,8 @@ export function AccountingModule() {
     }
     // personel and ortak = 0 for now
     
-    return balance;
+    // Avoid -0 display
+    return balance === 0 ? 0 : balance;
   };
 
   let filteredCustomers = customers.filter(customer => {
@@ -367,6 +381,29 @@ export function AccountingModule() {
     filteredCustomers = filteredCustomers.filter(c => 
       new Date(c.created_at) <= new Date(filters.dateTo)
     );
+  }
+
+  // Apply sorting
+  if (sortBy) {
+    filteredCustomers.sort((a, b) => {
+      let compareValue = 0;
+      
+      if (sortBy === "name") {
+        const nameA = (a.company || a.name || "").toLowerCase();
+        const nameB = (b.company || b.name || "").toLowerCase();
+        compareValue = nameA.localeCompare(nameB, 'tr');
+      } else if (sortBy === "account_type") {
+        const typeA = getAccountTypeLabel(a.account_type || "musteri");
+        const typeB = getAccountTypeLabel(b.account_type || "musteri");
+        compareValue = typeA.localeCompare(typeB, 'tr');
+      } else if (sortBy === "balance") {
+        const balanceA = calculateCustomerBalance(a.id, a.account_type || "musteri");
+        const balanceB = calculateCustomerBalance(b.id, b.account_type || "musteri");
+        compareValue = balanceA - balanceB;
+      }
+      
+      return sortOrder === "asc" ? compareValue : -compareValue;
+    });
   }
 
   const handleUpdateCategory = async () => {
@@ -1132,13 +1169,42 @@ export function AccountingModule() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gray-50">
-                        <TableHead>Kod</TableHead>
-                        <TableHead>Unvan</TableHead>
-                        <TableHead>Cari Tipi</TableHead>
+                        <TableHead>
+                          <button 
+                            onClick={() => handleSort("name")}
+                            className="flex items-center gap-1 hover:text-blue-600 font-semibold"
+                          >
+                            Ünvan
+                            {sortBy === "name" && (
+                              sortOrder === "asc" ? <ChevronDown className="w-4 h-4 rotate-180" /> : <ChevronDown className="w-4 h-4" />
+                            )}
+                          </button>
+                        </TableHead>
+                        <TableHead>
+                          <button 
+                            onClick={() => handleSort("account_type")}
+                            className="flex items-center gap-1 hover:text-blue-600 font-semibold"
+                          >
+                            Cari Tipi
+                            {sortBy === "account_type" && (
+                              sortOrder === "asc" ? <ChevronDown className="w-4 h-4 rotate-180" /> : <ChevronDown className="w-4 h-4" />
+                            )}
+                          </button>
+                        </TableHead>
                         <TableHead>Telefon Numarası</TableHead>
                         <TableHead>Etiketler</TableHead>
                         <TableHead>VKN/TCKN</TableHead>
-                        <TableHead>Yerel Bakiye</TableHead>
+                        <TableHead>
+                          <button 
+                            onClick={() => handleSort("balance")}
+                            className="flex items-center gap-1 hover:text-blue-600 font-semibold ml-auto"
+                          >
+                            Yerel Bakiye
+                            {sortBy === "balance" && (
+                              sortOrder === "asc" ? <ChevronDown className="w-4 h-4 rotate-180" /> : <ChevronDown className="w-4 h-4" />
+                            )}
+                          </button>
+                        </TableHead>
                         <TableHead>İşlemler</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1161,9 +1227,6 @@ export function AccountingModule() {
                           const AccountIcon = getAccountTypeIcon(customer.account_type || "musteri");
                           return (
                             <TableRow key={customer.id} className="hover:bg-gray-50">
-                              <TableCell className="font-mono text-sm text-gray-600">
-                                {customer.id.substring(0, 8)}
-                              </TableCell>
                               <TableCell>
                                 <div>
                                   <p className="font-semibold">{customer.company || customer.name}</p>
