@@ -161,7 +161,7 @@ export function CustomerTransactionsDialog({
         const { error } = await supabase.from("purchases").insert({
           supplier_id: customer.id,
           purchase_date: debtForm.date,
-          invoice_no: `BORC-${Date.now()}`,
+          purchase_no: `BORC-${Date.now()}`,
           total: parseFloat(debtForm.amount),
           currency: debtForm.currency,
           notes: debtForm.description,
@@ -174,6 +174,7 @@ export function CustomerTransactionsDialog({
         const { error } = await supabase.from("sales_invoices").insert({
           customer_id: customer.id,
           invoice_date: debtForm.date,
+          due_date: debtForm.date,
           invoice_no: `BORC-${Date.now()}`,
           grand_total: -parseFloat(debtForm.amount),
           currency: debtForm.currency,
@@ -205,6 +206,7 @@ export function CustomerTransactionsDialog({
         const { error } = await supabase.from("sales_invoices").insert({
           customer_id: customer.id,
           invoice_date: creditForm.date,
+          due_date: creditForm.date,
           invoice_no: `ALACAK-${Date.now()}`,
           grand_total: parseFloat(creditForm.amount),
           currency: creditForm.currency,
@@ -218,7 +220,7 @@ export function CustomerTransactionsDialog({
         const { error } = await supabase.from("purchases").insert({
           supplier_id: customer.id,
           purchase_date: creditForm.date,
-          invoice_no: `ALACAK-${Date.now()}`,
+          purchase_no: `ALACAK-${Date.now()}`,
           total: -parseFloat(creditForm.amount),
           currency: creditForm.currency,
           notes: creditForm.description,
