@@ -22,8 +22,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Download, Upload, Filter, Search, AlertCircle, ChevronDown } from "lucide-react";
+import { Search, Filter, Upload, Download, AlertCircle, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { InvoiceDialog } from "@/components/InvoiceDialog";
+import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
 
 interface CustomerTransactionsDialogProps {
   isOpen: boolean;
@@ -68,6 +70,10 @@ export function CustomerTransactionsDialog({
     date: new Date().toISOString().split('T')[0],
     currency: "TRY"
   });
+  
+  // Invoice Dialog States
+  const [showSalesInvoiceDialog, setShowSalesInvoiceDialog] = useState(false);
+  const [showPurchaseInvoiceDialog, setShowPurchaseInvoiceDialog] = useState(false);
 
   useEffect(() => {
     if (isOpen && customer) {
@@ -321,22 +327,22 @@ export function CustomerTransactionsDialog({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => console.log("Satış Faturası")}>
+                  <DropdownMenuItem onClick={() => setShowSalesInvoiceDialog(true)}>
                     Satış Faturası
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => console.log("Satın Alma Faturası")}>
+                  <DropdownMenuItem onClick={() => setShowPurchaseInvoiceDialog(true)}>
                     Satın Alma Faturası
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => console.log("Satış İade Faturası")}>
+                  <DropdownMenuItem onClick={() => alert("Satış İade Faturası özelliği yakında eklenecek")}>
                     Satış İade Faturası
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => console.log("Alış İade Faturası")}>
+                  <DropdownMenuItem onClick={() => alert("Alış İade Faturası özelliği yakında eklenecek")}>
                     Alış İade Faturası
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => console.log("Genel Gider")}>
+                  <DropdownMenuItem onClick={() => alert("Genel Gider özelliği yakında eklenecek")}>
                     Genel Gider
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => console.log("Satış İrsaliyesi")}>
+                  <DropdownMenuItem onClick={() => alert("Satış İrsaliyesi özelliği yakında eklenecek")}>
                     Satış İrsaliyesi
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -636,6 +642,36 @@ export function CustomerTransactionsDialog({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Satış Faturası Dialog */}
+      {showSalesInvoiceDialog && (
+        <InvoiceDialog
+          isOpen={showSalesInvoiceDialog}
+          onClose={() => {
+            setShowSalesInvoiceDialog(false);
+            loadTransactions();
+          }}
+          preSelectedCustomer={customer}
+        />
+      )}
+
+      {/* Satın Alma Faturası Dialog */}
+      {showPurchaseInvoiceDialog && (
+        <Dialog open={showPurchaseInvoiceDialog} onOpenChange={setShowPurchaseInvoiceDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Satın Alma Faturası - {customer?.company || customer?.name}</DialogTitle>
+            </DialogHeader>
+            <PurchaseInvoiceForm 
+              onSuccess={() => {
+                setShowPurchaseInvoiceDialog(false);
+                loadTransactions();
+              }}
+              preSelectedSupplier={customer}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 }
