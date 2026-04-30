@@ -311,6 +311,27 @@ export function AccountingModule() {
     return configs[status as keyof typeof configs] || configs["Potansiyel"];
   };
 
+  const calculateCustomerBalance = (customerId: string, accountType: string) => {
+    let balance = 0;
+    
+    if (accountType === "musteri") {
+      // Sales invoices - pending = receivable (alacak)
+      const customerInvoices = salesInvoices.filter(inv => 
+        inv.customer_id === customerId && inv.payment_status === 'Bekliyor'
+      );
+      balance = customerInvoices.reduce((sum, inv) => sum + (inv.grand_total || 0), 0);
+    } else if (accountType === "tedarikci") {
+      // Purchase invoices - pending = payable (borç) - show as negative
+      const supplierInvoices = purchaseInvoices.filter(inv => 
+        inv.supplier_id === customerId && inv.status === 'beklemede'
+      );
+      balance = -1 * supplierInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+    }
+    // personel and ortak = 0 for now
+    
+    return balance;
+  };
+
   let filteredCustomers = customers.filter(customer => {
     const accountType = customer.account_type || "musteri";
     // If 'tumu' is selected, show all types
@@ -1165,7 +1186,19 @@ export function AccountingModule() {
                                 {customer.vergi_no || customer.tc_no || "-"}
                               </TableCell>
                               <TableCell className="text-right font-semibold">
-                                <span className="text-gray-700">0 TRY</span>
+                                {(() => {
+                                  const balance = calculateCustomerBalance(customer.id, customer.account_type || "musteri");
+                                  const colorClass = balance > 0 
+                                    ? "text-green-600" 
+                                    : balance < 0 
+                                    ? "text-red-600" 
+                                    : "text-gray-700";
+                                  return (
+                                    <span className={colorClass}>
+                                      {balance.toLocaleString('tr-TR')} TRY
+                                    </span>
+                                  );
+                                })()}
                               </TableCell>
                               <TableCell className="text-right">
                                 <div className="flex items-center justify-end gap-1">
