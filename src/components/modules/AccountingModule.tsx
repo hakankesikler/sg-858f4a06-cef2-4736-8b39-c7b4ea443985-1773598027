@@ -54,6 +54,7 @@ import { InvoicePreviewDialog } from "@/components/InvoicePreviewDialog";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { PendingInvoicesDialog } from "@/components/PendingInvoicesDialog";
 import { EditInvoiceDialog } from "@/components/EditInvoiceDialog";
+import { CustomerTransactionsDialog } from "@/components/CustomerTransactionsDialog";
 
 type Invoice = {
   id: string;
@@ -153,6 +154,8 @@ export function AccountingModule() {
   const [previewInvoice, setPreviewInvoice] = useState<any>(null);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [showPendingInvoicesDialog, setShowPendingInvoicesDialog] = useState(false);
+  const [transactionsCustomer, setTransactionsCustomer] = useState<any>(null);
+  const [showTransactionsDialog, setShowTransactionsDialog] = useState(false);
 
   const loadData = async () => {
     try {
@@ -1283,7 +1286,11 @@ export function AccountingModule() {
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => openDetailDialog(customer)}
+                                    onClick={() => {
+                                      setTransactionsCustomer(customer);
+                                      setShowTransactionsDialog(true);
+                                    }}
+                                    title="Cari Hareketleri"
                                   >
                                     <Eye className="w-4 h-4" />
                                   </Button>
@@ -1433,6 +1440,15 @@ export function AccountingModule() {
           }}
         />
       )}
+
+      <CustomerTransactionsDialog
+        isOpen={showTransactionsDialog}
+        onClose={() => {
+          setShowTransactionsDialog(false);
+          setTransactionsCustomer(null);
+        }}
+        customer={transactionsCustomer}
+      />
     </div>
   );
 }
