@@ -297,49 +297,50 @@ export default function PersonelProfil() {
         description="Rex Lojistik personel yönetim paneli"
       />
 
-      <SidebarProvider defaultOpen={false} collapsible="icon">
+      <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
           {/* Sidebar */}
           <aside className={`
             fixed lg:sticky top-0 left-0 z-40 h-screen
-            w-72 bg-slate-900 text-white shadow-2xl
-            transform transition-transform duration-300 ease-in-out
-            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            bg-slate-900 text-white shadow-2xl
+            transform transition-all duration-300 ease-in-out
+            overflow-hidden group flex flex-col
+            ${sidebarOpen ? 'translate-x-0 w-72' : '-translate-x-full lg:translate-x-0 w-72 lg:w-[80px] lg:hover:w-72'}
           `}>
             {/* Sidebar Header */}
-            <div className="p-6 border-b border-slate-800">
+            <div className="p-4 lg:p-5 border-b border-slate-800">
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="min-w-10 min-h-10 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg shrink-0">
                     RL
                   </div>
-                  <span className="text-xl font-bold">Rex Portal</span>
+                  <span className={`text-xl font-bold whitespace-nowrap transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'lg:opacity-0 lg:group-hover:opacity-100'}`}>Rex Portal</span>
                 </div>
                 <button 
                   onClick={() => setSidebarOpen(false)}
-                  className="lg:hidden p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                  className="lg:hidden p-2 hover:bg-slate-800 rounded-lg transition-colors shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* User Profile */}
-              <div className="p-6 border-b border-gray-700">
+              <div className={`pb-2 transition-all duration-300 ${sidebarOpen ? 'opacity-100 h-auto' : 'lg:opacity-0 lg:h-0 lg:group-hover:opacity-100 lg:group-hover:h-auto overflow-hidden'}`}>
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                  <div className="w-10 h-10 min-w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shrink-0">
                     {user?.email?.[0]?.toUpperCase() || "A"}
                   </div>
-                  <div>
+                  <div className="whitespace-nowrap overflow-hidden">
                     <h3 className="font-semibold text-white">{user?.email?.split("@")[0] || "Kullanıcı"}</h3>
-                    <p className="text-sm text-gray-400">Operasyon Müdürü</p>
+                    <p className="text-sm text-gray-400">Operasyon</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Navigation */}
-            <nav className="p-4 flex-1 overflow-y-auto">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3">
+            <nav className="p-3 flex-1 overflow-y-auto overflow-x-hidden">
+              <p className={`text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3 transition-opacity duration-300 whitespace-nowrap ${sidebarOpen ? 'opacity-100' : 'lg:opacity-0 lg:group-hover:opacity-100'}`}>
                 Modüller
               </p>
               <ul className="space-y-1">
@@ -351,16 +352,19 @@ export default function PersonelProfil() {
                       <button
                         onClick={() => handleModuleClick(module.id as typeof activeModule)}
                         className={`
-                          w-full flex items-center gap-3 px-4 py-3 rounded-lg
-                          transition-all duration-200 group
+                          w-full flex items-center gap-3 px-3 py-3 rounded-lg
+                          transition-all duration-200 group/btn
                           ${isActive 
                             ? 'bg-blue-600 text-white shadow-lg' 
                             : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                           }
                         `}
+                        title={module.name}
                       >
-                        <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`} />
-                        <span className="font-medium text-sm">{module.name}</span>
+                        <Icon className={`min-w-5 w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400 group-hover/btn:text-white'}`} />
+                        <span className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'lg:opacity-0 lg:group-hover:opacity-100'}`}>
+                          {module.name}
+                        </span>
                       </button>
                     </li>
                   );
@@ -369,10 +373,12 @@ export default function PersonelProfil() {
             </nav>
 
             {/* Sidebar Footer */}
-            <div className="p-4 border-t border-slate-800">
-              <Link href="/" className="flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all duration-200">
-                <LogOut className="w-5 h-5" />
-                <span className="font-medium text-sm">Çıkış Yap</span>
+            <div className="p-3 border-t border-slate-800">
+              <Link href="/" className="flex items-center gap-3 px-3 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all duration-200">
+                <LogOut className="min-w-5 w-5 h-5 shrink-0" />
+                <span className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'lg:opacity-0 lg:group-hover:opacity-100'}`}>
+                  Çıkış Yap
+                </span>
               </Link>
             </div>
           </aside>
