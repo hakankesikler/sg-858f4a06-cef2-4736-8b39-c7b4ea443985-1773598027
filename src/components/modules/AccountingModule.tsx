@@ -95,7 +95,7 @@ export function AccountingModule() {
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [cariTab, setCariTab] = useState("genel");
-  const [activeTab, setActiveTab] = useState("musteri");
+  const [activeTab, setActiveTab] = useState("genel");
   const [salesInvoices, setSalesInvoices] = useState<any[]>([]);
   const [purchaseInvoices, setPurchaseInvoices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -349,12 +349,12 @@ export function AccountingModule() {
   let filteredCustomers = customers.filter(customer => {
     const accountType = customer.account_type || "musteri";
     
-    // Combined view for musteri and tedarikci
-    if (activeTab === "musteri" || activeTab === "tedarikci") {
-      // Show both musteri and tedarikci in combined view
+    // Filter by activeTab
+    if (activeTab === "genel") {
+      // Show both musteri and tedarikci in general view
       if (accountType !== "musteri" && accountType !== "tedarikci") return false;
     } else {
-      // Separate view for personel and ortak
+      // Show only the selected type (musteri, tedarikci, personel, or ortak)
       if (accountType !== activeTab) return false;
     }
 
@@ -1101,6 +1101,13 @@ export function AccountingModule() {
             <div className="bg-gray-50 p-3 rounded-lg">
               <div className="flex gap-2">
                 <Button
+                  variant={activeTab === "genel" ? "default" : "ghost"}
+                  onClick={() => setActiveTab("genel")}
+                  className="flex items-center gap-2"
+                >
+                  Genel
+                </Button>
+                <Button
                   variant={activeTab === "musteri" ? "default" : "ghost"}
                   onClick={() => setActiveTab("musteri")}
                   className="flex items-center gap-2"
@@ -1140,12 +1147,12 @@ export function AccountingModule() {
                 <h2 className="text-2xl font-bold text-gray-900">
                   {activeTab === "personel" && "Personel Cari Hesapları"}
                   {activeTab === "ortak" && "Ortak Cari Hesapları"}
-                  {(activeTab === "musteri" || activeTab === "tedarikci") && "Genel Cari Hesapları"}
+                  {(activeTab === "genel" || activeTab === "musteri" || activeTab === "tedarikci") && "Genel Cari Hesapları"}
                 </h2>
                 <p className="text-gray-600 mt-1">
                   {activeTab === "personel" && "Personel cari hesaplarını yönetin"}
                   {activeTab === "ortak" && "Ortak cari hesaplarını yönetin"}
-                  {(activeTab === "musteri" || activeTab === "tedarikci") && "Müşteri ve tedarikçi cari hesaplarını yönetin"}
+                  {(activeTab === "genel" || activeTab === "musteri" || activeTab === "tedarikci") && "Müşteri ve tedarikçi cari hesaplarını yönetin"}
                 </p>
               </div>
             </div>
