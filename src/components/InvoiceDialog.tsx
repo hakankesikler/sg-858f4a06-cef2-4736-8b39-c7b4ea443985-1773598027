@@ -18,8 +18,7 @@ import { X, Plus, Trash2, Loader2 } from "lucide-react";
 interface InvoiceDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
-  shipment?: any;  // Optional - for shipment-based invoices
+  preSelectedCustomer?: any;
 }
 
 const defaultNotes = `** Taşıma İşleri Organizatörlüğü Belge Numarası: İZM.U-NET.TİO.35.6323
@@ -33,11 +32,14 @@ const defaultNotes = `** Taşıma İşleri Organizatörlüğü Belge Numarası: 
 * Yalınızca,
 * Sicil Numarası: 240976, İşletme Merkezi: İzmir`;
 
-export function InvoiceDialog({ isOpen, onClose, onSuccess, shipment }: InvoiceDialogProps) {
+export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer }: InvoiceDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [products, setProducts] = useState<any[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<string>(preSelectedCustomer?.id || "");
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
+  const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
   
   const [formData, setFormData] = useState({
     invoiceDate: new Date().toISOString().split("T")[0],

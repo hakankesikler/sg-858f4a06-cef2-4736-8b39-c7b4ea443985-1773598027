@@ -23,11 +23,16 @@ interface InvoiceItem {
 }
 
 interface PurchaseInvoiceFormProps {
-  onClose?: () => void;
-  onSave?: (data: any) => void;
+  initialData?: any;
+  onSuccess?: () => void;
+  preSelectedSupplier?: any;
 }
 
-export function PurchaseInvoiceForm({ onClose, onSave }: PurchaseInvoiceFormProps) {
+export function PurchaseInvoiceForm({ initialData, onSuccess, preSelectedSupplier }: PurchaseInvoiceFormProps) {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [invoiceDate, setInvoiceDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date>(new Date());
   const [items, setItems] = useState<InvoiceItem[]>([
@@ -44,7 +49,8 @@ export function PurchaseInvoiceForm({ onClose, onSave }: PurchaseInvoiceFormProp
   ]);
 
   // Form states
-  const [invoiceNo, setInvoiceNo] = useState("");
+  const [selectedSupplier, setSelectedSupplier] = useState<string>(initialData?.supplier_id || preSelectedSupplier?.id || "");
+  const [invoiceNo, setInvoiceNo] = useState(initialData?.invoice_no || "");
   const [supplierName, setSupplierName] = useState("");
   const [supplierTaxId, setSupplierTaxId] = useState("");
   const [supplierTaxOffice, setSupplierTaxOffice] = useState("");
@@ -141,6 +147,23 @@ export function PurchaseInvoiceForm({ onClose, onSave }: PurchaseInvoiceFormProp
     };
 
     onSave?.(formData);
+    toast({
+      title: "Başarılı",
+      description: initialData 
+        ? "Satın alma faturası güncellendi" 
+        : "Satın alma faturası kaydedildi",
+    });
+
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      // Reset form if it's a new invoice
+      if (!initialData) {
+        setSelectedSupplier(preSelectedSupplier?.id || "");
+        setInvoiceNo("");
+        setPurchaseDate(new Date().toISOString().split('T')[0]);
+      }
+    }
   };
 
   return (
