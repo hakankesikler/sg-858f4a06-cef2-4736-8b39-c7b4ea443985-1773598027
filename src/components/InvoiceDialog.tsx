@@ -130,55 +130,74 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         invoiceNo = `SF-2024-${String(lastNum + 1).padStart(3, "0")}`;
       }
 
-      // Get cargo items first to calculate totals
-      const { data: cargoItems } = await supabase
-        .from("shipment_cargo_items")
-        .select("*")
-        .eq("shipment_id", shipment.id);
+      // Prepare invoice data
+      const invoiceData: any = {
+        customer_id: shipment?.customer_id || selectedCustomer,
+        invoice_date: invoiceDate,
+        due_date: dueDate,
+        invoice_no: invoiceNo,
+        currency: "TRY",
+        payment_status: "Bekliyor",
+        items: items,
+        subtotal: subtotal,
+        tax: totalVat,
+        grand_total: grandTotal,
+        notes: formData.notes,
+      };
 
-      // Calculate totals from cargo items
-      let calculatedSubtotal = 0;
-      let calculatedTax = 0;
-      let calculatedGrandTotal = 0;
-
-      if (cargoItems && cargoItems.length > 0) {
-        cargoItems.forEach((cargo: any) => {
-          const itemSubtotal = cargo.alt_toplam_fiyat || 0;
-          const itemTax = itemSubtotal * 0.20;
-          calculatedSubtotal += itemSubtotal;
-          calculatedTax += itemTax;
-          calculatedGrandTotal += (itemSubtotal + itemTax);
-        });
+      // If shipment exists, add shipment_id
+      if (shipment?.id) {
+        invoiceData.shipment_id = shipment.id;
       }
 
-      // Create invoice with calculated totals
-      const { data: invoiceData, error: invoiceError } = await supabase
+      // Create the sales invoice
+      const { data: invoice, error: invoiceError } = await supabase
         .from("sales_invoices")
-        .insert({
-          invoice_no: invoiceNo,
-          customer_id: shipment.customer_id,
-          shipment_id: shipment.id,
-          invoice_date: formData.invoiceDate,
-          due_date: formData.invoiceDate,
-          subtotal: calculatedSubtotal,
-          total_tax: calculatedTax,
-          grand_total: calculatedGrandTotal,
-          payment_status: "Bekliyor",
-          currency: "TRY",
-          notes: formData.notes,
-          e_invoice_status: "taslak", // TASLAK status
-        })
+        .insert(invoiceData)
         .select()
         .single();
 
       if (invoiceError) throw invoiceError;
 
+      // Only load cargo items if shipment exists
+      if (shipment?.id) {
+        const { data: cargoItems, error: cargoError } = await supabase
+          .from("shipment_cargo_items")
+          .select("*")
+          .eq("shipment_id", shipment.id);
+
+        if (cargoError) throw cargoError;
+
+        // Calculate totals from cargo items
+        let calculatedSubtotal = 0;
+        if (cargoItems && cargoItems.length > 0) {
+          calculatedSubtotal = cargoItems.reduce((sum, item) => {
+            return sum + (item.quantity * item.unit_price);
+          }, 0);
+        }
+
+        const calculatedTax = calculatedSubtotal * 0.20;
+        const calculatedGrandTotal = calculatedSubtotal + calculatedTax;
+
+        // Update invoice with cargo item totals
+        const { error: updateError } = await supabase
+          .from("sales_invoices")
+          .update({
+            subtotal: calculatedSubtotal,
+            tax: calculatedTax,
+            grand_total: calculatedGrandTotal,
+          })
+          .eq("id", invoice.id);
+
+        if (updateError) throw updateError;
+      }
+
       // Create invoice items from cargo
-      if (invoiceData && cargoItems && cargoItems.length > 0) {
+      if (invoice && cargoItems && cargoItems.length > 0) {
         const items = cargoItems.map((cargo: any) => ({
-          invoice_id: invoiceData.id,
-          product_code: shipment.shipment_code,
-          description: `Taşıma Hizmeti - ${cargo.cinsi || shipment.shipment_code}`,
+          invoice_id: invoice.id,
+          product_code: shipment?.shipment_code,
+          description: `Taşıma Hizmeti - ${cargo.cinsi || shipment?.shipment_code}`,
           quantity: cargo.adet || 1,
           unit: cargo.cinsi || "Adet",
           unit_price: cargo.birim_fiyat || 0,
@@ -200,9 +219,9 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         .from("shipments")
         .update({ 
           invoice_status: "faturalandi",
-          sale_invoice_id: invoiceData?.id 
+          sale_invoice_id: invoice?.id 
         })
-        .eq("id", shipment.id);
+        .eq("id", shipment?.id);
 
       toast({
         title: "Başarılı",
@@ -248,6 +267,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                 <Select
                   value={selectedCustomer}
                   onValueChange={setSelectedCustomer}
+                  disabled={!!preSelectedCustomer}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Müşteri seçin..." />
