@@ -1031,6 +1031,44 @@ export function AccountingModule() {
 
         <TabsContent value="cari" className="space-y-4">
           <div className="space-y-6">
+            {/* Cari Type Selection - Moved to top */}
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="flex gap-2">
+                <Button
+                  variant={activeTab === "musteri" ? "default" : "ghost"}
+                  onClick={() => setActiveTab("musteri")}
+                  className="flex items-center gap-2"
+                >
+                  <Building2 className="w-4 h-4" />
+                  Müşteri Cari
+                </Button>
+                <Button
+                  variant={activeTab === "tedarikci" ? "default" : "ghost"}
+                  onClick={() => setActiveTab("tedarikci")}
+                  className="flex items-center gap-2"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  Tedarikçi Cari
+                </Button>
+                <Button
+                  variant={activeTab === "personel" ? "default" : "ghost"}
+                  onClick={() => setActiveTab("personel")}
+                  className="flex items-center gap-2"
+                >
+                  <UserCircle2 className="w-4 h-4" />
+                  Personel Cari
+                </Button>
+                <Button
+                  variant={activeTab === "ortak" ? "default" : "ghost"}
+                  onClick={() => setActiveTab("ortak")}
+                  className="flex items-center gap-2"
+                >
+                  <UserCircle2 className="w-4 h-4" />
+                  Ortak Cari
+                </Button>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Genel Cari Hesapları</h2>
@@ -1057,43 +1095,6 @@ export function AccountingModule() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-3 rounded-lg mb-4">
-                <div className="flex gap-2">
-                  <Button
-                    variant={activeTab === "musteri" ? "default" : "ghost"}
-                    onClick={() => setActiveTab("musteri")}
-                    className="flex items-center gap-2"
-                  >
-                    <Building2 className="w-4 h-4" />
-                    Müşteri Cari
-                  </Button>
-                  <Button
-                    variant={activeTab === "tedarikci" ? "default" : "ghost"}
-                    onClick={() => setActiveTab("tedarikci")}
-                    className="flex items-center gap-2"
-                  >
-                    <Briefcase className="w-4 h-4" />
-                    Tedarikçi Cari
-                  </Button>
-                  <Button
-                    variant={activeTab === "personel" ? "default" : "ghost"}
-                    onClick={() => setActiveTab("personel")}
-                    className="flex items-center gap-2"
-                  >
-                    <UserCircle2 className="w-4 h-4" />
-                    Personel Cari
-                  </Button>
-                  <Button
-                    variant={activeTab === "ortak" ? "default" : "ghost"}
-                    onClick={() => setActiveTab("ortak")}
-                    className="flex items-center gap-2"
-                  >
-                    <UserCircle2 className="w-4 h-4" />
-                    Ortak Cari
-                  </Button>
                 </div>
               </div>
 
