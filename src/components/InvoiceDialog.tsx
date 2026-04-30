@@ -4,7 +4,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +13,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { X, Plus, Trash2, Loader2 } from "lucide-react";
+
+interface InvoiceItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  vatRate: number;
+  subtotal: number;
+  vatAmount: number;
+  total: number;
+}
 
 interface InvoiceDialogProps {
   isOpen: boolean;
@@ -38,24 +48,25 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string>(preSelectedCustomer?.id || "");
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
+  const [currency, setCurrency] = useState("TRY");
+  const [paymentStatus, setPaymentStatus] = useState("Bekliyor");
+  const [notes, setNotes] = useState(defaultNotes);
   
-  const [formData, setFormData] = useState({
-    invoiceDate: new Date().toISOString().split("T")[0],
-    items: [
-      {
-        description: "Taşıma Hizmeti",
-        notes: "",
-        quantity: 1,
-        unitPrice: 0,
-        vatRate: 20,
-      },
-    ],
-    notes: defaultNotes,
-  });
+  const [items, setItems] = useState<InvoiceItem[]>([
+    {
+      id: "1",
+      description: "Taşıma Hizmeti",
+      quantity: 1,
+      unitPrice: 0,
+      vatRate: 20,
+      subtotal: 0,
+      vatAmount: 0,
+      total: 0,
+    },
+  ]);
 
   // Load customers for manual invoice mode
   useEffect(() => {
@@ -88,6 +99,67 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     }
   };
 
+  const calculateItemTotals = (item: Partial<InvoiceItem>): InvoiceItem => {
+    const quantity = item.quantity || 0;
+    const unitPrice = item.unitPrice || 0;
+    const vatRate = item.vatRate || 0;
+    
+    const subtotal = quantity * unitPrice;
+    const vatAmount = (subtotal * vatRate) / 100;
+    const total = subtotal + vatAmount;
+    
+    return {
+      id: item.id || Date.now().toString(),
+      description: item.description || "",
+      quantity,
+      unitPrice,
+      vatRate,
+      subtotal,
+      vatAmount,
+      total,
+    };
+  };
+
+  const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
+    const newItems = [...items];
+    newItems[index] = calculateItemTotals({
+      ...newItems[index],
+      [field]: value,
+    });
+    setItems(newItems);
+  };
+
+  const addItem = () => {
+    setItems([
+      ...items,
+      {
+        id: Date.now().toString(),
+        description: "",
+        quantity: 1,
+        unitPrice: 0,
+        vatRate: 20,
+        subtotal: 0,
+        vatAmount: 0,
+        total: 0,
+      },
+    ]);
+  };
+
+  const removeItem = (index: number) => {
+    if (items.length > 1) {
+      setItems(items.filter((_, i) => i !== index));
+    }
+  };
+
+  const totals = items.reduce(
+    (acc, item) => ({
+      subtotal: acc.subtotal + item.subtotal,
+      vat: acc.vat + item.vatAmount,
+      grandTotal: acc.grandTotal + item.total,
+    }),
+    { subtotal: 0, vat: 0, grandTotal: 0 }
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -104,18 +176,6 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     setLoading(true);
 
     try {
-      // Calculate totals
-      const subtotal = formData.items.reduce(
-        (sum, item) => sum + item.quantity * item.unitPrice,
-        0
-      );
-      const totalVat = formData.items.reduce(
-        (sum, item) =>
-          sum + (item.quantity * item.unitPrice * item.vatRate) / 100,
-        0
-      );
-      const grandTotal = subtotal + totalVat;
-
       // Generate invoice number
       const { data: lastInvoice } = await supabase
         .from("sales_invoices")
@@ -136,13 +196,12 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         invoice_date: invoiceDate,
         due_date: dueDate,
         invoice_no: invoiceNo,
-        currency: "TRY",
-        payment_status: "Bekliyor",
-        items: formData.items,
-        subtotal: subtotal,
-        tax: totalVat,
-        grand_total: grandTotal,
-        notes: formData.notes,
+        currency: currency,
+        payment_status: paymentStatus,
+        subtotal: totals.subtotal,
+        total_tax: totals.vat,
+        grand_total: totals.grandTotal,
+        notes: notes,
       };
 
       // If shipment exists, add shipment_id
@@ -159,76 +218,25 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
 
       if (invoiceError) throw invoiceError;
 
-      let itemsToInsert: any[] = [];
+      // Insert invoice items
+      const invoiceItems = items.map((item) => ({
+        invoice_id: invoice.id,
+        product_code: shipment?.shipment_code || "HIZMET",
+        description: item.description,
+        quantity: item.quantity,
+        unit: "Adet",
+        unit_price: item.unitPrice,
+        subtotal: item.subtotal,
+        tax_rate: item.vatRate,
+        tax_amount: item.vatAmount,
+        total: item.total,
+      }));
 
-      // Only load cargo items if shipment exists
-      if (shipment?.id) {
-        const { data: cargoItems, error: cargoError } = await supabase
-          .from("shipment_cargo_items")
-          .select("*")
-          .eq("shipment_id", shipment.id);
+      const { error: itemsError } = await supabase
+        .from("sales_invoice_items")
+        .insert(invoiceItems);
 
-        if (cargoError) throw cargoError;
-
-        if (cargoItems && cargoItems.length > 0) {
-          // Calculate totals from cargo items
-          const calculatedSubtotal = cargoItems.reduce((sum, item) => {
-            return sum + ((item.adet || 1) * (item.birim_fiyat || 0));
-          }, 0);
-
-          const calculatedTax = calculatedSubtotal * 0.20;
-          const calculatedGrandTotal = calculatedSubtotal + calculatedTax;
-
-          // Update invoice with cargo item totals
-          const { error: updateError } = await supabase
-            .from("sales_invoices")
-            .update({
-              subtotal: calculatedSubtotal,
-              tax: calculatedTax,
-              grand_total: calculatedGrandTotal,
-            })
-            .eq("id", invoice.id);
-
-          if (updateError) throw updateError;
-          
-          itemsToInsert = cargoItems.map((cargo: any) => ({
-            invoice_id: invoice.id,
-            product_code: shipment?.shipment_code,
-            description: `Taşıma Hizmeti - ${cargo.cinsi || shipment?.shipment_code}`,
-            quantity: cargo.adet || 1,
-            unit: cargo.cinsi || "Adet",
-            unit_price: cargo.birim_fiyat || 0,
-            subtotal: cargo.alt_toplam_fiyat || 0,
-            tax_rate: 20,
-            tax_amount: (cargo.alt_toplam_fiyat || 0) * 0.20,
-            total: (cargo.alt_toplam_fiyat || 0) * 1.20,
-          }));
-        }
-      } else {
-        // Manual invoice items
-        itemsToInsert = formData.items.map((item) => {
-          const itemSubtotal = item.quantity * item.unitPrice;
-          const itemTax = (itemSubtotal * item.vatRate) / 100;
-          return {
-            invoice_id: invoice.id,
-            description: item.description,
-            quantity: item.quantity,
-            unit_price: item.unitPrice,
-            tax_rate: item.vatRate,
-            subtotal: itemSubtotal,
-            tax_amount: itemTax,
-            total: itemSubtotal + itemTax,
-          };
-        });
-      }
-
-      if (itemsToInsert.length > 0) {
-        const { error: itemsError } = await supabase
-          .from("sales_invoice_items")
-          .insert(itemsToInsert);
-
-        if (itemsError) throw itemsError;
-      }
+      if (itemsError) throw itemsError;
 
       // Update shipment status if applicable
       if (shipment?.id) {
@@ -243,7 +251,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
 
       toast({
         title: "Başarılı",
-        description: `TASLAK fatura ${invoiceNo} oluşturuldu. Satış listesinde görüntüleyebilirsiniz.`,
+        description: `Satış faturası ${invoiceNo} oluşturuldu`,
       });
 
       if (onSuccess) onSuccess();
@@ -262,12 +270,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>
-              {shipment ? "Sevkiyattan Fatura Oluştur" : "Satış Faturası Oluştur"}
-            </span>
+            <span>Satış Faturası Oluştur</span>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -275,47 +281,209 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            {/* CUSTOMER SELECTION - Only show for manual invoices */}
-            {!shipment && (
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="customer" className="text-sm font-semibold">
-                  Müşteri Seçimi *
+          {/* TEMEL BİLGİLER */}
+          <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+            <h3 className="font-semibold text-lg">Temel Bilgiler</h3>
+            
+            <div className="grid grid-cols-3 gap-4">
+              {/* CUSTOMER SELECTION */}
+              {!shipment && (
+                <div className="space-y-2">
+                  <Label htmlFor="customer" className="text-sm font-semibold">
+                    Müşteri *
+                  </Label>
+                  <Select
+                    value={selectedCustomer}
+                    onValueChange={setSelectedCustomer}
+                    disabled={!!preSelectedCustomer}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Müşteri seçin..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          {customer.company || customer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* INVOICE DATE */}
+              <div className="space-y-2">
+                <Label htmlFor="invoiceDate" className="text-sm font-semibold">
+                  Fatura Tarihi *
                 </Label>
-                <Select
-                  value={selectedCustomer}
-                  onValueChange={setSelectedCustomer}
-                  disabled={!!preSelectedCustomer}
-                >
+                <Input
+                  type="date"
+                  id="invoiceDate"
+                  value={invoiceDate}
+                  onChange={(e) => setInvoiceDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* DUE DATE */}
+              <div className="space-y-2">
+                <Label htmlFor="dueDate" className="text-sm font-semibold">
+                  Vade Tarihi *
+                </Label>
+                <Input
+                  type="date"
+                  id="dueDate"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* CURRENCY */}
+              <div className="space-y-2">
+                <Label htmlFor="currency" className="text-sm font-semibold">
+                  Para Birimi
+                </Label>
+                <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Müşteri seçin..." />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.company || customer.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="TRY">TRY</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            )}
 
-            {/* INVOICE DATE */}
-            <div className="space-y-2">
-              <Label htmlFor="invoiceDate" className="text-sm font-semibold">
-                Fatura Tarihi
-              </Label>
-              <Input
-                type="date"
-                id="invoiceDate"
-                value={formData.invoiceDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, invoiceDate: e.target.value })
-                }
-                required
-              />
+              {/* PAYMENT STATUS */}
+              <div className="space-y-2">
+                <Label htmlFor="paymentStatus" className="text-sm font-semibold">
+                  Ödeme Durumu
+                </Label>
+                <Select value={paymentStatus} onValueChange={setPaymentStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Bekliyor">Bekliyor</SelectItem>
+                    <SelectItem value="Ödendi">Ödendi</SelectItem>
+                    <SelectItem value="Kısmi Ödendi">Kısmi Ödendi</SelectItem>
+                    <SelectItem value="Gecikmiş">Gecikmiş</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+          </div>
+
+          {/* ÜRÜN/HİZMET KALEMLERİ */}
+          <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-lg">Ürün/Hizmet Bilgileri</h3>
+              <Button type="button" onClick={addItem} size="sm" variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Kalem Ekle
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {items.map((item, index) => (
+                <div key={item.id} className="grid grid-cols-12 gap-2 items-end">
+                  <div className="col-span-4">
+                    <Label className="text-xs">Ürün/Hizmet Adı</Label>
+                    <Input
+                      placeholder="Açıklama..."
+                      value={item.description}
+                      onChange={(e) => handleItemChange(index, "description", e.target.value)}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label className="text-xs">Miktar</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(index, "quantity", parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label className="text-xs">Birim Fiyat</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.unitPrice}
+                      onChange={(e) => handleItemChange(index, "unitPrice", parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs">KDV %</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={item.vatRate}
+                      onChange={(e) => handleItemChange(index, "vatRate", parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label className="text-xs">Toplam</Label>
+                    <Input
+                      type="text"
+                      value={item.total.toFixed(2)}
+                      disabled
+                      className="bg-gray-100"
+                    />
+                  </div>
+                  <div className="col-span-1 flex items-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeItem(index)}
+                      disabled={items.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ÖZET */}
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="grid grid-cols-3 gap-4 text-right">
+              <div></div>
+              <div></div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-medium">Ara Toplam:</span>
+                  <span>{totals.subtotal.toFixed(2)} {currency}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Toplam KDV:</span>
+                  <span>{totals.vat.toFixed(2)} {currency}</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold border-t pt-2">
+                  <span>Genel Toplam:</span>
+                  <span>{totals.grandTotal.toFixed(2)} {currency}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* NOTES */}
+          <div className="space-y-2">
+            <Label htmlFor="notes">Açıklama / Notlar</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={6}
+              className="font-mono text-xs"
+            />
           </div>
 
           {/* Actions */}
@@ -332,10 +500,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Oluşturuluyor...
+                  Kaydediliyor...
                 </>
               ) : (
-                "Faturalandır"
+                "Faturayı Kaydet"
               )}
             </Button>
           </div>
