@@ -95,7 +95,7 @@ export function CustomerTransactionsDialog({
           .from("sales_invoices")
           .select("*")
           .eq("customer_id", customer.id)
-          .order("invoice_date", { ascending: true });
+          .order("invoice_date", { ascending: false });
 
         if (error) throw error;
 
@@ -120,7 +120,7 @@ export function CustomerTransactionsDialog({
           .from("purchases")
           .select("*")
           .eq("supplier_id", customer.id)
-          .order("purchase_date", { ascending: true });
+          .order("purchase_date", { ascending: false });
 
         if (error) throw error;
 
@@ -141,12 +141,14 @@ export function CustomerTransactionsDialog({
         }
       }
 
-      // Calculate cumulative balance
+      // Sort by date (newest first) and calculate cumulative balance
+      allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
       let runningBalance = 0;
-      allTransactions = allTransactions.map((tx) => {
+      allTransactions = allTransactions.reverse().map((tx) => {
         runningBalance += tx.credit - tx.debit;
         return { ...tx, balance: runningBalance };
-      });
+      }).reverse();
 
       setTransactions(allTransactions);
     } catch (error) {
