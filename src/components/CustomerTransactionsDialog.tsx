@@ -26,6 +26,8 @@ import { Search, Filter, Upload, Download, AlertCircle, ChevronDown } from "luci
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
+import { PaymentDialog } from "@/components/PaymentDialog";
+import { CollectionDialog } from "@/components/CollectionDialog";
 
 interface CustomerTransactionsDialogProps {
   isOpen: boolean;
@@ -74,6 +76,10 @@ export function CustomerTransactionsDialog({
   // Invoice Dialog States
   const [showSalesInvoiceDialog, setShowSalesInvoiceDialog] = useState(false);
   const [showPurchaseInvoiceDialog, setShowPurchaseInvoiceDialog] = useState(false);
+  
+  // Payment/Collection Dialog States
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
 
   useEffect(() => {
     if (isOpen && customer) {
@@ -91,13 +97,13 @@ export function CustomerTransactionsDialog({
 
       if (accountType === "musteri") {
         // Load sales invoices
-        const { data: invoices, error } = await supabase
+        const { data: invoices, error: invError } = await supabase
           .from("sales_invoices")
           .select("*")
           .eq("customer_id", customer.id)
           .order("invoice_date", { ascending: false });
 
-        if (error) throw error;
+        if (invError) throw invError;
 
         if (invoices) {
           const invoicesList = invoices as any[];
@@ -114,15 +120,44 @@ export function CustomerTransactionsDialog({
             balance: 0,
           }));
         }
+
+        // Load customer payments (tahsilat - collections)
+        const { data: collections, error: colError } = await supabase
+          .from("customer_payments")
+          .select("*")
+          .eq("customer_id", customer.id)
+          .eq("transaction_type", "tahsilat")
+          .order("payment_date", { ascending: false });
+
+        if (colError) throw colError;
+
+        if (collections) {
+          const collectionsList = collections as any[];
+          allTransactions = [
+            ...allTransactions,
+            ...collectionsList.map((col) => ({
+              id: col.id,
+              date: col.payment_date,
+              type: `Tahsilat (${col.payment_method})`,
+              documentNo: col.reference_no || "-",
+              debit: col.amount,
+              credit: 0,
+              currency: col.currency || "TRY",
+              exchangeRate: col.exchange_rate || 1,
+              localAmount: col.amount * (col.exchange_rate || 1),
+              balance: 0,
+            }))
+          ];
+        }
       } else if (accountType === "tedarikci") {
         // Load purchase invoices
-        const { data: purchases, error } = await supabase
+        const { data: purchases, error: purError } = await supabase
           .from("purchases")
           .select("*")
           .eq("supplier_id", customer.id)
           .order("purchase_date", { ascending: false });
 
-        if (error) throw error;
+        if (purError) throw purError;
 
         if (purchases) {
           const purchasesList = purchases as any[];
@@ -138,6 +173,35 @@ export function CustomerTransactionsDialog({
             localAmount: pur.total,
             balance: 0,
           }));
+        }
+
+        // Load customer payments (odeme - payments)
+        const { data: payments, error: payError } = await supabase
+          .from("customer_payments")
+          .select("*")
+          .eq("customer_id", customer.id)
+          .eq("transaction_type", "odeme")
+          .order("payment_date", { ascending: false });
+
+        if (payError) throw payError;
+
+        if (payments) {
+          const paymentsList = payments as any[];
+          allTransactions = [
+            ...allTransactions,
+            ...paymentsList.map((pay) => ({
+              id: pay.id,
+              date: pay.payment_date,
+              type: `Ödeme (${pay.payment_method})`,
+              documentNo: pay.reference_no || "-",
+              debit: 0,
+              credit: pay.amount,
+              currency: pay.currency || "TRY",
+              exchangeRate: pay.exchange_rate || 1,
+              localAmount: pay.amount * (pay.exchange_rate || 1),
+              balance: 0,
+            }))
+          ];
         }
       }
 
@@ -359,10 +423,10 @@ export function CustomerTransactionsDialog({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => console.log("Ödeme Ekle")}>
+                  <DropdownMenuItem onClick={() => setShowPaymentDialog(true)}>
                     Ödeme Ekle
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => console.log("Tahsilat Ekle")}>
+                  <DropdownMenuItem onClick={() => setShowCollectionDialog(true)}>
                     Tahsilat Ekle
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => console.log("Cari Virman")}>
@@ -679,6 +743,32 @@ export function CustomerTransactionsDialog({
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Ödeme Dialog */}
+      {showPaymentDialog && (
+        <PaymentDialog
+          isOpen={showPaymentDialog}
+          onClose={() => setShowPaymentDialog(false)}
+          onSuccess={() => {
+            setShowPaymentDialog(false);
+            loadTransactions();
+          }}
+          customer={customer}
+        />
+      )}
+
+      {/* Tahsilat Dialog */}
+      {showCollectionDialog && (
+        <CollectionDialog
+          isOpen={showCollectionDialog}
+          onClose={() => setShowCollectionDialog(false)}
+          onSuccess={() => {
+            setShowCollectionDialog(false);
+            loadTransactions();
+          }}
+          customer={customer}
+        />
       )}
     </Dialog>
   );
