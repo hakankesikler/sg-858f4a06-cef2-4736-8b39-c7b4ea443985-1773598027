@@ -176,18 +176,37 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     setLoading(true);
 
     try {
-      // Generate invoice number
+      // Calculate totals
+      const subtotal = items.reduce(
+        (sum, item) => sum + item.subtotal,
+        0
+      );
+      const totalVat = items.reduce(
+        (sum, item) => sum + item.vatAmount,
+        0
+      );
+      const grandTotal = items.reduce(
+        (sum, item) => sum + item.total,
+        0
+      );
+
+      // Generate unique invoice number with date
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD
+      
+      // Get last invoice number for today
       const { data: lastInvoice } = await supabase
         .from("sales_invoices")
         .select("invoice_no")
-        .order("created_at", { ascending: false })
+        .like("invoice_no", `SF-${dateStr}-%`)
+        .order("invoice_no", { ascending: false })
         .limit(1)
         .single();
 
-      let invoiceNo = "SF-2024-001";
+      let invoiceNo = `SF-${dateStr}-001`;
       if (lastInvoice?.invoice_no) {
         const lastNum = parseInt(lastInvoice.invoice_no.split("-")[2]);
-        invoiceNo = `SF-2024-${String(lastNum + 1).padStart(3, "0")}`;
+        invoiceNo = `SF-${dateStr}-${String(lastNum + 1).padStart(3, "0")}`;
       }
 
       // Prepare invoice data
