@@ -95,6 +95,7 @@ export function AccountingModule() {
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [cariTab, setCariTab] = useState("genel");
+  const [activeTab, setActiveTab] = useState("tumu");
   const [salesInvoices, setSalesInvoices] = useState<any[]>([]);
   const [purchaseInvoices, setPurchaseInvoices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -120,7 +121,6 @@ export function AccountingModule() {
 
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
 
-  const [activeTab, setActiveTab] = useState("sales");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
@@ -313,7 +313,8 @@ export function AccountingModule() {
 
   let filteredCustomers = customers.filter(customer => {
     const accountType = customer.account_type || "musteri";
-    if (accountType !== activeTab) return false;
+    // If 'tumu' is selected, show all types
+    if (activeTab !== "tumu" && accountType !== activeTab) return false;
 
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
@@ -1035,6 +1036,13 @@ export function AccountingModule() {
             <div className="bg-gray-50 p-3 rounded-lg">
               <div className="flex gap-2">
                 <Button
+                  variant={activeTab === "tumu" ? "default" : "ghost"}
+                  onClick={() => setActiveTab("tumu")}
+                  className="flex items-center gap-2"
+                >
+                  Tümü
+                </Button>
+                <Button
                   variant={activeTab === "musteri" ? "default" : "ghost"}
                   onClick={() => setActiveTab("musteri")}
                   className="flex items-center gap-2"
@@ -1109,6 +1117,7 @@ export function AccountingModule() {
                         <TableHead>Telefon Numarası</TableHead>
                         <TableHead>Etiketler</TableHead>
                         <TableHead>VKN/TCKN</TableHead>
+                        <TableHead>Yerel Bakiye</TableHead>
                         <TableHead>İşlemler</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1154,6 +1163,9 @@ export function AccountingModule() {
                               </TableCell>
                               <TableCell className="text-sm text-gray-900">
                                 {customer.vergi_no || customer.tc_no || "-"}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold">
+                                <span className="text-gray-700">0 TRY</span>
                               </TableCell>
                               <TableCell className="text-right">
                                 <div className="flex items-center justify-end gap-1">
