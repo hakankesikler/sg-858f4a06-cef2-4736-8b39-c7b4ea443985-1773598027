@@ -52,6 +52,22 @@ export function CustomerTransactionsDialog({
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Borç/Alacak Dialog States
+  const [showDebtDialog, setShowDebtDialog] = useState(false);
+  const [showCreditDialog, setShowCreditDialog] = useState(false);
+  const [debtForm, setDebtForm] = useState({
+    amount: "",
+    description: "",
+    date: new Date().toISOString().split('T')[0],
+    currency: "TRY"
+  });
+  const [creditForm, setCreditForm] = useState({
+    amount: "",
+    description: "",
+    date: new Date().toISOString().split('T')[0],
+    currency: "TRY"
+  });
 
   useEffect(() => {
     if (isOpen && customer) {
@@ -89,7 +105,7 @@ export function CustomerTransactionsDialog({
             currency: inv.currency || "TRY",
             exchangeRate: 1,
             localAmount: inv.grand_total,
-            balance: 0, // Will calculate below
+            balance: 0,
           }));
         }
       } else if (accountType === "tedarikci") {
@@ -114,7 +130,7 @@ export function CustomerTransactionsDialog({
             currency: pur.currency || "TRY",
             exchangeRate: 1,
             localAmount: pur.total,
-            balance: 0, // Will calculate below
+            balance: 0,
           }));
         }
       }
@@ -131,6 +147,94 @@ export function CustomerTransactionsDialog({
       console.error("Error loading transactions:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAddDebt = async () => {
+    if (!customer || !debtForm.amount) return;
+    
+    try {
+      const accountType = customer.account_type || "musteri";
+      
+      if (accountType === "tedarikci") {
+        // Add to purchases
+        const { error } = await supabase.from("purchases").insert({
+          supplier_id: customer.id,
+          purchase_date: debtForm.date,
+          invoice_no: `BORC-${Date.now()}`,
+          total: parseFloat(debtForm.amount),
+          currency: debtForm.currency,
+          notes: debtForm.description,
+          status: 'beklemede'
+        });
+        
+        if (error) throw error;
+      } else {
+        // For musteri - add negative transaction
+        const { error } = await supabase.from("sales_invoices").insert({
+          customer_id: customer.id,
+          invoice_date: debtForm.date,
+          invoice_no: `BORC-${Date.now()}`,
+          grand_total: -parseFloat(debtForm.amount),
+          currency: debtForm.currency,
+          notes: debtForm.description,
+          payment_status: 'Bekliyor'
+        });
+        
+        if (error) throw error;
+      }
+      
+      // Reset form and reload
+      setDebtForm({ amount: "", description: "", date: new Date().toISOString().split('T')[0], currency: "TRY" });
+      setShowDebtDialog(false);
+      loadTransactions();
+    } catch (error) {
+      console.error("Error adding debt:", error);
+      alert("Borç eklenirken bir hata oluştu!");
+    }
+  };
+
+  const handleAddCredit = async () => {
+    if (!customer || !creditForm.amount) return;
+    
+    try {
+      const accountType = customer.account_type || "musteri";
+      
+      if (accountType === "musteri") {
+        // Add to sales_invoices
+        const { error } = await supabase.from("sales_invoices").insert({
+          customer_id: customer.id,
+          invoice_date: creditForm.date,
+          invoice_no: `ALACAK-${Date.now()}`,
+          grand_total: parseFloat(creditForm.amount),
+          currency: creditForm.currency,
+          notes: creditForm.description,
+          payment_status: 'Bekliyor'
+        });
+        
+        if (error) throw error;
+      } else {
+        // For tedarikci - add negative transaction
+        const { error } = await supabase.from("purchases").insert({
+          supplier_id: customer.id,
+          purchase_date: creditForm.date,
+          invoice_no: `ALACAK-${Date.now()}`,
+          total: -parseFloat(creditForm.amount),
+          currency: creditForm.currency,
+          notes: creditForm.description,
+          status: 'beklemede'
+        });
+        
+        if (error) throw error;
+      }
+      
+      // Reset form and reload
+      setCreditForm({ amount: "", description: "", date: new Date().toISOString().split('T')[0], currency: "TRY" });
+      setShowCreditDialog(false);
+      loadTransactions();
+    } catch (error) {
+      console.error("Error adding credit:", error);
+      alert("Alacak eklenirken bir hata oluştu!");
     }
   };
 
@@ -197,10 +301,10 @@ export function CustomerTransactionsDialog({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => console.log("Borç Ekle")}>
+                  <DropdownMenuItem onClick={() => setShowDebtDialog(true)}>
                     Borç Ekle
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => console.log("Alacak Ekle")}>
+                  <DropdownMenuItem onClick={() => setShowCreditDialog(true)}>
                     Alacak Ekle
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -418,6 +522,118 @@ export function CustomerTransactionsDialog({
           </div>
         )}
       </DialogContent>
+
+      {/* Borç Ekle Dialog */}
+      <Dialog open={showDebtDialog} onOpenChange={setShowDebtDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Borç Ekle - {customer?.company || customer?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Tutar</label>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={debtForm.amount}
+                onChange={(e) => setDebtForm({ ...debtForm, amount: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Döviz</label>
+              <select
+                className="w-full px-3 py-2 border rounded-md"
+                value={debtForm.currency}
+                onChange={(e) => setDebtForm({ ...debtForm, currency: e.target.value })}
+              >
+                <option value="TRY">TRY</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Tarih</label>
+              <Input
+                type="date"
+                value={debtForm.date}
+                onChange={(e) => setDebtForm({ ...debtForm, date: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Açıklama</label>
+              <Input
+                placeholder="İşlem açıklaması..."
+                value={debtForm.description}
+                onChange={(e) => setDebtForm({ ...debtForm, description: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setShowDebtDialog(false)}>
+                İptal
+              </Button>
+              <Button onClick={handleAddDebt}>
+                Borç Ekle
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Alacak Ekle Dialog */}
+      <Dialog open={showCreditDialog} onOpenChange={setShowCreditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alacak Ekle - {customer?.company || customer?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Tutar</label>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={creditForm.amount}
+                onChange={(e) => setCreditForm({ ...creditForm, amount: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Döviz</label>
+              <select
+                className="w-full px-3 py-2 border rounded-md"
+                value={creditForm.currency}
+                onChange={(e) => setCreditForm({ ...creditForm, currency: e.target.value })}
+              >
+                <option value="TRY">TRY</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Tarih</label>
+              <Input
+                type="date"
+                value={creditForm.date}
+                onChange={(e) => setCreditForm({ ...creditForm, date: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Açıklama</label>
+              <Input
+                placeholder="İşlem açıklaması..."
+                value={creditForm.description}
+                onChange={(e) => setCreditForm({ ...creditForm, description: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setShowCreditDialog(false)}>
+                İptal
+              </Button>
+              <Button onClick={handleAddCredit}>
+                Alacak Ekle
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
