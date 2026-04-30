@@ -288,6 +288,109 @@ export type Database = {
           },
         ]
       }
+      customer_payments: {
+        Row: {
+          amount: number
+          bank_account_id: string | null
+          created_at: string | null
+          currency: string
+          customer_id: string
+          description: string | null
+          exchange_rate: number | null
+          id: string
+          payment_date: string
+          payment_method: string
+          reference_no: string | null
+          related_invoice_id: string | null
+          related_purchase_id: string | null
+          source_customer_id: string | null
+          target_customer_id: string | null
+          transaction_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          bank_account_id?: string | null
+          created_at?: string | null
+          currency?: string
+          customer_id: string
+          description?: string | null
+          exchange_rate?: number | null
+          id?: string
+          payment_date?: string
+          payment_method: string
+          reference_no?: string | null
+          related_invoice_id?: string | null
+          related_purchase_id?: string | null
+          source_customer_id?: string | null
+          target_customer_id?: string | null
+          transaction_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_account_id?: string | null
+          created_at?: string | null
+          currency?: string
+          customer_id?: string
+          description?: string | null
+          exchange_rate?: number | null
+          id?: string
+          payment_date?: string
+          payment_method?: string
+          reference_no?: string | null
+          related_invoice_id?: string | null
+          related_purchase_id?: string | null
+          source_customer_id?: string | null
+          target_customer_id?: string | null
+          transaction_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_payments_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_payments_related_invoice_id_fkey"
+            columns: ["related_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_payments_related_purchase_id_fkey"
+            columns: ["related_purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_payments_source_customer_id_fkey"
+            columns: ["source_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_payments_target_customer_id_fkey"
+            columns: ["target_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_vehicles: {
         Row: {
           arac_tipi: string | null
