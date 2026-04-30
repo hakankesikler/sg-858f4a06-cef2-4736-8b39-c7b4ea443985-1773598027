@@ -138,7 +138,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         invoice_no: invoiceNo,
         currency: "TRY",
         payment_status: "Bekliyor",
-        items: items,
+        items: formData.items,
         subtotal: subtotal,
         tax: totalVat,
         grand_total: grandTotal,
@@ -159,6 +159,8 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
 
       if (invoiceError) throw invoiceError;
 
+      let itemsToInsert: any[] = [];
+
       // Only load cargo items if shipment exists
       if (shipment?.id) {
         const { data: cargoItems, error: cargoError } = await supabase
@@ -168,60 +170,76 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
 
         if (cargoError) throw cargoError;
 
-        // Calculate totals from cargo items
-        let calculatedSubtotal = 0;
         if (cargoItems && cargoItems.length > 0) {
-          calculatedSubtotal = cargoItems.reduce((sum, item) => {
-            return sum + (item.quantity * item.unit_price);
+          // Calculate totals from cargo items
+          const calculatedSubtotal = cargoItems.reduce((sum, item) => {
+            return sum + ((item.adet || 1) * (item.birim_fiyat || 0));
           }, 0);
+
+          const calculatedTax = calculatedSubtotal * 0.20;
+          const calculatedGrandTotal = calculatedSubtotal + calculatedTax;
+
+          // Update invoice with cargo item totals
+          const { error: updateError } = await supabase
+            .from("sales_invoices")
+            .update({
+              subtotal: calculatedSubtotal,
+              tax: calculatedTax,
+              grand_total: calculatedGrandTotal,
+            })
+            .eq("id", invoice.id);
+
+          if (updateError) throw updateError;
+          
+          itemsToInsert = cargoItems.map((cargo: any) => ({
+            invoice_id: invoice.id,
+            product_code: shipment?.shipment_code,
+            description: `Taşıma Hizmeti - ${cargo.cinsi || shipment?.shipment_code}`,
+            quantity: cargo.adet || 1,
+            unit: cargo.cinsi || "Adet",
+            unit_price: cargo.birim_fiyat || 0,
+            subtotal: cargo.alt_toplam_fiyat || 0,
+            tax_rate: 20,
+            tax_amount: (cargo.alt_toplam_fiyat || 0) * 0.20,
+            total: (cargo.alt_toplam_fiyat || 0) * 1.20,
+          }));
         }
-
-        const calculatedTax = calculatedSubtotal * 0.20;
-        const calculatedGrandTotal = calculatedSubtotal + calculatedTax;
-
-        // Update invoice with cargo item totals
-        const { error: updateError } = await supabase
-          .from("sales_invoices")
-          .update({
-            subtotal: calculatedSubtotal,
-            tax: calculatedTax,
-            grand_total: calculatedGrandTotal,
-          })
-          .eq("id", invoice.id);
-
-        if (updateError) throw updateError;
+      } else {
+        // Manual invoice items
+        itemsToInsert = formData.items.map((item) => {
+          const itemSubtotal = item.quantity * item.unitPrice;
+          const itemTax = (itemSubtotal * item.vatRate) / 100;
+          return {
+            invoice_id: invoice.id,
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unitPrice,
+            tax_rate: item.vatRate,
+            subtotal: itemSubtotal,
+            tax_amount: itemTax,
+            total: itemSubtotal + itemTax,
+          };
+        });
       }
 
-      // Create invoice items from cargo
-      if (invoice && cargoItems && cargoItems.length > 0) {
-        const items = cargoItems.map((cargo: any) => ({
-          invoice_id: invoice.id,
-          product_code: shipment?.shipment_code,
-          description: `Taşıma Hizmeti - ${cargo.cinsi || shipment?.shipment_code}`,
-          quantity: cargo.adet || 1,
-          unit: cargo.cinsi || "Adet",
-          unit_price: cargo.birim_fiyat || 0,
-          subtotal: cargo.alt_toplam_fiyat || 0,
-          tax_rate: 20,
-          tax_amount: (cargo.alt_toplam_fiyat || 0) * 0.20,
-          total: (cargo.alt_toplam_fiyat || 0) * 1.20,
-        }));
-
+      if (itemsToInsert.length > 0) {
         const { error: itemsError } = await supabase
           .from("sales_invoice_items")
-          .insert(items);
+          .insert(itemsToInsert);
 
         if (itemsError) throw itemsError;
       }
 
-      // Update shipment status
-      await supabase
-        .from("shipments")
-        .update({ 
-          invoice_status: "faturalandi",
-          sale_invoice_id: invoice?.id 
-        })
-        .eq("id", shipment?.id);
+      // Update shipment status if applicable
+      if (shipment?.id) {
+        await supabase
+          .from("shipments")
+          .update({ 
+            invoice_status: "faturalandi",
+            sale_invoice_id: invoice?.id 
+          })
+          .eq("id", shipment.id);
+      }
 
       toast({
         title: "Başarılı",
