@@ -72,7 +72,8 @@ export function CustomerTransactionsDialog({
         if (error) throw error;
 
         if (invoices) {
-          allTransactions = invoices.map((inv) => ({
+          const invoicesList = invoices as any[];
+          allTransactions = invoicesList.map((inv) => ({
             id: inv.id,
             date: inv.invoice_date || inv.created_at,
             type: "Satış Faturası",
@@ -96,7 +97,8 @@ export function CustomerTransactionsDialog({
         if (error) throw error;
 
         if (purchases) {
-          allTransactions = purchases.map((pur) => ({
+          const purchasesList = purchases as any[];
+          allTransactions = purchasesList.map((pur) => ({
             id: pur.id,
             date: pur.purchase_date || pur.created_at,
             type: "Alış Faturası",
