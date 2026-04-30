@@ -19,6 +19,8 @@ interface InvoiceDialogProps {
   isOpen: boolean;
   onClose: () => void;
   preSelectedCustomer?: any;
+  shipment?: any;
+  onSuccess?: () => void;
 }
 
 const defaultNotes = `** Taşıma İşleri Organizatörlüğü Belge Numarası: İZM.U-NET.TİO.35.6323
@@ -32,7 +34,7 @@ const defaultNotes = `** Taşıma İşleri Organizatörlüğü Belge Numarası: 
 * Yalınızca,
 * Sicil Numarası: 240976, İşletme Merkezi: İzmir`;
 
-export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer }: InvoiceDialogProps) {
+export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, onSuccess }: InvoiceDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -63,7 +65,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer }: InvoiceD
     
     // If shipment exists, set customer automatically
     if (shipment?.customer_id) {
-      setSelectedCustomerId(shipment.customer_id);
+      setSelectedCustomer(shipment.customer_id);
     }
   }, [isOpen, shipment]);
 
@@ -90,7 +92,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer }: InvoiceD
     e.preventDefault();
     
     // Validate customer selection
-    if (!selectedCustomerId) {
+    if (!selectedCustomer && !shipment) {
       toast({
         title: "Uyarı",
         description: "Lütfen bir müşteri seçin",
@@ -207,7 +209,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer }: InvoiceD
         description: `TASLAK fatura ${invoiceNo} oluşturuldu. Satış listesinde görüntüleyebilirsiniz.`,
       });
 
-      onSuccess();
+      if (onSuccess) onSuccess();
       onClose();
     } catch (error: any) {
       console.error("Error creating invoice:", error);
@@ -244,8 +246,8 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer }: InvoiceD
                   Müşteri Seçimi *
                 </Label>
                 <Select
-                  value={selectedCustomerId}
-                  onValueChange={setSelectedCustomerId}
+                  value={selectedCustomer}
+                  onValueChange={setSelectedCustomer}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Müşteri seçin..." />

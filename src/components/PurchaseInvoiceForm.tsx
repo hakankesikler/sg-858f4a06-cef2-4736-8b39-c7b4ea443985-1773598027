@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus, Trash2, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 interface InvoiceItem {
   id: string;
@@ -25,10 +26,12 @@ interface InvoiceItem {
 interface PurchaseInvoiceFormProps {
   initialData?: any;
   onSuccess?: () => void;
+  onClose?: () => void;
+  onSave?: (data: any) => void;
   preSelectedSupplier?: any;
 }
 
-export function PurchaseInvoiceForm({ initialData, onSuccess, preSelectedSupplier }: PurchaseInvoiceFormProps) {
+export function PurchaseInvoiceForm({ initialData, onSuccess, onClose, onSave, preSelectedSupplier }: PurchaseInvoiceFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,7 +164,7 @@ export function PurchaseInvoiceForm({ initialData, onSuccess, preSelectedSupplie
       if (!initialData) {
         setSelectedSupplier(preSelectedSupplier?.id || "");
         setInvoiceNo("");
-        setPurchaseDate(new Date().toISOString().split('T')[0]);
+        setInvoiceDate(new Date());
       }
     }
   };
