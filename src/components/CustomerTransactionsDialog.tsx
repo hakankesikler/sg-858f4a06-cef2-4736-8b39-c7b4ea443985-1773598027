@@ -16,7 +16,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Upload, Filter, Search, AlertCircle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Download, Upload, Filter, Search, AlertCircle, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CustomerTransactionsDialogProps {
@@ -160,11 +166,128 @@ export function CustomerTransactionsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-2xl">
-            Cari Hareketleri - {customer?.company || customer?.name}
-          </DialogTitle>
+          <div className="flex items-start justify-between">
+            <div>
+              <DialogTitle className="text-2xl">
+                Cari Hareketleri - {customer?.company || customer?.name}
+              </DialogTitle>
+              <div className="flex gap-2 mt-2">
+                <Badge className="bg-orange-500 text-white">
+                  {customer?.account_type === "musteri" && "Müşteri"}
+                  {customer?.account_type === "tedarikci" && "Tedarikçi"}
+                  {customer?.account_type === "personel" && "Personel"}
+                  {customer?.account_type === "ortak" && "Ortak"}
+                </Badge>
+                <Badge className={customer?.status === "Aktif" ? "bg-blue-500 text-white" : "bg-gray-400 text-white"}>
+                  {customer?.status || "Aktif"}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Action Menus */}
+            <div className="flex gap-2">
+              {/* Borç / Alacak Ekle Menüsü */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    Borç / Alacak Ekle
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => console.log("Borç Ekle")}>
+                    Borç Ekle
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Alacak Ekle")}>
+                    Alacak Ekle
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Fatura Ekle Menüsü */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    Fatura Ekle
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => console.log("Satış Faturası")}>
+                    Satış Faturası
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Satın Alma Faturası")}>
+                    Satın Alma Faturası
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Satış İade Faturası")}>
+                    Satış İade Faturası
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Alış İade Faturası")}>
+                    Alış İade Faturası
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Genel Gider")}>
+                    Genel Gider
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Satış İrsaliyesi")}>
+                    Satış İrsaliyesi
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Ödeme / Tahsilat Ekle Menüsü */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    Ödeme / Tahsilat Ekle
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => console.log("Ödeme Ekle")}>
+                    Ödeme Ekle
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Tahsilat Ekle")}>
+                    Tahsilat Ekle
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Cari Virman")}>
+                    Cari Virman
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* İşlemler Menüsü */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    İşlemler
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => console.log("Mahsuplaştır")}>
+                    Mahsuplaştır
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Mahsuplaşmaları Kaldır")}>
+                    Mahsuplaşmaları Kaldır
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Cari Ekstresi Oluştur")}>
+                    Cari Ekstresi Oluştur
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => console.log("Cariyi Pasifleştir")}>
+                    Cariyi Pasifleştir
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => console.log("Sil")}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    Sil
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </DialogHeader>
 
         {/* Warning Box */}
