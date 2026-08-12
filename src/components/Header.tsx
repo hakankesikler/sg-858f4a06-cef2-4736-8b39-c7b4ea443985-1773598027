@@ -43,7 +43,8 @@ export function Header() {
               <img 
                 src="/rex-logo-full.jpg" 
                 alt="Rex Lojistik" 
-                className="h-12 sm:h-16 object-contain"
+                className="h-14 sm:h-18 w-auto object-contain"
+                style={{ mixBlendMode: 'multiply' }}
               />
             </div>
 
@@ -123,7 +124,8 @@ export function Header() {
             <img 
               src="/rex-logo-full.jpg" 
               alt="Rex Lojistik" 
-              className="h-12 object-contain"
+              className="h-14 w-auto object-contain"
+              style={{ mixBlendMode: 'multiply' }}
             />
             <button
               onClick={closeMobileMenu}
