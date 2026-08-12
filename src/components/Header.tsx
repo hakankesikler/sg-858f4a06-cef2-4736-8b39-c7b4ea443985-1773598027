@@ -43,7 +43,7 @@ export function Header() {
               <img 
                 src="/lg.jpg" 
                 alt="Rex Lojistik" 
-                className="h-[67px] sm:h-[90px] w-auto object-contain"
+                className="h-[57px] sm:h-[77px] w-auto object-contain"
               />
             </div>
 
@@ -123,7 +123,7 @@ export function Header() {
             <img 
               src="/lg.jpg" 
               alt="Rex Lojistik" 
-              className="h-11 w-auto object-contain"
+              className="h-9 w-auto object-contain"
             />
             <button
               onClick={closeMobileMenu}
