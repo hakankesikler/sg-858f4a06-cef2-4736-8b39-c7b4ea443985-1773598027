@@ -41,7 +41,7 @@ export function Header() {
             {/* Logo */}
             <div className="flex-shrink-0">
               <img 
-                src="/rex-logo-header.png" 
+                src="/lg.jpg" 
                 alt="Rex Lojistik" 
                 className="h-24 sm:h-32 w-auto object-contain"
               />
@@ -121,7 +121,7 @@ export function Header() {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <img 
-              src="/rex-logo-header.png" 
+              src="/lg.jpg" 
               alt="Rex Lojistik" 
               className="h-16 w-auto object-contain"
             />
