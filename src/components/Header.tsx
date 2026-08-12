@@ -129,96 +129,75 @@ export function Header() {
           <nav className="flex-1 overflow-y-auto p-6">
             <ul className="space-y-1">
               <li>
-                <Link
+                <a
                   href="#hizmetler"
                   onClick={closeMobileMenu}
                   className="block px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-primary rounded-lg transition-colors"
                 >
-                  Hizmetlerimiz
-                </Link>
+                  Hizmetler
+                </a>
               </li>
               <li>
-                <Link
+                <a
+                  href="#takip"
+                  onClick={closeMobileMenu}
+                  className="block px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-primary rounded-lg transition-colors"
+                >
+                  Kargo Takip
+                </a>
+              </li>
+              <li>
+                <a
                   href="#hakkimizda"
                   onClick={closeMobileMenu}
                   className="block px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-primary rounded-lg transition-colors"
                 >
                   Hakkımızda
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  href="#referanslar"
-                  onClick={closeMobileMenu}
-                  className="block px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-primary rounded-lg transition-colors"
-                >
-                  Referanslar
-                </Link>
-              </li>
-              <li>
-                <Link
+                <a
                   href="#iletisim"
                   onClick={closeMobileMenu}
                   className="block px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-primary rounded-lg transition-colors"
                 >
                   İletişim
+                </a>
+              </li>
+              <li>
+                <Link
+                  href="/personel/profil"
+                  onClick={closeMobileMenu}
+                  className="block px-4 py-3 text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Rex Portal
                 </Link>
               </li>
             </ul>
           </nav>
 
           {/* Contact & CTA */}
-          <div className="p-6 space-y-6">
-            <nav className="space-y-4">
-              <a 
-                href="#hizmetler" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors font-medium"
-              >
-                Hizmetler
-              </a>
-              <a 
-                href="#takip" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors font-medium"
-              >
-                Kargo Takip
-              </a>
-              <a 
-                href="#hakkimizda" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors font-medium"
-              >
-                Hakkımızda
-              </a>
-              <a 
-                href="#iletisim" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors font-medium"
-              >
-                İletişim
-              </a>
-            </nav>
-
-            <div className="pt-6 border-t border-gray-200 space-y-4">
-              <a 
-                href="tel:+905434010755" 
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <span className="font-semibold">0543 401 07 55</span>
-              </a>
-              
-              <Button 
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
-                size="lg"
-                onClick={openQuoteForm}
-              >
-                Teklif Al
-              </Button>
-            </div>
+          <div className="p-6 space-y-4 border-t border-gray-200">
+            <a 
+              href="tel:+905434010755" 
+              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-orange-500 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              <span className="font-semibold">0543 401 07 55</span>
+            </a>
+            
+            <Button 
+              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+              size="lg"
+              onClick={openQuoteForm}
+            >
+              Teklif Al
+            </Button>
           </div>
         </div>
       </div>
