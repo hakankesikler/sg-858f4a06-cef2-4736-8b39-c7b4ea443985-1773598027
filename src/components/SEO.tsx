@@ -8,22 +8,29 @@ interface SEOProps {
 }
 
 export function SEO({
-  title = "Rex Lojistik - Hızlı ve Güvenilir Lojistik Çözümleri",
-  description = "Kara, hava ve deniz taşımacılığı, depolama ve uluslararası kargo hizmetleri. 7/24 müşteri desteği ile güvenli teslimat.",
+  title = "Rex Lojistik - Türkiye'nin Güvenilir Lojistik Partneri",
+  description = "Rex Lojistik ile kara, hava ve deniz taşımacılığı hizmetleri. Depolama, dağıtım ve uluslararası kargo çözümleri. 7/24 müşteri desteği, hızlı ve güvenli teslimat garantisi.",
   image = "/og-image.png",
-  url = "https://rexlojistik.com"
+  url = "https://www.rexlojistik.com"
 }: SEOProps) {
   return (
     <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
-      <meta name="keywords" content="lojistik, kargo, taşımacılık, depolama, hava kargo, deniz kargo, uluslararası kargo, hızlı teslimat" />
+      <meta name="keywords" content="rex lojistik, lojistik firması, kargo şirketi, nakliye, taşımacılık, depolama, dağıtım, hava kargo, deniz kargo, kara taşımacılığı, uluslararası kargo, lojistik çözümleri, hızlı teslimat, güvenli kargo" />
+      <meta name="author" content="Rex Lojistik" />
+      <meta name="language" content="tr" />
+      <meta name="robots" content="index, follow" />
       
       {/* Open Graph */}
       <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="Rex Lojistik" />
+      <meta property="og:locale" content="tr_TR" />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta property="og:url" content={url} />
       
       {/* Twitter Card */}
@@ -34,6 +41,11 @@ export function SEO({
       
       {/* Canonical */}
       <link rel="canonical" href={url} />
+      
+      {/* Additional SEO */}
+      <meta name="theme-color" content="#D84315" />
+      <meta name="apple-mobile-web-app-title" content="Rex Lojistik" />
+      <meta name="application-name" content="Rex Lojistik" />
     </Head>
   );
 }
@@ -41,16 +53,26 @@ export function SEO({
 export function SEOElements() {
   return (
     <>
-      <meta name="description" content="Kara, hava ve deniz taşımacılığı, depolama ve uluslararası kargo hizmetleri. 7/24 müşteri desteği ile güvenli teslimat." />
-      <meta name="keywords" content="lojistik, kargo, taşımacılık, depolama, hava kargo, deniz kargo, uluslararası kargo, hızlı teslimat" />
+      <meta name="description" content="Rex Lojistik ile kara, hava ve deniz taşımacılığı hizmetleri. Depolama, dağıtım ve uluslararası kargo çözümleri. 7/24 müşteri desteği, hızlı ve güvenli teslimat garantisi." />
+      <meta name="keywords" content="rex lojistik, lojistik firması, kargo şirketi, nakliye, taşımacılık, depolama, dağıtım, hava kargo, deniz kargo, kara taşımacılığı, uluslararası kargo, lojistik çözümleri, hızlı teslimat, güvenli kargo" />
+      <meta name="author" content="Rex Lojistik" />
+      <meta name="language" content="tr" />
+      <meta name="robots" content="index, follow" />
       <meta property="og:type" content="website" />
-      <meta property="og:title" content="Rex Lojistik - Hızlı ve Güvenilir Lojistik Çözümleri" />
-      <meta property="og:description" content="Kara, hava ve deniz taşımacılığı, depolama ve uluslararası kargo hizmetleri. 7/24 müşteri desteği ile güvenli teslimat." />
+      <meta property="og:site_name" content="Rex Lojistik" />
+      <meta property="og:locale" content="tr_TR" />
+      <meta property="og:title" content="Rex Lojistik - Türkiye'nin Güvenilir Lojistik Partneri" />
+      <meta property="og:description" content="Rex Lojistik ile kara, hava ve deniz taşımacılığı hizmetleri. Depolama, dağıtım ve uluslararası kargo çözümleri. 7/24 müşteri desteği, hızlı ve güvenli teslimat garantisi." />
       <meta property="og:image" content="/og-image.png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Rex Lojistik - Hızlı ve Güvenilir Lojistik Çözümleri" />
-      <meta name="twitter:description" content="Kara, hava ve deniz taşımacılığı, depolama ve uluslararası kargo hizmetleri. 7/24 müşteri desteği ile güvenli teslimat." />
+      <meta name="twitter:title" content="Rex Lojistik - Türkiye'nin Güvenilir Lojistik Partneri" />
+      <meta name="twitter:description" content="Rex Lojistik ile kara, hava ve deniz taşımacılığı hizmetleri. Depolama, dağıtım ve uluslararası kargo çözümleri. 7/24 müşteri desteği, hızlı ve güvenli teslimat garantisi." />
       <meta name="twitter:image" content="/og-image.png" />
+      <meta name="theme-color" content="#D84315" />
+      <meta name="apple-mobile-web-app-title" content="Rex Lojistik" />
+      <meta name="application-name" content="Rex Lojistik" />
     </>
   );
 }

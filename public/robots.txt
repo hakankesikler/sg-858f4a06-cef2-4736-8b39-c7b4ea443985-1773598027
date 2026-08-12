@@ -2,5 +2,22 @@
 User-agent: *
 Allow: /
 
+# Disallow old template pages and legacy content
+Disallow: /freight-forwarding
+Disallow: /air-freight
+Disallow: /ocean-freight
+Disallow: /services/
+Disallow: /about/
+Disallow: /contact/
+Disallow: /transpress
+Disallow: /fraser-freight
+
+# Allow only Turkish pages
+Allow: /
+Allow: /login
+Allow: /gizlilik-politikasi
+Allow: /kullanim-kosullari
+Allow: /kvkk-aydinlatma-metni
+
 # Sitemaps
 Sitemap: https://www.rexlojistik.com/sitemap.xml
