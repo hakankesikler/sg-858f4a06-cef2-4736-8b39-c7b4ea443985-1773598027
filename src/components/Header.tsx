@@ -37,13 +37,13 @@ export function Header() {
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
         <div className="w-full px-4 sm:px-6">
-          <div className="flex items-center justify-between h-24 sm:h-32 gap-4">
+          <div className="flex items-center justify-between h-28 sm:h-36 gap-4">
             {/* Logo */}
             <div className="flex-shrink-0">
               <img 
                 src="/rex-logo-header.png" 
                 alt="Rex Lojistik" 
-                className="h-20 sm:h-28 w-auto object-contain"
+                className="h-24 sm:h-32 w-auto object-contain"
               />
             </div>
 
