@@ -41,10 +41,9 @@ export function Header() {
             {/* Logo */}
             <div className="flex-shrink-0">
               <img 
-                src="/rex-logo-full.jpg" 
+                src="/rex_logo_gu_ncel.png" 
                 alt="Rex Lojistik" 
-                className="h-14 sm:h-18 w-auto object-contain"
-                style={{ mixBlendMode: 'multiply' }}
+                className="h-12 sm:h-16 w-auto object-contain"
               />
             </div>
 
@@ -122,10 +121,9 @@ export function Header() {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <img 
-              src="/rex-logo-full.jpg" 
+              src="/rex_logo_gu_ncel.png" 
               alt="Rex Lojistik" 
-              className="h-14 w-auto object-contain"
-              style={{ mixBlendMode: 'multiply' }}
+              className="h-12 w-auto object-contain"
             />
             <button
               onClick={closeMobileMenu}
