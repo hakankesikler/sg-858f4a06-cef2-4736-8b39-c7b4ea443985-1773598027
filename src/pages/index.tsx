@@ -12,8 +12,8 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="REX Lojistik - Kara, Hava ve Deniz Taşımacılığı | Gümrükleme ve Depolama Hizmetleri"
-        description="REX Lojistik olarak parsiyel yük taşımacılığı, komple araç kiralama, hava ve deniz taşımacılığı, gümrükleme ve depolama hizmetleri sunuyoruz. Türkiye ve Avrupa'ya güvenli teslimat. 0532 717 34 34"
+        title="Rex Lojistik - Türkiye'nin Güvenilir Lojistik Partneri | 0543 401 07 55"
+        description="Rex Lojistik ile kara, hava ve deniz taşımacılığı hizmetleri. Depolama, dağıtım ve uluslararası kargo çözümleri. 7/24 müşteri desteği, hızlı ve güvenli teslimat. İletişim: 0543 401 07 55"
         image="/og-image.png"
       />
       <div className="min-h-screen">
