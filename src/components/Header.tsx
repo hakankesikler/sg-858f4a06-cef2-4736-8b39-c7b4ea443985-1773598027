@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Phone, Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -10,6 +10,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quoteFormOpen, setQuoteFormOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenQuoteForm = () => {
+      setQuoteFormOpen(true);
+    };
+
+    window.addEventListener("openQuoteForm", handleOpenQuoteForm);
+    return () => window.removeEventListener("openQuoteForm", handleOpenQuoteForm);
+  }, []);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
