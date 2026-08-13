@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 
 export function Footer() {
   return (
@@ -50,8 +50,8 @@ export function Footer() {
                     Manas Bulvarı No:39 Kat:33 D:3305<br />
                     Bayraklı / İzmir
                   </p>
-                  <div className="flex items-start gap-2">
-                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <div className="flex items-center gap-2 mt-2">
+                    <Phone className="h-4 w-4 text-primary" />
                     <a href="tel:+902322290014" className="text-sm text-white hover:text-primary transition-colors">
                       +90 (232) 229 0014
                     </a>
@@ -66,23 +66,23 @@ export function Footer() {
                     A Blok no:28,<br />
                     45140 Yunusemre/Manisa
                   </p>
-                  <div className="flex items-start gap-2">
-                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <div className="flex items-center gap-2 mt-2">
+                    <Phone className="h-4 w-4 text-primary" />
                     <a href="tel:+902362300013" className="text-sm text-white hover:text-primary transition-colors">
                       +90 (236) 230 0013
                     </a>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                <div className="space-y-2 pt-2">
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-primary" />
                     <a href="tel:+905434010755" className="text-sm text-white hover:text-primary transition-colors">
                       +90 (543) 401 0755
                     </a>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <Mail className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-primary" />
                     <a href="mailto:info@rexlojistik.com" className="text-sm text-white hover:text-primary transition-colors">
                       info@rexlojistik.com
                     </a>
