@@ -46,12 +46,13 @@ export function Footer() {
                 <div>
                   <h4 className="text-sm font-semibold text-white mb-2">Merkez Ofis - İzmir</h4>
                   <p className="text-sm text-white leading-relaxed mb-2">
-                    Folkart Towers Adalet Mah.<br />
-                    Manas Bulvarı No:39 Kat:33 D:3305<br />
-                    Bayraklı / İzmir
+                    Folkart Towers A Kule No:47/B<br />
+                    K:26 D:2601<br />
+                    Adalet Mahallesi Manas Bulvarı<br />
+                    Bayraklı, 35530, İzmir
                   </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Phone className="h-4 w-4 text-primary" />
+                  <div className="flex items-start gap-2">
+                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
                     <a href="tel:+902322290014" className="text-sm text-white hover:text-primary transition-colors">
                       +90 (232) 229 0014
                     </a>
