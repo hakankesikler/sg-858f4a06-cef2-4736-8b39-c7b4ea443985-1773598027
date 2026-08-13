@@ -44,14 +44,11 @@ export function Footer() {
               <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">İletişim</h3>
               <div className="space-y-4">
                 <div>
-                  <div className="flex items-start gap-2 mb-2">
-                    <MapPin className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    <h4 className="text-sm font-semibold text-white">Merkez Ofis - İzmir</h4>
-                  </div>
-                  <p className="text-sm text-white leading-relaxed ml-6">
-                    Folkart Towers A Kule No:17/B K:26 D:2601<br />
-                    Adalet Mahallesi Manas Bulvarı<br />
-                    Bayraklı / İzmir, 35630
+                  <h4 className="text-sm font-semibold text-white mb-2">Merkez Ofis - İzmir</h4>
+                  <p className="text-sm text-white leading-relaxed">
+                    Folkart Towers Adalet Mah.<br />
+                    Manas Bulvarı No:39 Kat:33 D:3305<br />
+                    Bayraklı / İzmir
                   </p>
                 </div>
 
@@ -66,16 +63,20 @@ export function Footer() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="text-sm text-white">+90 232 218 24 83</span>
+                  <div className="flex items-start gap-2">
+                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                    <a href="tel:+902363140370" className="text-sm text-white hover:text-primary transition-colors">
+                      +90 236 314 03 70
+                    </a>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="text-sm text-white">+90 543 401 07 55</span>
+                  <div className="flex items-start gap-2">
+                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                    <a href="tel:+902363163061" className="text-sm text-white hover:text-primary transition-colors">
+                      +90 236 316 30 61
+                    </a>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div className="flex items-start gap-2">
+                    <Mail className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
                     <a href="mailto:info@rexlojistik.com" className="text-sm text-white hover:text-primary transition-colors">
                       info@rexlojistik.com
                     </a>
