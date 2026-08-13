@@ -68,18 +68,15 @@ export function Footer() {
                   Bayraklı / İzmir, 35530</p>
                 </div>
               </li>
-              <li className="flex items-start space-x-2">
-                <MapPin className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-white mb-1">Manisa Şubesi</p>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Rainbow Life Avm, Muradiye,<br />
-                    Manolya Sokak No:228/1<br />
-                    A Blok no:28,<br />
-                    45140 Yunusemre/Manisa
-                  </p>
-                </div>
-              </li>
+              <div>
+                <h3 className="font-semibold text-white mb-3">Manisa Şubesi</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Rainbow Life Avm, Muradiye,<br />
+                  Manolya Sokak No:228/1<br />
+                  A Blok no:28,<br />
+                  45140 Yunusemre/Manisa
+                </p>
+              </div>
               <li className="flex items-center space-x-2">
                 <Phone className="h-5 w-5 text-accent flex-shrink-0" />
                 <div>
