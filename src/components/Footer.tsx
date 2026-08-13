@@ -13,21 +13,62 @@ export function Footer() {
               alt="Rex Lojistik" 
               className="h-44 w-auto object-contain"
             />
-            <p className="text-gray-400 max-w-sm">
+            <p className="text-sm text-gray-400 max-w-sm">
               2002 yılından bu yana sektör tecrübesi ile 2022'de kurulan REX Lojistik, güvenilir ve profesyonel lojistik çözümleri sunuyor.
             </p>
           </div>
 
-          <div>
-            <h3 className="font-heading font-semibold text-lg mb-4">Hizmetlerimiz</h3>
-            <ul className="space-y-2 text-sm text-blue-200">
-              <li><Link href="#" className="hover:text-accent transition-colors">Hava Yolu Taşımacılığı</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Deniz Yolu Taşımacılığı</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Kara Yolu Taşımacılığı</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Depolama Hizmetleri</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Paketleme ve Elleçleme</Link></li>
-              <li><Link href="#" className="hover:text-accent transition-colors">Uluslararası Taşımacılık</Link></li>
-            </ul>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Hizmetlerimiz</h3>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-sm text-gray-400 hover:text-primary transition-colors">Kara Yolu Taşımacılığı</a></li>
+                <li><a href="#" className="text-sm text-gray-400 hover:text-primary transition-colors">Depolama Hizmetleri</a></li>
+                <li><a href="#" className="text-sm text-gray-400 hover:text-primary transition-colors">Dağıtım Lojistiği</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Şubelerimiz</h3>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-white mb-2">Merkez Ofis</h4>
+                  <p className="text-sm text-gray-400 leading-relaxed">
+                    Şenyurt, 3080. Sk. No:16,<br />
+                    45400 Turgutlu/Manisa
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-white mb-2">Manisa Şubesi</h4>
+                  <p className="text-sm text-gray-400 leading-relaxed">
+                    Rainbow Life Avm, Muradiye,<br />
+                    Manolya Sokak No:228/1<br />
+                    A Blok no:28,<br />
+                    45140 Yunusemre/Manisa
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">İletişim</h3>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-2 text-sm text-gray-400">
+                  <Phone className="h-4 w-4 text-primary flex-shrink-0" />
+                  <span>+90 236 314 03 70</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-400">
+                  <Mail className="h-4 w-4 text-primary flex-shrink-0" />
+                  <a href="mailto:info@rexlojistik.com" className="hover:text-primary transition-colors">
+                    info@rexlojistik.com
+                  </a>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-400">
+                  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                  <span>Turgutlu / Manisa</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <div>
@@ -51,47 +92,6 @@ export function Footer() {
               <li>
                 <a href="#iletisim" className="text-gray-300 hover:text-orange-400 transition-colors">
                   İletişim
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-heading font-semibold text-lg mb-4">İletişim</h3>
-            <ul className="space-y-3 text-sm text-blue-200">
-              <li className="flex items-start space-x-2">
-                <MapPin className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-white mb-1">Merkez Ofis - İzmir</p>
-                  <p>Folkart Towers A Kule No:47/B K:26 D:2601<br />
-                  Adalet Mahallesi Manas Bulvarı<br />
-                  Bayraklı / İzmir, 35530</p>
-                </div>
-              </li>
-              <div>
-                <h3 className="font-semibold text-white mb-3">Manisa Şubesi</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  Rainbow Life Avm, Muradiye,<br />
-                  Manolya Sokak No:228/1<br />
-                  A Blok no:28,<br />
-                  45140 Yunusemre/Manisa
-                </p>
-              </div>
-              <li className="flex items-center space-x-2">
-                <Phone className="h-5 w-5 text-accent flex-shrink-0" />
-                <div>
-                  <a href="tel:+902322182483" className="hover:text-accent transition-colors block">
-                    +90 232 218 24 83
-                  </a>
-                  <a href="tel:+905434010755" className="hover:text-accent transition-colors block">
-                    +90 543 401 07 55
-                  </a>
-                </div>
-              </li>
-              <li className="flex items-center space-x-2">
-                <Mail className="h-5 w-5 text-accent flex-shrink-0" />
-                <a href="mailto:info@rexlojistik.com" className="hover:text-accent transition-colors">
-                  info@rexlojistik.com
                 </a>
               </li>
             </ul>
