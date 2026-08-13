@@ -43,47 +43,49 @@ export function Footer() {
             <div>
               <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">İletişim</h3>
               <div className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-semibold text-white mb-2">Merkez Ofis - İzmir</h4>
-                  <p className="text-sm text-white leading-relaxed mb-2">
-                    Folkart Towers A Kule No:47/B<br />
-                    K:26 D:2601<br />
-                    Adalet Mahallesi Manas Bulvarı<br />
-                    Bayraklı, 35530, İzmir
-                  </p>
-                  <div className="flex items-start gap-2">
-                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    <a href="tel:+902322290014" className="text-sm text-white hover:text-primary transition-colors">
-                      +90 (232) 229 0014
-                    </a>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-sm font-semibold text-white mb-2">Merkez Ofis - İzmir</h4>
+                    <p className="text-sm text-white leading-relaxed">
+                      Folkart Towers A Kule No:47/B<br />
+                      K:26 D:2601<br />
+                      Adalet Mahallesi Manas Bulvarı<br />
+                      Bayraklı, 35530, İzmir
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Phone className="h-4 w-4 text-primary flex-shrink-0" />
+                      <a href="tel:+902322290014" className="text-sm text-white hover:text-primary transition-colors">
+                        +90 (232) 229 0014
+                      </a>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-semibold text-white mb-2">Manisa Ofisi</h4>
+                    <p className="text-sm text-white leading-relaxed">
+                      Rainbow Life Avm, Muradiye,<br />
+                      Manolya Sokak No:228/1<br />
+                      A Blok no:28,<br />
+                      45140 Yunusemre/Manisa
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Phone className="h-4 w-4 text-primary flex-shrink-0" />
+                      <a href="tel:+902362300013" className="text-sm text-white hover:text-primary transition-colors">
+                        +90 (236) 230 0013
+                      </a>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-sm font-semibold text-white mb-2">Manisa Ofisi</h4>
-                  <p className="text-sm text-white leading-relaxed mb-2">
-                    Rainbow Life Avm, Muradiye,<br />
-                    Manolya Sokak No:228/1<br />
-                    A Blok no:28,<br />
-                    45140 Yunusemre/Manisa
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Phone className="h-4 w-4 text-primary" />
-                    <a href="tel:+902362300013" className="text-sm text-white hover:text-primary transition-colors">
-                      +90 (236) 230 0013
-                    </a>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2 border-t border-white/10 pt-4">
                   <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-primary" />
+                    <Phone className="h-4 w-4 text-primary flex-shrink-0" />
                     <a href="tel:+905434010755" className="text-sm text-white hover:text-primary transition-colors">
                       +90 (543) 401 0755
                     </a>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-primary" />
+                    <Mail className="h-4 w-4 text-primary flex-shrink-0" />
                     <a href="mailto:info@rexlojistik.com" className="text-sm text-white hover:text-primary transition-colors">
                       info@rexlojistik.com
                     </a>
