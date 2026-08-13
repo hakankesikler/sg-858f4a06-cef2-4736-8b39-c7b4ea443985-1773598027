@@ -56,14 +56,12 @@ export function Footer() {
                 </div>
 
                 <div>
-                  <div className="flex items-start gap-2 mb-2">
-                    <MapPin className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    <h4 className="text-sm font-semibold text-white">Manisa Ofisi</h4>
-                  </div>
-                  <p className="text-sm text-white leading-relaxed ml-6">
-                    Muradiye Mahallesi 42 Sokak 3/C<br />
-                    Yunusemre, 45140<br />
-                    Manisa, Türkiye
+                  <h4 className="text-sm font-semibold text-white mb-2">Manisa Ofisi</h4>
+                  <p className="text-sm text-white leading-relaxed">
+                    Rainbow Life Avm, Muradiye,<br />
+                    Manolya Sokak No:228/1<br />
+                    A Blok no:28,<br />
+                    45140 Yunusemre/Manisa
                   </p>
                 </div>
 
