@@ -6,7 +6,8 @@ export function Footer() {
     <footer className="bg-navy text-white py-16">
       <div className="container mx-auto px-4">
         <div className="space-y-12">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+            {/* Logo ve Açıklama */}
             <div className="space-y-4">
               <img 
                 src="/2.png" 
