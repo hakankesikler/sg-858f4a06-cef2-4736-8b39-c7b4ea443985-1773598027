@@ -64,18 +64,6 @@ export function Footer() {
 
                 <div className="space-y-2">
                   <div className="flex items-start gap-2">
-                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    <a href="tel:+902363140370" className="text-sm text-white hover:text-primary transition-colors">
-                      +90 236 314 03 70
-                    </a>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    <a href="tel:+902363163061" className="text-sm text-white hover:text-primary transition-colors">
-                      +90 236 316 30 61
-                    </a>
-                  </div>
-                  <div className="flex items-start gap-2">
                     <Mail className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
                     <a href="mailto:info@rexlojistik.com" className="text-sm text-white hover:text-primary transition-colors">
                       info@rexlojistik.com
