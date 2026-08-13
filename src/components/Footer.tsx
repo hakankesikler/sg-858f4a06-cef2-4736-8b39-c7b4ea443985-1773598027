@@ -45,30 +45,40 @@ export function Footer() {
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-semibold text-white mb-2">Merkez Ofis - İzmir</h4>
-                  <p className="text-sm text-white leading-relaxed">
+                  <p className="text-sm text-white leading-relaxed mb-2">
                     Folkart Towers Adalet Mah.<br />
                     Manas Bulvarı No:39 Kat:33 D:3305<br />
                     Bayraklı / İzmir
                   </p>
+                  <div className="flex items-start gap-2">
+                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                    <a href="tel:+902322290014" className="text-sm text-white hover:text-primary transition-colors">
+                      +90 (232) 229 0014
+                    </a>
+                  </div>
                 </div>
 
                 <div>
                   <h4 className="text-sm font-semibold text-white mb-2">Manisa Ofisi</h4>
-                  <p className="text-sm text-white leading-relaxed">
+                  <p className="text-sm text-white leading-relaxed mb-2">
                     Rainbow Life Avm, Muradiye,<br />
                     Manolya Sokak No:228/1<br />
                     A Blok no:28,<br />
                     45140 Yunusemre/Manisa
                   </p>
-                </div>
-
-                <div className="space-y-2">
                   <div className="flex items-start gap-2">
-                    <Mail className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                    <a href="mailto:info@rexlojistik.com" className="text-sm text-white hover:text-primary transition-colors">
-                      info@rexlojistik.com
+                    <Phone className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                    <a href="tel:+902362300013" className="text-sm text-white hover:text-primary transition-colors">
+                      +90 (236) 230 0013
                     </a>
                   </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <Mail className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <a href="mailto:info@rexlojistik.com" className="text-sm text-white hover:text-primary transition-colors">
+                    info@rexlojistik.com
+                  </a>
                 </div>
               </div>
             </div>
