@@ -8,14 +8,11 @@ export function Footer() {
       <div className="container mx-auto px-4 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div className="space-y-4">
-            <div className="relative inline-block">
-              <div className="absolute inset-0 bg-white rounded-full scale-90"></div>
-              <img 
-                src="/rex-lojistik-logo-new.png" 
-                alt="Rex Lojistik" 
-                className="h-44 w-44 object-contain relative z-10"
-              />
-            </div>
+            <img 
+              src="/2.png" 
+              alt="Rex Lojistik" 
+              className="h-44 w-auto object-contain"
+            />
             <p className="text-gray-400 max-w-xs">
               2002 yılından bu yana sektör tecrübesi ile 2022'de kurulan REX Lojistik, güvenilir ve profesyonel lojistik çözümleri sunuyor.
             </p>
