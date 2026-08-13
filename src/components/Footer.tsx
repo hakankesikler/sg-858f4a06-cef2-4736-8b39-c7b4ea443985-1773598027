@@ -5,9 +5,9 @@ export function Footer() {
   return (
     <footer className="bg-navy text-white py-16">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           {/* Logo ve Açıklama */}
-          <div>
+          <div className="flex flex-col">
             <img 
               src="/2.png" 
               alt="Rex Lojistik" 
