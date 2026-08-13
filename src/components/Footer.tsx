@@ -13,7 +13,7 @@ export function Footer() {
               alt="Rex Lojistik" 
               className="h-48 w-auto object-contain -mt-4"
             />
-            <p className="text-sm text-white max-w-sm leading-relaxed -mt-8">
+            <p className="text-sm text-white max-w-sm leading-relaxed -mt-12">
               2002 yılından bu yana sektör tecrübesi ile 2022'de kurulan REX Lojistik, güvenilir ve profesyonel lojistik çözümleri sunuyor.
             </p>
           </div>
