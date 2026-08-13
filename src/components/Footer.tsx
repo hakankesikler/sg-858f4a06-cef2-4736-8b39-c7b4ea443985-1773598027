@@ -8,13 +8,11 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Logo ve Açıklama */}
           <div className="space-y-3">
-            <div className="mb-4">
-              <img 
-                src="/2.png" 
-                alt="Rex Lojistik" 
-                className="h-12 w-auto object-contain"
-              />
-            </div>
+            <img 
+              src="/2.png" 
+              alt="Rex Lojistik" 
+              className="h-16 w-auto object-contain mb-4"
+            />
             <p className="text-sm text-white max-w-sm leading-relaxed">
               2002 yılından bu yana sektör tecrübesi ile 2022'de kurulan REX Lojistik, güvenilir ve profesyonel lojistik çözümleri sunuyor.
             </p>
