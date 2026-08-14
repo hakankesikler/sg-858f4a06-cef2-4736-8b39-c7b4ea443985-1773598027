@@ -33,18 +33,9 @@ const formSchema = z.object({
   serviceType: z.enum(["domestic", "international"]),
   transportMode: z.string().min(1, "Taşıma türü seçiniz"),
   transportDetail: z.string().optional(),
-  
-  senderCountry: z.string().min(2, "Ülke seçiniz"),
-  senderCity: z.string().min(2, "İl giriniz"),
-  senderDistrict: z.string().min(2, "İlçe giriniz"),
-  senderPostalCode: z.string().min(5, "Posta kodu giriniz"),
-  senderAddress: z.string().min(10, "Adres giriniz"),
-  
-  receiverCountry: z.string().min(2, "Ülke seçiniz"),
-  receiverCity: z.string().min(2, "İl giriniz"),
-  receiverDistrict: z.string().min(2, "İlçe giriniz"),
-  receiverPostalCode: z.string().min(5, "Posta kodu giriniz"),
-  receiverAddress: z.string().min(10, "Adres giriniz"),
+  loadingPoint: z.string().min(2, "Yükleme noktası giriniz"),
+  deliveryPoint: z.string().min(2, "Teslimat noktası giriniz"),
+  specialRequirements: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -92,17 +83,6 @@ export function QuoteForm() {
     { width: "", length: "", height: "", weight: "", quantity: "" }
   ]);
   const [cargoErrors, setCargoErrors] = useState<Array<Partial<Record<keyof CargoData, string>>>>([{}]);
-  const [formData, setFormData] = useState({
-    senderName: "",
-    senderEmail: "",
-    senderPhone: "",
-    loadingPoint: "",
-    deliveryPoint: "",
-    cargoType: "",
-    weight: "",
-    dimensions: "",
-    specialRequirements: "",
-  });
 
   const {
     register,
@@ -216,19 +196,11 @@ export function QuoteForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          senderName: formData.senderName,
-          senderEmail: formData.senderEmail,
-          senderPhone: formData.senderPhone,
-          loadingPoint: formData.loadingPoint,
-          deliveryPoint: formData.deliveryPoint,
-          cargoType: formData.cargoType,
-          weight: formData.weight,
-          dimensions: formData.dimensions,
-          specialRequirements: formData.specialRequirements,
+          ...data,
+          cargos,
         }),
       });
 
-      // Check if response is actually JSON
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         const textResponse = await response.text();
@@ -388,149 +360,31 @@ export function QuoteForm() {
             </Select>
           </div>
         </div>
-      </div>
 
-      {/* Gönderen Bilgileri */}
-      <div className="space-y-4">
-        <h3 className="font-heading font-semibold text-xl text-white mb-4">Gönderen Bilgileri</h3>
-        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="senderCountry" className="text-white">Ülke *</Label>
+            <Label htmlFor="loadingPoint" className="text-white">Yükleme Noktası *</Label>
             <Input
-              id="senderCountry"
-              {...register("senderCountry")}
-              className="mt-1 bg-white/95"
-              placeholder="Türkiye"
-            />
-            {errors.senderCountry && (
-              <p className="text-red-300 text-sm mt-1">{errors.senderCountry.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="senderCity" className="text-white">İl *</Label>
-            <Input
-              id="senderCity"
-              {...register("senderCity")}
+              id="loadingPoint"
+              {...register("loadingPoint")}
               className="mt-1 bg-white/95"
               placeholder="İstanbul"
             />
-            {errors.senderCity && (
-              <p className="text-red-300 text-sm mt-1">{errors.senderCity.message}</p>
+            {errors.loadingPoint && (
+              <p className="text-red-300 text-sm mt-1">{errors.loadingPoint.message}</p>
             )}
           </div>
 
           <div>
-            <Label htmlFor="senderDistrict" className="text-white">İlçe *</Label>
+            <Label htmlFor="deliveryPoint" className="text-white">Teslimat Noktası *</Label>
             <Input
-              id="senderDistrict"
-              {...register("senderDistrict")}
-              className="mt-1 bg-white/95"
-              placeholder="Kadıköy"
-            />
-            {errors.senderDistrict && (
-              <p className="text-red-300 text-sm mt-1">{errors.senderDistrict.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="senderPostalCode" className="text-white">Posta Kodu *</Label>
-            <Input
-              id="senderPostalCode"
-              {...register("senderPostalCode")}
-              className="mt-1 bg-white/95"
-              placeholder="34000"
-            />
-            {errors.senderPostalCode && (
-              <p className="text-red-300 text-sm mt-1">{errors.senderPostalCode.message}</p>
-            )}
-          </div>
-
-          <div className="md:col-span-2">
-            <Label htmlFor="senderAddress" className="text-white">Adres *</Label>
-            <Textarea
-              id="senderAddress"
-              {...register("senderAddress")}
-              className="mt-1 bg-white/95"
-              placeholder="Detaylı adres"
-              rows={3}
-            />
-            {errors.senderAddress && (
-              <p className="text-red-300 text-sm mt-1">{errors.senderAddress.message}</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Alıcı Bilgileri */}
-      <div className="space-y-4">
-        <h3 className="font-heading font-semibold text-xl text-white mb-4">Alıcı Bilgileri</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="receiverCountry" className="text-white">Ülke *</Label>
-            <Input
-              id="receiverCountry"
-              {...register("receiverCountry")}
-              className="mt-1 bg-white/95"
-              placeholder="Türkiye"
-            />
-            {errors.receiverCountry && (
-              <p className="text-red-300 text-sm mt-1">{errors.receiverCountry.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="receiverCity" className="text-white">İl *</Label>
-            <Input
-              id="receiverCity"
-              {...register("receiverCity")}
+              id="deliveryPoint"
+              {...register("deliveryPoint")}
               className="mt-1 bg-white/95"
               placeholder="Ankara"
             />
-            {errors.receiverCity && (
-              <p className="text-red-300 text-sm mt-1">{errors.receiverCity.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="receiverDistrict" className="text-white">İlçe *</Label>
-            <Input
-              id="receiverDistrict"
-              {...register("receiverDistrict")}
-              className="mt-1 bg-white/95"
-              placeholder="Çankaya"
-            />
-            {errors.receiverDistrict && (
-              <p className="text-red-300 text-sm mt-1">{errors.receiverDistrict.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="receiverPostalCode" className="text-white">Posta Kodu *</Label>
-            <Input
-              id="receiverPostalCode"
-              {...register("receiverPostalCode")}
-              className="mt-1 bg-white/95"
-              placeholder="06000"
-            />
-            {errors.receiverPostalCode && (
-              <p className="text-red-300 text-sm mt-1">{errors.receiverPostalCode.message}</p>
-            )}
-          </div>
-
-          <div className="md:col-span-2">
-            <Label htmlFor="receiverAddress" className="text-white">Adres *</Label>
-            <Textarea
-              id="receiverAddress"
-              {...register("receiverAddress")}
-              className="mt-1 bg-white/95"
-              placeholder="Detaylı adres"
-              rows={3}
-            />
-            {errors.receiverAddress && (
-              <p className="text-red-300 text-sm mt-1">{errors.receiverAddress.message}</p>
+            {errors.deliveryPoint && (
+              <p className="text-red-300 text-sm mt-1">{errors.deliveryPoint.message}</p>
             )}
           </div>
         </div>
@@ -650,6 +504,21 @@ export function QuoteForm() {
           <Plus className="w-4 h-4 mr-2" />
           Yeni Yük Ekle
         </Button>
+      </div>
+
+      {/* Özel Gereksinimler */}
+      <div className="space-y-4">
+        <h3 className="font-heading font-semibold text-xl text-white mb-4">Özel Gereksinimler</h3>
+        <div>
+          <Label htmlFor="specialRequirements" className="text-white">Ek Notlar</Label>
+          <Textarea
+            id="specialRequirements"
+            {...register("specialRequirements")}
+            className="mt-1 bg-white/95"
+            placeholder="Varsa özel taleplerinizi buraya yazabilirsiniz..."
+            rows={4}
+          />
+        </div>
       </div>
 
       {/* Submit Button */}
