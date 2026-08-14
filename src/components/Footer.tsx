@@ -7,7 +7,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
           {/* Logo ve Açıklama */}
           <div>
-            <div className="h-[28px] flex items-center mb-4">
+            <div className="h-[28px] flex items-center mb-6">
               <img src="/rexlogo.png" alt="Rex Lojistik" className="w-full max-w-[180px] h-auto" />
             </div>
             <p className="text-sm text-white/80">
