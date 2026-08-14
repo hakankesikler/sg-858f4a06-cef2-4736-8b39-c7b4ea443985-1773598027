@@ -41,9 +41,9 @@ export function Footer() {
           </div>
 
           {/* İletişim */}
-          <div>
+          <div className="md:col-span-2">
             <h3 className="text-lg font-semibold mb-4">İletişim</h3>
-            <div className="space-y-4 text-sm">
+            <div className="grid md:grid-cols-2 gap-6 text-sm">
               <div>
                 <p className="font-medium">Merkez Ofis - İzmir</p>
                 <p>Folkart Towers A Kule No:47/B<br />K:26 D:2601</p>
@@ -52,18 +52,18 @@ export function Footer() {
                 <p>+90 (543) 401 0765</p>
               </div>
               
-              <div className="pt-2">
+              <div>
                 <p className="font-medium">Manisa Ofis</p>
                 <p>Rainbow Life AVM</p>
                 <p>Muradiye Mahallesi, Manolya Sokak No: 228/1</p>
                 <p>A Blok No: 28 Yunusemre, 45140, Manisa</p>
                 <p className="pt-2">+90 (236) 230 00 13</p>
               </div>
-              
-              <a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors block pt-2">
-                info@rexlojistik.com
-              </a>
             </div>
+            
+            <a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors block mt-4 text-sm">
+              info@rexlojistik.com
+            </a>
           </div>
         </div>
 
