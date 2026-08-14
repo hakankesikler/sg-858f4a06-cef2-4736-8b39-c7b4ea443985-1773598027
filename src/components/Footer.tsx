@@ -81,22 +81,23 @@ export function Footer() {
         </div>
 
         {/* Alt Bölüm */}
-        <div className="mt-8 pt-8 border-t border-white/10">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-sm text-white/60">
-              © {new Date().getFullYear()} Rex Lojistik. Tüm hakları saklıdır.
-            </p>
-            <div className="flex space-x-6 text-sm">
-              <Link href="/gizlilik-politikasi" className="text-white/60 hover:text-white transition-colors">
-                Gizlilik Politikası
-              </Link>
-              <Link href="/kullanim-kosullari" className="text-white/60 hover:text-white transition-colors">
-                Kullanım Koşulları
-              </Link>
-              <Link href="/kvkk-aydinlatma-metni" className="text-white/60 hover:text-white transition-colors">
-                KVKK
-              </Link>
-            </div>
+        <div className="border-t border-white/10 mt-8 pt-8 text-sm text-center">
+          <p className="mb-2">&copy; 2026 Rex Lojistik. Tüm hakları saklıdır.</p>
+          <p className="mb-3">
+            <a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors">
+              info@rexlojistik.com
+            </a>
+          </p>
+          <div className="flex justify-center gap-4 flex-wrap">
+            <Link href="/gizlilik-politikasi" className="text-white/80 hover:text-white transition-colors">
+              Gizlilik Politikası
+            </Link>
+            <Link href="/kullanim-kosullari" className="text-white/80 hover:text-white transition-colors">
+              Kullanım Koşulları
+            </Link>
+            <Link href="/kvkk-aydinlatma-metni" className="text-white/80 hover:text-white transition-colors">
+              KVKK
+            </Link>
           </div>
         </div>
       </div>
