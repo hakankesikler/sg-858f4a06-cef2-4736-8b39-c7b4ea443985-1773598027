@@ -54,8 +54,10 @@ export function Footer() {
               
               <div className="pt-2">
                 <p className="font-medium">Manisa Ofis</p>
-                <p>Organize Sanayi Bölgesi<br />Manisa</p>
-                <p className="pt-2">+90 (236) 213 4567</p>
+                <p>Rainbow Life AVM</p>
+                <p>Muradiye Mahallesi, Manolya Sokak No: 228/1</p>
+                <p>A Blok No: 28 Yunusemre, 45140, Manisa</p>
+                <p className="pt-2">+90 (236) 230 00 13</p>
               </div>
               
               <a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors block pt-2">
