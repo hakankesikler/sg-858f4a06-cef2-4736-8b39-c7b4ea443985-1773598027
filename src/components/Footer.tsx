@@ -1,11 +1,10 @@
-import Link from "next/link";
-import { Mail, Phone } from "lucide-react";
+import { Link } from "next/link";
 
 export function Footer() {
   return (
-    <footer className="bg-navy text-white py-16">
+    <footer className="bg-[#1a1f2e] text-white py-16">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Logo ve Açıklama */}
           <div className="flex flex-col">
             <img 
@@ -18,32 +17,34 @@ export function Footer() {
             </p>
           </div>
 
+          {/* Hizmetlerimiz */}
           <div>
-            <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Hizmetlerimiz</h3>
-            <ul className="space-y-2">
-              <li><a href="#" className="text-sm text-white hover:text-primary transition-colors">Hava Yolu Taşımacılığı</a></li>
-              <li><a href="#" className="text-sm text-white hover:text-primary transition-colors">Deniz Yolu Taşımacılığı</a></li>
-              <li><a href="#" className="text-sm text-white hover:text-primary transition-colors">Kara Yolu Taşımacılığı</a></li>
-              <li><a href="#" className="text-sm text-white hover:text-primary transition-colors">Depolama Hizmetleri</a></li>
-              <li><a href="#" className="text-sm text-white hover:text-primary transition-colors">Paketleme ve Elleçleme</a></li>
-              <li><a href="#" className="text-sm text-white hover:text-primary transition-colors">Uluslararası Taşımacılık</a></li>
+            <h3 className="text-lg font-semibold mb-4">HİZMETLERİMİZ</h3>
+            <ul className="space-y-2 text-sm">
+              <li>Hava Yolu Taşımacılığı</li>
+              <li>Deniz Yolu Taşımacılığı</li>
+              <li>Kara Yolu Taşımacılığı</li>
+              <li>Depolama Hizmetleri</li>
+              <li>Paketleme ve Elleçleme</li>
+              <li>Uluslararası Taşımacılık</li>
             </ul>
           </div>
 
+          {/* Kurumsal */}
           <div>
-            <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Kurumsal</h3>
-            <ul className="space-y-2">
-              <li><a href="#" className="text-sm text-white hover:text-primary transition-colors">Hakkımızda</a></li>
-              <li><a href="#" className="text-sm text-white hover:text-primary transition-colors">Hizmetlerimiz</a></li>
-              <li><a href="#" className="text-sm text-white hover:text-primary transition-colors">Rex Portal</a></li>
-              <li><a href="#" className="text-sm text-white hover:text-primary transition-colors">İletişim</a></li>
+            <h3 className="text-lg font-semibold mb-4">KURUMSAL</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/hakkimizda" className="hover:text-white/80 transition-colors">Hakkımızda</Link></li>
+              <li><Link href="/hizmetlerimiz" className="hover:text-white/80 transition-colors">Hizmetlerimiz</Link></li>
+              <li><Link href="/rex-portal" className="hover:text-white/80 transition-colors">Rex Portal</Link></li>
+              <li><Link href="/iletisim" className="hover:text-white/80 transition-colors">İletişim</Link></li>
             </ul>
           </div>
 
           {/* İletişim */}
-          <div className="md:col-span-2">
+          <div>
             <h3 className="text-lg font-semibold mb-4">İletişim</h3>
-            <div className="grid md:grid-cols-2 gap-6 text-sm">
+            <div className="space-y-4 text-sm">
               <div>
                 <p className="font-medium">Merkez Ofis - İzmir</p>
                 <p>Folkart Towers A Kule No:47/B<br />K:26 D:2601</p>
@@ -52,31 +53,34 @@ export function Footer() {
                 <p>+90 (543) 401 0765</p>
               </div>
               
-              <div>
+              <div className="pt-2">
                 <p className="font-medium">Manisa Ofis</p>
                 <p>Rainbow Life AVM</p>
                 <p>Muradiye Mahallesi, Manolya Sokak No: 228/1</p>
                 <p>A Blok No: 28 Yunusemre, 45140, Manisa</p>
                 <p className="pt-2">+90 (236) 230 00 13</p>
               </div>
+              
+              <a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors block pt-2">
+                info@rexlojistik.com
+              </a>
             </div>
-            
-            <a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors block mt-4 text-sm">
-              info@rexlojistik.com
-            </a>
           </div>
         </div>
 
-        <div className="border-t border-gray-700 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-white">
-              © 2026 REX Lojistik. Tüm hakları saklıdır.
-            </p>
-            <div className="flex gap-6">
-              <Link href="/gizlilik-politikasi" className="text-sm text-white hover:text-primary transition-colors">Gizlilik Politikası</Link>
-              <Link href="/kullanim-kosullari" className="text-sm text-white hover:text-primary transition-colors">Kullanım Koşulları</Link>
-              <Link href="/kvkk-aydinlatma-metni" className="text-sm text-white hover:text-primary transition-colors">KVKK</Link>
-            </div>
+        {/* Alt Bölüm */}
+        <div className="border-t border-white/10 pt-8 text-center text-sm text-white/60">
+          <p className="mb-2">© 2026 REX Lojistik. Tüm hakları saklıdır.</p>
+          <div className="flex justify-center gap-4 flex-wrap">
+            <Link href="/gizlilik-politikasi" className="hover:text-white transition-colors">
+              Gizlilik Politikası
+            </Link>
+            <Link href="/kullanim-kosullari" className="hover:text-white transition-colors">
+              Kullanım Koşulları
+            </Link>
+            <Link href="/kvkk-aydinlatma-metni" className="hover:text-white transition-colors">
+              KVKK
+            </Link>
           </div>
         </div>
       </div>
