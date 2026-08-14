@@ -6,9 +6,7 @@ Allow: /
 Disallow: /freight-forwarding
 Disallow: /air-freight
 Disallow: /ocean-freight
-Disallow: /services/
 Disallow: /about/
-Disallow: /contact/
 Disallow: /transpress
 Disallow: /fraser-freight
 

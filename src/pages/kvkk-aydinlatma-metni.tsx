@@ -6,7 +6,8 @@ import { Shield, FileText, Users, Database, Lock, AlertCircle, UserCheck, Calend
 export default function KVKKAydinlatmaMetni() {
   return (
     <>
-      <SEO 
+      <SEO
+        url="https://www.rexlojistik.com/kvkk-aydinlatma-metni"
         title="KVKK Aydınlatma Metni - REX Lojistik"
         description="REX Lojistik Kişisel Verilerin Korunması ve İşlenmesi Aydınlatma Metni. KVKK kapsamında haklarınız ve veri işleme süreçlerimiz."
       />

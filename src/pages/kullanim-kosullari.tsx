@@ -6,7 +6,8 @@ import { FileText, Shield, AlertCircle, Scale, Globe, Lock, Edit, Phone } from "
 export default function KullanimKosullari() {
   return (
     <>
-      <SEO 
+      <SEO
+        url="https://www.rexlojistik.com/kullanim-kosullari"
         title="Kullanım Koşulları | REX Lojistik"
         description="REX Lojistik web sitesi kullanım koşulları, hizmet şartları ve yasal uyarılar."
       />

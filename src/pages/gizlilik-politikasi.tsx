@@ -6,6 +6,7 @@ export default function GizlilikPolitikasi() {
   return (
     <>
       <SEO
+        url="https://www.rexlojistik.com/gizlilik-politikasi"
         title="Gizlilik Politikası | REX Lojistik"
         description="REX Lojistik Taşımacılık Depolama Danışmanlık Limited Şirketi gizlilik politikası ve kişisel verilerin korunması hakkında bilgiler."
       />
