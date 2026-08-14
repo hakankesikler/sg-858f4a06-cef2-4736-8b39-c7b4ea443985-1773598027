@@ -92,6 +92,17 @@ export function QuoteForm() {
     { width: "", length: "", height: "", weight: "", quantity: "" }
   ]);
   const [cargoErrors, setCargoErrors] = useState<Array<Partial<Record<keyof CargoData, string>>>>([{}]);
+  const [formData, setFormData] = useState({
+    senderName: "",
+    senderEmail: "",
+    senderPhone: "",
+    loadingPoint: "",
+    deliveryPoint: "",
+    cargoType: "",
+    weight: "",
+    dimensions: "",
+    specialRequirements: "",
+  });
 
   const {
     register,
@@ -205,8 +216,15 @@ export function QuoteForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...data,
-          cargos: cargos,
+          senderName: formData.senderName,
+          senderEmail: formData.senderEmail,
+          senderPhone: formData.senderPhone,
+          loadingPoint: formData.loadingPoint,
+          deliveryPoint: formData.deliveryPoint,
+          cargoType: formData.cargoType,
+          weight: formData.weight,
+          dimensions: formData.dimensions,
+          specialRequirements: formData.specialRequirements,
         }),
       });
 
