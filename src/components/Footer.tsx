@@ -43,12 +43,21 @@ export function Footer() {
           {/* İletişim */}
           <div>
             <h3 className="text-lg font-semibold mb-4">İletişim</h3>
-            <div className="space-y-2 text-sm">
-              <p className="font-medium">Merkez Ofis - İzmir</p>
-              <p>Folkart Towers A Kule No:47/B<br />K:26 D:2601</p>
-              <p>Adalet Mahallesi, Manas Bulvarı<br />Bayraklı, 35630, İzmir</p>
-              <p className="pt-2">+90 (232) 229 0014</p>
-              <p>+90 (543) 401 0765</p>
+            <div className="space-y-4 text-sm">
+              <div>
+                <p className="font-medium">Merkez Ofis - İzmir</p>
+                <p>Folkart Towers A Kule No:47/B<br />K:26 D:2601</p>
+                <p>Adalet Mahallesi, Manas Bulvarı<br />Bayraklı, 35630, İzmir</p>
+                <p className="pt-2">+90 (232) 229 0014</p>
+                <p>+90 (543) 401 0765</p>
+              </div>
+              
+              <div className="pt-2">
+                <p className="font-medium">Manisa Ofis</p>
+                <p>Organize Sanayi Bölgesi<br />Manisa</p>
+                <p className="pt-2">+90 (236) 213 4567</p>
+              </div>
+              
               <a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors block pt-2">
                 info@rexlojistik.com
               </a>
