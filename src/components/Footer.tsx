@@ -3,8 +3,14 @@ import Link from "next/link";
 export function Footer() {
   return (
     <footer className="bg-[#1a1f2e] text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors text-sm">
+            info@rexlojistik.com
+          </a>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
           {/* Logo ve Açıklama */}
           <div className="flex flex-col">
             <img 
@@ -78,13 +84,6 @@ export function Footer() {
               <p className="pt-2">+90 (236) 230 00 13</p>
             </div>
           </div>
-        </div>
-
-        {/* Email */}
-        <div className="mt-8 pt-8 border-t border-white/10">
-          <a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors text-sm">
-            info@rexlojistik.com
-          </a>
         </div>
 
         {/* Alt Bölüm */}
