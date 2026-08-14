@@ -4,12 +4,6 @@ export function Footer() {
   return (
     <footer className="bg-[#1a1f2e] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors text-sm">
-            info@rexlojistik.com
-          </a>
-        </div>
-        
         <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
           {/* Logo ve Açıklama */}
           <div className="flex flex-col">
