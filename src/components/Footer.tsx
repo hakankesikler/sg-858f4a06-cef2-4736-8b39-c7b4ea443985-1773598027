@@ -66,9 +66,9 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Manisa Ofis */}
+          {/* İzmir Ofis */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Merkez Ofis</h3>
+            <h3 className="font-semibold text-white mb-4">İzmir Ofis</h3>
             <div className="space-y-2 text-sm">
               <p className="text-white">Muradiye, Muradiye Cd. No:35, 45010 Yunusemre/Manisa</p>
               <p className="text-white">Tel: 0543 401 07 55</p>
@@ -81,7 +81,8 @@ export function Footer() {
             <h3 className="font-semibold text-white mb-4">Manisa Ofis</h3>
             <div className="space-y-2 text-sm">
               <p className="text-white">Muradiye, Muradiye Cd. No:35, 45010 Yunusemre/Manisa</p>
-              <p className="text-white">Tel: 0543 401 07 55</p>
+              <p className="text-white">Tel: 0236 233 90 93</p>
+              <p className="text-white">Cep: 0543 401 07 55</p>
               <p className="text-white">Email: info@rexlojistik.com</p>
             </div>
           </div>
