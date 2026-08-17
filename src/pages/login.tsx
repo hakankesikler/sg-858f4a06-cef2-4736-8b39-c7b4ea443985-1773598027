@@ -219,13 +219,6 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
-
-            {/* Demo Credentials Info */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <p className="text-xs font-semibold text-blue-900 mb-2">🔑 Demo Hesap Bilgileri:</p>
-              <p className="text-xs text-blue-700 font-mono">demo@rexlojistik.com</p>
-              <p className="text-xs text-blue-700 font-mono">demo123</p>
-            </div>
           </div>
 
           {/* Footer */}
