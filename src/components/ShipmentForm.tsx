@@ -481,6 +481,17 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const invalidCargo = cargoItems.some(item => item.adet <= 0 || item.kg_ds <= 0 || !item.cinsi.trim());
+    if (!formData.customer_id || !formData.driver_id || !formData.vehicle_id ||
+        !formData.origin.trim() || !formData.destination.trim() || !pickupDate || invalidCargo) {
+      toast({
+        title: "Eksik Bilgi",
+        description: "Müşteri, sürücü, araç, çıkış/varış, yükleme tarihi ve geçerli yük kalemleri zorunludur.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       
@@ -509,24 +520,19 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         toplam_kg_ds: totalKgDs
       };
 
-      let shipmentId: string;
+      const shipmentId = await shipmentService.saveShipmentWithCargo(
+        editMode && initialData ? initialData.id : null,
+        submitData,
+        cargoItems,
+      );
 
       if (editMode && initialData) {
-        await shipmentService.updateShipment(initialData.id, submitData);
-        shipmentId = initialData.id;
-        
-        await shipmentCargoService.updateCargoItems(shipmentId, cargoItems);
         
         toast({
           title: "Başarılı",
           description: "Sevkiyat başarıyla güncellendi",
         });
       } else {
-        const created = await shipmentService.createShipment(submitData);
-        shipmentId = created.id;
-        
-        await shipmentCargoService.createCargoItems(shipmentId, cargoItems);
-        
         const selectedDriver = drivers.find(d => d.id === formData.driver_id);
         const selectedVehicle = vehicles.find(v => v.id === formData.vehicle_id);
         const selectedCustomer = customers.find(c => c.id === formData.customer_id);

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { workflowService } from "@/services/workflowService";
 
 interface PaymentDialogProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [openPurchases, setOpenPurchases] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     amount: "",
@@ -34,6 +36,7 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
     referenceNo: "",
     description: "",
     currency: "TRY",
+    relatedPurchaseId: "",
   });
 
   useEffect(() => {
@@ -47,11 +50,20 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
       const { data, error } = await supabase
         .from("financial_accounts")
         .select("*")
-        .eq("account_type", "Banka")
+        .or("is_active.eq.true,is_active.is.null")
         .order("account_name");
 
       if (error) throw error;
       setBankAccounts(data || []);
+
+      const { data: purchases, error: purchasesError } = await supabase
+        .from("purchases")
+        .select("id, purchase_no, total, paid_amount, currency, status")
+        .eq("supplier_id", customer.id)
+        .neq("status", "odendi")
+        .order("purchase_date", { ascending: false });
+      if (purchasesError) throw purchasesError;
+      setOpenPurchases(purchases || []);
     } catch (error) {
       console.error("Error loading bank accounts:", error);
     }
@@ -68,27 +80,26 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
       });
       return;
     }
+    if (!formData.bankAccountId) {
+      toast({ title: "Uyarı", description: "Lütfen işlemin yapılacağı finans hesabını seçin", variant: "destructive" });
+      return;
+    }
 
     setLoading(true);
 
     try {
-      const paymentData: any = {
-        customer_id: customer.id,
-        transaction_type: "odeme",
+      await workflowService.recordCustomerPayment({
+        customerId: customer.id,
+        transactionType: "odeme",
         amount: parseFloat(formData.amount),
-        payment_method: formData.paymentMethod,
-        payment_date: formData.paymentDate,
+        paymentMethod: formData.paymentMethod,
+        paymentDate: formData.paymentDate,
         description: formData.description,
         currency: formData.currency,
-        reference_no: formData.referenceNo || null,
-        bank_account_id: formData.bankAccountId || null,
-      };
-
-      const { error } = await supabase
-        .from("customer_payments")
-        .insert(paymentData);
-
-      if (error) throw error;
+        referenceNo: formData.referenceNo,
+        financialAccountId: formData.bankAccountId,
+        relatedPurchaseId: formData.relatedPurchaseId || null,
+      });
 
       toast({
         title: "Başarılı",
@@ -107,6 +118,7 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
         referenceNo: "",
         description: "",
         currency: "TRY",
+        relatedPurchaseId: "",
       });
     } catch (error: any) {
       console.error("Error creating payment:", error);
@@ -196,16 +208,15 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
               />
             </div>
 
-            {/* BANKA HESABI (Sadece Havale/EFT için) */}
-            {(formData.paymentMethod === "Havale" || formData.paymentMethod === "EFT") && (
+            {/* FİNANS HESABI */}
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="bankAccount">Banka Hesabı</Label>
+                <Label htmlFor="bankAccount">Finans Hesabı *</Label>
                 <Select
                   value={formData.bankAccountId}
                   onValueChange={(value) => setFormData({ ...formData, bankAccountId: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Banka hesabı seçin..." />
+                    <SelectValue placeholder="Kasa veya banka hesabı seçin..." />
                   </SelectTrigger>
                   <SelectContent>
                     {bankAccounts.map((account) => (
@@ -216,9 +227,28 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
                   </SelectContent>
                 </Select>
               </div>
-            )}
 
             {/* REFERANS NO */}
+            {openPurchases.length > 0 && (
+              <div className="space-y-2 col-span-2">
+                <Label>İlgili Alış Faturası</Label>
+                <Select
+                  value={formData.relatedPurchaseId || "unallocated"}
+                  onValueChange={(value) => setFormData({ ...formData, relatedPurchaseId: value === "unallocated" ? "" : value })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Faturaya bağlama (isteğe bağlı)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unallocated">Genel ödeme</SelectItem>
+                    {openPurchases.map((purchase) => (
+                      <SelectItem key={purchase.id} value={purchase.id}>
+                        {purchase.purchase_no} - {Number(purchase.total || 0).toLocaleString("tr-TR")} {purchase.currency || "TRY"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2 col-span-2">
               <Label htmlFor="referenceNo">Referans No / Dekont No</Label>
               <Input

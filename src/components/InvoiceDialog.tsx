@@ -176,109 +176,35 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     setLoading(true);
 
     try {
-      // Calculate totals
-      const subtotal = items.reduce(
-        (sum, item) => sum + item.subtotal,
-        0
-      );
-      const totalVat = items.reduce(
-        (sum, item) => sum + item.vatAmount,
-        0
-      );
-      const grandTotal = items.reduce(
-        (sum, item) => sum + item.total,
-        0
-      );
-
-      // Generate unique invoice number with date
-      const today = new Date();
-      const dateStr = today.toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD
-      
-      // Get last invoice number for today
-      const { data: lastInvoice } = await supabase
-        .from("sales_invoices")
-        .select("invoice_no")
-        .like("invoice_no", `SF-${dateStr}-%`)
-        .order("invoice_no", { ascending: false })
-        .limit(1)
-        .single();
-
-      let invoiceNo = `SF-${dateStr}-001`;
-      if (lastInvoice?.invoice_no) {
-        const lastNum = parseInt(lastInvoice.invoice_no.split("-")[2]);
-        invoiceNo = `SF-${dateStr}-${String(lastNum + 1).padStart(3, "0")}`;
-      }
-
-      // Prepare invoice data
-      const invoiceData: any = {
-        customer_id: shipment?.customer_id || selectedCustomer,
-        invoice_date: invoiceDate,
-        due_date: dueDate,
-        invoice_no: invoiceNo,
-        currency: currency,
-        payment_status: paymentStatus,
-        subtotal: totals.subtotal,
-        total_tax: totals.vat,
-        grand_total: totals.grandTotal,
-        notes: notes,
-      };
-
-      // If shipment exists, add shipment_id
-      if (shipment?.id) {
-        invoiceData.shipment_id = shipment.id;
-      }
-
-      // Create the sales invoice
-      const { data: invoice, error: invoiceError } = await supabase
-        .from("sales_invoices")
-        .insert(invoiceData)
-        .select()
-        .single();
+      const { data: invoice, error: invoiceError } = await supabase.rpc("rex_create_sales_invoice" as any, {
+        p_customer_id: shipment?.customer_id || selectedCustomer,
+        p_shipment_ids: shipment?.id ? [shipment.id] : [],
+        p_invoice_date: invoiceDate,
+        p_due_date: dueDate,
+        p_currency: currency,
+        p_payment_status: paymentStatus,
+        p_notes: notes,
+        p_items: items.map((item) => ({
+          productCode: shipment?.shipment_code || "HIZMET",
+          description: item.description,
+          quantity: item.quantity,
+          unit: "Adet",
+          unitPrice: item.unitPrice,
+          vatRate: item.vatRate,
+        })),
+      } as any);
 
       if (invoiceError) throw invoiceError;
-
-      // Insert invoice items
-      const invoiceItems = items.map((item) => ({
-        invoice_id: invoice.id,
-        product_code: shipment?.shipment_code || "HIZMET",
-        description: item.description,
-        quantity: item.quantity,
-        unit: "Adet",
-        unit_price: item.unitPrice,
-        subtotal: item.subtotal,
-        tax_rate: item.vatRate,
-        tax_amount: item.vatAmount,
-        total: item.total,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from("sales_invoice_items")
-        .insert(invoiceItems);
-
-      if (itemsError) throw itemsError;
-
-      // Update shipment status if applicable
-      if (shipment?.id) {
-        await supabase
-          .from("shipments")
-          .update({ 
-            invoice_status: "faturalandi",
-            sale_invoice_id: invoice?.id 
-          })
-          .eq("id", shipment.id);
-      }
+      const invoiceResult = invoice as unknown as { invoice_no?: string };
+      const invoiceNo = invoiceResult?.invoice_no || "oluşturuldu";
 
       toast({
         title: "Başarılı",
         description: `Satış faturası ${invoiceNo} oluşturuldu`,
       });
 
-      console.log("Invoice saved successfully, calling onSuccess...");
       if (onSuccess) {
-        console.log("onSuccess exists, calling it now...");
         onSuccess();
-      } else {
-        console.log("onSuccess is not defined!");
       }
       onClose();
     } catch (error: any) {

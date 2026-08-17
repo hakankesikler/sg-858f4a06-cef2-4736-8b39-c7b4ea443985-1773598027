@@ -35,6 +35,50 @@ export interface Shipment {
 }
 
 export const shipmentService = {
+  async saveShipmentWithCargo(
+    shipmentId: string | null,
+    shipment: Partial<Shipment>,
+    cargoItems: Array<{
+      adet: number;
+      cinsi: string;
+      kg_ds: number;
+      birim_fiyat?: number;
+      alt_toplam_fiyat?: number;
+    }>,
+  ): Promise<string> {
+    const { data, error } = await supabase.rpc("rex_save_shipment" as any, {
+      p_shipment_id: shipmentId,
+      p_shipment: shipment,
+      p_cargo_items: cargoItems,
+    } as any);
+
+    if (error) throw error;
+    return data as unknown as string;
+  },
+
+  async setShipmentStatus(id: string, status: "hazirlaniyor" | "yolda" | "iptal") {
+    const { error } = await supabase.rpc("rex_set_shipment_status" as any, {
+      p_shipment_id: id,
+      p_status: status,
+    } as any);
+    if (error) throw error;
+  },
+
+  async markDelivered(
+    id: string,
+    deliveredTo: string,
+    deliveryDate: string,
+    deliveryProofUrl: string | null,
+  ) {
+    const { error } = await supabase.rpc("rex_mark_shipment_delivered" as any, {
+      p_shipment_id: id,
+      p_delivered_to: deliveredTo,
+      p_delivery_date: deliveryDate,
+      p_delivery_proof_url: deliveryProofUrl,
+    } as any);
+    if (error) throw error;
+  },
+
   async getShipments() {
     const { data, error } = await supabase
       .from("shipments")

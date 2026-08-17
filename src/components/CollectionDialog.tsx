@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { workflowService } from "@/services/workflowService";
 
 interface CollectionDialogProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [openInvoices, setOpenInvoices] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     amount: "",
@@ -34,6 +36,7 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
     referenceNo: "",
     description: "",
     currency: "TRY",
+    relatedInvoiceId: "",
   });
 
   useEffect(() => {
@@ -47,11 +50,22 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
       const { data, error } = await supabase
         .from("financial_accounts")
         .select("*")
-        .eq("account_type", "Banka")
+        .or("is_active.eq.true,is_active.is.null")
         .order("account_name");
 
       if (error) throw error;
       setBankAccounts(data || []);
+
+      const { data: invoices, error: invoicesError } = await supabase
+        .from("sales_invoices")
+        .select("id, invoice_no, grand_total, currency, payment_status")
+        .eq("customer_id", customer.id)
+        .neq("payment_status", "Ödendi")
+        .not("invoice_no", "like", "BORC-%")
+        .not("invoice_no", "like", "ALACAK-%")
+        .order("invoice_date", { ascending: false });
+      if (invoicesError) throw invoicesError;
+      setOpenInvoices(invoices || []);
     } catch (error) {
       console.error("Error loading bank accounts:", error);
     }
@@ -68,27 +82,26 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
       });
       return;
     }
+    if (!formData.bankAccountId) {
+      toast({ title: "Uyarı", description: "Lütfen işlemin yapılacağı finans hesabını seçin", variant: "destructive" });
+      return;
+    }
 
     setLoading(true);
 
     try {
-      const collectionData: any = {
-        customer_id: customer.id,
-        transaction_type: "tahsilat",
+      await workflowService.recordCustomerPayment({
+        customerId: customer.id,
+        transactionType: "tahsilat",
         amount: parseFloat(formData.amount),
-        payment_method: formData.paymentMethod,
-        payment_date: formData.paymentDate,
+        paymentMethod: formData.paymentMethod,
+        paymentDate: formData.paymentDate,
         description: formData.description,
         currency: formData.currency,
-        reference_no: formData.referenceNo || null,
-        bank_account_id: formData.bankAccountId || null,
-      };
-
-      const { error } = await supabase
-        .from("customer_payments")
-        .insert(collectionData);
-
-      if (error) throw error;
+        referenceNo: formData.referenceNo,
+        financialAccountId: formData.bankAccountId,
+        relatedInvoiceId: formData.relatedInvoiceId || null,
+      });
 
       toast({
         title: "Başarılı",
@@ -107,6 +120,7 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
         referenceNo: "",
         description: "",
         currency: "TRY",
+        relatedInvoiceId: "",
       });
     } catch (error: any) {
       console.error("Error creating collection:", error);
@@ -196,16 +210,15 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
               />
             </div>
 
-            {/* BANKA HESABI (Sadece Havale/EFT için) */}
-            {(formData.paymentMethod === "Havale" || formData.paymentMethod === "EFT") && (
+            {/* FİNANS HESABI */}
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="bankAccount">Banka Hesabı</Label>
+                <Label htmlFor="bankAccount">Finans Hesabı *</Label>
                 <Select
                   value={formData.bankAccountId}
                   onValueChange={(value) => setFormData({ ...formData, bankAccountId: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Banka hesabı seçin..." />
+                    <SelectValue placeholder="Kasa veya banka hesabı seçin..." />
                   </SelectTrigger>
                   <SelectContent>
                     {bankAccounts.map((account) => (
@@ -216,9 +229,28 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
                   </SelectContent>
                 </Select>
               </div>
-            )}
 
             {/* REFERANS NO */}
+            {openInvoices.length > 0 && (
+              <div className="space-y-2 col-span-2">
+                <Label>İlgili Satış Faturası</Label>
+                <Select
+                  value={formData.relatedInvoiceId || "unallocated"}
+                  onValueChange={(value) => setFormData({ ...formData, relatedInvoiceId: value === "unallocated" ? "" : value })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Faturaya bağlama (isteğe bağlı)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unallocated">Genel tahsilat</SelectItem>
+                    {openInvoices.map((invoice) => (
+                      <SelectItem key={invoice.id} value={invoice.id}>
+                        {invoice.invoice_no} - {Number(invoice.grand_total || 0).toLocaleString("tr-TR")} {invoice.currency || "TRY"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2 col-span-2">
               <Label htmlFor="referenceNo">Referans No / Dekont No</Label>
               <Input

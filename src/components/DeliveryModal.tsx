@@ -99,14 +99,12 @@ export function DeliveryModal({ isOpen, onClose, shipmentId, shipmentCode, onSuc
         deliveryProofUrl = await uploadDeliveryProof();
       }
 
-      // Update shipment status to "teslim_edildi"
-      await shipmentService.updateShipment(shipmentId, {
-        status: "teslim_edildi",
-        delivered_to: deliveredTo,
-        delivery_proof_url: deliveryProofUrl,
-        actual_delivery_date: new Date().toISOString(),
-        delivery_date: deliveryDate
-      });
+      await shipmentService.markDelivered(
+        shipmentId,
+        deliveredTo,
+        deliveryDate,
+        deliveryProofUrl,
+      );
 
       toast({
         title: "Başarılı",

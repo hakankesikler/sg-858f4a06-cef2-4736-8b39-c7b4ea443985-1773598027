@@ -6,6 +6,7 @@ import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown } from "lu
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService } from "@/services/shipmentService";
+import { crmService } from "@/services/crmService";
 import { openPrivateDocument } from "@/lib/private-storage";
 import { downloadCsv, parseCsv } from "@/lib/csv";
 import { DriverForm } from "@/components/DriverForm";
@@ -177,6 +178,20 @@ export function LogisticsModule() {
     }
   };
 
+  const handleStartShipment = async (shipment: any) => {
+    try {
+      await shipmentService.setShipmentStatus(shipment.id, "yolda");
+      toast({ title: "Başarılı", description: `${shipment.shipment_code} yola çıkarıldı` });
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: "Hata",
+        description: error?.message || "Sevkiyat durumu güncellenemedi",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "beklemede":
@@ -280,6 +295,7 @@ export function LogisticsModule() {
     try {
       const templateData = [
         {
+          "Müşteri Cari Adı": "Örn: Medbar A.Ş",
           "Gönderici Adı": "Örn: Medbar A.Ş",
           "Gönderici İl": "Örn: İzmir",
           "Alıcı Adı": "Örn: ASG Havaleli Depo",
@@ -288,6 +304,10 @@ export function LogisticsModule() {
           "Sürücü Adı": "Örn: Enes Özbay",
           "Araç Plakası": "Örn: 63AJL095",
           "Yükleme Tarihi": "Örn: 15.04.2026",
+          "Yük Cinsi": "Örn: Paletli Malzeme",
+          "Adet": 1,
+          "Kg/Desi": 100,
+          "Birim Fiyat": 2500,
         },
       ];
 
@@ -319,6 +339,7 @@ export function LogisticsModule() {
         throw new Error("CSV dosyası 2 MB'den büyük olamaz");
       }
       const jsonData = parseCsv(await file.text());
+      const customers = await crmService.getCustomers();
 
       let successCount = 0;
       let errorCount = 0;
@@ -340,6 +361,15 @@ export function LogisticsModule() {
             v.cekici_plakasi?.toLowerCase().includes(vehiclePlate.toLowerCase())
           );
 
+          const customerName = row["Müşteri Cari Adı"] || row["Gönderici Adı"] || row["Gönderici"] || "";
+          const customer = customers.find((c) =>
+            normalize(c.name || c.company || "") === normalize(customerName)
+          );
+          const cargoQuantity = Number(row["Adet"] || 0);
+          const cargoWeight = Number(row["Kg/Desi"] || 0);
+          const cargoUnitPrice = Number(row["Birim Fiyat"] || 0);
+          const cargoKind = row["Yük Cinsi"] || "";
+
           // Parse date
           let pickupDate = new Date().toISOString().split("T")[0];
           if (row["Yükleme Tarihi"]) {
@@ -357,18 +387,26 @@ export function LogisticsModule() {
             destination: row["Alıcı İl"] || "",
             driver_id: driver?.id || null,
             vehicle_id: vehicle?.id || null,
+            customer_id: customer?.id || null,
             pickup_date: pickupDate,
             status: "beklemede" as const,
           };
 
           // Validate required fields
-          if (!shipmentData.sender_name || !shipmentData.receiver) {
-            errors.push(`Satır ${i + 2}: Gönderici ve Alıcı adı gerekli`);
+          if (!shipmentData.sender_name || !shipmentData.receiver || !customer || !driver || !vehicle ||
+              cargoQuantity <= 0 || cargoWeight <= 0 || !cargoKind.trim()) {
+            errors.push(`Satır ${i + 2}: Cari, sürücü, araç, gönderici/alıcı ve yük bilgileri eksik`);
             errorCount++;
             continue;
           }
 
-          await shipmentService.createShipment(shipmentData);
+          await shipmentService.saveShipmentWithCargo(null, shipmentData, [{
+            adet: cargoQuantity,
+            cinsi: cargoKind,
+            kg_ds: cargoWeight,
+            birim_fiyat: cargoUnitPrice,
+            alt_toplam_fiyat: cargoQuantity * cargoUnitPrice,
+          }]);
           successCount++;
         } catch (error) {
           console.error(`Row ${i + 2} error:`, error);
@@ -588,21 +626,31 @@ export function LogisticsModule() {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          {shipment.status === "beklemede" ? (
+                          <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(shipment.status)}`}>
+                            {getStatusLabel(shipment.status)}
+                          </span>
+                          {shipment.status === "beklemede" && (
                             <button
+                              type="button"
+                              onClick={() => void handleStartShipment(shipment)}
+                              className="text-xs font-medium text-blue-700 hover:text-blue-900"
+                              title="Sevkiyatı yola çıkar"
+                            >
+                              Yola Çıkar
+                            </button>
+                          )}
+                          {(shipment.status === "yolda" || shipment.status === "hazirlaniyor" || shipment.status === "hazırlaniyor") && (
+                            <button
+                              type="button"
                               onClick={() => {
                                 setDeliveringShipment(shipment);
                                 setIsDeliveryModalOpen(true);
                               }}
-                              className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(shipment.status)} cursor-pointer hover:opacity-80`}
-                              title="Teslim et"
+                              className="text-xs font-medium text-green-700 hover:text-green-900"
+                              title="Sevkiyatı teslim et"
                             >
-                              {getStatusLabel(shipment.status)}
+                              Teslim Et
                             </button>
-                          ) : (
-                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeColor(shipment.status)}`}>
-                              {getStatusLabel(shipment.status)}
-                            </span>
                           )}
                           {shipment.status === "teslim_edildi" && shipment.delivery_proof_url && (
                             <button

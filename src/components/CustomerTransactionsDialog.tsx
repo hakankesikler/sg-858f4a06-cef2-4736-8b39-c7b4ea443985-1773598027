@@ -28,6 +28,7 @@ import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
 import { PaymentDialog } from "@/components/PaymentDialog";
 import { CollectionDialog } from "@/components/CollectionDialog";
+import { workflowService } from "@/services/workflowService";
 
 interface CustomerTransactionsDialogProps {
   isOpen: boolean;
@@ -101,6 +102,8 @@ export function CustomerTransactionsDialog({
           .from("sales_invoices")
           .select("*")
           .eq("customer_id", customer.id)
+          .not("invoice_no", "like", "BORC-%")
+          .not("invoice_no", "like", "ALACAK-%")
           .order("invoice_date", { ascending: false });
 
         if (invError) throw invError;
@@ -155,6 +158,8 @@ export function CustomerTransactionsDialog({
           .from("purchases")
           .select("*")
           .eq("supplier_id", customer.id)
+          .not("purchase_no", "like", "BORC-%")
+          .not("purchase_no", "like", "ALACAK-%")
           .order("purchase_date", { ascending: false });
 
         if (purError) throw purError;
@@ -205,6 +210,27 @@ export function CustomerTransactionsDialog({
         }
       }
 
+      const { data: adjustments, error: adjustmentsError } = await (supabase as any)
+        .from("account_transactions")
+        .select("id, transaction_type, amount, description, reference_no, transaction_date, currency")
+        .eq("customer_id", customer.id);
+      if (adjustmentsError) throw adjustmentsError;
+      allTransactions = [
+        ...allTransactions,
+        ...(adjustments || []).map((adjustment: any) => ({
+          id: adjustment.id,
+          date: adjustment.transaction_date,
+          type: `Cari ${adjustment.transaction_type}`,
+          documentNo: adjustment.reference_no || "-",
+          debit: adjustment.transaction_type === "Borç" ? Number(adjustment.amount) : 0,
+          credit: adjustment.transaction_type === "Alacak" ? Number(adjustment.amount) : 0,
+          currency: adjustment.currency || "TRY",
+          exchangeRate: 1,
+          localAmount: Number(adjustment.amount),
+          balance: 0,
+        })),
+      ];
+
       // Sort by date (newest first) and calculate cumulative balance
       allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
@@ -226,36 +252,14 @@ export function CustomerTransactionsDialog({
     if (!customer || !debtForm.amount) return;
     
     try {
-      const accountType = customer.account_type || "musteri";
-      
-      if (accountType === "tedarikci") {
-        // Add to purchases
-        const { error } = await supabase.from("purchases").insert({
-          supplier_id: customer.id,
-          purchase_date: debtForm.date,
-          purchase_no: `BORC-${Date.now()}`,
-          total: parseFloat(debtForm.amount),
-          currency: debtForm.currency,
-          notes: debtForm.description,
-          status: 'beklemede'
-        } as any);
-        
-        if (error) throw error;
-      } else {
-        // For musteri - add negative transaction
-        const { error } = await supabase.from("sales_invoices").insert({
-          customer_id: customer.id,
-          invoice_date: debtForm.date,
-          due_date: debtForm.date,
-          invoice_no: `BORC-${Date.now()}`,
-          grand_total: -parseFloat(debtForm.amount),
-          currency: debtForm.currency,
-          notes: debtForm.description,
-          payment_status: 'Bekliyor'
-        });
-        
-        if (error) throw error;
-      }
+      await workflowService.recordCustomerAdjustment({
+        customerId: customer.id,
+        transactionType: "Borç",
+        amount: parseFloat(debtForm.amount),
+        transactionDate: debtForm.date,
+        currency: debtForm.currency,
+        description: debtForm.description,
+      });
       
       // Reset form and reload
       setDebtForm({ amount: "", description: "", date: new Date().toISOString().split('T')[0], currency: "TRY" });
@@ -271,36 +275,14 @@ export function CustomerTransactionsDialog({
     if (!customer || !creditForm.amount) return;
     
     try {
-      const accountType = customer.account_type || "musteri";
-      
-      if (accountType === "musteri") {
-        // Add to sales_invoices
-        const { error } = await supabase.from("sales_invoices").insert({
-          customer_id: customer.id,
-          invoice_date: creditForm.date,
-          due_date: creditForm.date,
-          invoice_no: `ALACAK-${Date.now()}`,
-          grand_total: parseFloat(creditForm.amount),
-          currency: creditForm.currency,
-          notes: creditForm.description,
-          payment_status: 'Bekliyor'
-        });
-        
-        if (error) throw error;
-      } else {
-        // For tedarikci - add negative transaction
-        const { error } = await supabase.from("purchases").insert({
-          supplier_id: customer.id,
-          purchase_date: creditForm.date,
-          purchase_no: `ALACAK-${Date.now()}`,
-          total: -parseFloat(creditForm.amount),
-          currency: creditForm.currency,
-          notes: creditForm.description,
-          status: 'beklemede'
-        } as any);
-        
-        if (error) throw error;
-      }
+      await workflowService.recordCustomerAdjustment({
+        customerId: customer.id,
+        transactionType: "Alacak",
+        amount: parseFloat(creditForm.amount),
+        transactionDate: creditForm.date,
+        currency: creditForm.currency,
+        description: creditForm.description,
+      });
       
       // Reset form and reload
       setCreditForm({ amount: "", description: "", date: new Date().toISOString().split('T')[0], currency: "TRY" });

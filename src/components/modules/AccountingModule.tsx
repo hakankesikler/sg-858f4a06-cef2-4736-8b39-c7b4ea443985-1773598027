@@ -55,6 +55,7 @@ import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { PendingInvoicesDialog } from "@/components/PendingInvoicesDialog";
 import { EditInvoiceDialog } from "@/components/EditInvoiceDialog";
 import { CustomerTransactionsDialog } from "@/components/CustomerTransactionsDialog";
+import { workflowService } from "@/services/workflowService";
 
 type Invoice = {
   id: string;
@@ -101,6 +102,8 @@ export function AccountingModule() {
   const [activeTab, setActiveTab] = useState("genel");
   const [salesInvoices, setSalesInvoices] = useState<any[]>([]);
   const [purchaseInvoices, setPurchaseInvoices] = useState<any[]>([]);
+  const [customerPayments, setCustomerPayments] = useState<any[]>([]);
+  const [customerAdjustments, setCustomerAdjustments] = useState<any[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -184,7 +187,9 @@ export function AccountingModule() {
       if (purchasesError) {
         console.error("Purchases error:", purchasesError);
       } else {
-        setPurchaseInvoices(purchasesData || []);
+        setPurchaseInvoices((purchasesData || []).filter(invoice =>
+          !invoice.purchase_no?.startsWith("BORC-") && !invoice.purchase_no?.startsWith("ALACAK-")
+        ));
       }
       
       const { data: salesData, error: salesError } = await supabase
@@ -205,8 +210,23 @@ export function AccountingModule() {
       if (salesError) {
         console.error("Sales error:", salesError);
       } else {
-        setSalesInvoices(salesData || []);
+        setSalesInvoices((salesData || []).filter(invoice =>
+          !invoice.invoice_no?.startsWith("BORC-") && !invoice.invoice_no?.startsWith("ALACAK-")
+        ));
       }
+
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from("customer_payments")
+        .select("customer_id, transaction_type, amount, currency");
+      if (paymentsError) throw paymentsError;
+      setCustomerPayments(paymentsData || []);
+
+      const { data: adjustmentsData, error: adjustmentsError } = await (supabase as any)
+        .from("account_transactions")
+        .select("customer_id, transaction_type, amount, currency")
+        .not("customer_id", "is", null);
+      if (adjustmentsError) throw adjustmentsError;
+      setCustomerAdjustments(adjustmentsData || []);
     } catch (error) {
       console.error("Error loading accounting data:", error);
       toast({
@@ -332,19 +352,28 @@ export function AccountingModule() {
 
   const calculateCustomerBalance = (customerId: string, accountType: string) => {
     let balance = 0;
+    const adjustmentBalance = customerAdjustments
+      .filter(adjustment => adjustment.customer_id === customerId)
+      .reduce((sum, adjustment) => sum + (
+        adjustment.transaction_type === "Alacak" ? Number(adjustment.amount || 0) : -Number(adjustment.amount || 0)
+      ), 0);
     
     if (accountType === "musteri") {
-      // Sales invoices - pending = receivable (alacak)
       const customerInvoices = salesInvoices.filter(inv => 
-        inv.customer_id === customerId && inv.payment_status === 'Bekliyor'
+        inv.customer_id === customerId
       );
-      balance = customerInvoices.reduce((sum, inv) => sum + (inv.grand_total || 0), 0);
+      const collections = customerPayments
+        .filter(payment => payment.customer_id === customerId && payment.transaction_type === "tahsilat")
+        .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      balance = customerInvoices.reduce((sum, inv) => sum + Number(inv.grand_total || 0), 0) - collections + adjustmentBalance;
     } else if (accountType === "tedarikci") {
-      // Purchase invoices - pending = payable (borç) - show as negative
       const supplierInvoices = purchaseInvoices.filter(inv => 
-        inv.supplier_id === customerId && inv.status === 'beklemede'
+        inv.supplier_id === customerId
       );
-      balance = -1 * supplierInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+      const payments = customerPayments
+        .filter(payment => payment.customer_id === customerId && payment.transaction_type === "odeme")
+        .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      balance = -1 * (supplierInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0) - payments) + adjustmentBalance;
     }
     // personel and ortak = 0 for now
     
@@ -746,9 +775,7 @@ export function AccountingModule() {
     if (!window.confirm("Faturayı silmek istediğinize emin misiniz?")) return;
     try {
       setIsLoading(true);
-      await supabase.from("sales_invoice_items").delete().eq("invoice_id", id);
-      const { error } = await supabase.from("sales_invoices").delete().eq("id", id);
-      if (error) throw error;
+      await workflowService.deleteSalesInvoice(id);
       toast({ title: "Başarılı", description: "Fatura silindi" });
       loadData();
     } catch (err: any) {
@@ -881,14 +908,20 @@ export function AccountingModule() {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Button 
-                  onClick={handleConfirmDraftInvoices}
-                  disabled={selectedInvoices.length === 0 || isLoading}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Satış Faturası Oluştur
+                <Button onClick={() => setShowPendingInvoicesDialog(true)} className="bg-green-600 hover:bg-green-700">
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Bekleyen Sevkiyatları Faturala
                 </Button>
+                <Button variant="outline" onClick={handleCreateManualInvoice}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Manuel Fatura
+                </Button>
+                {selectedInvoices.length > 0 && (
+                  <Button onClick={handleConfirmDraftInvoices} disabled={isLoading} variant="outline">
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Seçili Taslakları Onayla
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={() => toast({ title: "Bilgi", description: "e-Fatura entegrasyonu yakında aktif edilecek." })}>
                   <Mail className="h-4 w-4 mr-2" />
                   e-Fatura Giden Kutusu

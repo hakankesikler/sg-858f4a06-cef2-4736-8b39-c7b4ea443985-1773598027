@@ -54,7 +54,7 @@ export function PendingInvoicesDialog({
     } else {
       const filtered = shipments.filter((shipment) => {
         const customerName = (shipment.customers?.company || shipment.customers?.name || "").toLowerCase();
-        const trackingNumber = (shipment.tracking_number || "").toLowerCase();
+        const trackingNumber = (shipment.shipment_code || "").toLowerCase();
         const search = searchQuery.toLowerCase();
         
         return customerName.includes(search) || trackingNumber.includes(search);
@@ -82,14 +82,15 @@ export function PendingInvoicesDialog({
             company,
             vergi_no
           ),
-          shipment_cargo (
+          shipment_cargo_items (
             id,
-            quantity,
-            unit_price
+            adet,
+            birim_fiyat,
+            alt_toplam_fiyat
           )
         `)
         .eq("status", "teslim_edildi")
-        .or("invoice_status.is.null,invoice_status.neq.faturalandi")
+        .is("sale_invoice_id", null)
         .order("created_at", { ascending: false });
 
       console.log("🔵 Pending shipments query result:", { 
@@ -111,9 +112,9 @@ export function PendingInvoicesDialog({
 
       // Calculate totalAmount for each shipment
       const shipmentsWithTotal = (data || []).map(shipment => {
-        const totalAmount = Array.isArray(shipment.shipment_cargo)
-          ? shipment.shipment_cargo.reduce((sum: number, cargo: any) => {
-              return sum + (cargo.quantity || 0) * (cargo.unit_price || 0);
+        const totalAmount = Array.isArray(shipment.shipment_cargo_items)
+          ? shipment.shipment_cargo_items.reduce((sum: number, cargo: any) => {
+              return sum + Number(cargo.alt_toplam_fiyat ?? ((cargo.adet || 0) * (cargo.birim_fiyat || 0)));
             }, 0)
           : 0;
         
@@ -199,11 +200,11 @@ export function PendingInvoicesDialog({
   };
 
   const calculateShipmentTotal = (shipment: any) => {
-    if (!shipment.shipment_cargo || shipment.shipment_cargo.length === 0) {
+    if (!shipment.shipment_cargo_items || shipment.shipment_cargo_items.length === 0) {
       return 0;
     }
-    return shipment.shipment_cargo.reduce(
-      (sum: number, cargo: any) => sum + (cargo.total_price || 0),
+    return shipment.shipment_cargo_items.reduce(
+      (sum: number, cargo: any) => sum + Number(cargo.alt_toplam_fiyat ?? ((cargo.adet || 0) * (cargo.birim_fiyat || 0))),
       0
     );
   };
@@ -422,77 +423,32 @@ function BulkInvoiceDialog({ isOpen, onClose, onSuccess, shipments }: {
 
   // Toplam tutarları hesapla
   const totalAmount = shipments.reduce((sum, s) => sum + s.totalAmount, 0);
-  const subtotal = totalAmount / 1.2; // KDV hariç
-  const totalVat = totalAmount - subtotal;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Fatura numarası oluştur
-      const { data: lastInvoice } = await supabase
-        .from("sales_invoices")
-        .select("invoice_no")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      let invoiceNo = "SF-2024-001";
-      if (lastInvoice?.invoice_no) {
-        const lastNum = parseInt(lastInvoice.invoice_no.split("-")[2]);
-        invoiceNo = `SF-2024-${String(lastNum + 1).padStart(3, "0")}`;
-      }
-
-      // Fatura oluştur
-      const { data: invoiceData, error: invoiceError } = await supabase.from("sales_invoices").insert({
-        invoice_no: invoiceNo,
-        customer_id: shipments[0].customer_id,
-        shipment_id: null, // Çoklu sevkiyat için null
-        invoice_date: invoiceDate,
-        due_date: invoiceDate, // Zorunlu alan
-        subtotal,
-        total_tax: totalVat,
-        grand_total: totalAmount,
-        payment_status: "Bekliyor",
-        currency: "TRY",
-        notes: notes,
-      }).select().single();
+      const { data: invoiceData, error: invoiceError } = await supabase.rpc("rex_create_sales_invoice" as any, {
+        p_customer_id: shipments[0].customer_id,
+        p_shipment_ids: shipments.map(s => s.id),
+        p_invoice_date: invoiceDate,
+        p_due_date: invoiceDate,
+        p_currency: "TRY",
+        p_payment_status: "Bekliyor",
+        p_notes: notes,
+        p_items: shipments.map(shipment => ({
+          productCode: shipment.shipment_code,
+          description: `Taşıma Hizmeti - ${shipment.shipment_code}`,
+          quantity: 1,
+          unit: "Adet",
+          unitPrice: shipment.totalAmount / 1.2,
+          vatRate: 20,
+        })),
+      } as any);
 
       if (invoiceError) throw invoiceError;
-
-      // Fatura kalemlerini oluştur (her sevkiyat bir kalem)
-      if (invoiceData) {
-        const items = shipments.map(shipment => {
-          const qty = 1;
-          const price = shipment.totalAmount / 1.2;
-          const tax = shipment.totalAmount - price;
-          
-          return {
-            invoice_id: invoiceData.id,
-            product_code: shipment.shipment_code,
-            description: `Taşıma Hizmeti - ${shipment.shipment_code}`,
-            quantity: qty,
-            unit: "Adet",
-            unit_price: price,
-            subtotal: price,
-            tax_rate: 20,
-            tax_amount: tax,
-            total: shipment.totalAmount,
-          };
-        });
-
-        const { error: itemsError } = await supabase.from("sales_invoice_items").insert(items);
-        if (itemsError) throw itemsError;
-      }
-
-      // Tüm sevkiyatları "faturalandi" olarak işaretle
-      const { error: updateError } = await supabase
-        .from("shipments")
-        .update({ invoice_status: "faturalandi", sale_invoice_id: invoiceData?.id })
-        .in("id", shipments.map(s => s.id));
-
-      if (updateError) throw updateError;
+      const invoiceNo = (invoiceData as unknown as { invoice_no?: string })?.invoice_no || "oluşturuldu";
 
       toast({
         title: "Başarılı",
