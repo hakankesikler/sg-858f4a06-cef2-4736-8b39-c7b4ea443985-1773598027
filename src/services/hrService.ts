@@ -112,7 +112,7 @@ export const hrService = {
         status, 
         approved_by: approvedBy,
         rejection_reason: rejectionReason 
-      })
+      } as any)
       .eq("id", id)
       .select()
       .single();

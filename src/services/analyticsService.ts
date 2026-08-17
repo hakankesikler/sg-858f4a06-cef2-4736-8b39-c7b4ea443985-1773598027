@@ -29,46 +29,19 @@ function getOrCreateVisitorId(): string {
   return visitorId;
 }
 
-// Track a page visit - ROBUST FALLBACK: Works even if geolocation fails
+// Track a page visit through the constrained database function.
 export async function trackPageVisit(visitorInfo: VisitorInfo) {
   try {
     const deviceType = getDeviceType(visitorInfo.user_agent || navigator.userAgent);
     const visitorId = getOrCreateVisitorId();
-    
-    // Default location object (empty but valid)
-    const location: { ip?: string; country?: string; city?: string } = {};
 
-    // Try to get location but NEVER let it block the tracking
-    // This runs in background and if it fails, we just skip it
-    getVisitorLocation()
-      .then(loc => {
-        // If we got location data, update the record
-        if (loc.ip || loc.country || loc.city) {
-          supabase.from("website_visits")
-            .update({ ip_address: loc.ip, country: loc.country, city: loc.city })
-            .eq("visitor_id", visitorId)
-            .order("visited_at", { ascending: false })
-            .limit(1)
-            .then(({ error }) => {
-              // Intentionally empty - silent update
-            }, () => {
-              // Silent fail
-            });
-        }
-      })
-      .catch(() => {}); // Silently fail
-
-    // Insert visit record immediately (without waiting for location)
-    const { error } = await supabase.from("website_visits").insert({
-      visitor_id: visitorId,
-      page_url: visitorInfo.page_url,
-      page_title: visitorInfo.page_title || document.title,
-      referrer: visitorInfo.referrer || document.referrer,
-      user_agent: visitorInfo.user_agent || navigator.userAgent,
-      device_type: deviceType,
-      ip_address: location.ip,
-      country: location.country,
-      city: location.city,
+    const { error } = await supabase.rpc("rex_record_visit" as any, {
+      p_visitor_id: visitorId,
+      p_page_url: visitorInfo.page_url,
+      p_page_title: visitorInfo.page_title || document.title,
+      p_referrer: visitorInfo.referrer || document.referrer,
+      p_user_agent: visitorInfo.user_agent || navigator.userAgent,
+      p_device_type: deviceType,
     } as any);
 
     if (error) {
@@ -93,35 +66,6 @@ function getDeviceType(userAgent: string): "desktop" | "mobile" | "tablet" {
   }
   
   return "desktop";
-}
-
-// Get visitor location - COMPLETELY OPTIONAL (never blocks)
-async function getVisitorLocation(): Promise<{ ip?: string; country?: string; city?: string }> {
-  try {
-    // Set a hard timeout - if API doesn't respond in 1 second, give up
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1000);
-    
-    const response = await fetch("https://ipapi.co/json/", {
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      return {};
-    }
-    
-    const data = await response.json();
-    return {
-      ip: data.ip,
-      country: data.country_name,
-      city: data.city,
-    };
-  } catch (error) {
-    // Silently fail - geolocation is optional
-    return {};
-  }
 }
 
 // Get real-time active visitors (last 5 minutes)
@@ -174,9 +118,9 @@ export async function getTopPages(limit: number = 10, days: number = 30) {
 
   // Count page visits
   const pageCounts = (data || []).reduce((acc: Record<string, { url: string; title: string; count: number }>, visit) => {
-    const key = visit.page_url;
+    const key = (visit.page_url || "/").split("?")[0];
     if (!acc[key]) {
-      acc[key] = { url: visit.page_url, title: visit.page_title || "", count: 0 };
+      acc[key] = { url: key, title: visit.page_title || "", count: 0 };
     }
     acc[key].count++;
     return acc;
@@ -285,15 +229,15 @@ export async function getUniqueVisitors(days: number = 30) {
 
   const { data, error } = await supabase
     .from("website_visits")
-    .select("ip_address")
+    .select("visitor_id")
     .gte("visited_at", startDate)
-    .not("ip_address", "is", null);
+    .not("visitor_id", "is", null);
 
   if (error) {
     console.error("Error fetching unique visitors:", error);
     return 0;
   }
 
-  const uniqueIPs = new Set((data || []).map(v => v.ip_address));
-  return uniqueIPs.size;
+  const uniqueVisitors = new Set((data || []).map(v => v.visitor_id));
+  return uniqueVisitors.size;
 }

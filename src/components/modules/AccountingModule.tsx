@@ -90,6 +90,8 @@ interface ExpenseCategory {
   types: Array<{ id: string; name: string }>;
 }
 
+const CUSTOMER_PAGE_SIZE = 50;
+
 export function AccountingModule() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
@@ -102,6 +104,7 @@ export function AccountingModule() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [customerPage, setCustomerPage] = useState(1);
 
   const [editCategoryModal, setEditCategoryModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<ExpenseCategory | null>(null);
@@ -415,6 +418,13 @@ export function AccountingModule() {
       return sortOrder === "asc" ? compareValue : -compareValue;
     });
   }
+
+  useEffect(() => {
+    setCustomerPage(1);
+  }, [activeTab, searchTerm, filters.status, filters.city, filters.dateFrom, filters.dateTo]);
+
+  const customerPageCount = Math.max(1, Math.ceil(filteredCustomers.length / CUSTOMER_PAGE_SIZE));
+  const paginatedCustomers = filteredCustomers.slice((customerPage - 1) * CUSTOMER_PAGE_SIZE, customerPage * CUSTOMER_PAGE_SIZE);
 
   const handleUpdateCategory = async () => {
     if (!currentCategory || !editedCategoryName.trim()) {
@@ -1241,7 +1251,7 @@ export function AccountingModule() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        filteredCustomers.map((customer) => {
+                        paginatedCustomers.map((customer) => {
                           const AccountIcon = getAccountTypeIcon(customer.account_type || "musteri");
                           return (
                             <TableRow key={customer.id} className="hover:bg-gray-50">
@@ -1316,6 +1326,16 @@ export function AccountingModule() {
                       )}
                     </TableBody>
                   </Table>
+                  {filteredCustomers.length > 0 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t px-4 py-3">
+                      <span className="text-sm text-gray-600">{filteredCustomers.length} kayıttan {(customerPage - 1) * CUSTOMER_PAGE_SIZE + 1}-{Math.min(customerPage * CUSTOMER_PAGE_SIZE, filteredCustomers.length)} arası</span>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setCustomerPage((page) => Math.max(1, page - 1))} disabled={customerPage === 1}>Önceki</Button>
+                        <span className="text-sm">{customerPage} / {customerPageCount}</span>
+                        <Button variant="outline" size="sm" onClick={() => setCustomerPage((page) => Math.min(customerPageCount, page + 1))} disabled={customerPage === customerPageCount}>Sonraki</Button>
+                      </div>
+                    </div>
+                  )}
                 </Card>
               </TabsContent>
             </Tabs>

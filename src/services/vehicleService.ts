@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { storageReference } from "@/lib/private-storage";
 
 export interface Vehicle {
   id?: string;
@@ -130,10 +131,6 @@ export const vehicleService = {
       throw error;
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('vehicle-documents')
-      .getPublicUrl(data.path);
-
-    return publicUrl;
+    return storageReference('vehicle-documents', data.path);
   }
 };

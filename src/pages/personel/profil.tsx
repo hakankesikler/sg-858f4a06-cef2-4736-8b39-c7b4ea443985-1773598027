@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import Link from "next/link";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,435 +14,283 @@ import { AnalyticsModule } from "@/components/modules/AnalyticsModule";
 import { ReportsModule } from "@/components/modules/ReportsModule";
 import { SettingsModule } from "@/components/modules/SettingsModule";
 import { supabase } from "@/integrations/supabase/client";
+import { AppRole, PortalModule, canAccessModule, canEditOperations, getCurrentUserRole, roleLabels } from "@/lib/access-control";
 import { useToast } from "@/hooks/use-toast";
 import {
-  LayoutDashboard,
-  Users,
-  Truck,
-  DollarSign,
-  UserCircle,
-  Activity,
-  BarChart3,
-  Settings,
-  LogOut,
-  Bell,
-  Search,
-  Menu,
-  X,
-  BarChart,
-  Clock,
-  Award,
-  Plus,
-  Package,
   Activity as ActivityIcon,
-  CheckCircle2
+  BarChart3,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Package,
+  Plus,
+  Settings,
+  Truck,
+  UserCircle,
+  Users,
+  X,
 } from "lucide-react";
 import { SidebarProvider } from "@/components/ui/sidebar";
+
+type DashboardStats = {
+  totalShipments: number;
+  deliveredShipments: number;
+  activeShipments: number;
+  pendingShipments: number;
+  successRate: number;
+};
+
+const emptyStats: DashboardStats = {
+  totalShipments: 0,
+  deliveredShipments: 0,
+  activeShipments: 0,
+  pendingShipments: 0,
+  successRate: 0,
+};
+
+const moduleDefinitions = [
+  { id: "dashboard" as const, name: "Dashboard", icon: LayoutDashboard },
+  { id: "crm" as const, name: "CRM", icon: Users },
+  { id: "logistics" as const, name: "Lojistik Yönetimi", icon: Truck },
+  { id: "accounting" as const, name: "Muhasebe", icon: DollarSign },
+  { id: "hr" as const, name: "İnsan Kaynakları", icon: UserCircle },
+  { id: "analytics" as const, name: "Web Analitik", icon: ActivityIcon },
+  { id: "reports" as const, name: "Raporlama", icon: BarChart3 },
+  { id: "settings" as const, name: "Ayarlar", icon: Settings },
+];
 
 export default function PersonelProfil() {
   const router = useRouter();
   const { toast } = useToast();
-  const [activeModule, setActiveModule] = useState<"dashboard" | "crm" | "logistics" | "accounting" | "hr" | "reports" | "settings" | "analytics">("dashboard");
+  const [activeModule, setActiveModule] = useState<PortalModule>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCariFormOpen, setIsCariFormOpen] = useState(false);
   const [isIsGirisFormOpen, setIsIsGirisFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [role, setRole] = useState<AppRole | null>(null);
+  const [stats, setStats] = useState<DashboardStats>(emptyStats);
 
-  // Authentication check
   useEffect(() => {
+    let mounted = true;
+
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (!session) {
-        router.push("/login?redirect=/personel/profil");
+        await router.replace("/login?redirect=/personel/profil");
         return;
       }
 
-      setUser(session.user);
-      setLoading(false);
-
-      // Check if there's a module query parameter
-      const moduleParam = router.query.module as string;
-      if (moduleParam && ["dashboard", "crm", "logistics", "accounting", "hr", "reports", "settings", "analytics"].includes(moduleParam)) {
-        setActiveModule(moduleParam as any);
+      const currentRole = await getCurrentUserRole(session.user.id);
+      if (!currentRole) {
+        await supabase.auth.signOut();
+        toast({ title: "Erişim reddedildi", description: "Bu hesabın portal yetkisi bulunmuyor.", variant: "destructive" });
+        await router.replace("/login");
+        return;
       }
+
+      if (!mounted) return;
+      setUser(session.user);
+      setRole(currentRole);
+
+      const requestedModule = typeof router.query.module === "string" ? router.query.module as PortalModule : "dashboard";
+      if (canAccessModule(currentRole, requestedModule)) {
+        setActiveModule(requestedModule);
+      } else {
+        setActiveModule("dashboard");
+        await router.replace({ pathname: "/personel/profil", query: { module: "dashboard" } }, undefined, { shallow: true });
+      }
+      setLoading(false);
     };
 
-    checkAuth();
-
-    // Listen for auth changes
+    if (router.isReady) void checkAuth();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        router.push("/login?redirect=/personel/profil");
-      } else {
-        setUser(session.user);
-      }
+      if (!session) void router.replace("/login");
     });
 
-    return () => subscription.unsubscribe();
-  }, [router]);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router.isReady, router.query.module]);
+
+  useEffect(() => {
+    if (!role) return;
+    const loadStats = async () => {
+      const { data, error } = await supabase.rpc("rex_dashboard_stats" as any);
+      if (!error && data) setStats(data as unknown as DashboardStats);
+    };
+    void loadStats();
+  }, [role]);
+
+  const modules = useMemo(
+    () => role ? moduleDefinitions.filter((module) => canAccessModule(role, module.id)) : [],
+    [role],
+  );
+
+  const handleModuleClick = async (moduleId: PortalModule) => {
+    if (!role || !canAccessModule(role, moduleId)) return;
+    setActiveModule(moduleId);
+    setSidebarOpen(false);
+    await router.replace({ pathname: "/personel/profil", query: { module: moduleId } }, undefined, { shallow: true });
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    toast({
-      title: "Çıkış Yapıldı",
-      description: "Başarıyla çıkış yaptınız.",
-    });
-    router.push("/login");
+    toast({ title: "Çıkış yapıldı", description: "Oturumunuz güvenli şekilde kapatıldı." });
+    await router.replace("/login");
   };
 
-  if (loading) {
+  if (loading || !role) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Yükleniyor...</p>
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Yetkiniz kontrol ediliyor...</p>
         </div>
       </div>
     );
   }
 
-  const modules = [
-    { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, color: "from-blue-500 to-blue-600" },
-    { id: "crm", name: "CRM", icon: Users, color: "from-purple-500 to-purple-600" },
-    { id: "logistics", name: "Lojistik Yönetimi", icon: Truck, color: "from-orange-500 to-orange-600" },
-    { id: "accounting", name: "Muhasebe", icon: DollarSign, color: "from-green-500 to-green-600" },
-    { id: "hr", name: "İnsan Kaynakları", icon: UserCircle, color: "from-indigo-500 to-indigo-600" },
-    { id: "analytics", name: "Web Analitik", icon: ActivityIcon, color: "from-cyan-500 to-cyan-600" },
-    { id: "reports", name: "Raporlama", icon: BarChart3, color: "from-pink-500 to-pink-600" },
-    { id: "settings", name: "Ayarlar", icon: Settings, color: "from-gray-500 to-gray-600" }
-  ];
-
-  const handleModuleClick = (moduleId: typeof activeModule) => {
-    setActiveModule(moduleId);
-    setSidebarOpen(false);
-  };
-
-  const renderModuleContent = () => {
-    switch (activeModule) {
-      case "crm":
-        return <CRMModule />;
-      case "logistics":
-        return <LogisticsModule />;
-      case "accounting":
-        return <AccountingModule />;
-      case "hr":
-        return <HRModule />;
-      case "analytics":
-        return <AnalyticsModule />;
-      case "reports":
-        return <ReportsModule />;
-      case "settings":
-        return <SettingsModule />;
-      default:
-        return renderDashboard();
-    }
-  };
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Kullanıcı";
+  const editableOperations = canEditOperations(role);
 
   const renderDashboard = () => (
     <div className="space-y-6">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 rounded-2xl p-8 text-white shadow-xl">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">Hoş Geldiniz, Ahmet Yılmaz</h1>
-            <p className="text-blue-100 text-lg">Bugün nasılsınız? İşlerinizi kolayca yönetmek için modülleri kullanabilirsiniz.</p>
-            <div className="flex flex-wrap items-center gap-4 mt-4">
-              <Badge className="bg-white/20 text-white hover:bg-white/30 px-4 py-2 text-sm">
-                Lojistik Operasyonları
-              </Badge>
-              <span className="text-blue-200 text-sm">📅 {new Date().toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-            </div>
-          </div>
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 rounded-2xl p-6 md:p-8 text-white shadow-xl overflow-hidden">
+        <h1 className="text-3xl md:text-4xl font-bold mb-2 break-words">Hoş geldiniz, {displayName}</h1>
+        <p className="text-blue-100 text-lg">Güncel operasyon özetiniz aşağıdadır.</p>
+        <div className="flex flex-wrap items-center gap-4 mt-4">
+          <Badge className="bg-white/20 text-white hover:bg-white/30 px-4 py-2 text-sm">{roleLabels[role]}</Badge>
+          <span className="text-blue-200 text-sm">📅 {new Date().toLocaleDateString("tr-TR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {role === "demo" && (
+        <Card className="p-4 border-blue-200 bg-blue-50 text-blue-900">
+          Bu hesap güvenli demo görünümündedir. Müşteri, sürücü, personel ve finans verilerine erişemez.
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-green-700 font-medium">Tamamlanan Görevler</p>
-              <p className="text-3xl font-bold text-green-900 mt-2">142</p>
-              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" />
-                Bu ay
-              </p>
-            </div>
-            <div className="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center">
-              <CheckCircle2 className="w-7 h-7 text-white" />
-            </div>
-          </div>
+        <Card className="p-6 bg-green-50 border-green-200">
+          <p className="text-sm text-green-700 font-medium">Teslim Edilen Sevkiyat</p>
+          <p className="text-3xl font-bold text-green-900 mt-2">{stats.deliveredShipments}</p>
+          <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Toplam</p>
         </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-blue-700 font-medium">Aktif Projeler</p>
-              <p className="text-3xl font-bold text-blue-900 mt-2">8</p>
-              <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-                <BarChart className="w-3 h-3" />
-                Devam ediyor
-              </p>
-            </div>
-            <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center">
-              <BarChart className="w-7 h-7 text-white" />
-            </div>
-          </div>
+        <Card className="p-6 bg-blue-50 border-blue-200">
+          <p className="text-sm text-blue-700 font-medium">Aktif Sevkiyat</p>
+          <p className="text-3xl font-bold text-blue-900 mt-2">{stats.activeShipments}</p>
+          <p className="text-xs text-blue-600 mt-1 flex items-center gap-1"><Truck className="w-3 h-3" /> Devam ediyor</p>
         </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-orange-700 font-medium">Bekleyen Görevler</p>
-              <p className="text-3xl font-bold text-orange-900 mt-2">12</p>
-              <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                Öncelikli
-              </p>
-            </div>
-            <div className="w-14 h-14 bg-orange-600 rounded-xl flex items-center justify-center">
-              <Clock className="w-7 h-7 text-white" />
-            </div>
-          </div>
+        <Card className="p-6 bg-orange-50 border-orange-200">
+          <p className="text-sm text-orange-700 font-medium">Bekleyen Sevkiyat</p>
+          <p className="text-3xl font-bold text-orange-900 mt-2">{stats.pendingShipments}</p>
+          <p className="text-xs text-orange-600 mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> İşlem bekliyor</p>
         </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-purple-700 font-medium">Başarı Oranı</p>
-              <p className="text-3xl font-bold text-purple-900 mt-2">94%</p>
-              <p className="text-xs text-purple-600 mt-1 flex items-center gap-1">
-                <Award className="w-3 h-3" />
-                Mükemmel
-              </p>
-            </div>
-            <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center">
-              <Award className="w-7 h-7 text-white" />
-            </div>
-          </div>
+        <Card className="p-6 bg-purple-50 border-purple-200">
+          <p className="text-sm text-purple-700 font-medium">Teslim Başarı Oranı</p>
+          <p className="text-3xl font-bold text-purple-900 mt-2">%{stats.successRate}</p>
+          <p className="text-xs text-purple-600 mt-1">{stats.totalShipments} sevkiyat üzerinden</p>
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">🚀 Hızlı İşlemler</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Cari Ekle Card */}
-          <Card 
-            className="p-6 hover:shadow-xl transition-all cursor-pointer group border-2 border-blue-200 hover:border-blue-500"
-            onClick={() => setIsCariFormOpen(true)}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-lg">
-                <Plus className="w-7 h-7" />
-              </div>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition-colors mb-2">
-              Yeni Cari Ekle
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Müşteri veya tedarikçi kaydı oluşturun
-            </p>
-            <Button 
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsCariFormOpen(true);
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Cari Formu Aç
-            </Button>
-          </Card>
-
-          {/* İş Giriş Card */}
-          <Card 
-            className="p-6 hover:shadow-xl transition-all cursor-pointer group border-2 border-green-200 hover:border-green-500"
-            onClick={() => setIsIsGirisFormOpen(true)}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-lg">
-                <Package className="w-7 h-7" />
-              </div>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-800 group-hover:text-green-600 transition-colors mb-2">
-              Yeni İş Girişi
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Sevkiyat kaydı oluşturun
-            </p>
-            <Button 
-              className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsIsGirisFormOpen(true);
-              }}
-            >
-              <Package className="w-4 h-4 mr-2" />
-              İş Giriş Formu Aç
-            </Button>
-          </Card>
+      {editableOperations && (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Hızlı İşlemler</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="p-6 border-2 border-blue-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Yeni Cari Ekle</h3>
+              <p className="text-sm text-gray-600 mb-4">Müşteri veya tedarikçi kaydı oluşturun.</p>
+              <Button className="w-full" onClick={() => setIsCariFormOpen(true)}><Plus className="w-4 h-4 mr-2" />Cari Formu Aç</Button>
+            </Card>
+            <Card className="p-6 border-2 border-green-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Yeni İş Girişi</h3>
+              <p className="text-sm text-gray-600 mb-4">Yeni sevkiyat kaydı oluşturun.</p>
+              <Button className="w-full bg-green-700 hover:bg-green-800" onClick={() => setIsIsGirisFormOpen(true)}><Package className="w-4 h-4 mr-2" />İş Giriş Formu Aç</Button>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
+  const renderModuleContent = () => {
+    if (!canAccessModule(role, activeModule)) return renderDashboard();
+    switch (activeModule) {
+      case "crm": return <CRMModule />;
+      case "logistics": return <LogisticsModule />;
+      case "accounting": return <AccountingModule />;
+      case "hr": return <HRModule />;
+      case "analytics": return <AnalyticsModule />;
+      case "reports": return <ReportsModule />;
+      case "settings": return <SettingsModule />;
+      default: return renderDashboard();
+    }
+  };
+
   return (
     <>
-      <SEO 
-        title="Rex Portal - Dashboard"
-        description="Rex Lojistik personel yönetim paneli"
-      />
-
+      <SEO title="Rex Portal - Dashboard" description="Rex Lojistik güvenli personel yönetim paneli" />
       <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
-          {/* Sidebar */}
-          <aside className={`
-            fixed lg:sticky top-0 left-0 z-40 h-screen
-            bg-slate-900 text-white shadow-2xl
-            transform transition-all duration-300 ease-in-out
-            overflow-hidden group flex flex-col
-            ${sidebarOpen ? 'translate-x-0 w-72' : '-translate-x-full lg:translate-x-0 w-72 lg:w-[80px] lg:hover:w-72'}
-          `}>
-            {/* Sidebar Header */}
+          <aside className={`fixed lg:sticky top-0 left-0 z-40 h-screen bg-slate-900 text-white shadow-2xl transform transition-all duration-300 overflow-hidden group flex flex-col ${sidebarOpen ? "translate-x-0 w-72" : "-translate-x-full lg:translate-x-0 w-72 lg:w-[80px] lg:hover:w-72"}`}>
             <div className="p-4 lg:p-5 border-b border-slate-800">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="min-w-10 min-h-10 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg shrink-0">
-                    RL
-                  </div>
-                  <span className={`text-xl font-bold whitespace-nowrap transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'lg:opacity-0 lg:group-hover:opacity-100'}`}>Rex Portal</span>
+                  <div className="min-w-10 min-h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold">RL</div>
+                  <span className={`text-xl font-bold whitespace-nowrap ${sidebarOpen ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>Rex Portal</span>
                 </div>
-                <button 
-                  onClick={() => setSidebarOpen(false)}
-                  className="lg:hidden p-2 hover:bg-slate-800 rounded-lg transition-colors shrink-0"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <button aria-label="Menüyü kapat" onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-slate-800 rounded-lg"><X className="w-5 h-5" /></button>
               </div>
-
-              {/* User Profile */}
-              <div className={`pb-2 transition-all duration-300 ${sidebarOpen ? 'opacity-100 h-auto' : 'lg:opacity-0 lg:h-0 lg:group-hover:opacity-100 lg:group-hover:h-auto overflow-hidden'}`}>
+              <div className={`pb-2 ${sidebarOpen ? "opacity-100" : "lg:opacity-0 lg:h-0 lg:group-hover:opacity-100 lg:group-hover:h-auto overflow-hidden"}`}>
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 min-w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shrink-0">
-                    {user?.email?.[0]?.toUpperCase() || "A"}
-                  </div>
-                  <div className="whitespace-nowrap overflow-hidden">
-                    <h3 className="font-semibold text-white">{user?.email?.split("@")[0] || "Kullanıcı"}</h3>
-                    <p className="text-sm text-gray-400">Operasyon</p>
-                  </div>
+                  <div className="w-10 h-10 min-w-10 bg-blue-500 rounded-full flex items-center justify-center font-bold">{user?.email?.[0]?.toUpperCase() || "R"}</div>
+                  <div className="whitespace-nowrap overflow-hidden"><h3 className="font-semibold">{displayName}</h3><p className="text-sm text-gray-400">{roleLabels[role]}</p></div>
                 </div>
               </div>
             </div>
-
-            {/* Navigation */}
-            <nav className="p-3 flex-1 overflow-y-auto overflow-x-hidden">
-              <p className={`text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3 transition-opacity duration-300 whitespace-nowrap ${sidebarOpen ? 'opacity-100' : 'lg:opacity-0 lg:group-hover:opacity-100'}`}>
-                Modüller
-              </p>
+            <nav className="p-3 flex-1 overflow-y-auto overflow-x-hidden" aria-label="Portal modülleri">
               <ul className="space-y-1">
                 {modules.map((module) => {
                   const Icon = module.icon;
                   const isActive = activeModule === module.id;
                   return (
                     <li key={module.id}>
-                      <button
-                        onClick={() => handleModuleClick(module.id as typeof activeModule)}
-                        className={`
-                          w-full flex items-center gap-3 px-3 py-3 rounded-lg
-                          transition-all duration-200 group/btn
-                          ${isActive 
-                            ? 'bg-blue-600 text-white shadow-lg' 
-                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                          }
-                        `}
-                        title={module.name}
-                      >
-                        <Icon className={`min-w-5 w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400 group-hover/btn:text-white'}`} />
-                        <span className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'lg:opacity-0 lg:group-hover:opacity-100'}`}>
-                          {module.name}
-                        </span>
+                      <button onClick={() => void handleModuleClick(module.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg ${isActive ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white"}`} title={module.name}>
+                        <Icon className="min-w-5 w-5 h-5" /><span className={`font-medium text-sm whitespace-nowrap ${sidebarOpen ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>{module.name}</span>
                       </button>
                     </li>
                   );
                 })}
               </ul>
             </nav>
-
-            {/* Sidebar Footer */}
             <div className="p-3 border-t border-slate-800">
-              <Link href="/" className="flex items-center gap-3 px-3 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all duration-200">
-                <LogOut className="min-w-5 w-5 h-5 shrink-0" />
-                <span className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'lg:opacity-0 lg:group-hover:opacity-100'}`}>
-                  Çıkış Yap
-                </span>
-              </Link>
+              <button onClick={() => void handleLogout()} className="w-full flex items-center gap-3 px-3 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg">
+                <LogOut className="min-w-5 w-5 h-5" /><span className={`font-medium text-sm whitespace-nowrap ${sidebarOpen ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>Çıkış Yap</span>
+              </button>
             </div>
           </aside>
 
-          {/* Main Content */}
           <main className="flex-1 min-w-0">
-            {/* Mobile Header */}
             <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                  RL
-                </div>
-                <span className="font-bold text-lg text-gray-900">Rex Portal</span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
-                  <Bell className="w-5 h-5 text-gray-600" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <Search className="w-5 h-5 text-gray-600" />
-                </button>
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  className="flex items-center space-x-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Çıkış Yap</span>
-                </Button>
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                </button>
+              <div className="flex items-center gap-3"><div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">RL</div><span className="font-bold text-lg">Rex Portal</span></div>
+              <div className="flex items-center gap-2">
+                <Button onClick={() => void handleLogout()} variant="outline" size="sm"><LogOut className="w-4 h-4 mr-1" />Çıkış</Button>
+                <button aria-label="Menüyü aç" onClick={() => setSidebarOpen((value) => !value)} className="p-2 hover:bg-gray-100 rounded-lg">{sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}</button>
               </div>
             </div>
-
-            {/* Content Area */}
-            <div className="p-4 md:p-6 lg:p-8">
-              {renderModuleContent()}
-            </div>
+            <div className="p-4 md:p-6 lg:p-8">{renderModuleContent()}</div>
           </main>
-
-          {/* Mobile Overlay */}
-          {sidebarOpen && (
-            <div 
-              className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-          )}
+          {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
         </div>
       </SidebarProvider>
 
-      {/* Modals */}
-      <CariForm 
-        isOpen={isCariFormOpen}
-        onClose={() => setIsCariFormOpen(false)}
-      />
-
-      <IsGirisForm 
-        isOpen={isIsGirisFormOpen}
-        onClose={() => setIsIsGirisFormOpen(false)}
-      />
+      {editableOperations && <CariForm isOpen={isCariFormOpen} onClose={() => setIsCariFormOpen(false)} />}
+      {editableOperations && <IsGirisForm isOpen={isIsGirisFormOpen} onClose={() => setIsIsGirisFormOpen(false)} />}
     </>
   );
 }

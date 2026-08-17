@@ -6,6 +6,8 @@ import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown } from "lu
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService } from "@/services/shipmentService";
+import { openPrivateDocument } from "@/lib/private-storage";
+import { downloadCsv, parseCsv } from "@/lib/csv";
 import { DriverForm } from "@/components/DriverForm";
 import { VehicleForm } from "@/components/VehicleForm";
 import { ShipmentForm } from "@/components/ShipmentForm";
@@ -25,7 +27,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import * as XLSX from "xlsx";
 
 export function LogisticsModule() {
   const { toast } = useToast();
@@ -241,10 +242,10 @@ export function LogisticsModule() {
     );
   });
 
-  // Export to Excel
-  const exportToExcel = () => {
+  // Export to CSV
+  const exportToCSV = () => {
     try {
-      const data = filteredShipments.map((shipment) => ({
+      const rows = filteredShipments.map((shipment) => ({
         "Sevkiyat Kodu": shipment.shipment_code || "-",
         "Yükleme Tarihi": shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd.MM.yyyy", { locale: tr }) : "-",
         "Gönderici": shipment.sender_name || "-",
@@ -258,80 +259,7 @@ export function LogisticsModule() {
         "Teslim Alan": shipment.delivered_to || "-",
         "Durum": getStatusLabel(shipment.status),
       }));
-
-      const worksheet = XLSX.utils.json_to_sheet(data);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Sevkiyatlar");
-
-      // Auto-size columns
-      const maxWidth = 20;
-      const colWidths = Object.keys(data[0] || {}).map(() => ({ wch: maxWidth }));
-      worksheet["!cols"] = colWidths;
-
-      const fileName = `Sevkiyatlar_${format(new Date(), "dd-MM-yyyy_HH-mm")}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
-
-      toast({
-        title: "Başarılı",
-        description: "Excel dosyası indirildi",
-      });
-    } catch (error) {
-      console.error("Excel export error:", error);
-      toast({
-        title: "Hata",
-        description: "Excel dosyası oluşturulurken bir hata oluştu",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Export to CSV
-  const exportToCSV = () => {
-    try {
-      const headers = [
-        "Sevkiyat Kodu",
-        "Yükleme Tarihi",
-        "Gönderici",
-        "Gönderici İl",
-        "Alıcı",
-        "Alıcı İlçe",
-        "Alıcı İl",
-        "Sürücü",
-        "Araç",
-        "Teslim Tarihi",
-        "Teslim Alan",
-        "Durum",
-      ];
-
-      const rows = filteredShipments.map((shipment) => [
-        shipment.shipment_code || "-",
-        shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd.MM.yyyy", { locale: tr }) : "-",
-        shipment.sender_name || "-",
-        shipment.origin || "-",
-        shipment.receiver || "-",
-        shipment.receiver_district || "-",
-        shipment.destination || "-",
-        shipment.driver?.full_name || "-",
-        shipment.vehicle?.cekici_plakasi || "-",
-        shipment.delivery_date ? format(new Date(shipment.delivery_date), "dd.MM.yyyy", { locale: tr }) : "-",
-        shipment.delivered_to || "-",
-        getStatusLabel(shipment.status),
-      ]);
-
-      const csvContent = [
-        headers.join(","),
-        ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
-      ].join("\n");
-
-      // UTF-8 BOM for Turkish characters
-      const BOM = "\uFEFF";
-      const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `Sevkiyatlar_${format(new Date(), "dd-MM-yyyy_HH-mm")}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadCsv(`Sevkiyatlar_${format(new Date(), "dd-MM-yyyy_HH-mm")}.csv`, rows);
 
       toast({
         title: "Başarılı",
@@ -347,7 +275,7 @@ export function LogisticsModule() {
     }
   };
 
-  // Download Excel template
+  // Download CSV template
   const downloadExcelTemplate = () => {
     try {
       const templateData = [
@@ -363,16 +291,11 @@ export function LogisticsModule() {
         },
       ];
 
-      const worksheet = XLSX.utils.json_to_sheet(templateData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Sevkiyat Şablonu");
-
-      const fileName = "Sevkiyat_Sablonu.xlsx";
-      XLSX.writeFile(workbook, fileName);
+      downloadCsv("Sevkiyat_Sablonu.csv", templateData);
 
       toast({
         title: "Başarılı",
-        description: "Excel şablonu indirildi",
+        description: "CSV şablonu indirildi",
       });
     } catch (error) {
       console.error("Template download error:", error);
@@ -384,18 +307,18 @@ export function LogisticsModule() {
     }
   };
 
-  // Handle Excel import
-  const handleExcelImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle CSV import
+  const handleCsvImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsImporting(true);
 
     try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      if (file.size > 2 * 1024 * 1024) {
+        throw new Error("CSV dosyası 2 MB'den büyük olamaz");
+      }
+      const jsonData = parseCsv(await file.text());
 
       let successCount = 0;
       let errorCount = 0;
@@ -475,10 +398,10 @@ export function LogisticsModule() {
       // Reload data
       await loadData();
     } catch (error) {
-      console.error("Excel import error:", error);
+      console.error("CSV import error:", error);
       toast({
         title: "Hata",
-        description: "Excel dosyası okunurken bir hata oluştu",
+        description: error instanceof Error ? error.message : "CSV dosyası okunurken bir hata oluştu",
         variant: "destructive",
       });
     } finally {
@@ -514,10 +437,6 @@ export function LogisticsModule() {
         <TabsContent value="shipments" className="space-y-4">
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
-              <Button onClick={exportToExcel} variant="outline">
-                <FileDown className="h-4 w-4 mr-2" />
-                Excel İndir
-              </Button>
               <Button onClick={exportToCSV} variant="outline">
                 <FileText className="h-4 w-4 mr-2" />
                 CSV İndir
@@ -532,13 +451,13 @@ export function LogisticsModule() {
                 disabled={isImporting}
               >
                 <FileDown className="h-4 w-4 mr-2" />
-                {isImporting ? "Yükleniyor..." : "Excel'den Yükle"}
+                {isImporting ? "Yükleniyor..." : "CSV'den Yükle"}
               </Button>
               <input
                 id="excel-import-input"
                 type="file"
-                accept=".xlsx,.xls"
-                onChange={handleExcelImport}
+                accept=".csv,text/csv"
+                onChange={handleCsvImport}
                 style={{ display: "none" }}
               />
             </div>
@@ -686,15 +605,14 @@ export function LogisticsModule() {
                             </span>
                           )}
                           {shipment.status === "teslim_edildi" && shipment.delivery_proof_url && (
-                            <a
-                              href={shipment.delivery_proof_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              type="button"
+                              onClick={() => void openPrivateDocument(shipment.delivery_proof_url, 'shipment-documents')}
                               className="text-blue-600 hover:text-blue-800"
                               title="Teslim evrakını görüntüle"
                             >
                               <FileText className="h-4 w-4" />
-                            </a>
+                            </button>
                           )}
                         </div>
                       </td>

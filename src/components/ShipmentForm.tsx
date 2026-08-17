@@ -17,6 +17,7 @@ import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { crmService, Customer } from "@/services/crmService";
 import { cn } from "@/lib/utils";
+import { openPrivateDocument } from "@/lib/private-storage";
 import { ShipmentNotificationDialog } from "@/components/ShipmentNotificationDialog";
 
 // Helper function to convert text to title case (Turkish locale aware)
@@ -1023,17 +1024,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Teslim Evrakı</Label>
                   {initialData.delivery_proof_url ? (
-                    <a 
-                      href={initialData.delivery_proof_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => void openPrivateDocument(initialData.delivery_proof_url, 'shipment-documents')}
                       className="flex items-center gap-2 px-3 py-2 bg-white border rounded-md hover:bg-gray-50 transition-colors text-blue-600 hover:text-blue-700"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                       PDF İndir
-                    </a>
+                    </button>
                   ) : (
                     <div className="px-3 py-2 bg-white border rounded-md text-gray-400">
                       Yok

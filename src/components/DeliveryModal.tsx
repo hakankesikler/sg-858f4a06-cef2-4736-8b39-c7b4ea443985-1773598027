@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { storageReference } from "@/lib/private-storage";
 import { shipmentService } from "@/services/shipmentService";
 import { Upload, FileText } from "lucide-react";
 
@@ -72,11 +73,7 @@ export function DeliveryModal({ isOpen, onClose, shipmentId, shipmentCode, onSuc
         throw uploadError;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('shipment-documents')
-        .getPublicUrl(filePath);
-
-      return publicUrl;
+      return storageReference('shipment-documents', filePath);
     } catch (error) {
       console.error("Error uploading delivery proof:", error);
       throw error;

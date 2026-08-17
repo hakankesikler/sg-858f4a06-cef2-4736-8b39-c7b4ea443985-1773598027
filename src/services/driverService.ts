@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { storageReference } from "@/lib/private-storage";
 
 export interface Driver {
   id?: string;
@@ -129,10 +130,6 @@ export const driverService = {
       throw error;
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('driver-documents')
-      .getPublicUrl(data.path);
-
-    return publicUrl;
+    return storageReference('driver-documents', data.path);
   }
 };

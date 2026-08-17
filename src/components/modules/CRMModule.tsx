@@ -15,7 +15,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { bankAccountService, type BankAccount } from "@/services/bankAccountService";
-import * as XLSX from "xlsx";
+import { downloadCsv, parseCsv } from "@/lib/csv";
 
 // Helper function to normalize Turkish characters for search
 const normalizeTurkish = (str: string): string => {
@@ -35,9 +35,10 @@ const normalizeTurkish = (str: string): string => {
     .replace(/ç/g, 'c')
     .toLowerCase();
   
-  console.log(`normalizeTurkish: "${str}" -> "${normalized}"`);
   return normalized;
 };
+
+const PAGE_SIZE = 50;
 
 export function CRMModule() {
   const { toast } = useToast();
@@ -75,6 +76,7 @@ export function CRMModule() {
   
   // Import state
   const [isImporting, setIsImporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   
   useEffect(() => {
     loadCustomers();
@@ -84,32 +86,6 @@ export function CRMModule() {
     setLoading(true);
     try {
       const data = await crmService.getCustomers();
-      console.log("=== CRM MODULE LOADED CUSTOMERS ===");
-      console.log("Total customers loaded:", data.length);
-      console.log("Account types:", [...new Set(data.map(c => c.account_type))]);
-      
-      // Search for TEKNİK İSTİF by customer code
-      const teknikIstifByCode = data.find(c => c.customer_code === 'CST-000414');
-      console.log("TEKNİK İSTİF search by code (CST-000414):", teknikIstifByCode ? "FOUND ✅" : "NOT FOUND ❌");
-      if (teknikIstifByCode) {
-        console.log("TEKNİK İSTİF data:", {
-          id: teknikIstifByCode.id,
-          code: teknikIstifByCode.customer_code,
-          name: teknikIstifByCode.name,
-          account_type: teknikIstifByCode.account_type,
-          name_normalized: normalizeTurkish(teknikIstifByCode.name || '')
-        });
-      }
-      
-      // Search for TEKNİK İSTİF by name
-      const teknikIstifByName = data.find(c => c.name?.includes('İSTİF'));
-      console.log("TEKNİK İSTİF search by name (contains 'İSTİF'):", teknikIstifByName ? "FOUND ✅" : "NOT FOUND ❌");
-      
-      // List all customers with TEKNİK in name
-      const allTeknik = data.filter(c => c.name?.includes('TEKNİK') || c.name?.includes('TEKNIK'));
-      console.log("All customers with TEKNİK/TEKNIK:", allTeknik.length);
-      console.log("TEKNİK customer codes:", allTeknik.map(c => c.customer_code));
-      
       setCustomers(data);
     } catch (error) {
       console.error("Error loading customers:", error);
@@ -195,75 +171,43 @@ export function CRMModule() {
   };
 
   const filteredCustomers = useMemo(() => {
-    console.log("=== FILTERED CUSTOMERS MEMO ===");
-    console.log("Total customers:", customers.length);
-    console.log("Filter Type:", filterType);
-    console.log("Search Term:", searchTerm);
-    
     let filtered = customers;
 
     // Filter by main account type
     if (filterType === "musteri") {
       filtered = filtered.filter(c => c.account_type === "musteri" || !c.account_type);
-      console.log("After musteri filter:", filtered.length);
-      
-      // Check if TEKNİK İSTİF is in musteri filtered list
-      const teknikIstif = filtered.find(c => c.customer_code === 'CST-000414');
-      console.log("TEKNİK İSTİF in musteri filter:", teknikIstif ? "YES ✅" : "NO ❌");
     } else if (filterType !== "all") {
       filtered = filtered.filter(c => c.account_type === filterType);
-      console.log(`After ${filterType} filter:`, filtered.length);
     }
 
     // Filter by supplier sub-category if in tedarikci tab
     if (filterType === "tedarikci" && supplierSubCategory !== "all") {
       filtered = filtered.filter(c => c.supplier_category === supplierSubCategory);
-      console.log("After supplier sub-category filter:", filtered.length);
     }
 
     // Filter by search term with Turkish character normalization
     if (searchTerm) {
       const search = normalizeTurkish(searchTerm);
-      console.log(`Searching for: "${searchTerm}" (normalized: "${search}")`);
-      
-      const beforeSearchCount = filtered.length;
-      
       filtered = filtered.filter(c => {
         const nameNorm = normalizeTurkish(c.name || '');
         const emailNorm = normalizeTurkish(c.email || '');
         const phoneNorm = normalizeTurkish(c.phone || '');
         const codeNorm = normalizeTurkish(c.customer_code || '');
         
-        const matches = nameNorm.includes(search) || emailNorm.includes(search) || phoneNorm.includes(search) || codeNorm.includes(search);
-        
-        // Log TEKNİK İSTİF specifically
-        if (c.customer_code === 'CST-000414') {
-          console.log("🔍 TEKNİK İSTİF match check:", {
-            code: c.customer_code,
-            name: c.name,
-            nameNorm,
-            search,
-            nameIncludes: nameNorm.includes(search),
-            matches
-          });
-        }
-        
-        return matches;
+        return nameNorm.includes(search) || emailNorm.includes(search) || phoneNorm.includes(search) || codeNorm.includes(search);
       });
-      
-      console.log(`After search filter: ${beforeSearchCount} -> ${filtered.length}`);
-      
-      // Check if TEKNİK İSTİF survived the search filter
-      const teknikIstifAfterSearch = filtered.find(c => c.customer_code === 'CST-000414');
-      console.log("TEKNİK İSTİF after search filter:", teknikIstifAfterSearch ? "YES ✅" : "NO ❌");
     }
-
-    console.log("=== FINAL FILTERED COUNT:", filtered.length, "===");
-    
     return filtered;
   }, [customers, filterType, supplierSubCategory, searchTerm]);
 
-  // Download Cari Excel Template
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterType, supplierSubCategory, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / PAGE_SIZE));
+  const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Download Cari CSV template
   const downloadCariTemplate = () => {
     try {
       const templateData = [
@@ -282,17 +226,7 @@ export function CRMModule() {
         },
       ];
 
-      const worksheet = XLSX.utils.json_to_sheet(templateData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Cari Şablonu");
-
-      // Auto-size columns
-      const maxWidth = 35;
-      const colWidths = Object.keys(templateData[0]).map(() => ({ wch: maxWidth }));
-      worksheet["!cols"] = colWidths;
-
-      const fileName = "Cari_Sablonu.xlsx";
-      XLSX.writeFile(workbook, fileName);
+      downloadCsv("Cari_Sablonu.csv", templateData);
 
       toast({
         title: "Başarılı",
@@ -308,7 +242,7 @@ export function CRMModule() {
     }
   };
 
-  // Handle Cari Excel Import
+  // Handle Cari CSV import
   const handleCariImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -316,10 +250,10 @@ export function CRMModule() {
     setIsImporting(true);
 
     try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      if (file.size > 2 * 1024 * 1024) {
+        throw new Error("CSV dosyası 2 MB'den büyük olamaz");
+      }
+      const jsonData = parseCsv(await file.text());
 
       let successCount = 0;
       let errorCount = 0;
@@ -410,10 +344,10 @@ export function CRMModule() {
       // Reload data
       await loadCustomers();
     } catch (error) {
-      console.error("Excel import error:", error);
+      console.error("CSV import error:", error);
       toast({
         title: "Hata",
-        description: "Excel dosyası okunurken bir hata oluştu",
+        description: error instanceof Error ? error.message : "CSV dosyası okunurken bir hata oluştu",
         variant: "destructive",
       });
     } finally {
@@ -425,13 +359,11 @@ export function CRMModule() {
   };
 
   const handleEditCustomer = (customer: any) => {
-    console.log("=== EDIT CUSTOMER CLICKED ===", customer);
     setSelectedCustomer(customer);
     setIsEditDialogOpen(true);
   };
 
   const handleDeleteClick = (customer: any) => {
-    console.log("=== DELETE CUSTOMER CLICKED ===", customer);
     setSelectedCustomer(customer);
     setIsDeleteDialogOpen(true);
   };
@@ -489,12 +421,12 @@ export function CRMModule() {
           onClick={() => document.getElementById("cari-import-input")?.click()}
           disabled={isImporting}
         >
-          {isImporting ? "Yükleniyor..." : "Excel'den Cari Yükle"}
+          {isImporting ? "Yükleniyor..." : "CSV'den Cari Yükle"}
         </Button>
         <input
           id="cari-import-input"
           type="file"
-          accept=".xlsx,.xls"
+          accept=".csv,text/csv"
           onChange={handleCariImport}
           style={{ display: "none" }}
         />
@@ -622,8 +554,8 @@ export function CRMModule() {
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full">
+      <div className="border rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[900px]">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="w-12 px-6 py-3">
@@ -653,10 +585,8 @@ export function CRMModule() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredCustomers.map((customer) => {
+            {paginatedCustomers.map((customer) => {
               const vknValue = customer.vergi_no || customer.tc_no || "-";
-              console.log(`Rendering row for ${customer.name}: VKN=${vknValue}`);
-              
               return (
                 <tr key={customer.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
@@ -727,6 +657,16 @@ export function CRMModule() {
 
         {filteredCustomers.length === 0 && (
           <div className="p-8 text-center text-gray-500">Cari kaydı bulunamadı</div>
+        )}
+        {filteredCustomers.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t px-4 py-3 bg-white">
+            <span className="text-sm text-gray-600">{filteredCustomers.length} kayıttan {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, filteredCustomers.length)} arası</span>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1}>Önceki</Button>
+              <span className="text-sm">{currentPage} / {totalPages}</span>
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages}>Sonraki</Button>
+            </div>
+          </div>
         )}
       </div>
 

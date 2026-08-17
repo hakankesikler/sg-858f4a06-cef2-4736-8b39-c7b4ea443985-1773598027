@@ -238,7 +238,7 @@ export function CustomerTransactionsDialog({
           currency: debtForm.currency,
           notes: debtForm.description,
           status: 'beklemede'
-        });
+        } as any);
         
         if (error) throw error;
       } else {
@@ -297,7 +297,7 @@ export function CustomerTransactionsDialog({
           currency: creditForm.currency,
           notes: creditForm.description,
           status: 'beklemede'
-        });
+        } as any);
         
         if (error) throw error;
       }

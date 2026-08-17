@@ -8,6 +8,28 @@ type ResponseData = {
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const WINDOW_MS = 15 * 60 * 1000;
+const MAX_REQUESTS = 3;
+const requestLog = new Map<string, number[]>();
+
+function requestIp(req: NextApiRequest) {
+  const forwarded = req.headers["x-forwarded-for"];
+  return (Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(",")[0])?.trim() || req.socket.remoteAddress || "unknown";
+}
+
+function isRateLimited(ip: string) {
+  const now = Date.now();
+  const recent = (requestLog.get(ip) || []).filter((timestamp) => now - timestamp < WINDOW_MS);
+  if (recent.length >= MAX_REQUESTS) return true;
+  recent.push(now);
+  requestLog.set(ip, recent);
+  return false;
+}
+
+function validText(value: unknown, maxLength: number) {
+  return typeof value === "string" && value.trim().length > 0 && value.length <= maxLength;
+}
+
 function formatEmailText(data: any): string {
   const serviceTypeLabel = data.serviceType === "domestic" ? "Yurt İçi" : "Uluslararası";
   
@@ -99,7 +121,26 @@ export default async function handler(
   try {
     const formData = req.body;
 
-    if (!formData.cargos || !Array.isArray(formData.cargos) || formData.cargos.length === 0) {
+    const origin = req.headers.origin;
+    if (origin && !/^https:\/\/(www\.)?rexlojistik\.com$/i.test(origin)) {
+      return res.status(403).json({ success: false, message: "İstek reddedildi" });
+    }
+
+    if (isRateLimited(requestIp(req))) {
+      return res.status(429).json({ success: false, message: "Çok fazla istek gönderdiniz. Lütfen daha sonra tekrar deneyin." });
+    }
+
+    if (
+      !validText(formData?.fullName, 120) ||
+      !validText(formData?.companyName, 160) ||
+      !validText(formData?.email, 200) ||
+      !validText(formData?.phone, 40) ||
+      !/^\S+@\S+\.\S+$/.test(formData.email)
+    ) {
+      return res.status(400).json({ success: false, message: "Form bilgileri geçersiz" });
+    }
+
+    if (!Array.isArray(formData.cargos) || formData.cargos.length === 0 || formData.cargos.length > 20) {
       return res.status(400).json({
         success: false,
         message: "En az bir yük bilgisi girilmelidir",
