@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { SEO } from "@/components/SEO";
@@ -24,6 +24,20 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setRecoveryMode(true);
+        setPassword("");
+        setConfirmPassword("");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -84,6 +98,34 @@ export default function LoginPage() {
     toast({ title: "Bağlantı gönderildi", description: "Şifre yenileme bağlantısı e-posta adresinize gönderildi." });
   };
 
+  const handleUpdatePassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (password.length < 8) {
+      toast({ title: "Şifre çok kısa", description: "Şifreniz en az 8 karakter olmalıdır.", variant: "destructive" });
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast({ title: "Şifreler eşleşmiyor", description: "İki alana aynı şifreyi yazın.", variant: "destructive" });
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      setLoading(false);
+      toast({ title: "Şifre güncellenemedi", description: "Bağlantının süresi dolmuş olabilir. Yeni bir bağlantı isteyin.", variant: "destructive" });
+      return;
+    }
+
+    await supabase.auth.signOut();
+    setRecoveryMode(false);
+    setPassword("");
+    setConfirmPassword("");
+    setLoading(false);
+    toast({ title: "Şifre oluşturuldu", description: "Yeni şifrenizle giriş yapabilirsiniz." });
+    await router.replace("/login");
+  };
+
   return (
     <>
       <SEO title="Giriş Yap - Rex Portal" description="Rex Lojistik yetkili personel portalı." />
@@ -102,11 +144,37 @@ export default function LoginPage() {
               <div className="flex items-center justify-center mb-6">
                 <Image src="/rex-logo.png" alt="Rex Lojistik" width={180} height={60} priority />
               </div>
-              <CardTitle className="text-2xl text-center">REX Portal Giriş</CardTitle>
-              <CardDescription className="text-center">Yalnızca yetkili personel giriş yapabilir</CardDescription>
+              <CardTitle className="text-2xl text-center">{recoveryMode ? "Yeni Şifre Oluştur" : "REX Portal Giriş"}</CardTitle>
+              <CardDescription className="text-center">
+                {recoveryMode ? "Hesabınız için güvenli bir şifre belirleyin" : "Yalnızca yetkili personel giriş yapabilir"}
+              </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-6 pt-6">
+              {recoveryMode ? (
+                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                  <div>
+                    <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-2">Yeni Şifre</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Input id="new-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="pl-10 pr-10" disabled={loading} />
+                      <button type="button" aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"} onClick={() => setShowPassword((value) => !value)} className="absolute inset-y-0 right-0 px-3 flex items-center" disabled={loading}>
+                        {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">Yeni Şifre Tekrar</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <Input id="confirm-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="pl-10" disabled={loading} />
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full bg-[#E94E1B] hover:bg-[#d4451a]" disabled={loading}>
+                    {loading ? "Kaydediliyor..." : "Şifreyi Kaydet"}
+                  </Button>
+                </form>
+              ) : (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">E-posta</label>
@@ -137,6 +205,7 @@ export default function LoginPage() {
                   {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
                 </Button>
               </form>
+              )}
             </CardContent>
           </div>
 
