@@ -70,9 +70,11 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-white mb-4">Manisa Ofis</h3>
             <div className="space-y-2 text-sm">
-              <p className="text-white">Muradiye, Muradiye Cd. No:35, 45010 Yunusemre/Manisa</p>
-              <p className="text-white">Tel: 0236 233 90 93</p>
-              <p className="text-white">Cep: 0543 401 07 55</p>
+              <p className="text-white">Rainbow Life AVM</p>
+              <p className="text-white">Muradiye Mahallesi, Manolya Sokak No: 228/1</p>
+              <p className="text-white">A Blok No: 28 Yunusemre, 45140, Manisa</p>
+              <p className="text-white">Telefon: +90 (236) 230 00 13</p>
+              <p className="text-white">Cep: +90 (543) 401 0755</p>
               <p className="text-white">Email: info@rexlojistik.com</p>
             </div>
           </div>
