@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
@@ -35,60 +35,90 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      console.log("🔐 Login attempt:", email);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password,
-      });
-
-      console.log("📊 Login response:", { data, error });
-
-      if (error) {
-        console.error("❌ Login error:", error);
+      if (isSignUp) {
+        // Kayıt işlemi
+        console.log("📝 Sign up attempt:", email);
         
-        let errorMessage = "Giriş yapılamadı";
-        
-        if (error.message.includes("Invalid login credentials")) {
-          errorMessage = "E-posta veya şifre hatalı";
-        } else if (error.message.includes("Email not confirmed")) {
-          errorMessage = "E-posta adresiniz doğrulanmamış. Lütfen e-postanızdaki doğrulama linkine tıklayın.";
-        } else if (error.message.includes("Invalid")) {
-          errorMessage = "Geçersiz giriş bilgileri";
-        } else {
-          errorMessage = error.message;
-        }
-        
-        toast({
-          title: "Giriş Başarısız",
-          description: errorMessage,
-          variant: "destructive",
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password: password,
         });
-        return;
-      }
 
-      if (data?.session) {
-        console.log("✅ Login successful! Session:", data.session.user.email);
-        
-        if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
+        console.log("📊 Sign up response:", { data, error });
+
+        if (error) {
+          console.error("❌ Sign up error:", error);
+          toast({
+            title: "Kayıt Başarısız",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
         }
 
         toast({
-          title: "Giriş Başarılı",
-          description: "Hoş geldiniz!",
+          title: "Hesap Oluşturuldu",
+          description: "Giriş yapabilirsiniz!",
         });
-
-        const redirectUrl = router.query.redirect as string || "/personel/profil";
-        console.log("🔄 Redirecting to:", redirectUrl);
-        router.push(redirectUrl);
+        setIsSignUp(false);
+        
       } else {
-        console.warn("⚠️ No session returned");
-        toast({
-          title: "Hata",
-          description: "Oturum oluşturulamadı. Lütfen tekrar deneyin.",
-          variant: "destructive",
+        // Giriş işlemi
+        console.log("🔐 Login attempt:", email);
+        
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
         });
+
+        console.log("📊 Login response:", { data, error });
+
+        if (error) {
+          console.error("❌ Login error:", error);
+          
+          let errorMessage = "Giriş yapılamadı";
+          
+          if (error.message.includes("Invalid login credentials")) {
+            errorMessage = "E-posta veya şifre hatalı";
+          } else if (error.message.includes("Email not confirmed")) {
+            errorMessage = "E-posta adresiniz doğrulanmamış. Lütfen e-postanızdaki doğrulama linkine tıklayın.";
+          } else if (error.message.includes("Invalid")) {
+            errorMessage = "Geçersiz giriş bilgileri";
+          } else {
+            errorMessage = error.message;
+          }
+          
+          toast({
+            title: "Giriş Başarısız",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data?.session) {
+          console.log("✅ Login successful! Session:", data.session.user.email);
+          
+          if (rememberMe) {
+            localStorage.setItem("rememberMe", "true");
+          }
+
+          toast({
+            title: "Giriş Başarılı",
+            description: "Hoş geldiniz!",
+          });
+
+          const redirectUrl = router.query.redirect as string || "/personel/profil";
+          console.log("🔄 Redirecting to:", redirectUrl);
+          router.push(redirectUrl);
+        } else {
+          console.warn("⚠️ No session returned");
+          toast({
+            title: "Hata",
+            description: "Oturum oluşturulamadı. Lütfen tekrar deneyin.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (err: any) {
       console.error("💥 Unexpected error:", err);
@@ -143,7 +173,7 @@ export default function LoginPage() {
             </CardHeader>
 
             <CardContent className="space-y-6 pt-6">
-              <form onSubmit={handleLogin} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Email Input */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -235,7 +265,6 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => {
                       setIsSignUp(!isSignUp);
-                      setError("");
                     }}
                     className="text-[#E94E1B] hover:underline"
                   >
