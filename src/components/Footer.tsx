@@ -66,16 +66,6 @@ export function Footer() {
             </div>
           </div>
 
-          {/* İzmir Ofis */}
-          <div>
-            <h3 className="font-semibold text-white mb-4">İzmir Ofis</h3>
-            <div className="space-y-2 text-sm">
-              <p className="text-white">Muradiye, Muradiye Cd. No:35, 45010 Yunusemre/Manisa</p>
-              <p className="text-white">Tel: 0543 401 07 55</p>
-              <p className="text-white">Email: info@rexlojistik.com</p>
-            </div>
-          </div>
-
           {/* Manisa Ofis */}
           <div>
             <h3 className="font-semibold text-white mb-4">Manisa Ofis</h3>
