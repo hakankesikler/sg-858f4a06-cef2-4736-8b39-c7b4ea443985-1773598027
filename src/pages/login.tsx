@@ -143,8 +143,15 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Logo and Title */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-lg mb-4">
-              <span className="text-white font-bold text-3xl">RL</span>
+            <div className="inline-flex items-center justify-center mb-4">
+              <Image
+                src="/rexlogo.png"
+                alt="Rex Lojistik"
+                width={120}
+                height={120}
+                priority
+                className="rounded-2xl shadow-lg"
+              />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Rex Portal</h1>
             <p className="text-gray-600">Lojistik Yönetim Sistemi</p>
@@ -153,15 +160,6 @@ export default function LoginPage() {
           {/* Login Form */}
           <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
             <CardHeader className="space-y-2">
-              <div className="flex items-center justify-center mb-6">
-                <Image
-                  src="/rex-logo.png"
-                  alt="Rex Lojistik"
-                  width={180}
-                  height={60}
-                  priority
-                />
-              </div>
               <CardTitle className="text-2xl text-center">
                 {isSignUp ? "Hesap Oluştur" : "REX Portal Giriş"}
               </CardTitle>
