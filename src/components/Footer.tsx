@@ -8,7 +8,7 @@ export function Footer() {
           {/* Logo ve Açıklama */}
           <div>
             <div className="h-[28px] flex items-center mb-16 pt-6">
-              <img src="/rexlogo.png" alt="Rex Lojistik" className="w-full max-w-[270px] h-auto" />
+              <img src="/rex-logo-new.png" alt="Rex Lojistik" className="w-full max-w-[270px] h-auto" />
             </div>
             <p className="text-sm text-white">
               2002 yılından bu yana sektör tecrübesi ile 2022&apos;de kurulan REX Lojistik, güvenilir ve profesyonel lojistik çözümleri sunuyor.

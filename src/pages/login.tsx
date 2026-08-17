@@ -155,7 +155,7 @@ export default function LoginPage() {
             <CardHeader className="space-y-2">
               <div className="flex items-center justify-center mb-6">
                 <Image
-                  src="/rex-logo.png"
+                  src="/rex-logo-new.png"
                   alt="Rex Lojistik"
                   width={180}
                   height={60}
