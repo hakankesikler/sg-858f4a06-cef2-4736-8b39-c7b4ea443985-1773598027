@@ -62,7 +62,7 @@ export function Footer() {
               <p>Folkart Towers A Kule No:47/B<br />K:26 D:2601</p>
               <p>Adalet Mahallesi, Manas Bulvarı<br />Bayraklı, 35630, İzmir</p>
               <p className="pt-2">+90 (232) 229 0014</p>
-              <p>+90 (543) 401 0765</p>
+              <p>+90 (543) 401 0755</p>
             </div>
           </div>
 
