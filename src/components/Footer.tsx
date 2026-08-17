@@ -73,9 +73,8 @@ export function Footer() {
               <p className="text-white">Rainbow Life AVM</p>
               <p className="text-white">Muradiye Mahallesi, Manolya Sokak No: 228/1</p>
               <p className="text-white">A Blok No: 28 Yunusemre, 45140, Manisa</p>
-              <p className="text-white">Telefon: +90 (236) 230 00 13</p>
-              <p className="text-white">Cep: +90 (543) 401 0755</p>
-              <p className="text-white">Email: info@rexlojistik.com</p>
+              <p className="text-white pt-2">+90 (236) 230 00 13</p>
+              <p className="text-white">+90 (543) 401 0755</p>
             </div>
           </div>
         </div>
