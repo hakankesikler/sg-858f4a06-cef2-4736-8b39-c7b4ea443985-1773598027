@@ -4,14 +4,13 @@ import { processKolayBiJob, publicKolayBiError } from "@/lib/kolaybi";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST desteklenir." });
-
-  const token = req.headers.authorization?.startsWith("Bearer ")
-    ? req.headers.authorization.slice(7)
-    : "";
+  const token = req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : "";
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const invoiceId = typeof req.query.invoiceId === "string" ? req.query.invoiceId : "";
   if (!token) return res.status(401).json({ error: "Oturum doğrulanamadı." });
   if (!supabaseUrl || !anonKey) return res.status(500).json({ error: "Sunucu veritabanı ayarları eksik." });
+  if (!invoiceId) return res.status(400).json({ error: "Fatura kimliği zorunludur." });
 
   const db = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -19,23 +18,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
   const { data: userData, error: userError } = await db.auth.getUser(token);
   if (userError || !userData.user) return res.status(401).json({ error: "Oturum süresi dolmuş." });
-  const { data: allowed } = await db.rpc("rex_has_role" as any, {
-    required_roles: ["admin", "accounting"],
-  } as any);
+  const { data: allowed } = await db.rpc("rex_has_role" as any, { required_roles: ["admin", "accounting"] } as any);
   if (!allowed) return res.status(403).json({ error: "Faturalandırma yetkiniz bulunmuyor." });
 
-  const invoiceId = typeof req.body?.invoiceId === "string" ? req.body.invoiceId : "";
-  if (!invoiceId) return res.status(400).json({ error: "Fatura kimliği zorunludur." });
-
   try {
+    const { error: queueError } = await db.rpc("rex_queue_invoice_status_check" as any, {
+      p_invoice_id: invoiceId,
+    } as any);
+    if (queueError) throw queueError;
     const result = await processKolayBiJob(db, invoiceId);
     return res.status(200).json({ success: true, ...result });
   } catch (error: any) {
     const safe = publicKolayBiError(error);
-    return res.status(safe.retryable ? 502 : 422).json({
-      error: safe.message,
-      retryable: safe.retryable,
-      queued: safe.retryable,
-    });
+    return res.status(safe.retryable ? 502 : 422).json({ error: safe.message, retryable: safe.retryable });
   }
 }
+

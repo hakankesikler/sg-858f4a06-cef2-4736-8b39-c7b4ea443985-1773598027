@@ -853,7 +853,7 @@ export function LogisticsModule() {
                           >
                             <FileDown className="h-4 w-4 text-blue-600" />
                           </Button>
-                          {shipment.status === "teslim_edildi" && shipment.invoice_status !== "faturalandi" && (
+                          {shipment.status === "teslim_edildi" && !shipment.sale_invoice_id && (
                             <Button
                               variant="ghost"
                               size="sm"

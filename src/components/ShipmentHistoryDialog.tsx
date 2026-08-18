@@ -34,6 +34,12 @@ const eventLabels: Record<string, string> = {
   revision_rejected: "Revizyon talebi reddedildi",
   revision_applied: "Revizyon onaylandı ve uygulandı",
   invoice_cancelled: "Fatura iptal/iade süreci tamamlandı",
+  invoice_queued: "Fatura KolayBi kuyruğuna alındı",
+  invoice_submitted: "Fatura KolayBi'ye gönderildi",
+  invoice_official: "Resmî e-belge oluşturuldu",
+  invoice_retry_scheduled: "Fatura gönderimi yeniden denenecek",
+  invoice_status_checked: "KolayBi fatura durumu sorgulandı",
+  invoice_refund_created: "İade faturası oluşturuldu",
 };
 
 const fieldLabels: Record<string, string> = {
@@ -67,6 +73,10 @@ const fieldLabels: Record<string, string> = {
   sale_invoice_id: "Fatura bağlantısı",
   kolaybi_status: "KolayBi durumu",
   kolaybi_document_id: "KolayBi belge numarası",
+  integration_status: "Fatura entegrasyon durumu",
+  provider_status: "KolayBi/GİB durumu",
+  official_invoice_no: "Resmî fatura numarası",
+  official_uuid: "Fatura UUID (ETTN)",
   cancellation_reason: "İptal nedeni",
 };
 

@@ -14,6 +14,7 @@ import { InvoiceDialog } from "./InvoiceDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { invoiceIntegrationService } from "@/services/invoiceIntegrationService";
 
 interface PendingInvoicesDialogProps {
   isOpen: boolean;
@@ -429,30 +430,38 @@ function BulkInvoiceDialog({ isOpen, onClose, onSuccess, shipments }: {
     setLoading(true);
 
     try {
-      const { data: invoiceData, error: invoiceError } = await supabase.rpc("rex_create_sales_invoice" as any, {
-        p_customer_id: shipments[0].customer_id,
-        p_shipment_ids: shipments.map(s => s.id),
-        p_invoice_date: invoiceDate,
-        p_due_date: invoiceDate,
-        p_currency: "TRY",
-        p_payment_status: "Bekliyor",
-        p_notes: notes,
-        p_items: shipments.map(shipment => ({
-          productCode: shipment.shipment_code,
+      const invoiceData = await invoiceIntegrationService.createDraft({
+        customerId: shipments[0].customer_id,
+        shipmentIds: shipments.map(s => s.id),
+        invoiceDate,
+        dueDate: invoiceDate,
+        currency: "TRY",
+        paymentStatus: "Bekliyor",
+        notes,
+        documentType: "e_archive",
+        documentScenario: "EARSIVFATURA",
+        exchangeRate: 1,
+        idempotencyKey: crypto.randomUUID(),
+        items: shipments.map(shipment => ({
+          productCode: "HIZMET",
           description: `Taşıma Hizmeti - ${shipment.shipment_code}`,
           quantity: 1,
           unit: "Adet",
           unitPrice: shipment.totalAmount / 1.2,
           vatRate: 20,
         })),
-      } as any);
-
-      if (invoiceError) throw invoiceError;
-      const invoiceNo = (invoiceData as unknown as { invoice_no?: string })?.invoice_no || "oluşturuldu";
+      });
+      let integrationMessage = "KolayBi gönderim kuyruğuna alındı";
+      try {
+        const sync = await invoiceIntegrationService.send(invoiceData.id);
+        integrationMessage = sync.status === "official" ? "resmî e-belge oluşturuldu" : "KolayBi'ye gönderildi";
+      } catch (syncError: any) {
+        integrationMessage = `taslak korundu; gönderim bekliyor: ${syncError.message}`;
+      }
 
       toast({
-        title: "Başarılı",
-        description: `${shipments.length} sevkiyat için fatura ${invoiceNo} oluşturuldu`,
+        title: "Fatura taslağı oluşturuldu",
+        description: `${shipments.length} sevkiyat için ${invoiceData.invoice_no}; ${integrationMessage}.`,
       });
 
       onSuccess();

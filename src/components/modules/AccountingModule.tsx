@@ -41,6 +41,9 @@ import {
   Mail,
   Upload,
   Receipt,
+  RefreshCw,
+  FileDown,
+  Send,
   Building2,
   Briefcase,
   UserCircle2,
@@ -57,6 +60,28 @@ import { PendingInvoicesDialog } from "@/components/PendingInvoicesDialog";
 import { EditInvoiceDialog } from "@/components/EditInvoiceDialog";
 import { CustomerTransactionsDialog } from "@/components/CustomerTransactionsDialog";
 import { workflowService } from "@/services/workflowService";
+import { invoiceIntegrationService } from "@/services/invoiceIntegrationService";
+
+const INVOICE_INTEGRATION_LABELS: Record<string, string> = {
+  draft: "Fatura Taslağı",
+  queued: "KolayBi Gönderimi Bekliyor",
+  processing: "KolayBi'ye Gönderiliyor",
+  submitted: "KolayBi'ye Gönderildi",
+  official: "E-Belge Oluşturuldu",
+  failed: "Gönderim Hatası",
+  mapping_required: "Eşleştirme Eksik",
+  cancelled: "İptal Edildi",
+  refund_created: "İade Faturası Oluşturuldu",
+};
+
+const integrationBadgeClass = (status?: string) => {
+  if (status === "official") return "bg-green-50 text-green-700 border-green-200";
+  if (status === "submitted") return "bg-blue-50 text-blue-700 border-blue-200";
+  if (status === "queued" || status === "processing") return "bg-amber-50 text-amber-700 border-amber-200";
+  if (status === "failed" || status === "mapping_required") return "bg-red-50 text-red-700 border-red-200";
+  if (status === "cancelled" || status === "refund_created") return "bg-slate-100 text-slate-700 border-slate-300";
+  return "bg-gray-50 text-gray-700 border-gray-200";
+};
 
 type Invoice = {
   id: string;
@@ -246,6 +271,24 @@ export function AccountingModule() {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const processDueInvoices = async () => {
+      try {
+        const result = await invoiceIntegrationService.processQueue(3);
+        if (active && result.processed > 0) await loadData();
+      } catch (error) {
+        console.warn("KolayBi kuyruğu şu anda işlenemedi", error);
+      }
+    };
+    void processDueInvoices();
+    const timer = window.setInterval(() => void processDueInvoices(), 60_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
   }, []);
 
   const handleSort = (column: string) => {
@@ -744,17 +787,16 @@ export function AccountingModule() {
 
     try {
       setIsLoading(true);
-
-      const { error } = await supabase
-        .from("sales_invoices")
-        .update({ e_invoice_status: "oluşturuldu" })
-        .in("id", selectedInvoices);
-
-      if (error) throw error;
+      const results = await Promise.allSettled(
+        selectedInvoices.map((invoiceId) => invoiceIntegrationService.retry(invoiceId)),
+      );
+      const succeeded = results.filter((result) => result.status === "fulfilled").length;
+      const failed = results.length - succeeded;
 
       toast({
-        title: "Başarılı",
-        description: `${selectedInvoices.length} fatura onaylandı ve e-Fatura olarak oluşturuldu`,
+        title: failed ? "Gönderim kuyruğu işlendi" : "KolayBi gönderimi tamamlandı",
+        description: `${succeeded} fatura işlendi${failed ? `, ${failed} fatura hata/eksik eşleştirme nedeniyle bekliyor` : ""}.`,
+        variant: failed && !succeeded ? "destructive" : "default",
       });
 
       setSelectedInvoices([]);
@@ -797,6 +839,44 @@ export function AccountingModule() {
       toast({ title: "İptal/iade tamamlanamadı", description: err?.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRetryInvoice = async (invoice: any) => {
+    try {
+      setIsLoading(true);
+      const result = await invoiceIntegrationService.retry(invoice.id);
+      toast({
+        title: result.status === "official" ? "E-belge oluşturuldu" : "Fatura yeniden kuyruğa alındı",
+        description: result.invoiceNo || invoice.invoice_no,
+      });
+      await loadData();
+    } catch (error: any) {
+      toast({ title: "Gönderim tamamlanamadı", description: error.message, variant: "destructive" });
+      await loadData();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefreshInvoiceStatus = async (invoice: any) => {
+    try {
+      setIsLoading(true);
+      await invoiceIntegrationService.refreshStatus(invoice.id);
+      toast({ title: "KolayBi durumu güncellendi", description: invoice.invoice_no });
+      await loadData();
+    } catch (error: any) {
+      toast({ title: "Durum sorgulanamadı", description: error.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOpenInvoicePdf = async (invoice: any) => {
+    try {
+      await invoiceIntegrationService.openPdf(invoice.id);
+    } catch (error: any) {
+      toast({ title: "PDF alınamadı", description: error.message, variant: "destructive" });
     }
   };
 
@@ -933,12 +1013,12 @@ export function AccountingModule() {
                 {selectedInvoices.length > 0 && (
                   <Button onClick={handleConfirmDraftInvoices} disabled={isLoading} variant="outline">
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Seçili Taslakları Onayla
+                    Seçilileri KolayBi'ye Gönder
                   </Button>
                 )}
-                <Button variant="outline" size="sm" onClick={() => toast({ title: "Bilgi", description: "e-Fatura entegrasyonu yakında aktif edilecek." })}>
+                <Button variant="outline" size="sm" onClick={() => void invoiceIntegrationService.processQueue(5).then(loadData).catch((error) => toast({ title: "Kuyruk işlenemedi", description: error.message, variant: "destructive" }))}>
                   <Mail className="h-4 w-4 mr-2" />
-                  e-Fatura Giden Kutusu
+                  Gönderim Kuyruğunu İşle
                 </Button>
                 <Button variant="outline" size="sm">
                   <Download className="mr-2 h-4 w-4" />
@@ -1007,15 +1087,16 @@ export function AccountingModule() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={
-                          invoice.e_invoice_status === 'oluşturuldu' 
-                            ? "bg-blue-50 text-blue-700 border-blue-200" 
-                            : "bg-gray-50 text-gray-700 border-gray-200"
-                        }>
-                          {invoice.e_invoice_status === 'oluşturuldu' ? 'e-Fatura' : 'Taslak'}
+                        <Badge variant="outline" className={integrationBadgeClass(invoice.integration_status)}>
+                          {INVOICE_INTEGRATION_LABELS[invoice.integration_status] || "Fatura Taslağı"}
                         </Badge>
+                        {invoice.kolaybi_error && (
+                          <p className="mt-1 max-w-52 text-xs text-red-600" title={invoice.kolaybi_error}>
+                            {invoice.kolaybi_error}
+                          </p>
+                        )}
                       </TableCell>
-                      <TableCell>Satış Faturası</TableCell>
+                      <TableCell>{invoice.document_type === "e_invoice" ? "E-Fatura" : "E-Arşiv"}</TableCell>
                       <TableCell className="font-medium">
                         {customer?.company || customer?.name || "Bilinmeyen Cari"}
                       </TableCell>
@@ -1034,7 +1115,7 @@ export function AccountingModule() {
                       <TableCell className="text-right font-semibold">{invoice.grand_total.toLocaleString('tr-TR')} {invoice.currency || "TRY"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {invoice.e_invoice_status === 'taslak' && (
+                          {["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft") && !invoice.kolaybi_document_id && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -1052,6 +1133,38 @@ export function AccountingModule() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          {["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft") && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={isLoading}
+                              onClick={() => void handleRetryInvoice(invoice)}
+                              title="KolayBi gönderimini yeniden dene"
+                            >
+                              <Send className="h-4 w-4 text-blue-600" />
+                            </Button>
+                          )}
+                          {invoice.kolaybi_document_id && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={isLoading}
+                              onClick={() => void handleRefreshInvoiceStatus(invoice)}
+                              title="KolayBi durumunu sorgula"
+                            >
+                              <RefreshCw className="h-4 w-4 text-sky-600" />
+                            </Button>
+                          )}
+                          {invoice.official_uuid && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => void handleOpenInvoicePdf(invoice)}
+                              title="Resmî fatura PDF'ini aç"
+                            >
+                              <FileDown className="h-4 w-4 text-green-600" />
+                            </Button>
+                          )}
                           {invoice.payment_status !== "İptal" && (
                             <Button
                               size="sm"
@@ -1514,7 +1627,7 @@ export function AccountingModule() {
                 rows={4}
               />
             </div>
-            {(cancellationInvoice?.kolaybi_document_id || cancellationInvoice?.e_invoice_status === "oluşturuldu") && (
+            {(cancellationInvoice?.kolaybi_document_id || ["submitted", "official"].includes(cancellationInvoice?.integration_status)) && (
               <div className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
                 <Label>Dış Sistem İptal/İade Referansı *</Label>
                 <p className="text-xs text-amber-800">KolayBi/e-Fatura işlemini tamamladıktan sonra oluşan referans numarasını girin.</p>
@@ -1533,7 +1646,7 @@ export function AccountingModule() {
               onClick={() => void handleCancelInvoice()}
               disabled={
                 isLoading || invoiceCancellationReason.trim().length < 10 ||
-                (Boolean(cancellationInvoice?.kolaybi_document_id || cancellationInvoice?.e_invoice_status === "oluşturuldu") && !invoiceCancellationReference.trim())
+                (Boolean(cancellationInvoice?.kolaybi_document_id || ["submitted", "official"].includes(cancellationInvoice?.integration_status)) && !invoiceCancellationReference.trim())
               }
             >
               {isLoading ? "İşleniyor..." : invoiceCancellationType === "iade" ? "İade Sürecini Tamamla" : "Faturayı İptal Et"}

@@ -119,48 +119,26 @@ export function EditInvoiceDialog({
     try {
       setLoading(true);
 
-      const { subtotal, totalTax, grandTotal } = calculateTotals();
-
-      // Update invoice
-      const { error: invoiceError } = await supabase
-        .from("sales_invoices")
-        .update({
-          invoice_date: invoiceDate,
-          due_date: dueDate,
-          notes: notes,
-          subtotal: subtotal,
-          total_tax: totalTax,
-          grand_total: grandTotal,
-        })
-        .eq("id", invoice.id);
-
-      if (invoiceError) throw invoiceError;
-
-      // Delete existing items
-      await supabase
-        .from("sales_invoice_items")
-        .delete()
-        .eq("invoice_id", invoice.id);
-
-      // Insert new items
-      const itemsToInsert = items.map((item) => ({
-        invoice_id: invoice.id,
-        product_code: item.product_code || "",
-        description: item.description || "",
-        quantity: item.quantity || 0,
-        unit: item.unit || "Adet",
-        unit_price: item.unit_price || 0,
-        subtotal: item.subtotal || 0,
-        tax_rate: item.tax_rate || 0,
-        tax_amount: item.tax_amount || 0,
-        total: item.total || 0,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from("sales_invoice_items")
-        .insert(itemsToInsert);
-
-      if (itemsError) throw itemsError;
+      const { error } = await supabase.rpc("rex_update_sales_invoice_draft" as any, {
+        p_invoice_id: invoice.id,
+        p_invoice_date: invoiceDate,
+        p_due_date: dueDate,
+        p_notes: notes,
+        p_items: items.map((item) => ({
+          productCode: item.product_code || "HIZMET",
+          description: item.description || "",
+          quantity: item.quantity || 0,
+          unit: item.unit || "Adet",
+          unitPrice: item.unit_price || 0,
+          vatRate: item.tax_rate || 0,
+          kolaybiProductId: (item as any).kolaybi_product_id || null,
+          withholdingCode: (item as any).withholding_code || null,
+          withholdingValue: (item as any).withholding_value || null,
+          withholdingType: (item as any).withholding_type || null,
+          exemptionCode: (item as any).exemption_code || null,
+        })),
+      } as any);
+      if (error) throw error;
 
       toast({
         title: "Başarılı",

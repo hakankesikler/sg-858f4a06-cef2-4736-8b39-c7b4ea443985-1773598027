@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { X, Plus, Trash2, Loader2 } from "lucide-react";
+import { invoiceIntegrationService, type InvoiceDocumentType } from "@/services/invoiceIntegrationService";
 
 interface InvoiceItem {
   id: string;
@@ -23,6 +24,9 @@ interface InvoiceItem {
   subtotal: number;
   vatAmount: number;
   total: number;
+  withholdingCode?: string;
+  withholdingValue?: number;
+  exemptionCode?: string;
 }
 
 interface InvoiceDialogProps {
@@ -53,6 +57,9 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
   const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
   const [currency, setCurrency] = useState("TRY");
   const [paymentStatus, setPaymentStatus] = useState("Bekliyor");
+  const [documentType, setDocumentType] = useState<InvoiceDocumentType>("e_archive");
+  const [documentScenario, setDocumentScenario] = useState<"EARSIVFATURA" | "TEMELFATURA" | "TICARIFATURA" | "KAMU">("EARSIVFATURA");
+  const [exchangeRate, setExchangeRate] = useState("1");
   const [notes, setNotes] = useState(defaultNotes);
   
   const [items, setItems] = useState<InvoiceItem[]>([
@@ -122,6 +129,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     const total = subtotal + vatAmount;
     
     return {
+      ...item,
       id: item.id || Date.now().toString(),
       description: item.description || "",
       quantity,
@@ -130,6 +138,9 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       subtotal,
       vatAmount,
       total,
+      withholdingCode: item.withholdingCode || "",
+      withholdingValue: item.withholdingValue || 0,
+      exemptionCode: item.exemptionCode || "",
     };
   };
 
@@ -189,45 +200,43 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     setLoading(true);
 
     try {
-      const { data: invoice, error: invoiceError } = await supabase.rpc("rex_create_sales_invoice" as any, {
-        p_customer_id: shipment?.customer_id || selectedCustomer,
-        p_shipment_ids: shipment?.id ? [shipment.id] : [],
-        p_invoice_date: invoiceDate,
-        p_due_date: dueDate,
-        p_currency: currency,
-        p_payment_status: paymentStatus,
-        p_notes: notes,
-        p_items: items.map((item) => ({
-          productCode: shipment?.shipment_code || "HIZMET",
+      const invoice = await invoiceIntegrationService.createDraft({
+        customerId: shipment?.customer_id || selectedCustomer,
+        shipmentIds: shipment?.id ? [shipment.id] : [],
+        invoiceDate,
+        dueDate,
+        currency,
+        paymentStatus,
+        notes,
+        documentType,
+        documentScenario,
+        exchangeRate: currency === "TRY" ? 1 : Number(exchangeRate),
+        idempotencyKey: crypto.randomUUID(),
+        items: items.map((item) => ({
+          productCode: "HIZMET",
           description: item.description,
           quantity: item.quantity,
           unit: "Adet",
           unitPrice: item.unitPrice,
           vatRate: item.vatRate,
+          withholdingCode: item.withholdingCode || null,
+          withholdingValue: item.withholdingValue || null,
+          withholdingType: item.withholdingCode ? "PERCENTAGE" : null,
+          exemptionCode: item.exemptionCode || null,
         })),
-      } as any);
+      });
 
-      if (invoiceError) throw invoiceError;
-      const invoiceResult = invoice as unknown as { id?: string; invoice_no?: string };
-      const invoiceNo = invoiceResult?.invoice_no || "oluşturuldu";
-      let syncMessage = "KolayBi'ye gönderildi";
-      if (invoiceResult.id) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const response = await fetch("/api/kolaybi/invoices", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionData.session?.access_token || ""}`,
-          },
-          body: JSON.stringify({ invoiceId: invoiceResult.id }),
-        });
-        if (!response.ok) {
-          const result = await response.json().catch(() => ({}));
-          syncMessage = `Yerel fatura oluştu; KolayBi bekliyor: ${result.error || "bağlantı tamamlanamadı"}`;
-        }
+      let syncMessage = "KolayBi gönderim kuyruğuna alındı.";
+      try {
+        const sync = await invoiceIntegrationService.send(invoice.id);
+        syncMessage = sync.status === "official"
+          ? `Resmî e-belge oluşturuldu${sync.invoiceNo ? `: ${sync.invoiceNo}` : "."}`
+          : "KolayBi'ye gönderildi; resmileştirme bekleniyor.";
+      } catch (syncError: any) {
+        syncMessage = `Taslak korundu; gönderim tamamlanamadı: ${syncError.message}`;
       }
 
-      toast({ title: "Fatura oluşturuldu", description: `${invoiceNo}. ${syncMessage}` });
+      toast({ title: "Fatura taslağı oluşturuldu", description: `${invoice.invoice_no}. ${syncMessage}` });
 
       if (onSuccess) {
         onSuccess();
@@ -333,6 +342,56 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                 </Select>
               </div>
 
+              {currency !== "TRY" && (
+                <div className="space-y-2">
+                  <Label htmlFor="exchangeRate" className="text-sm font-semibold">Döviz Kuru *</Label>
+                  <Input
+                    id="exchangeRate"
+                    type="number"
+                    min="0.000001"
+                    step="0.000001"
+                    value={exchangeRate}
+                    onChange={(event) => setExchangeRate(event.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">E-Belge Türü</Label>
+                <Select
+                  value={documentType}
+                  onValueChange={(value: InvoiceDocumentType) => {
+                    setDocumentType(value);
+                    setDocumentScenario(value === "e_archive" ? "EARSIVFATURA" : "TEMELFATURA");
+                  }}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="e_archive">E-Arşiv</SelectItem>
+                    <SelectItem value="e_invoice">E-Fatura</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Belge Senaryosu</Label>
+                <Select value={documentScenario} onValueChange={(value: typeof documentScenario) => setDocumentScenario(value)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {documentType === "e_archive" ? (
+                      <SelectItem value="EARSIVFATURA">E-Arşiv Fatura</SelectItem>
+                    ) : (
+                      <>
+                        <SelectItem value="TEMELFATURA">Temel Fatura</SelectItem>
+                        <SelectItem value="TICARIFATURA">Ticari Fatura</SelectItem>
+                        <SelectItem value="KAMU">Kamu</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* PAYMENT STATUS */}
               <div className="space-y-2">
                 <Label htmlFor="paymentStatus" className="text-sm font-semibold">
@@ -365,7 +424,8 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
 
             <div className="space-y-2">
               {items.map((item, index) => (
-                <div key={item.id} className="grid grid-cols-12 gap-2 items-end">
+                <div key={item.id} className="space-y-2 rounded-lg border bg-white p-3">
+                  <div className="grid grid-cols-12 gap-2 items-end">
                   <div className="col-span-4">
                     <Label className="text-xs">Ürün/Hizmet Adı</Label>
                     <Input
@@ -423,6 +483,39 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
+                  </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                    {item.vatRate === 0 && (
+                      <div>
+                        <Label className="text-xs">KDV İstisna Kodu *</Label>
+                        <Input
+                          value={item.exemptionCode || ""}
+                          onChange={(event) => handleItemChange(index, "exemptionCode", event.target.value)}
+                          placeholder="GİB istisna kodu"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <Label className="text-xs">Tevkifat Kodu</Label>
+                      <Input
+                        value={item.withholdingCode || ""}
+                        onChange={(event) => handleItemChange(index, "withholdingCode", event.target.value)}
+                        placeholder="İsteğe bağlı GİB kodu"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Tevkifat Oranı (%)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={item.withholdingValue || ""}
+                        onChange={(event) => handleItemChange(index, "withholdingValue", Number(event.target.value) || 0)}
+                        placeholder="Örn. 50"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}

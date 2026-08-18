@@ -682,63 +682,6 @@ export const accountingService = {
     return data;
   },
 
-  async createSalesInvoice(invoiceData: any, items: any[]): Promise<any> {
-    // Create invoice header
-    const { data: invoice, error: invoiceError } = await supabase
-      .from("sales_invoices")
-      .insert([invoiceData])
-      .select()
-      .single();
-
-    if (invoiceError) throw invoiceError;
-
-    // Create invoice items
-    const itemsWithInvoiceId = items.map(item => ({
-      ...item,
-      invoice_id: invoice.id
-    }));
-
-    const { error: itemsError } = await supabase
-      .from("sales_invoice_items")
-      .insert(itemsWithInvoiceId);
-
-    if (itemsError) throw itemsError;
-
-    return invoice;
-  },
-
-  async updateSalesInvoice(id: string, invoiceData: any, items?: any[]): Promise<any> {
-    // Update invoice header
-    const { data: invoice, error: invoiceError } = await supabase
-      .from("sales_invoices")
-      .update({ ...invoiceData, updated_at: new Date().toISOString() })
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (invoiceError) throw invoiceError;
-
-    // If items provided, update them
-    if (items && items.length > 0) {
-      // Delete existing items
-      await supabase.from("sales_invoice_items").delete().eq("invoice_id", id);
-
-      // Insert new items
-      const itemsWithInvoiceId = items.map(item => ({
-        ...item,
-        invoice_id: id
-      }));
-
-      const { error: itemsError } = await supabase
-        .from("sales_invoice_items")
-        .insert(itemsWithInvoiceId);
-
-      if (itemsError) throw itemsError;
-    }
-
-    return invoice;
-  },
-
   async getSalesInvoiceStats(): Promise<any> {
     const { data } = await supabase.from("sales_invoices").select("grand_total, payment_status, invoice_date");
 

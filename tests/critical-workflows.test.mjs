@@ -94,16 +94,17 @@ test("work order and shipment audit trails remain append-only and actor-aware", 
 test("delivery proof and KolayBi synchronization keep distinct audit events", async () => {
   const [sql, api, history] = await Promise.all([
     read("supabase/migrations/20260818233000_complete_audit_trail.sql"),
-    read("src/pages/api/kolaybi/invoices.ts"),
+    read("src/lib/kolaybi.ts"),
     read("src/components/ShipmentHistoryDialog.tsx"),
   ]);
   assert.match(sql, /CREATE TRIGGER rex_delivery_document_with_delivery_audit/);
   assert.match(sql, /'delivery_document_added'/);
   assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_record_kolaybi_sync/);
   assert.match(sql, /'kolaybi_sync_started','kolaybi_sync_succeeded','kolaybi_sync_failed'/);
-  assert.match(api, /recordSync\("started"\)/);
-  assert.match(api, /recordSync\(status, Number\(documentId\)\)/);
-  assert.match(api, /recordSync\("failed", null, message\)/);
+  assert.match(api, /rex_claim_invoice_sync_job/);
+  assert.match(api, /rex_record_invoice_provider_document/);
+  assert.match(api, /rex_record_invoice_sync_result/);
+  assert.match(api, /status: "official"/);
   assert.match(history, /kolaybi_sync_succeeded/);
 });
 
@@ -164,4 +165,39 @@ test("invoice cancellation is soft, reasoned and external-reference gated", asyn
   assert.match(service, /rex_cancel_sales_invoice/);
   assert.match(accounting, /Fatura İptal \/ İade Süreci/);
   assert.doesNotMatch(accountingService, /from\("sales_invoices"\)[\s\S]{0,100}\.delete\(\)/);
+});
+
+test("KolayBi invoices use a retryable idempotent state machine and only official documents invoice shipments", async () => {
+  const [sql, integration, invoiceDialog, accounting, queueApi, statusApi, pdfApi] = await Promise.all([
+    read("supabase/migrations/20260819003000_secure_kolaybi_invoice_pipeline.sql"),
+    read("src/lib/kolaybi.ts"),
+    read("src/components/InvoiceDialog.tsx"),
+    read("src/components/modules/AccountingModule.tsx"),
+    read("src/pages/api/kolaybi/process-queue.ts"),
+    read("src/pages/api/kolaybi/invoices/[invoiceId]/status.ts"),
+    read("src/pages/api/kolaybi/invoices/[invoiceId]/pdf.ts"),
+  ]);
+  assert.match(sql, /'draft','queued','processing','submitted','official','failed','mapping_required'/);
+  assert.match(sql, /CREATE UNIQUE INDEX IF NOT EXISTS sales_invoices_idempotency_key_unique/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.invoice_sync_jobs/);
+  assert.match(sql, /FOR UPDATE SKIP LOCKED/);
+  assert.match(sql, /power\(2,least\(v_job\.attempts,8\)\)/);
+  assert.match(sql, /invoice_status='kolaybi_bekliyor'/);
+  assert.match(sql, /CASE WHEN p_status='official' THEN 'faturalandi' ELSE 'kolaybi_gonderildi' END/);
+  assert.match(sql, /KDV oranı sıfır olan kalemde istisna kodu zorunludur/);
+  assert.match(sql, /Tevkifat kodu ve oranı birlikte girilmelidir/);
+  assert.match(sql, /Dövizli faturada geçerli kur zorunludur/);
+  assert.match(sql, /REVOKE INSERT,UPDATE,DELETE ON public\.sales_invoices FROM authenticated/);
+  assert.match(integration, /serial_no/);
+  assert.match(integration, /invoices\/e-document\/create/);
+  assert.match(integration, /invoices\/e-document\/view/);
+  assert.match(integration, /kolaybi_product_id \|\| config\.defaultProductId/);
+  assert.match(invoiceDialog, /rex_create_sales_invoice_secure|invoiceIntegrationService\.createDraft/);
+  assert.match(accounting, /KolayBi Gönderimi Bekliyor/);
+  assert.match(accounting, /handleRefreshInvoiceStatus/);
+  assert.match(accounting, /handleOpenInvoicePdf/);
+  assert.match(queueApi, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(queueApi, /CRON_SECRET/);
+  assert.match(statusApi, /rex_queue_invoice_status_check/);
+  assert.match(pdfApi, /Content-Type", "application\/pdf/);
 });
