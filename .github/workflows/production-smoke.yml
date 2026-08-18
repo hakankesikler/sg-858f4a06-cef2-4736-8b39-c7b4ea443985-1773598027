@@ -1,0 +1,30 @@
+name: Production Smoke
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Production URL to verify
+        required: false
+        default: https://www.rexlojistik.com
+
+permissions:
+  contents: read
+
+jobs:
+  live-critical-pages:
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify deployed critical pages
+        run: node scripts/smoke-test.mjs
+        env:
+          SMOKE_BASE_URL: ${{ inputs.base_url || github.event.deployment_status.target_url }}
