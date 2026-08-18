@@ -31,7 +31,8 @@ export async function openPrivateDocument(reference: string, fallbackBucket?: st
   const parsed = parseStorageReference(reference, fallbackBucket);
   if (!parsed) throw new Error("Belge adresi geçersiz.");
 
-  const popup = window.open("", "_blank", "noopener,noreferrer");
+  const popup = window.open("about:blank", "_blank");
+  if (popup) popup.opener = null;
   const { data, error } = await supabase.storage.from(parsed.bucket).createSignedUrl(parsed.path, 300);
   if (error || !data?.signedUrl) {
     popup?.close();
