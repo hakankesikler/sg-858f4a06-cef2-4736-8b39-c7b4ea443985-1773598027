@@ -109,8 +109,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     e.preventDefault();
     
     if (!formData.full_name || !formData.tc_no || !formData.phone_1 || !ehliyetGecerlilikTarihi ||
-        !formData.src_belge_no || !srcGecerlilikTarihi || !formData.psikoteknik_belge_no ||
-        !psikoteknikGecerlilikTarihi || formData.ehliyet_sinifi.length === 0 ||
+        formData.ehliyet_sinifi.length === 0 ||
         (!ehliyetFile && !initialData?.ehliyet_dosyasi_url)) {
       toast({
         title: "Hata",
@@ -242,7 +241,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
           {/* Belgeler */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>SRC Belge No *</Label>
+              <Label>SRC Belge No (İsteğe Bağlı)</Label>
               <Input
                 value={formData.src_belge_no}
                 onChange={(e) => setFormData({ ...formData, src_belge_no: e.target.value })}
@@ -250,7 +249,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               />
             </div>
             <div className="space-y-2">
-              <Label>Psikoteknik Belge No *</Label>
+              <Label>Psikoteknik Belge No (İsteğe Bağlı)</Label>
               <Input
                 value={formData.psikoteknik_belge_no}
                 onChange={(e) => setFormData({ ...formData, psikoteknik_belge_no: e.target.value })}
@@ -261,7 +260,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>SRC Geçerlilik Tarihi *</Label>
+              <Label>SRC Geçerlilik Tarihi</Label>
               <Input
                 type="date"
                 value={srcGecerlilikTarihi}
@@ -269,7 +268,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               />
             </div>
             <div className="space-y-2">
-              <Label>Psikoteknik Geçerlilik Tarihi *</Label>
+              <Label>Psikoteknik Geçerlilik Tarihi</Label>
               <Input
                 type="date"
                 value={psikoteknikGecerlilikTarihi}

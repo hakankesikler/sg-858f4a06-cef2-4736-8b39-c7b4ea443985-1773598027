@@ -236,9 +236,10 @@ test("KolayBi inbound purchase invoices are synchronized without exposing creden
   assert.match(pdfApi, /Cache-Control", "private, no-store"/);
 });
 
-test("driver and vehicle assignments are blocked by document, licence and load rules", async () => {
-  const [sql, shipmentForm, driverForm, vehicleForm] = await Promise.all([
+test("driver and vehicle assignments enforce core documents, licence and load rules", async () => {
+  const [sql, optionalSql, shipmentForm, driverForm, vehicleForm] = await Promise.all([
     read("supabase/migrations/20260819023000_driver_vehicle_compliance.sql"),
+    read("supabase/migrations/20260819030000_optional_driver_vehicle_documents.sql"),
     read("src/components/ShipmentForm.tsx"),
     read("src/components/DriverForm.tsx"),
     read("src/components/VehicleForm.tsx"),
@@ -247,20 +248,24 @@ test("driver and vehicle assignments are blocked by document, licence and load r
   assert.match(sql, /p_load_weight>v_vehicle\.tasima_kapasitesi_kg/);
   assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_required_license_classes/);
   assert.match(sql, /v_actual && v_required/);
-  assert.match(sql, /src_belgesi_gecerlilik_tarihi < current_date/);
-  assert.match(sql, /psikoteknik_gecerlilik_tarihi < current_date/);
   assert.match(sql, /yetki_belgesi_gecerlilik_tarihi < current_date/);
-  assert.match(sql, /trafik_sigortasi_bitis_tarihi < current_date/);
   assert.match(sql, /CREATE TRIGGER rex_shipment_assignment_compliance_guard/);
   assert.match(sql, /PERFORM public\.rex_validate_assignment_with_load\(v_driver,v_vehicle,v_load\)/);
-  assert.match(shipmentForm, /driver\.src_belgesi_gecerlilik_tarihi >= today/);
   assert.match(shipmentForm, /vehicle\.yetki_belgesi_gecerlilik_tarihi >= today/);
+  assert.doesNotMatch(optionalSql, /src_belgesi_gecerlilik_tarihi < current_date/);
+  assert.doesNotMatch(optionalSql, /psikoteknik_gecerlilik_tarihi < current_date/);
+  assert.doesNotMatch(optionalSql, /trafik_sigortasi_bitis_tarihi < current_date/);
+  assert.doesNotMatch(shipmentForm, /driver\.src_belgesi_gecerlilik_tarihi >= today/);
+  assert.doesNotMatch(shipmentForm, /driver\.psikoteknik_gecerlilik_tarihi >= today/);
+  assert.doesNotMatch(shipmentForm, /vehicle\.trafik_sigortasi_bitis_tarihi >= today/);
   assert.match(driverForm, /src_belgesi_gecerlilik_tarihi/);
   assert.match(driverForm, /psikoteknik_gecerlilik_tarihi/);
   assert.match(vehicleForm, /yetki_belgesi_gecerlilik_tarihi/);
+  assert.match(driverForm, /SRC Belge No \(İsteğe Bağlı\)/);
+  assert.match(vehicleForm, /Trafik Sigortası Bitiş Tarihi \(İsteğe Bağlı\)/);
 });
 
-test("managers receive 30-day transport document warnings", async () => {
+test("managers receive 30-day warnings only for assignment-blocking documents", async () => {
   const [sql, service, logistics] = await Promise.all([
     read("supabase/migrations/20260819023000_driver_vehicle_compliance.sql"),
     read("src/services/transportComplianceService.ts"),
@@ -271,6 +276,8 @@ test("managers receive 30-day transport document warnings", async () => {
   assert.match(sql, /d\.expiry_date<=current_date\+p_warning_days/);
   assert.match(service, /rex_transport_compliance_alerts/);
   assert.match(service, /p_warning_days: warningDays/);
+  assert.match(service, /new Set\(\["SRC Belgesi", "Psikoteknik", "Trafik Sigortası"\]\)/);
+  assert.match(service, /!optionalDocuments\.has\(alert\.document_type\)/);
   assert.match(logistics, /transportComplianceService\.getAlerts\(30\)/);
   assert.match(logistics, /Atama Engelli/);
   assert.match(logistics, /Süre Yaklaşıyor/);

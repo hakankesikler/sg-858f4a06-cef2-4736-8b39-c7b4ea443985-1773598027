@@ -97,7 +97,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
 
     if (!formData.arac_tipi || !formData.cekici_plakasi || !formData.kasa_tipi ||
         !formData.tasima_kapasitesi_kg || Number(formData.tasima_kapasitesi_kg) <= 0 ||
-        !trafikSigortasiBitisTarihi || !formData.yetki_belgesi || !yetkiBelgesiGecerlilikTarihi ||
+        !formData.yetki_belgesi || !yetkiBelgesiGecerlilikTarihi ||
         (!ruhsatFile && !initialData?.ruhsat_dosyasi_url)) {
       toast({
         title: "Hata",
@@ -257,7 +257,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               />
             </div>
             <div className="space-y-2">
-              <Label>Trafik Sigortası Bitiş Tarihi *</Label>
+              <Label>Trafik Sigortası Bitiş Tarihi (İsteğe Bağlı)</Label>
               <Input
                 type="date"
                 value={trafikSigortasiBitisTarihi}

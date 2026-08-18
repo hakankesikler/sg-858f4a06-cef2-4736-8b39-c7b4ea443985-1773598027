@@ -17,6 +17,9 @@ export const transportComplianceService = {
       p_warning_days: warningDays,
     });
     if (error) throw error;
-    return (data || []) as TransportComplianceAlert[];
+    const optionalDocuments = new Set(["SRC Belgesi", "Psikoteknik", "Trafik Sigortası"]);
+    return ((data || []) as TransportComplianceAlert[]).filter(
+      (alert) => !optionalDocuments.has(alert.document_type),
+    );
   },
 };
