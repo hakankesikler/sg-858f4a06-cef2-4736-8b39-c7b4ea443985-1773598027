@@ -81,10 +81,10 @@ export function DeliveryModal({ isOpen, onClose, shipmentId, shipmentCode, onSuc
   };
 
   const handleSubmit = async () => {
-    if (!deliveredTo.trim()) {
+    if (!deliveredTo.trim() || !deliveryFile) {
       toast({
         title: "Uyarı",
-        description: "Lütfen teslim alan kişinin adını girin",
+        description: "Teslim alan kişi ve teslim evrakı zorunludur.",
         variant: "destructive",
       });
       return;
@@ -93,11 +93,7 @@ export function DeliveryModal({ isOpen, onClose, shipmentId, shipmentCode, onSuc
     try {
       setIsSubmitting(true);
 
-      // Upload delivery proof if provided
-      let deliveryProofUrl = null;
-      if (deliveryFile) {
-        deliveryProofUrl = await uploadDeliveryProof();
-      }
+      const deliveryProofUrl = await uploadDeliveryProof();
 
       await shipmentService.markDelivered(
         shipmentId,
@@ -166,7 +162,7 @@ export function DeliveryModal({ isOpen, onClose, shipmentId, shipmentCode, onSuc
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="delivery-proof">Teslim Evrakı (İsteğe Bağlı)</Label>
+            <Label htmlFor="delivery-proof">Teslim Evrakı *</Label>
             <div className="flex items-center gap-2">
               <Input
                 id="delivery-proof"

@@ -77,6 +77,19 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     // If shipment exists, set customer automatically
     if (shipment?.customer_id) {
       setSelectedCustomer(shipment.customer_id);
+      const unitPrice = Number(shipment.satis_tutar || 0);
+      const vatRate = 20;
+      setCurrency(shipment.currency || "TRY");
+      setItems([{
+        id: "1",
+        description: `${shipment.shipment_code || ""} taşıma hizmeti (${shipment.origin || ""} → ${shipment.destination || ""})`.trim(),
+        quantity: 1,
+        unitPrice,
+        vatRate,
+        subtotal: unitPrice,
+        vatAmount: unitPrice * vatRate / 100,
+        total: unitPrice * (1 + vatRate / 100),
+      }]);
     }
   }, [isOpen, shipment]);
 
@@ -195,13 +208,26 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       } as any);
 
       if (invoiceError) throw invoiceError;
-      const invoiceResult = invoice as unknown as { invoice_no?: string };
+      const invoiceResult = invoice as unknown as { id?: string; invoice_no?: string };
       const invoiceNo = invoiceResult?.invoice_no || "oluşturuldu";
+      let syncMessage = "KolayBi'ye gönderildi";
+      if (invoiceResult.id) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const response = await fetch("/api/kolaybi/invoices", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionData.session?.access_token || ""}`,
+          },
+          body: JSON.stringify({ invoiceId: invoiceResult.id }),
+        });
+        if (!response.ok) {
+          const result = await response.json().catch(() => ({}));
+          syncMessage = `Yerel fatura oluştu; KolayBi bekliyor: ${result.error || "bağlantı tamamlanamadı"}`;
+        }
+      }
 
-      toast({
-        title: "Başarılı",
-        description: `Satış faturası ${invoiceNo} oluşturuldu`,
-      });
+      toast({ title: "Fatura oluşturuldu", description: `${invoiceNo}. ${syncMessage}` });
 
       if (onSuccess) {
         onSuccess();

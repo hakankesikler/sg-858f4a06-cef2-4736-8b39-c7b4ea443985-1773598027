@@ -7,10 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { crmService, type Customer } from "@/services/crmService";
+import { transportJobService } from "@/services/transportJobService";
 
 interface IsGirisFormProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 interface FormData {
@@ -90,10 +94,22 @@ const cinsiOptions = [
   "Tır"
 ];
 
-export function IsGirisForm({ isOpen, onClose }: IsGirisFormProps) {
+export function IsGirisForm({ isOpen, onClose, onSuccess }: IsGirisFormProps) {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [activeTab, setActiveTab] = useState("temel");
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    crmService.getCustomers().then(setCustomers).catch((error) => toast({
+      title: "Cari listesi yüklenemedi",
+      description: error?.message,
+      variant: "destructive",
+    }));
+  }, [isOpen, toast]);
 
   // Toplam KG/DS otomatik hesaplama
   useEffect(() => {
@@ -118,28 +134,62 @@ export function IsGirisForm({ isOpen, onClose }: IsGirisFormProps) {
 
     // Zorunlu alanlar
     if (!formData.tarih) newErrors.tarih = "Tarih zorunludur";
+    if (!formData.musteri) newErrors.musteri = "Müşteri seçimi zorunludur";
     if (!formData.gonderici) newErrors.gonderici = "Gönderici zorunludur";
     if (!formData.alici) newErrors.alici = "Alıcı zorunludur";
     if (!formData.cinsi) newErrors.cinsi = "Cinsi seçimi zorunludur";
+    if (!(Number(formData.adet) > 0)) newErrors.adet = "Adet sıfırdan büyük olmalıdır";
+    if (!(Number(formData.kgds) > 0)) newErrors.kgds = "Ağırlık sıfırdan büyük olmalıdır";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    console.log("İş Giriş Formu Verileri:", formData);
-    alert("İş girişi başarıyla kaydedildi!");
-    
-    // Reset form
-    setFormData(initialFormData);
-    setActiveTab("temel");
-    onClose();
+    try {
+      setIsSubmitting(true);
+      await transportJobService.create({
+        job_date: formData.tarih,
+        quote_no: formData.teklifNo,
+        seller: formData.satici,
+        customer_id: formData.musteri,
+        supplier_id: formData.tedarikci || null,
+        sender_name: formData.gonderici,
+        sender_address: formData.gondericiAdres,
+        sender_postal_code: formData.gondericiPostaKodu,
+        sender_district: formData.gondericiIlce,
+        sender_city: formData.gondericiIl,
+        receiver_name: formData.alici,
+        receiver_address: formData.aliciAdres,
+        receiver_postal_code: formData.aliciPostaKodu,
+        receiver_district: formData.aliciIlce,
+        receiver_city: formData.aliciIl,
+        quantity: Number(formData.adet),
+        cargo_type: formData.cinsi,
+        unit_weight: Number(formData.kgds),
+        total_weight: Number(formData.toplamKgds),
+        sales_unit_price: Number(formData.satisBirim || 0),
+        sales_total: Number(formData.satisTutar || 0),
+        cost: Number(formData.maliyet || 0),
+        currency: "TRY",
+      });
+      window.dispatchEvent(new Event("rex:transport-jobs-changed"));
+      toast({ title: "İş kaydı oluşturuldu", description: "Onay bekleyen iş emirlerine eklendi." });
+      setFormData(initialFormData);
+      setActiveTab("temel");
+      onSuccess?.();
+      onClose();
+    } catch (error: any) {
+      toast({ title: "İş kaydı oluşturulamadı", description: error?.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
@@ -269,13 +319,11 @@ export function IsGirisForm({ isOpen, onClose }: IsGirisFormProps) {
                           <User className="w-4 h-4 text-green-600" />
                           Müşteri (Cari Kart)
                         </Label>
-                        <Input
-                          id="musteri"
-                          value={formData.musteri}
-                          onChange={(e) => handleInputChange("musteri", e.target.value)}
-                          placeholder="Cari kart girişinden gelir"
-                          className="bg-green-50"
-                        />
+                        <Select value={formData.musteri} onValueChange={(value) => handleInputChange("musteri", value)}>
+                          <SelectTrigger className={errors.musteri ? "border-red-500" : "bg-green-50"}><SelectValue placeholder="Müşteri seçin" /></SelectTrigger>
+                          <SelectContent>{customers.map((customer) => customer.id && <SelectItem key={customer.id} value={customer.id}>{customer.customer_code} - {customer.name}</SelectItem>)}</SelectContent>
+                        </Select>
+                        {errors.musteri && <p className="text-sm text-red-500">{errors.musteri}</p>}
                         <p className="text-xs text-slate-500">Cari kart sisteminden otomatik çekilir</p>
                       </div>
 
@@ -285,13 +333,10 @@ export function IsGirisForm({ isOpen, onClose }: IsGirisFormProps) {
                           <Truck className="w-4 h-4 text-purple-600" />
                           Tedarikçi (Cari Kart)
                         </Label>
-                        <Input
-                          id="tedarikci"
-                          value={formData.tedarikci}
-                          onChange={(e) => handleInputChange("tedarikci", e.target.value)}
-                          placeholder="Cari kart girişinden gelir"
-                          className="bg-purple-50"
-                        />
+                        <Select value={formData.tedarikci} onValueChange={(value) => handleInputChange("tedarikci", value)}>
+                          <SelectTrigger className="bg-purple-50"><SelectValue placeholder="Tedarikçi seçin (isteğe bağlı)" /></SelectTrigger>
+                          <SelectContent>{customers.filter((customer) => customer.account_type === "tedarikci").map((customer) => customer.id && <SelectItem key={customer.id} value={customer.id}>{customer.customer_code} - {customer.name}</SelectItem>)}</SelectContent>
+                        </Select>
                         <p className="text-xs text-slate-500">Cari kart sisteminden otomatik çekilir</p>
                       </div>
                     </div>
@@ -574,10 +619,11 @@ export function IsGirisForm({ isOpen, onClose }: IsGirisFormProps) {
             </Button>
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
               <Package className="w-4 h-4 mr-2" />
-              İş Girişini Kaydet
+              {isSubmitting ? "Kaydediliyor..." : "İş Girişini Kaydet"}
             </Button>
           </div>
         </form>

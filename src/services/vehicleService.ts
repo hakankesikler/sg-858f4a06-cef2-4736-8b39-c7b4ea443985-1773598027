@@ -132,5 +132,15 @@ export const vehicleService = {
     }
 
     return storageReference('vehicle-documents', data.path);
+  },
+
+  async saveWithDocument(vehicle: Vehicle, file: File | null, existingId?: string) {
+    if (!file && !vehicle.ruhsat_dosyasi_url) {
+      throw new Error("Ruhsat resmi yüklenmeden araç kaydedilemez");
+    }
+    const id = existingId || crypto.randomUUID();
+    const documentUrl = file ? await this.uploadRuhsatFile(file, id) : vehicle.ruhsat_dosyasi_url;
+    const payload = { ...vehicle, id, ruhsat_dosyasi_url: documentUrl };
+    return existingId ? this.updateVehicle(id, payload) : this.createVehicle(payload);
   }
 };

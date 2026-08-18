@@ -6,6 +6,7 @@ import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown } from "lu
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService } from "@/services/shipmentService";
+import { transportJobService, type TransportJob } from "@/services/transportJobService";
 import { crmService } from "@/services/crmService";
 import { openPrivateDocument } from "@/lib/private-storage";
 import { downloadCsv, parseCsv } from "@/lib/csv";
@@ -34,6 +35,7 @@ export function LogisticsModule() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
+  const [transportJobs, setTransportJobs] = useState<TransportJob[]>([]);
   const [isDriverFormOpen, setIsDriverFormOpen] = useState(false);
   const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false);
   const [isShipmentFormOpen, setIsShipmentFormOpen] = useState(false);
@@ -72,9 +74,17 @@ export function LogisticsModule() {
 
   useEffect(() => {
     loadData();
+    const refresh = () => void loadData();
+    window.addEventListener("rex:transport-jobs-changed", refresh);
+    return () => window.removeEventListener("rex:transport-jobs-changed", refresh);
   }, []);
 
   const loadData = async () => {
+    try {
+      setTransportJobs(await transportJobService.list());
+    } catch (error) {
+      console.error("Error loading transport jobs:", error);
+    }
     // Load drivers
     try {
       const driversData = await driverService.getDrivers();
@@ -192,10 +202,27 @@ export function LogisticsModule() {
     }
   };
 
+  const handleReviewJob = async (job: TransportJob, decision: "onayla" | "reddet") => {
+    const reason = decision === "reddet" ? window.prompt("Ret nedenini yazın:") : undefined;
+    if (decision === "reddet" && !reason?.trim()) return;
+    try {
+      await transportJobService.review(job.id, decision, reason);
+      toast({
+        title: decision === "onayla" ? "İş onaylandı" : "İş reddedildi",
+        description: decision === "onayla" ? "Sevkiyat, atama bekleyenler listesine eklendi." : undefined,
+      });
+      await loadData();
+    } catch (error: any) {
+      toast({ title: "İşlem tamamlanamadı", description: error?.message, variant: "destructive" });
+    }
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "beklemede":
         return "bg-yellow-100 text-yellow-800";
+      case "atama_bekliyor":
+        return "bg-orange-100 text-orange-800";
       case "hazırlaniyor":
         return "bg-blue-100 text-blue-800";
       case "yolda":
@@ -211,6 +238,7 @@ export function LogisticsModule() {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
+      atama_bekliyor: "Atama Bekliyor",
       beklemede: "Beklemede",
       hazırlaniyor: "Hazırlanıyor",
       yolda: "Yolda",
@@ -456,8 +484,12 @@ export function LogisticsModule() {
         <h2 className="text-2xl font-bold">Lojistik Yönetimi</h2>
       </div>
 
-      <Tabs defaultValue="shipments" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="jobs" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="jobs" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            İş Emirleri
+          </TabsTrigger>
           <TabsTrigger value="shipments" className="flex items-center gap-2">
             <Package className="h-4 w-4" />
             Sevkiyatlar
@@ -471,6 +503,34 @@ export function LogisticsModule() {
             Araçlar
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="jobs" className="space-y-4">
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b"><tr>
+                  <th className="p-4 text-left">İŞ NO</th><th className="p-4 text-left">TARİH</th>
+                  <th className="p-4 text-left">MÜŞTERİ</th><th className="p-4 text-left">GÜZERGÂH</th>
+                  <th className="p-4 text-left">YÜK</th><th className="p-4 text-left">TUTAR</th>
+                  <th className="p-4 text-left">DURUM</th><th className="p-4 text-left">İŞLEMLER</th>
+                </tr></thead>
+                <tbody>
+                  {transportJobs.map((job) => <tr key={job.id} className="border-b hover:bg-gray-50">
+                    <td className="p-4 font-medium">{job.job_code}</td>
+                    <td className="p-4">{format(new Date(job.job_date), "dd MMM yyyy", { locale: tr })}</td>
+                    <td className="p-4">{job.customer?.name || "-"}</td>
+                    <td className="p-4">{job.sender_city || "-"} → {job.receiver_city || "-"}</td>
+                    <td className="p-4">{job.quantity} {job.cargo_type} / {job.total_weight} kg-ds</td>
+                    <td className="p-4">{Number(job.sales_total || 0).toLocaleString("tr-TR")} {job.currency}</td>
+                    <td className="p-4"><span className={`px-2 py-1 rounded-full text-xs ${job.status === "onaylandi" ? "bg-green-100 text-green-800" : job.status === "reddedildi" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}>{job.status === "onaylandi" ? "Onaylandı" : job.status === "reddedildi" ? "Reddedildi" : "Onay Bekliyor"}</span></td>
+                    <td className="p-4">{job.status === "onay_bekliyor" && <div className="flex gap-2"><Button size="sm" onClick={() => void handleReviewJob(job, "onayla")}>Onayla</Button><Button size="sm" variant="outline" onClick={() => void handleReviewJob(job, "reddet")}>Reddet</Button></div>}</td>
+                  </tr>)}
+                  {transportJobs.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-gray-500">Henüz iş emri bulunmuyor.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="shipments" className="space-y-4">
           <div className="flex justify-between items-center">
@@ -639,7 +699,7 @@ export function LogisticsModule() {
                               Yola Çıkar
                             </button>
                           )}
-                          {(shipment.status === "yolda" || shipment.status === "hazirlaniyor" || shipment.status === "hazırlaniyor") && (
+                          {shipment.status === "yolda" && (
                             <button
                               type="button"
                               onClick={() => {

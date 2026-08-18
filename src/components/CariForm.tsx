@@ -60,6 +60,8 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     para_birimi: "TRY",
     durumu: "",
     proje: "",
+    kolaybi_contact_id: "",
+    kolaybi_address_id: "",
     // Forwarder/Havayolu alanları
     carrier_type: "karayolu",
     iata_code: "",
@@ -130,6 +132,8 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         para_birimi: "TRY",
         durumu: "",
         proje: "",
+        kolaybi_contact_id: initialData.kolaybi_contact_id?.toString() || "",
+        kolaybi_address_id: initialData.kolaybi_address_id?.toString() || "",
         // Forwarder/Havayolu alanları
         carrier_type: initialData.carrier_type || "karayolu",
         iata_code: initialData.iata_code || "",
@@ -209,6 +213,8 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       para_birimi: "TRY",
       durumu: "",
       proje: "",
+      kolaybi_contact_id: "",
+      kolaybi_address_id: "",
       // Forwarder/Havayolu alanları
       carrier_type: "karayolu",
       iata_code: "",
@@ -337,6 +343,8 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         postal_code: formData.postal_code || null,
         vade_gunu: vadeGunuVar && vadeGunuSayisi ? parseInt(vadeGunuSayisi) : null,
         sabit_iskonto: sabitIskontoVar && sabitIskontoYuzde ? parseFloat(sabitIskontoYuzde) : null,
+        kolaybi_contact_id: formData.kolaybi_contact_id ? Number(formData.kolaybi_contact_id) : null,
+        kolaybi_address_id: formData.kolaybi_address_id ? Number(formData.kolaybi_address_id) : null,
         // Nakliyeci specific fields
         authorized_person_name: formData.authorized_person_name || null,
         authorized_person_phone: formData.authorized_person_phone || null,
@@ -1278,6 +1286,14 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
 
           {/* Cari Detay Bilgileri Tab */}
           <TabsContent value="detay" className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">KolayBi Eşlemesi</h3>
+              <p className="text-sm text-gray-500">KolayBi cari kartındaki kimlikleri girin. Bu eşleme tamamlanmadan otomatik fatura gönderilmez.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Contact ID</Label><Input type="number" min="1" value={formData.kolaybi_contact_id} onChange={(e) => setFormData({ ...formData, kolaybi_contact_id: e.target.value })} placeholder="KolayBi contact_id" /></div>
+                <div className="space-y-2"><Label>Address ID</Label><Input type="number" min="1" value={formData.kolaybi_address_id} onChange={(e) => setFormData({ ...formData, kolaybi_address_id: e.target.value })} placeholder="KolayBi address_id" /></div>
+              </div>
+            </div>
             {/* Vade Bilgileri */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold border-b pb-2">Vade Bilgileri</h3>

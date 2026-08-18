@@ -367,8 +367,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         vehicleService.getVehicles(),
         crmService.getCustomers()
       ]);
-      setDrivers(driversData);
-      setVehicles(vehiclesData);
+      const today = new Date().toISOString().slice(0, 10);
+      setDrivers(driversData.filter((driver) =>
+        driver.status === "Aktif" &&
+        Boolean(driver.ehliyet_dosyasi_url) &&
+        Boolean(driver.ehliyet_gecerlilik_tarihi) &&
+        driver.ehliyet_gecerlilik_tarihi >= today
+      ));
+      setVehicles(vehiclesData.filter((vehicle) =>
+        vehicle.status === "Aktif" && Boolean(vehicle.ruhsat_dosyasi_url)
+      ));
       
       console.log('=== SHIPMENT FORM CUSTOMER LOADING ===');
       console.log('📦 API\'den gelen TÜM müşteriler:', customersData.length);
@@ -482,11 +490,14 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     e.preventDefault();
 
     const invalidCargo = cargoItems.some(item => item.adet <= 0 || item.kg_ds <= 0 || !item.cinsi.trim());
-    if (!formData.customer_id || !formData.driver_id || !formData.vehicle_id ||
+    const incompleteAssignment = Boolean(formData.driver_id) !== Boolean(formData.vehicle_id);
+    if (!formData.customer_id || incompleteAssignment ||
         !formData.origin.trim() || !formData.destination.trim() || !pickupDate || invalidCargo) {
       toast({
         title: "Eksik Bilgi",
-        description: "Müşteri, sürücü, araç, çıkış/varış, yükleme tarihi ve geçerli yük kalemleri zorunludur.",
+        description: incompleteAssignment
+          ? "Sürücü ve araç birlikte seçilmelidir."
+          : "Müşteri, çıkış/varış, yükleme tarihi ve geçerli yük kalemleri zorunludur.",
         variant: "destructive",
       });
       return;
@@ -560,7 +571,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         
         toast({
           title: "Başarılı",
-          description: "Sevkiyat başarıyla oluşturuldu",
+        description: formData.driver_id
+          ? "Sevkiyat atamasıyla birlikte oluşturuldu"
+          : "Sevkiyat oluşturuldu; sürücü ve araç ataması bekliyor",
         });
       }
 

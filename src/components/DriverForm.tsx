@@ -91,14 +91,20 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setEhliyetFile(e.target.files[0]);
+      const file = e.target.files[0];
+      if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+        toast({ title: "Geçersiz dosya", description: "Ehliyet belgesi JPG, PNG veya PDF ve en fazla 5 MB olmalıdır.", variant: "destructive" });
+        e.target.value = "";
+        return;
+      }
+      setEhliyetFile(file);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.full_name || !formData.tc_no || !formData.phone_1) {
+    if (!formData.full_name || !formData.tc_no || !formData.phone_1 || !ehliyetGecerlilikTarihi || (!ehliyetFile && !initialData?.ehliyet_dosyasi_url)) {
       toast({
         title: "Hata",
         description: "Lütfen zorunlu alanları doldurun",
@@ -123,40 +129,15 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         psikoteknik_belge_no: formData.psikoteknik_belge_no || null,
         ehliyet_sinifi: ehliyetSinifiString || null,
         ehliyet_gecerlilik_tarihi: ehliyetGecerlilikTarihi || null,
-        status: formData.status
+        status: formData.status,
+        ehliyet_dosyasi_url: initialData?.ehliyet_dosyasi_url || undefined
       };
 
-      let driverId: string;
-      
-      if (editMode && initialData) {
-        const updated = await driverService.updateDriver(initialData.id!, submitData);
-        driverId = updated.id;
-        toast({
-          title: "Başarılı",
-          description: "Sürücü başarıyla güncellendi",
-        });
-      } else {
-        const created = await driverService.createDriver(submitData);
-        driverId = created.id;
-        toast({
-          title: "Başarılı",
-          description: "Sürücü başarıyla oluşturuldu",
-        });
-      }
-
-      // Upload file if exists
-      if (ehliyetFile) {
-        try {
-          await driverService.uploadEhliyetFile(ehliyetFile, driverId);
-        } catch (error) {
-          console.error("Error uploading file:", error);
-          toast({
-            title: "Uyarı",
-            description: "Sürücü kaydedildi ancak dosya yüklenirken hata oluştu",
-            variant: "destructive",
-          });
-        }
-      }
+      await driverService.saveWithDocument(submitData, ehliyetFile, editMode ? initialData?.id : undefined);
+      toast({
+        title: "Başarılı",
+        description: editMode ? "Sürücü ve ehliyet belgesi güncellendi" : "Sürücü ve ehliyet belgesi kaydedildi",
+      });
 
       onSuccess();
       onClose();
@@ -323,7 +304,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               <p className="text-xs text-gray-500">Birden fazla sınıf seçebilirsiniz</p>
             </div>
             <div className="space-y-2">
-              <Label>Ehliyet Geçerlilik Tarihi</Label>
+              <Label>Ehliyet Geçerlilik Tarihi *</Label>
               <Input
                 type="date"
                 value={ehliyetGecerlilikTarihi}
@@ -335,7 +316,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
 
           {/* Ehliyet Dosyası */}
           <div className="space-y-2">
-            <Label>Ehliyet Dosyası</Label>
+            <Label>Ehliyet Dosyası *</Label>
             
             {/* Show existing file if available */}
             {editMode && initialData?.ehliyet_dosyasi_url && !ehliyetFile && (

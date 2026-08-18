@@ -31,6 +31,8 @@ export interface Customer {
   sabit_iskonto?: number | null;
   supplier_category?: string | null;
   customer_code?: string;
+  kolaybi_contact_id?: number | null;
+  kolaybi_address_id?: number | null;
   // Nakliyeci alanları
   authorized_person_name?: string | null;
   authorized_person_phone?: string | null;

@@ -80,14 +80,20 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setRuhsatFile(e.target.files[0]);
+      const file = e.target.files[0];
+      if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+        toast({ title: "Geçersiz dosya", description: "Ruhsat belgesi JPG, PNG veya PDF ve en fazla 5 MB olmalıdır.", variant: "destructive" });
+        e.target.value = "";
+        return;
+      }
+      setRuhsatFile(file);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.arac_tipi || !formData.cekici_plakasi || !formData.kasa_tipi) {
+    if (!formData.arac_tipi || !formData.cekici_plakasi || !formData.kasa_tipi || (!ruhsatFile && !initialData?.ruhsat_dosyasi_url)) {
       toast({
         title: "Hata",
         description: "Lütfen zorunlu alanları doldurun",
@@ -111,40 +117,15 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         yetki_belgesi: formData.yetki_belgesi || null,
         ruhsat_sahibi_adi_soyadi: formData.ruhsat_sahibi_adi_soyadi || null,
         ruhsat_no: formData.ruhsat_no || null,
-        status: formData.status
+        status: formData.status,
+        ruhsat_dosyasi_url: initialData?.ruhsat_dosyasi_url || undefined
       };
 
-      let vehicleId: string;
-
-      if (editMode && initialData) {
-        const updated = await vehicleService.updateVehicle(initialData.id!, submitData);
-        vehicleId = updated.id;
-        toast({
-          title: "Başarılı",
-          description: "Araç başarıyla güncellendi",
-        });
-      } else {
-        const created = await vehicleService.createVehicle(submitData);
-        vehicleId = created.id;
-        toast({
-          title: "Başarılı",
-          description: "Araç başarıyla oluşturuldu",
-        });
-      }
-
-      // Upload file if exists
-      if (ruhsatFile) {
-        try {
-          await vehicleService.uploadRuhsatFile(ruhsatFile, vehicleId);
-        } catch (error) {
-          console.error("Error uploading file:", error);
-          toast({
-            title: "Uyarı",
-            description: "Araç kaydedildi ancak dosya yüklenirken hata oluştu",
-            variant: "destructive",
-          });
-        }
-      }
+      await vehicleService.saveWithDocument(submitData, ruhsatFile, editMode ? initialData?.id : undefined);
+      toast({
+        title: "Başarılı",
+        description: editMode ? "Araç ve ruhsat belgesi güncellendi" : "Araç ve ruhsat belgesi kaydedildi",
+      });
 
       onSuccess();
       onClose();
@@ -311,7 +292,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
 
           {/* Ruhsat Dosyası */}
           <div className="space-y-2">
-            <Label>Ruhsat Dosyası</Label>
+            <Label>Ruhsat Dosyası *</Label>
             
             {/* Show existing file if available */}
             {editMode && initialData?.ruhsat_dosyasi_url && !ruhsatFile && (

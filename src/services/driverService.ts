@@ -131,5 +131,15 @@ export const driverService = {
     }
 
     return storageReference('driver-documents', data.path);
+  },
+
+  async saveWithDocument(driver: Driver, file: File | null, existingId?: string) {
+    if (!file && !driver.ehliyet_dosyasi_url) {
+      throw new Error("Ehliyet resmi yüklenmeden sürücü kaydedilemez");
+    }
+    const id = existingId || crypto.randomUUID();
+    const documentUrl = file ? await this.uploadEhliyetFile(file, id) : driver.ehliyet_dosyasi_url;
+    const payload = { ...driver, id, ehliyet_dosyasi_url: documentUrl };
+    return existingId ? this.updateDriver(id, payload) : this.createDriver(payload);
   }
 };
