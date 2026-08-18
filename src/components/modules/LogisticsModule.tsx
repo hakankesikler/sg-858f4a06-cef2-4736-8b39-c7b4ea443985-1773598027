@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History } from "lucide-react";
@@ -18,6 +19,7 @@ import { generateWaybill } from "@/components/WaybillGenerator";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { ShipmentHistoryDialog } from "@/components/ShipmentHistoryDialog";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import {
@@ -48,6 +50,8 @@ export function LogisticsModule() {
   const [deletingShipment, setDeletingShipment] = useState<any | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteType, setDeleteType] = useState<"driver" | "vehicle" | "shipment">("driver");
+  const [shipmentDeleteConfirmation, setShipmentDeleteConfirmation] = useState("");
+  const [currentUserEmail, setCurrentUserEmail] = useState("");
   
   // Delivery modal state
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
@@ -76,6 +80,7 @@ export function LogisticsModule() {
 
   useEffect(() => {
     loadData();
+    void supabase.auth.getUser().then(({ data }) => setCurrentUserEmail((data.user?.email || "").toLowerCase()));
     const refresh = () => void loadData();
     window.addEventListener("rex:transport-jobs-changed", refresh);
     return () => window.removeEventListener("rex:transport-jobs-changed", refresh);
@@ -171,22 +176,27 @@ export function LogisticsModule() {
 
   const handleDeleteShipment = async () => {
     if (!deletingShipment) return;
+    if (shipmentDeleteConfirmation !== deletingShipment.shipment_code) {
+      toast({ title: "Onay kodu hatalı", description: "Sevkiyat kodunu eksiksiz yazın.", variant: "destructive" });
+      return;
+    }
     try {
-      await shipmentService.deleteShipment(deletingShipment.id);
+      await shipmentService.deleteShipment(deletingShipment.id, shipmentDeleteConfirmation);
       toast({
         title: "Başarılı",
         description: "Sevkiyat başarıyla silindi",
       });
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Hata",
-        description: "Sevkiyat silinirken bir hata oluştu",
+        description: error?.message || "Sevkiyat silinirken bir hata oluştu",
         variant: "destructive",
       });
     } finally {
       setIsDeleteDialogOpen(false);
       setDeletingShipment(null);
+      setShipmentDeleteConfirmation("");
     }
   };
 
@@ -779,17 +789,21 @@ export function LogisticsModule() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setDeletingShipment(shipment);
-                              setDeleteType("shipment");
-                              setIsDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
+                          {currentUserEmail === "info@rexlojistik.com" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setShipmentDeleteConfirmation("");
+                                setDeletingShipment(shipment);
+                                setDeleteType("shipment");
+                                setIsDeleteDialogOpen(true);
+                              }}
+                              title="Sevkiyatı sil"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1009,7 +1023,10 @@ export function LogisticsModule() {
         shipment={historyShipment}
       />
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={(open) => {
+        setIsDeleteDialogOpen(open);
+        if (!open) setShipmentDeleteConfirmation("");
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Silme Onayı</AlertDialogTitle>
@@ -1018,6 +1035,17 @@ export function LogisticsModule() {
               {deleteType === "vehicle" && "Bu aracı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."}
               {deleteType === "shipment" && "Bu sevkiyatı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."}
             </AlertDialogDescription>
+            {deleteType === "shipment" && deletingShipment && (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm text-slate-700">Onaylamak için <strong>{deletingShipment.shipment_code}</strong> kodunu yazın:</p>
+                <Input
+                  value={shipmentDeleteConfirmation}
+                  onChange={(event) => setShipmentDeleteConfirmation(event.target.value)}
+                  placeholder={deletingShipment.shipment_code}
+                  autoComplete="off"
+                />
+              </div>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>İptal</AlertDialogCancel>
@@ -1028,6 +1056,7 @@ export function LogisticsModule() {
                 handleDeleteShipment
               }
               className="bg-red-600 hover:bg-red-700"
+              disabled={deleteType === "shipment" && shipmentDeleteConfirmation !== deletingShipment?.shipment_code}
             >
               Sil
             </AlertDialogAction>

@@ -196,11 +196,11 @@ export const shipmentService = {
     return data;
   },
 
-  async deleteShipment(id: string) {
-    const { error } = await supabase
-      .from("shipments")
-      .delete()
-      .eq("id", id);
+  async deleteShipment(id: string, confirmationCode: string) {
+    const { error } = await supabase.rpc("rex_owner_delete_shipment" as any, {
+      p_shipment_id: id,
+      p_confirmation_code: confirmationCode,
+    } as any);
 
     if (error) {
       console.error("Error deleting shipment:", error);
