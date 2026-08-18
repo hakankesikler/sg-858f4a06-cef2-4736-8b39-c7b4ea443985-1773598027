@@ -1867,6 +1867,7 @@ export type Database = {
           sender_ii: string | null
           sender_name: string | null
           shipment_code: string
+          tracking_number: string
           status: string | null
           supplier_id: string | null
           toplam_kg_ds: number | null
@@ -1903,6 +1904,7 @@ export type Database = {
           sender_ii?: string | null
           sender_name?: string | null
           shipment_code: string
+          tracking_number?: string
           status?: string | null
           supplier_id?: string | null
           toplam_kg_ds?: number | null
@@ -1939,6 +1941,7 @@ export type Database = {
           sender_ii?: string | null
           sender_name?: string | null
           shipment_code?: string
+          tracking_number?: string
           status?: string | null
           supplier_id?: string | null
           toplam_kg_ds?: number | null

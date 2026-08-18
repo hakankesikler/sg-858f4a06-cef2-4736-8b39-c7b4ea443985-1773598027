@@ -27,6 +27,7 @@ const eventLabels: Record<string, string> = {
 };
 
 const fieldLabels: Record<string, string> = {
+  tracking_number: "Takip numarası",
   customer_id: "Müşteri",
   supplier_id: "Tedarikçi",
   driver_id: "Sürücü",

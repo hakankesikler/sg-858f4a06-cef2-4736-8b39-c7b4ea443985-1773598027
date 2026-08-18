@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface Shipment {
   id?: string;
   shipment_code?: string;
+  tracking_number?: string;
   supplier_id?: string | null;
   driver_id?: string | null;
   vehicle_id?: string | null;

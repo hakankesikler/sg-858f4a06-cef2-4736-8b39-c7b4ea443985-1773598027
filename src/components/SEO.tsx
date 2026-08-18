@@ -5,13 +5,15 @@ interface SEOProps {
   description?: string;
   image?: string;
   url?: string;
+  noIndex?: boolean;
 }
 
 export function SEO({
   title = "Rex Lojistik - Türkiye'nin Güvenilir Lojistik Partneri",
   description = "Rex Lojistik ile kara, hava ve deniz taşımacılığı hizmetleri. Depolama, dağıtım ve uluslararası kargo çözümleri. 7/24 müşteri desteği, hızlı ve güvenli teslimat. İletişim: 0543 401 07 55",
   image = "/og-image.png",
-  url = "https://www.rexlojistik.com"
+  url = "https://www.rexlojistik.com",
+  noIndex = false,
 }: SEOProps) {
   return (
     <Head>
@@ -20,7 +22,7 @@ export function SEO({
       <meta name="keywords" content="rex lojistik, lojistik firması, kargo şirketi, nakliye, taşımacılık, depolama, dağıtım, hava kargo, deniz kargo, kara taşımacılığı, uluslararası kargo, lojistik çözümleri, hızlı teslimat, güvenli kargo" />
       <meta name="author" content="Rex Lojistik" />
       <meta name="language" content="tr" />
-      <meta name="robots" content="index, follow" />
+      <meta name="robots" content={noIndex ? "noindex, nofollow" : "index, follow"} />
       
       {/* Open Graph */}
       <meta property="og:type" content="website" />

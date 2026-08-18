@@ -97,6 +97,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
   const [notificationData, setNotificationData] = useState<{
     shipment_code: string;
+    tracking_number: string;
+    tracking_url: string;
     driver_name: string;
     driver_tc: string;
     driver_phone: string;
@@ -559,6 +561,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           description: "Sevkiyat başarıyla güncellendi",
         });
       } else {
+        const savedShipment: any = await shipmentService.getShipmentById(shipmentId);
         const selectedDriver = drivers.find(d => d.id === formData.driver_id);
         const selectedVehicle = vehicles.find(v => v.id === formData.vehicle_id);
         const selectedCustomer = customers.find(c => c.id === formData.customer_id);
@@ -569,7 +572,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         
         if (selectedDriver && selectedVehicle && selectedCustomer) {
           setNotificationData({
-            shipment_code: shipmentCode,
+            shipment_code: savedShipment.shipment_code || shipmentCode,
+            tracking_number: savedShipment.tracking_number || "",
+            tracking_url: savedShipment.tracking_number
+              ? `${window.location.origin}/takip/${encodeURIComponent(savedShipment.tracking_number)}`
+              : "",
             driver_name: selectedDriver.full_name || "",
             driver_tc: selectedDriver.tc_no || "",
             driver_phone: selectedDriver.phone || "",

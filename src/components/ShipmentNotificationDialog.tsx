@@ -1,12 +1,14 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Mail, X } from "lucide-react";
+import { Copy, MessageSquare, Mail, X } from "lucide-react";
 
 interface ShipmentNotificationDialogProps {
   open: boolean;
   onClose: () => void;
   shipmentData: {
     shipment_code: string;
+    tracking_number: string;
+    tracking_url: string;
     driver_name: string;
     driver_tc: string;
     driver_phone: string;
@@ -33,6 +35,7 @@ Sevkiyat Bilgileri
 ━━━━━━━━━━━━━━━━━━━
 📦 *SEVKIYAT*
 Kod: ${shipmentData.shipment_code}
+Takip No: ${shipmentData.tracking_number}
 Tarih: ${new Date().toLocaleDateString("tr-TR")}
 
 ━━━━━━━━━━━━━━━━━━━
@@ -50,6 +53,10 @@ Dorse Plaka: ${shipmentData.trailer_plate}
 📍 *ROTA BİLGİLERİ*
 Nereden: ${shipmentData.origin}
 Nereye: ${shipmentData.destination}
+
+━━━━━━━━━━━━━━━━━━━
+🔎 *CANLI TAKİP*
+${shipmentData.tracking_url}
 
 ━━━━━━━━━━━━━━━━━━━
 İyi günler dileriz.
@@ -94,6 +101,14 @@ Nereye: ${shipmentData.destination}
         <div class="info-row">
           <div class="info-label">Tarih:</div>
           <div class="info-value">${new Date().toLocaleDateString("tr-TR")}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Takip Numarası:</div>
+          <div class="info-value">${shipmentData.tracking_number}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Canlı Takip:</div>
+          <div class="info-value">${shipmentData.tracking_url}</div>
         </div>
       </div>
       
@@ -178,6 +193,15 @@ Nereye: ${shipmentData.destination}
     onClose();
   };
 
+  const handleCopyLink = async () => {
+    if (!shipmentData.tracking_url) {
+      alert("Takip bağlantısı henüz oluşturulmadı.");
+      return;
+    }
+    await navigator.clipboard.writeText(shipmentData.tracking_url);
+    alert("Takip bağlantısı kopyalandı.");
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -192,7 +216,15 @@ Nereye: ${shipmentData.destination}
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Button
+              onClick={() => void handleCopyLink()}
+              className="h-20 flex flex-col gap-2"
+              variant="outline"
+            >
+              <Copy className="h-6 w-6 text-orange-600" />
+              <span>Linki Kopyala</span>
+            </Button>
             <Button
               onClick={handleWhatsApp}
               className="h-20 flex flex-col gap-2"

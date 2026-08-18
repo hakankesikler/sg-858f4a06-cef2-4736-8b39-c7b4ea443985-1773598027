@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History } from "lucide-react";
+import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService } from "@/services/shipmentService";
@@ -197,6 +197,23 @@ export function LogisticsModule() {
       setIsDeleteDialogOpen(false);
       setDeletingShipment(null);
       setShipmentDeleteConfirmation("");
+    }
+  };
+
+  const copyTrackingLink = async (shipment: any) => {
+    if (!shipment.tracking_number) {
+      toast({ title: "Takip numarası bulunamadı", variant: "destructive" });
+      return;
+    }
+    try {
+      const url = `${window.location.origin}/takip/${encodeURIComponent(shipment.tracking_number)}`;
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Takip bağlantısı kopyalandı",
+        description: `${shipment.tracking_number} müşterinizle paylaşılabilir.`,
+      });
+    } catch {
+      toast({ title: "Bağlantı kopyalanamadı", variant: "destructive" });
     }
   };
 
@@ -681,7 +698,8 @@ export function LogisticsModule() {
                   {filteredShipments.map((shipment) => (
                     <tr key={shipment.id} className="border-b hover:bg-gray-50">
                       <td className="p-4">
-                        {shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd MMM yyyy", { locale: tr }) : "-"}
+                        <div>{shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd MMM yyyy", { locale: tr }) : "-"}</div>
+                        {shipment.tracking_number && <div className="mt-1 font-mono text-[11px] text-blue-700">{shipment.tracking_number}</div>}
                       </td>
                       <td className="p-4">{shipment.sender_name || "-"}</td>
                       <td className="p-4">{shipment.receiver || "-"}</td>
@@ -738,6 +756,16 @@ export function LogisticsModule() {
                       </td>
                       <td className="p-4">
                         <div className="flex gap-2">
+                          {shipment.tracking_number && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => void copyTrackingLink(shipment)}
+                              title="Müşteri takip bağlantısını kopyala"
+                            >
+                              <Copy className="h-4 w-4 text-blue-600" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
