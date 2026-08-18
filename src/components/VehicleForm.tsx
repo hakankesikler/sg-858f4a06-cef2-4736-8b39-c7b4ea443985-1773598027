@@ -97,7 +97,6 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
 
     if (!formData.arac_tipi || !formData.cekici_plakasi || !formData.kasa_tipi ||
         !formData.tasima_kapasitesi_kg || Number(formData.tasima_kapasitesi_kg) <= 0 ||
-        !formData.yetki_belgesi || !yetkiBelgesiGecerlilikTarihi ||
         (!ruhsatFile && !initialData?.ruhsat_dosyasi_url)) {
       toast({
         title: "Hata",
@@ -270,7 +269,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
           {/* Yetki Belgesi */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Yetki Belgesi (K1/K2) *</Label>
+              <Label>Taşıt Kartı / Yetki Belgesi Eki (İsteğe Bağlı)</Label>
               <Input
                 value={formData.yetki_belgesi}
                 onChange={(e) => setFormData({ ...formData, yetki_belgesi: e.target.value })}
@@ -278,7 +277,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               />
             </div>
             <div className="space-y-2">
-              <Label>Yetki Belgesi Geçerlilik Tarihi *</Label>
+              <Label>Belge Geçerlilik Tarihi (İsteğe Bağlı)</Label>
               <Input
                 type="date"
                 value={yetkiBelgesiGecerlilikTarihi}

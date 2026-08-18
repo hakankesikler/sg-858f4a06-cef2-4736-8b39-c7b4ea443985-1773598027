@@ -17,7 +17,7 @@ export const transportComplianceService = {
       p_warning_days: warningDays,
     });
     if (error) throw error;
-    const optionalDocuments = new Set(["SRC Belgesi", "Psikoteknik", "Trafik Sigortası"]);
+    const optionalDocuments = new Set(["SRC Belgesi", "Psikoteknik", "Trafik Sigortası", "Yetki Belgesi"]);
     return ((data || []) as TransportComplianceAlert[]).filter(
       (alert) => !optionalDocuments.has(alert.document_type),
     );

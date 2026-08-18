@@ -389,9 +389,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         vehicle.status === "Aktif" &&
         Boolean(vehicle.ruhsat_dosyasi_url) &&
         Number(vehicle.tasima_kapasitesi_kg || 0) > 0 &&
-        Boolean(vehicle.yetki_belgesi) &&
-        Boolean(vehicle.yetki_belgesi_gecerlilik_tarihi) &&
-        vehicle.yetki_belgesi_gecerlilik_tarihi >= today &&
         (!vehicle.kasko_bitis_tarihi || vehicle.kasko_bitis_tarihi >= today)
       ));
       

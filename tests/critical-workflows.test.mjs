@@ -237,9 +237,10 @@ test("KolayBi inbound purchase invoices are synchronized without exposing creden
 });
 
 test("driver and vehicle assignments enforce core documents, licence and load rules", async () => {
-  const [sql, optionalSql, shipmentForm, driverForm, vehicleForm] = await Promise.all([
+  const [sql, optionalSql, optionalVehicleSql, shipmentForm, driverForm, vehicleForm] = await Promise.all([
     read("supabase/migrations/20260819023000_driver_vehicle_compliance.sql"),
     read("supabase/migrations/20260819030000_optional_driver_vehicle_documents.sql"),
+    read("supabase/migrations/20260819031500_optional_vehicle_authorization.sql"),
     read("src/components/ShipmentForm.tsx"),
     read("src/components/DriverForm.tsx"),
     read("src/components/VehicleForm.tsx"),
@@ -251,18 +252,21 @@ test("driver and vehicle assignments enforce core documents, licence and load ru
   assert.match(sql, /yetki_belgesi_gecerlilik_tarihi < current_date/);
   assert.match(sql, /CREATE TRIGGER rex_shipment_assignment_compliance_guard/);
   assert.match(sql, /PERFORM public\.rex_validate_assignment_with_load\(v_driver,v_vehicle,v_load\)/);
-  assert.match(shipmentForm, /vehicle\.yetki_belgesi_gecerlilik_tarihi >= today/);
+  assert.doesNotMatch(optionalVehicleSql, /v_vehicle\.yetki_belgesi_gecerlilik_tarihi < current_date/);
+  assert.doesNotMatch(optionalVehicleSql, /nullif\(trim\(v_vehicle\.yetki_belgesi\)/);
   assert.doesNotMatch(optionalSql, /src_belgesi_gecerlilik_tarihi < current_date/);
   assert.doesNotMatch(optionalSql, /psikoteknik_gecerlilik_tarihi < current_date/);
   assert.doesNotMatch(optionalSql, /trafik_sigortasi_bitis_tarihi < current_date/);
   assert.doesNotMatch(shipmentForm, /driver\.src_belgesi_gecerlilik_tarihi >= today/);
   assert.doesNotMatch(shipmentForm, /driver\.psikoteknik_gecerlilik_tarihi >= today/);
   assert.doesNotMatch(shipmentForm, /vehicle\.trafik_sigortasi_bitis_tarihi >= today/);
+  assert.doesNotMatch(shipmentForm, /vehicle\.yetki_belgesi_gecerlilik_tarihi >= today/);
   assert.match(driverForm, /src_belgesi_gecerlilik_tarihi/);
   assert.match(driverForm, /psikoteknik_gecerlilik_tarihi/);
   assert.match(vehicleForm, /yetki_belgesi_gecerlilik_tarihi/);
   assert.match(driverForm, /SRC Belge No \(İsteğe Bağlı\)/);
   assert.match(vehicleForm, /Trafik Sigortası Bitiş Tarihi \(İsteğe Bağlı\)/);
+  assert.match(vehicleForm, /Taşıt Kartı \/ Yetki Belgesi Eki \(İsteğe Bağlı\)/);
 });
 
 test("managers receive 30-day warnings only for assignment-blocking documents", async () => {
@@ -276,7 +280,7 @@ test("managers receive 30-day warnings only for assignment-blocking documents", 
   assert.match(sql, /d\.expiry_date<=current_date\+p_warning_days/);
   assert.match(service, /rex_transport_compliance_alerts/);
   assert.match(service, /p_warning_days: warningDays/);
-  assert.match(service, /new Set\(\["SRC Belgesi", "Psikoteknik", "Trafik Sigortası"\]\)/);
+  assert.match(service, /new Set\(\["SRC Belgesi", "Psikoteknik", "Trafik Sigortası", "Yetki Belgesi"\]\)/);
   assert.match(service, /!optionalDocuments\.has\(alert\.document_type\)/);
   assert.match(logistics, /transportComplianceService\.getAlerts\(30\)/);
   assert.match(logistics, /Atama Engelli/);
