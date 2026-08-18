@@ -70,6 +70,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [shipmentCode, setShipmentCode] = useState("SHP-000001");
   const [pickupDate, setPickupDate] = useState("");
   const [estimatedDeliveryDate, setEstimatedDeliveryDate] = useState("");
+  const [completedEditConfirmation, setCompletedEditConfirmation] = useState("");
+  const isCompletedEdit = Boolean(
+    editMode && initialData && ["teslim_edildi", "Teslim Edildi"].includes(initialData.status),
+  );
   
   const [drivers, setDrivers] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
@@ -287,6 +291,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
   useEffect(() => {
     if (isOpen) {
+      setCompletedEditConfirmation("");
       loadSelectionData();
       if (!editMode) {
         loadNextShipmentCode();
@@ -489,6 +494,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isCompletedEdit && completedEditConfirmation !== initialData.shipment_code) {
+      toast({
+        title: "Onay kodu hatalı",
+        description: "Tamamlanmış sevkiyatı değiştirmek için sevkiyat kodunu eksiksiz yazın.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const invalidCargo = cargoItems.some(item => item.adet <= 0 || item.kg_ds <= 0 || !item.cinsi.trim());
     const incompleteAssignment = Boolean(formData.driver_id) !== Boolean(formData.vehicle_id);
     if (!formData.customer_id || incompleteAssignment ||
@@ -535,6 +549,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         editMode && initialData ? initialData.id : null,
         submitData,
         cargoItems,
+        isCompletedEdit ? completedEditConfirmation : undefined,
       );
 
       if (editMode && initialData) {
@@ -617,6 +632,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     });
     setPickupDate("");
     setEstimatedDeliveryDate("");
+    setCompletedEditConfirmation("");
     console.log("🔢 SHIPMENT CODE RESET (resetForm):", "SHP-000001");
     setShipmentCode("SHP-000001");
     setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
@@ -1063,11 +1079,30 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
           )}
 
+          {isCompletedEdit && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-2">
+              <p className="font-semibold text-amber-900">Şirket sahibi onayı gerekli</p>
+              <p className="text-sm text-amber-800">
+                Teslim edilmiş sevkiyatın müşteri, fiyat, güzergâh veya yük bilgileri değiştiriliyor.
+                Onaylamak için <strong>{initialData.shipment_code}</strong> kodunu yazın.
+              </p>
+              <Input
+                value={completedEditConfirmation}
+                onChange={(event) => setCompletedEditConfirmation(event.target.value)}
+                placeholder={initialData.shipment_code}
+                autoComplete="off"
+              />
+            </div>
+          )}
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               İptal
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting || (isCompletedEdit && completedEditConfirmation !== initialData?.shipment_code)}
+            >
               {isSubmitting ? "Kaydediliyor..." : editMode ? "Güncelle" : "Kaydet"}
             </Button>
           </DialogFooter>

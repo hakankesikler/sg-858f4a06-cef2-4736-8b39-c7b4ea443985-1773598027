@@ -23,6 +23,7 @@ const eventLabels: Record<string, string> = {
   invoiced: "Sevkiyat faturalandırıldı",
   invoice_unlinked: "Fatura bağlantısı kaldırıldı",
   deleted: "Sevkiyat silindi",
+  owner_approved_edit: "Tamamlanmış sevkiyat değişikliği onaylandı",
 };
 
 const fieldLabels: Record<string, string> = {

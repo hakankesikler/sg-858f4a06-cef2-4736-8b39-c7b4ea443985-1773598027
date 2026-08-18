@@ -69,10 +69,14 @@ export const shipmentService = {
       birim_fiyat?: number;
       alt_toplam_fiyat?: number;
     }>,
+    completedEditConfirmation?: string,
   ): Promise<string> {
     const { data, error } = await supabase.rpc("rex_save_shipment" as any, {
       p_shipment_id: shipmentId,
-      p_shipment: shipment,
+      p_shipment: {
+        ...shipment,
+        _owner_confirmation_code: completedEditConfirmation || null,
+      },
       p_cargo_items: cargoItems,
     } as any);
 

@@ -778,17 +778,25 @@ export function LogisticsModule() {
                               <FileText className="h-4 w-4 text-green-600" />
                             </Button>
                           )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              console.log("Editing shipment:", shipment);
-                              setEditingShipment(shipment);
-                              setIsShipmentFormOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          {(!["teslim_edildi", "Teslim Edildi"].includes(shipment.status) ||
+                            currentUserEmail === "info@rexlojistik.com") && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                console.log("Editing shipment:", shipment);
+                                setEditingShipment(shipment);
+                                setIsShipmentFormOpen(true);
+                              }}
+                              title={
+                                ["teslim_edildi", "Teslim Edildi"].includes(shipment.status)
+                                  ? "Tamamlanmış sevkiyatı sahip onayıyla düzenle"
+                                  : "Sevkiyatı düzenle"
+                              }
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
                           {currentUserEmail === "info@rexlojistik.com" && (
                             <Button
                               variant="ghost"
