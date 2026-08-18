@@ -4,11 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck } from "lucide-react";
+import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck, AlertTriangle } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService, type ShipmentRevisionRequest } from "@/services/shipmentService";
 import { transportJobService, type TransportJob } from "@/services/transportJobService";
+import { transportComplianceService, type TransportComplianceAlert } from "@/services/transportComplianceService";
 import { crmService } from "@/services/crmService";
 import { openPrivateDocument } from "@/lib/private-storage";
 import { downloadCsv, parseCsv } from "@/lib/csv";
@@ -42,6 +43,7 @@ export function LogisticsModule() {
   const [shipments, setShipments] = useState<any[]>([]);
   const [transportJobs, setTransportJobs] = useState<TransportJob[]>([]);
   const [revisionRequests, setRevisionRequests] = useState<ShipmentRevisionRequest[]>([]);
+  const [complianceAlerts, setComplianceAlerts] = useState<TransportComplianceAlert[]>([]);
   const [isDriverFormOpen, setIsDriverFormOpen] = useState(false);
   const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false);
   const [isShipmentFormOpen, setIsShipmentFormOpen] = useState(false);
@@ -93,6 +95,11 @@ export function LogisticsModule() {
   }, []);
 
   const loadData = async () => {
+    try {
+      setComplianceAlerts(await transportComplianceService.getAlerts(30));
+    } catch (error) {
+      console.error("Error loading transport compliance alerts:", error);
+    }
     try {
       setTransportJobs(await transportJobService.list());
     } catch (error) {
@@ -548,11 +555,45 @@ export function LogisticsModule() {
     }
   };
 
+  const complianceFor = (entityType: "driver" | "vehicle", entityId: string) =>
+    complianceAlerts.filter((alert) => alert.entity_type === entityType && alert.entity_id === entityId);
+  const blockedComplianceCount = complianceAlerts.filter((alert) => alert.severity === "blocked").length;
+  const warningComplianceCount = complianceAlerts.filter((alert) => alert.severity === "warning").length;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Lojistik Yönetimi</h2>
       </div>
+
+      {complianceAlerts.length > 0 && (
+        <Card className={`border-l-4 p-4 ${blockedComplianceCount > 0 ? "border-l-red-600 bg-red-50/50" : "border-l-amber-500 bg-amber-50/50"}`}>
+          <div className="flex items-start gap-3">
+            <AlertTriangle className={`mt-0.5 h-5 w-5 ${blockedComplianceCount > 0 ? "text-red-600" : "text-amber-600"}`} />
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-slate-900">Sürücü ve Araç Belge Uyarıları</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                {blockedComplianceCount > 0 && `${blockedComplianceCount} belge nedeniyle atama engelli. `}
+                {warningComplianceCount > 0 && `${warningComplianceCount} belgenin süresi 30 gün içinde dolacak.`}
+              </p>
+              <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {complianceAlerts.slice(0, 9).map((alert) => (
+                  <div key={`${alert.entity_type}-${alert.entity_id}-${alert.document_type}`} className="rounded-md border bg-white px-3 py-2 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate font-medium">{alert.entity_name}</span>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${alert.severity === "blocked" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+                        {alert.severity === "blocked" ? "Atama Engelli" : "Süre Yaklaşıyor"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-600">{alert.message}</p>
+                  </div>
+                ))}
+              </div>
+              {complianceAlerts.length > 9 && <p className="mt-2 text-xs text-slate-500">Ayrıntılar sürücü ve araç listelerinde gösterilir.</p>}
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Tabs defaultValue="jobs" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
@@ -994,6 +1035,7 @@ export function LogisticsModule() {
                     <th className="p-4 text-left text-sm font-medium">TC NO</th>
                     <th className="p-4 text-left text-sm font-medium">TELEFON</th>
                     <th className="p-4 text-left text-sm font-medium">EHLİYET SINIFI</th>
+                    <th className="p-4 text-left text-sm font-medium">BELGE UYGUNLUĞU</th>
                     <th className="p-4 text-left text-sm font-medium">DURUM</th>
                     <th className="p-4 text-left text-sm font-medium">İŞLEMLER</th>
                   </tr>
@@ -1006,6 +1048,18 @@ export function LogisticsModule() {
                       <td className="p-4">{driver.tc_no}</td>
                       <td className="p-4">{driver.phone_1}</td>
                       <td className="p-4">{driver.ehliyet_sinifi || "-"}</td>
+                      <td className="p-4">
+                        {(() => {
+                          const alerts = complianceFor("driver", driver.id);
+                          const blocked = alerts.some((alert) => alert.severity === "blocked");
+                          const warning = alerts.some((alert) => alert.severity === "warning");
+                          return (
+                            <span className={`rounded-full px-2 py-1 text-xs ${blocked ? "bg-red-100 text-red-800" : warning ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800"}`}>
+                              {blocked ? "Atama Engelli" : warning ? "Süre Yaklaşıyor" : "Uygun"}
+                            </span>
+                          );
+                        })()}
+                      </td>
                       <td className="p-4">
                         <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
                           {driver.status}
@@ -1067,6 +1121,7 @@ export function LogisticsModule() {
                     <th className="p-4 text-left text-sm font-medium">DORSE PLAKA</th>
                     <th className="p-4 text-left text-sm font-medium">KASA TİPİ</th>
                     <th className="p-4 text-left text-sm font-medium">KAPASİTE</th>
+                    <th className="p-4 text-left text-sm font-medium">BELGE UYGUNLUĞU</th>
                     <th className="p-4 text-left text-sm font-medium">DURUM</th>
                     <th className="p-4 text-left text-sm font-medium">İŞLEMLER</th>
                   </tr>
@@ -1080,6 +1135,18 @@ export function LogisticsModule() {
                       <td className="p-4">{vehicle.dorse_plakasi || "-"}</td>
                       <td className="p-4 capitalize">{vehicle.kasa_tipi}</td>
                       <td className="p-4">{vehicle.tasima_kapasitesi_kg ? `${vehicle.tasima_kapasitesi_kg} kg` : "-"}</td>
+                      <td className="p-4">
+                        {(() => {
+                          const alerts = complianceFor("vehicle", vehicle.id);
+                          const blocked = alerts.some((alert) => alert.severity === "blocked");
+                          const warning = alerts.some((alert) => alert.severity === "warning");
+                          return (
+                            <span className={`rounded-full px-2 py-1 text-xs ${blocked ? "bg-red-100 text-red-800" : warning ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800"}`}>
+                              {blocked ? "Atama Engelli" : warning ? "Süre Yaklaşıyor" : "Uygun"}
+                            </span>
+                          );
+                        })()}
+                      </td>
                       <td className="p-4">
                         <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
                           {vehicle.status}

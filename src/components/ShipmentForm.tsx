@@ -382,10 +382,25 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         driver.status === "Aktif" &&
         Boolean(driver.ehliyet_dosyasi_url) &&
         Boolean(driver.ehliyet_gecerlilik_tarihi) &&
-        driver.ehliyet_gecerlilik_tarihi >= today
+        driver.ehliyet_gecerlilik_tarihi >= today &&
+        Boolean(driver.ehliyet_sinifi) &&
+        Boolean(driver.src_belge_no) &&
+        Boolean(driver.src_belgesi_gecerlilik_tarihi) &&
+        driver.src_belgesi_gecerlilik_tarihi >= today &&
+        Boolean(driver.psikoteknik_belge_no) &&
+        Boolean(driver.psikoteknik_gecerlilik_tarihi) &&
+        driver.psikoteknik_gecerlilik_tarihi >= today
       ));
       setVehicles(vehiclesData.filter((vehicle) =>
-        vehicle.status === "Aktif" && Boolean(vehicle.ruhsat_dosyasi_url)
+        vehicle.status === "Aktif" &&
+        Boolean(vehicle.ruhsat_dosyasi_url) &&
+        Number(vehicle.tasima_kapasitesi_kg || 0) > 0 &&
+        Boolean(vehicle.yetki_belgesi) &&
+        Boolean(vehicle.yetki_belgesi_gecerlilik_tarihi) &&
+        vehicle.yetki_belgesi_gecerlilik_tarihi >= today &&
+        Boolean(vehicle.trafik_sigortasi_bitis_tarihi) &&
+        vehicle.trafik_sigortasi_bitis_tarihi >= today &&
+        (!vehicle.kasko_bitis_tarihi || vehicle.kasko_bitis_tarihi >= today)
       ));
       
       console.log('=== SHIPMENT FORM CUSTOMER LOADING ===');

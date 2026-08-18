@@ -12,6 +12,7 @@ export interface Vehicle {
   kasko_bitis_tarihi?: string;
   trafik_sigortasi_bitis_tarihi?: string;
   yetki_belgesi?: string;
+  yetki_belgesi_gecerlilik_tarihi?: string;
   ruhsat_sahibi_adi_soyadi?: string;
   ruhsat_no?: string;
   ruhsat_dosyasi_url?: string;

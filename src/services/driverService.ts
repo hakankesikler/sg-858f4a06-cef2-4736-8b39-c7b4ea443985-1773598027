@@ -9,7 +9,9 @@ export interface Driver {
   phone_1: string;
   phone_2?: string;
   src_belge_no?: string;
+  src_belgesi_gecerlilik_tarihi?: string;
   psikoteknik_belge_no?: string;
+  psikoteknik_gecerlilik_tarihi?: string;
   ehliyet_sinifi?: string;
   ehliyet_gecerlilik_tarihi?: string;
   ehliyet_dosyasi_url?: string;

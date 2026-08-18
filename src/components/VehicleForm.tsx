@@ -21,6 +21,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
   const [vehicleCode, setVehicleCode] = useState("VHC-000001");
   const [kaskoBitisTarihi, setKaskoBitisTarihi] = useState("");
   const [trafikSigortasiBitisTarihi, setTrafikSigortasiBitisTarihi] = useState("");
+  const [yetkiBelgesiGecerlilikTarihi, setYetkiBelgesiGecerlilikTarihi] = useState("");
   const [ruhsatFile, setRuhsatFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
@@ -62,6 +63,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
       } else {
         setTrafikSigortasiBitisTarihi("");
       }
+      setYetkiBelgesiGecerlilikTarihi(initialData.yetki_belgesi_gecerlilik_tarihi?.split('T')[0] || "");
     } else if (!editMode && isOpen) {
       resetForm();
       loadNextVehicleCode();
@@ -93,7 +95,10 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.arac_tipi || !formData.cekici_plakasi || !formData.kasa_tipi || (!ruhsatFile && !initialData?.ruhsat_dosyasi_url)) {
+    if (!formData.arac_tipi || !formData.cekici_plakasi || !formData.kasa_tipi ||
+        !formData.tasima_kapasitesi_kg || Number(formData.tasima_kapasitesi_kg) <= 0 ||
+        !trafikSigortasiBitisTarihi || !formData.yetki_belgesi || !yetkiBelgesiGecerlilikTarihi ||
+        (!ruhsatFile && !initialData?.ruhsat_dosyasi_url)) {
       toast({
         title: "Hata",
         description: "Lütfen zorunlu alanları doldurun",
@@ -115,6 +120,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         kasko_bitis_tarihi: kaskoBitisTarihi || null,
         trafik_sigortasi_bitis_tarihi: trafikSigortasiBitisTarihi || null,
         yetki_belgesi: formData.yetki_belgesi || null,
+        yetki_belgesi_gecerlilik_tarihi: yetkiBelgesiGecerlilikTarihi || null,
         ruhsat_sahibi_adi_soyadi: formData.ruhsat_sahibi_adi_soyadi || null,
         ruhsat_no: formData.ruhsat_no || null,
         status: formData.status,
@@ -156,6 +162,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
     });
     setKaskoBitisTarihi("");
     setTrafikSigortasiBitisTarihi("");
+    setYetkiBelgesiGecerlilikTarihi("");
     setRuhsatFile(null);
     setVehicleCode("VHC-000001");
   };
@@ -228,7 +235,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Taşıma Kapasitesi (kg)</Label>
+              <Label>Taşıma Kapasitesi (kg) *</Label>
               <Input
                 type="number"
                 value={formData.tasima_kapasitesi_kg}
@@ -250,7 +257,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               />
             </div>
             <div className="space-y-2">
-              <Label>Trafik Sigortası Bitiş Tarihi</Label>
+              <Label>Trafik Sigortası Bitiş Tarihi *</Label>
               <Input
                 type="date"
                 value={trafikSigortasiBitisTarihi}
@@ -261,13 +268,23 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
           </div>
 
           {/* Yetki Belgesi */}
-          <div className="space-y-2">
-            <Label>Yetki Belgesi (K1/K2)</Label>
-            <Input
-              value={formData.yetki_belgesi}
-              onChange={(e) => setFormData({ ...formData, yetki_belgesi: e.target.value })}
-              placeholder="K1, K2 veya K1/K2"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Yetki Belgesi (K1/K2) *</Label>
+              <Input
+                value={formData.yetki_belgesi}
+                onChange={(e) => setFormData({ ...formData, yetki_belgesi: e.target.value })}
+                placeholder="K1, K2 veya K1/K2"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Yetki Belgesi Geçerlilik Tarihi *</Label>
+              <Input
+                type="date"
+                value={yetkiBelgesiGecerlilikTarihi}
+                onChange={(e) => setYetkiBelgesiGecerlilikTarihi(e.target.value)}
+              />
+            </div>
           </div>
 
           {/* Ruhsat Bilgileri */}

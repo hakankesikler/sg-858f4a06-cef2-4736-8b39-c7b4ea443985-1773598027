@@ -681,7 +681,9 @@ export type Database = {
           phone_1: string
           phone_2: string | null
           psikoteknik_belge_no: string | null
+          psikoteknik_gecerlilik_tarihi: string | null
           src_belge_no: string | null
+          src_belgesi_gecerlilik_tarihi: string | null
           status: string | null
           tc_no: string
           updated_at: string | null
@@ -697,7 +699,9 @@ export type Database = {
           phone_1: string
           phone_2?: string | null
           psikoteknik_belge_no?: string | null
+          psikoteknik_gecerlilik_tarihi?: string | null
           src_belge_no?: string | null
+          src_belgesi_gecerlilik_tarihi?: string | null
           status?: string | null
           tc_no: string
           updated_at?: string | null
@@ -713,7 +717,9 @@ export type Database = {
           phone_1?: string
           phone_2?: string | null
           psikoteknik_belge_no?: string | null
+          psikoteknik_gecerlilik_tarihi?: string | null
           src_belge_no?: string | null
+          src_belgesi_gecerlilik_tarihi?: string | null
           status?: string | null
           tc_no?: string
           updated_at?: string | null
@@ -2113,6 +2119,7 @@ export type Database = {
           vehicle_code: string | null
           vehicle_type: string | null
           yetki_belgesi: string | null
+          yetki_belgesi_gecerlilik_tarihi: string | null
         }
         Insert: {
           arac_tipi?: string | null
@@ -2136,6 +2143,7 @@ export type Database = {
           vehicle_code?: string | null
           vehicle_type?: string | null
           yetki_belgesi?: string | null
+          yetki_belgesi_gecerlilik_tarihi?: string | null
         }
         Update: {
           arac_tipi?: string | null
@@ -2159,6 +2167,7 @@ export type Database = {
           vehicle_code?: string | null
           vehicle_type?: string | null
           yetki_belgesi?: string | null
+          yetki_belgesi_gecerlilik_tarihi?: string | null
         }
         Relationships: []
       }

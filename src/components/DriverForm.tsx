@@ -20,6 +20,8 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [driverCode, setDriverCode] = useState("DRV-000001");
   const [ehliyetGecerlilikTarihi, setEhliyetGecerlilikTarihi] = useState("");
+  const [srcGecerlilikTarihi, setSrcGecerlilikTarihi] = useState("");
+  const [psikoteknikGecerlilikTarihi, setPsikoteknikGecerlilikTarihi] = useState("");
   const [ehliyetFile, setEhliyetFile] = useState<File | null>(null);
   
   const [formData, setFormData] = useState({
@@ -71,6 +73,8 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
           console.log("No date found, setting empty");
           setEhliyetGecerlilikTarihi("");
         }
+        setSrcGecerlilikTarihi(initialData.src_belgesi_gecerlilik_tarihi?.split('T')[0] || "");
+        setPsikoteknikGecerlilikTarihi(initialData.psikoteknik_gecerlilik_tarihi?.split('T')[0] || "");
       } else {
         console.log("=== CREATE MODE ===");
         resetForm();
@@ -104,7 +108,10 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.full_name || !formData.tc_no || !formData.phone_1 || !ehliyetGecerlilikTarihi || (!ehliyetFile && !initialData?.ehliyet_dosyasi_url)) {
+    if (!formData.full_name || !formData.tc_no || !formData.phone_1 || !ehliyetGecerlilikTarihi ||
+        !formData.src_belge_no || !srcGecerlilikTarihi || !formData.psikoteknik_belge_no ||
+        !psikoteknikGecerlilikTarihi || formData.ehliyet_sinifi.length === 0 ||
+        (!ehliyetFile && !initialData?.ehliyet_dosyasi_url)) {
       toast({
         title: "Hata",
         description: "Lütfen zorunlu alanları doldurun",
@@ -126,7 +133,9 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         phone_1: formData.phone_1,
         phone_2: formData.phone_2 || null,
         src_belge_no: formData.src_belge_no || null,
+        src_belgesi_gecerlilik_tarihi: srcGecerlilikTarihi || null,
         psikoteknik_belge_no: formData.psikoteknik_belge_no || null,
+        psikoteknik_gecerlilik_tarihi: psikoteknikGecerlilikTarihi || null,
         ehliyet_sinifi: ehliyetSinifiString || null,
         ehliyet_gecerlilik_tarihi: ehliyetGecerlilikTarihi || null,
         status: formData.status,
@@ -166,6 +175,8 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
       status: "Aktif"
     });
     setEhliyetGecerlilikTarihi("");
+    setSrcGecerlilikTarihi("");
+    setPsikoteknikGecerlilikTarihi("");
     setEhliyetFile(null);
     setDriverCode("DRV-000001");
   };
@@ -231,7 +242,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
           {/* Belgeler */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>SRC Belge No</Label>
+              <Label>SRC Belge No *</Label>
               <Input
                 value={formData.src_belge_no}
                 onChange={(e) => setFormData({ ...formData, src_belge_no: e.target.value })}
@@ -239,11 +250,30 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               />
             </div>
             <div className="space-y-2">
-              <Label>Psikoteknik Belge No</Label>
+              <Label>Psikoteknik Belge No *</Label>
               <Input
                 value={formData.psikoteknik_belge_no}
                 onChange={(e) => setFormData({ ...formData, psikoteknik_belge_no: e.target.value })}
                 placeholder="PSK123456"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>SRC Geçerlilik Tarihi *</Label>
+              <Input
+                type="date"
+                value={srcGecerlilikTarihi}
+                onChange={(e) => setSrcGecerlilikTarihi(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Psikoteknik Geçerlilik Tarihi *</Label>
+              <Input
+                type="date"
+                value={psikoteknikGecerlilikTarihi}
+                onChange={(e) => setPsikoteknikGecerlilikTarihi(e.target.value)}
               />
             </div>
           </div>
