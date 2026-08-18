@@ -35,6 +35,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const invoiceId = typeof req.body?.invoiceId === "string" ? req.body.invoiceId : "";
   if (!invoiceId) return res.status(400).json({ error: "Fatura kimliği zorunludur" });
 
+  const recordSync = async (status: string, documentId?: number | null, errorMessage?: string | null) => {
+    const { error } = await db.rpc("rex_record_kolaybi_sync" as any, {
+      p_invoice_id: invoiceId,
+      p_status: status,
+      p_document_id: documentId ?? null,
+      p_error: errorMessage ?? null,
+    } as any);
+    if (error) throw error;
+  };
+
   const { data: invoice, error: invoiceError } = await (db.from("sales_invoices") as any)
     .select("*, customer:customers!sales_invoices_customer_id_fkey(id,name,kolaybi_contact_id,kolaybi_address_id), items:sales_invoice_items(*)")
     .eq("id", invoiceId)
@@ -42,11 +52,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (invoiceError || !invoice) return res.status(404).json({ error: "Fatura bulunamadı" });
   if (invoice.kolaybi_document_id) return res.status(200).json({ success: true, documentId: invoice.kolaybi_document_id, alreadySynced: true });
   if (!invoice.customer?.kolaybi_contact_id || !invoice.customer?.kolaybi_address_id) {
-    await (db.from("sales_invoices") as any).update({ kolaybi_status: "mapping_required", kolaybi_error: "Cari KolayBi eşlemesi eksik" }).eq("id", invoiceId);
+    await recordSync("mapping_required", null, "Cari KolayBi eşlemesi eksik");
     return res.status(422).json({ error: "Seçilen carinin KolayBi contact_id ve address_id eşlemesi eksik." });
   }
 
   try {
+    await recordSync("started");
     const tokenResponse = await fetch(`${baseUrl}/access_token`, {
       method: "POST",
       headers: { Channel: channel, "Content-Type": "application/json", Accept: "application/json" },
@@ -89,10 +100,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!sendResponse.ok) throw new Error("Fatura oluştu ancak e-belge gönderimi başarısız oldu");
       status = "e_document_sent";
     }
-    await (db.from("sales_invoices") as any).update({ kolaybi_document_id: documentId, kolaybi_status: status, kolaybi_synced_at: new Date().toISOString(), kolaybi_error: null }).eq("id", invoiceId);
+    await recordSync(status, Number(documentId));
     return res.status(200).json({ success: true, documentId, status });
   } catch (error: any) {
-    await (db.from("sales_invoices") as any).update({ kolaybi_status: "failed", kolaybi_error: String(error?.message || error).slice(0, 1000) }).eq("id", invoiceId);
+    const message = String(error?.message || error).slice(0, 1000);
+    try {
+      await recordSync("failed", null, message);
+    } catch (auditError) {
+      console.error("KolayBi denetim kaydı yazılamadı:", auditError);
+    }
     return res.status(502).json({ error: error?.message || "KolayBi bağlantısı başarısız oldu" });
   }
 }

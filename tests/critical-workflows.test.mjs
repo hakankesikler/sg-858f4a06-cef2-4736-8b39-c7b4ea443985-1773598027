@@ -78,3 +78,45 @@ test("critical public and staff entry points remain wired", async () => {
   assert.match(staffLogin, /REX Operasyon Portalı/);
   assert.match(customerLogin, /customerPortalService\.getProfile/);
 });
+
+test("work order and shipment audit trails remain append-only and actor-aware", async () => {
+  const sql = await read("supabase/migrations/20260818233000_complete_audit_trail.sql");
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.transport_job_events/);
+  assert.match(sql, /'job_created','job_updated','job_approved','job_rejected','job_deleted'/);
+  assert.match(sql, /CREATE TRIGGER rex_transport_jobs_audit/);
+  assert.match(sql, /actor_id,actor_email,actor_role/);
+  assert.match(sql, /e\.event_type IN \('job_created','job_approved'\)/);
+  assert.match(sql, /REVOKE INSERT,UPDATE,DELETE ON public\.transport_jobs FROM authenticated/);
+  assert.match(sql, /CREATE TRIGGER rex_shipment_events_append_only[\s\S]*BEFORE UPDATE OR DELETE/);
+  assert.match(sql, /CREATE TRIGGER rex_transport_job_events_append_only[\s\S]*BEFORE UPDATE OR DELETE/);
+});
+
+test("delivery proof and KolayBi synchronization keep distinct audit events", async () => {
+  const [sql, api, history] = await Promise.all([
+    read("supabase/migrations/20260818233000_complete_audit_trail.sql"),
+    read("src/pages/api/kolaybi/invoices.ts"),
+    read("src/components/ShipmentHistoryDialog.tsx"),
+  ]);
+  assert.match(sql, /CREATE TRIGGER rex_delivery_document_with_delivery_audit/);
+  assert.match(sql, /'delivery_document_added'/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_record_kolaybi_sync/);
+  assert.match(sql, /'kolaybi_sync_started','kolaybi_sync_succeeded','kolaybi_sync_failed'/);
+  assert.match(api, /recordSync\("started"\)/);
+  assert.match(api, /recordSync\(status, Number\(documentId\)\)/);
+  assert.match(api, /recordSync\("failed", null, message\)/);
+  assert.match(history, /kolaybi_sync_succeeded/);
+});
+
+test("work order history remains visible from the logistics screen", async () => {
+  const [service, module, dialog] = await Promise.all([
+    read("src/services/transportJobService.ts"),
+    read("src/components/modules/LogisticsModule.tsx"),
+    read("src/components/TransportJobHistoryDialog.tsx"),
+  ]);
+  assert.match(service, /from\("transport_job_events" as any\)/);
+  assert.match(module, /TransportJobHistoryDialog/);
+  assert.match(module, /setHistoryJob\(job\)/);
+  assert.match(dialog, /İş Emri Geçmişi/);
+  assert.match(dialog, /actor_email/);
+  assert.match(dialog, /old_status/);
+});

@@ -18,6 +18,7 @@ import { DeliveryModal } from "@/components/DeliveryModal";
 import { generateWaybill } from "@/components/WaybillGenerator";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { ShipmentHistoryDialog } from "@/components/ShipmentHistoryDialog";
+import { TransportJobHistoryDialog } from "@/components/TransportJobHistoryDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -61,6 +62,7 @@ export function LogisticsModule() {
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [invoicingShipment, setInvoicingShipment] = useState<any | null>(null);
   const [historyShipment, setHistoryShipment] = useState<any | null>(null);
+  const [historyJob, setHistoryJob] = useState<TransportJob | null>(null);
 
   // Excel import state
   const [isImporting, setIsImporting] = useState(false);
@@ -552,7 +554,17 @@ export function LogisticsModule() {
                     <td className="p-4">{job.quantity} {job.cargo_type} / {job.total_weight} kg-ds</td>
                     <td className="p-4">{Number(job.sales_total || 0).toLocaleString("tr-TR")} {job.currency}</td>
                     <td className="p-4"><span className={`px-2 py-1 rounded-full text-xs ${job.status === "onaylandi" ? "bg-green-100 text-green-800" : job.status === "reddedildi" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}>{job.status === "onaylandi" ? "Onaylandı" : job.status === "reddedildi" ? "Reddedildi" : "Onay Bekliyor"}</span></td>
-                    <td className="p-4">{job.status === "onay_bekliyor" && <div className="flex gap-2"><Button size="sm" onClick={() => void handleReviewJob(job, "onayla")}>Onayla</Button><Button size="sm" variant="outline" onClick={() => void handleReviewJob(job, "reddet")}>Reddet</Button></div>}</td>
+                    <td className="p-4">
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" title="İşlem geçmişi" onClick={() => setHistoryJob(job)}>
+                          <History className="h-4 w-4" />
+                        </Button>
+                        {job.status === "onay_bekliyor" && <>
+                          <Button size="sm" onClick={() => void handleReviewJob(job, "onayla")}>Onayla</Button>
+                          <Button size="sm" variant="outline" onClick={() => void handleReviewJob(job, "reddet")}>Reddet</Button>
+                        </>}
+                      </div>
+                    </td>
                   </tr>)}
                   {transportJobs.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-gray-500">Henüz iş emri bulunmuyor.</td></tr>}
                 </tbody>
@@ -1057,6 +1069,12 @@ export function LogisticsModule() {
         isOpen={!!historyShipment}
         onClose={() => setHistoryShipment(null)}
         shipment={historyShipment}
+      />
+
+      <TransportJobHistoryDialog
+        isOpen={!!historyJob}
+        onClose={() => setHistoryJob(null)}
+        job={historyJob}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={(open) => {

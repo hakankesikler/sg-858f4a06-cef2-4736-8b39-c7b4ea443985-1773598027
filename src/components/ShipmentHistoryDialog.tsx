@@ -24,6 +24,11 @@ const eventLabels: Record<string, string> = {
   invoice_unlinked: "Fatura bağlantısı kaldırıldı",
   deleted: "Sevkiyat silindi",
   owner_approved_edit: "Tamamlanmış sevkiyat değişikliği onaylandı",
+  job_created: "İş emri oluşturuldu",
+  job_approved: "İş emri onaylandı",
+  kolaybi_sync_started: "KolayBi fatura aktarımı başlatıldı",
+  kolaybi_sync_succeeded: "KolayBi fatura aktarımı tamamlandı",
+  kolaybi_sync_failed: "KolayBi fatura aktarımı tamamlanamadı",
 };
 
 const fieldLabels: Record<string, string> = {
@@ -55,6 +60,8 @@ const fieldLabels: Record<string, string> = {
   delivery_proof_url: "Teslim evrakı",
   invoice_status: "Fatura durumu",
   sale_invoice_id: "Fatura bağlantısı",
+  kolaybi_status: "KolayBi durumu",
+  kolaybi_document_id: "KolayBi belge numarası",
 };
 
 function displayValue(value: unknown) {
