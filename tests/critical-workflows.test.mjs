@@ -370,3 +370,53 @@ test("exception cancellation uses the existing guarded shipment cancellation wor
   assert.match(sql, /exception_resolved/);
   assert.match(sql, /REVOKE ALL ON public\.shipment_exceptions,public\.shipment_exception_events FROM PUBLIC,anon,authenticated/);
 });
+
+test("delivery completion supports typed multi-document packages without bypassing validation", async () => {
+  const [sql, modal, service] = await Promise.all([
+    read("supabase/migrations/20260819050000_delivery_document_management.sql"),
+    read("src/components/DeliveryModal.tsx"),
+    read("src/services/deliveryDocumentService.ts"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.delivery_documents/);
+  assert.match(sql, /'delivery_proof','damaged_delivery_report','partial_delivery_report','recipient_photo','other'/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_mark_shipment_delivered_v2/);
+  assert.match(sql, /En az bir belge Teslim Evrakı türünde olmalıdır/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.rex_mark_shipment_delivered\(uuid,text,date,text\) FROM PUBLIC,anon,authenticated/);
+  assert.match(modal, /type="file" multiple/);
+  assert.match(modal, /Hasarlı Teslimat Tutanağı|deliveryDocumentTypeLabels/);
+  assert.match(service, /rex_register_delivery_document/);
+  assert.match(service, /rex_mark_shipment_delivered_v2/);
+});
+
+test("delivery documents have private previews and immutable version history", async () => {
+  const [sql, dialog] = await Promise.all([
+    read("supabase/migrations/20260819050000_delivery_document_management.sql"),
+    read("src/components/DeliveryDocumentsDialog.tsx"),
+  ]);
+  assert.match(sql, /document_group_id uuid NOT NULL/);
+  assert.match(sql, /version_number integer NOT NULL/);
+  assert.match(sql, /supersedes_document_id uuid/);
+  assert.match(sql, /CREATE TRIGGER rex_delivery_document_events_append_only[\s\S]*BEFORE UPDATE OR DELETE/);
+  assert.match(sql, /bucket_id='shipment-documents'[\s\S]*scan_status IN \('clean','legacy_unscanned'\)/);
+  assert.match(dialog, /Yeni Sürüm/);
+  assert.match(dialog, /iframe src=\{preview\.url\}/);
+  assert.match(dialog, /Geçmiş sürüm/);
+});
+
+test("delivery file antivirus scanning is server-side, quarantined and fail-visible", async () => {
+  const [sql, api, service] = await Promise.all([
+    read("supabase/migrations/20260819050000_delivery_document_management.sql"),
+    read("src/pages/api/security/scan-delivery-document.ts"),
+    read("src/services/deliveryDocumentService.ts"),
+  ]);
+  assert.match(sql, /scan_enforcement_enabled boolean NOT NULL DEFAULT false/);
+  assert.match(sql, /scan_status IN \('pending','clean','infected','error','legacy_unscanned'\)/);
+  assert.match(sql, /auth\.role\(\)<>'service_role'/);
+  assert.match(sql, /Zararlı olduğu belirlenen dosya ile teslimat tamamlanamaz/);
+  assert.match(api, /CLOUDMERSIVE_API_KEY/);
+  assert.match(api, /virus\/scan\/file\/advanced/);
+  assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(api, /rex_record_delivery_document_scan/);
+  assert.match(service, /\/api\/security\/scan-delivery-document/);
+  assert.match(service, /crypto\.subtle\.digest\("SHA-256"/);
+});

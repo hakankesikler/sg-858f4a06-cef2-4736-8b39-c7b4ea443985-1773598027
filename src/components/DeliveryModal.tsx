@@ -3,11 +3,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { storageReference } from "@/lib/private-storage";
-import { shipmentService } from "@/services/shipmentService";
-import { Upload, FileText } from "lucide-react";
+import {
+  deliveryDocumentService,
+  deliveryDocumentTypeLabels,
+  type DeliveryDocumentType,
+} from "@/services/deliveryDocumentService";
+import { FileImage, FileText, ShieldCheck, Trash2, Upload } from "lucide-react";
 
 interface DeliveryModalProps {
   isOpen: boolean;
@@ -17,186 +20,180 @@ interface DeliveryModalProps {
   onSuccess: () => void;
 }
 
+interface SelectedDeliveryFile {
+  id: string;
+  file: File;
+  documentType: DeliveryDocumentType;
+  notes: string;
+  previewUrl?: string;
+}
+
+const acceptedTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+const maxFileSize = 10 * 1024 * 1024;
+
 export function DeliveryModal({ isOpen, onClose, shipmentId, shipmentCode, onSuccess }: DeliveryModalProps) {
   const { toast } = useToast();
   const [deliveredTo, setDeliveredTo] = useState("");
-  const [deliveryFile, setDeliveryFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<SelectedDeliveryFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Delivery date with today as default
-  const today = new Date().toISOString().split('T')[0];
-  const [deliveryDate, setDeliveryDate] = useState(today);
+  const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString().split("T")[0]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      // Validate file type
-      const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
-      if (!validTypes.includes(file.type)) {
-        toast({
-          title: "Hata",
-          description: "Sadece JPG, PNG veya PDF dosyası yükleyebilirsiniz",
-          variant: "destructive",
-        });
-        return;
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const incoming = Array.from(event.target.files || []);
+    const accepted: SelectedDeliveryFile[] = [];
+    for (const file of incoming) {
+      if (!acceptedTypes.has(file.type)) {
+        toast({ title: "Dosya kabul edilmedi", description: `${file.name}: yalnızca PDF, JPG, PNG veya WEBP yüklenebilir.`, variant: "destructive" });
+        continue;
       }
-      
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "Hata",
-          description: "Dosya boyutu 5MB'dan küçük olmalıdır",
-          variant: "destructive",
-        });
-        return;
+      if (file.size < 1 || file.size > maxFileSize) {
+        toast({ title: "Dosya kabul edilmedi", description: `${file.name}: dosya boyutu 10 MB sınırını aşamaz.`, variant: "destructive" });
+        continue;
       }
-      
-      setDeliveryFile(file);
+      accepted.push({
+        id: crypto.randomUUID(),
+        file,
+        documentType: "delivery_proof",
+        notes: "",
+        previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+      });
     }
+    setFiles((current) => [...current, ...accepted].slice(0, 10));
+    event.target.value = "";
   };
 
-  const uploadDeliveryProof = async (): Promise<string | null> => {
-    if (!deliveryFile) return null;
+  const updateFile = (id: string, patch: Partial<SelectedDeliveryFile>) => {
+    setFiles((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  };
 
-    try {
-      const fileExt = deliveryFile.name.split('.').pop();
-      const fileName = `${shipmentCode}_${Date.now()}.${fileExt}`;
-      const filePath = `delivery-proofs/${fileName}`;
+  const removeFile = (id: string) => {
+    setFiles((current) => {
+      const removed = current.find((item) => item.id === id);
+      if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+      return current.filter((item) => item.id !== id);
+    });
+  };
 
-      const { error: uploadError } = await supabase.storage
-        .from('shipment-documents')
-        .upload(filePath, deliveryFile);
+  const resetForm = () => {
+    files.forEach((item) => item.previewUrl && URL.revokeObjectURL(item.previewUrl));
+    setFiles([]);
+    setDeliveredTo("");
+    setDeliveryDate(new Date().toISOString().split("T")[0]);
+  };
 
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw uploadError;
-      }
-
-      return storageReference('shipment-documents', filePath);
-    } catch (error) {
-      console.error("Error uploading delivery proof:", error);
-      throw error;
-    }
+  const handleClose = () => {
+    if (isSubmitting) return;
+    resetForm();
+    onClose();
   };
 
   const handleSubmit = async () => {
-    if (!deliveredTo.trim() || !deliveryFile) {
-      toast({
-        title: "Uyarı",
-        description: "Teslim alan kişi ve teslim evrakı zorunludur.",
-        variant: "destructive",
-      });
+    if (!deliveredTo.trim() || !deliveryDate || files.length === 0) {
+      toast({ title: "Eksik bilgi", description: "Teslim alan, teslim tarihi ve en az bir teslim evrakı zorunludur.", variant: "destructive" });
+      return;
+    }
+    if (!files.some((item) => item.documentType === "delivery_proof")) {
+      toast({ title: "Teslim evrakı gerekli", description: "Dosyalardan en az biri ‘Teslim Evrakı’ türünde olmalıdır.", variant: "destructive" });
       return;
     }
 
     try {
       setIsSubmitting(true);
-
-      const deliveryProofUrl = await uploadDeliveryProof();
-
-      await shipmentService.markDelivered(
+      const uploaded = await deliveryDocumentService.uploadMany(
         shipmentId,
-        deliveredTo,
-        deliveryDate,
-        deliveryProofUrl,
+        files.map((item) => ({ file: item.file, documentType: item.documentType, notes: item.notes })),
       );
+      await deliveryDocumentService.markDelivered(shipmentId, deliveredTo, deliveryDate, uploaded.map((item) => item.id));
 
+      const waitingCount = uploaded.filter((item) => item.scanStatus !== "clean").length;
       toast({
-        title: "Başarılı",
-        description: "Sevkiyat teslim edildi olarak işaretlendi",
+        title: "Teslimat tamamlandı",
+        description: waitingCount
+          ? `${uploaded.length} belge kaydedildi. ${waitingCount} belge özel karantinada virüs taraması bekliyor.`
+          : `${uploaded.length} belge virüs taramasından temiz geçti ve kaydedildi.`,
       });
-
       onSuccess();
       onClose();
       resetForm();
     } catch (error: any) {
-      console.error("Delivery error:", error);
-      toast({
-        title: "Hata",
-        description: error?.message || "Teslim işlemi sırasında bir hata oluştu",
-        variant: "destructive",
-      });
+      toast({ title: "Teslim işlemi tamamlanamadı", description: error?.message || "Beklenmeyen bir hata oluştu.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const resetForm = () => {
-    setDeliveredTo("");
-    setDeliveryFile(null);
-    const today = new Date().toISOString().split('T')[0];
-    setDeliveryDate(today);
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-[760px]">
         <DialogHeader>
-          <DialogTitle>Sevkiyat Teslim Et</DialogTitle>
-          <p className="text-sm text-gray-500">
-            Sevkiyat Kodu: <span className="font-semibold">{shipmentCode}</span>
-          </p>
+          <DialogTitle>Sevkiyatı Teslim Et</DialogTitle>
+          <p className="text-sm text-muted-foreground">Sevkiyat: <span className="font-semibold">{shipmentCode}</span></p>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="grid gap-4 py-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="delivered-to">Teslim Alan Kişi *</Label>
-            <Input
-              id="delivered-to"
-              value={deliveredTo}
-              onChange={(e) => setDeliveredTo(e.target.value)}
-              placeholder="Örn: Ahmet Yılmaz"
-            />
+            <Input id="delivered-to" value={deliveredTo} onChange={(event) => setDeliveredTo(event.target.value)} placeholder="Örn: Ahmet Yılmaz" />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="delivery-date">Teslim Tarihi *</Label>
-            <Input
-              id="delivery-date"
-              type="date"
-              value={deliveryDate}
-              onChange={(e) => setDeliveryDate(e.target.value)}
-              className="w-full"
-            />
+            <Input id="delivery-date" type="date" value={deliveryDate} onChange={(event) => setDeliveryDate(event.target.value)} />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <Label htmlFor="delivery-files">Teslim Belge Paketi *</Label>
+              <p className="text-xs text-muted-foreground">Bir defada en fazla 10 adet PDF veya fotoğraf, dosya başına 10 MB.</p>
+            </div>
+            <Button type="button" variant="outline" onClick={() => document.getElementById("delivery-files")?.click()}>
+              <Upload className="mr-2 h-4 w-4" /> Belge veya Fotoğraf Ekle
+            </Button>
+            <Input id="delivery-files" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf" onChange={handleFileChange} className="hidden" />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="delivery-proof">Teslim Evrakı *</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="delivery-proof"
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('delivery-proof')?.click()}
-                className="w-full"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {deliveryFile ? deliveryFile.name : "Dosya Seç (JPG, PNG, PDF)"}
-              </Button>
+          {files.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">Henüz belge seçilmedi.</div>
+          ) : (
+            <div className="space-y-3">
+              {files.map((item) => (
+                <div key={item.id} className="grid gap-3 rounded-lg border bg-slate-50 p-3 sm:grid-cols-[72px_1fr_auto]">
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded border bg-white">
+                    {item.previewUrl ? <img src={item.previewUrl} alt="Belge önizleme" className="h-full w-full object-cover" /> : <FileText className="h-7 w-7 text-red-600" />}
+                  </div>
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex items-center gap-2">
+                      {item.file.type.startsWith("image/") ? <FileImage className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                      <span className="truncate text-sm font-medium">{item.file.name}</span>
+                      <span className="text-xs text-muted-foreground">{(item.file.size / 1024 / 1024).toFixed(2)} MB</span>
+                    </div>
+                    <select
+                      value={item.documentType}
+                      onChange={(event) => updateFile(item.id, { documentType: event.target.value as DeliveryDocumentType })}
+                      className="h-9 w-full rounded-md border bg-white px-3 text-sm"
+                    >
+                      {Object.entries(deliveryDocumentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                    <Textarea value={item.notes} onChange={(event) => updateFile(item.id, { notes: event.target.value })} placeholder="Belge açıklaması (isteğe bağlı)" className="min-h-16 bg-white" />
+                  </div>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => removeFile(item.id)} title="Belgeyi kaldır">
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </Button>
+                </div>
+              ))}
             </div>
-            {deliveryFile && (
-              <p className="text-xs text-gray-500 flex items-center gap-1">
-                <FileText className="h-3 w-3" />
-                {(deliveryFile.size / 1024).toFixed(2)} KB
-              </p>
-            )}
+          )}
+
+          <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+            Dosyalar özel karantina alanına yüklenir. Temiz tarama sonucu alınmayan yeni belgeler müşteriye gösterilmez.
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            İptal
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "İşleniyor..." : "Teslim Et"}
-          </Button>
+          <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>İptal</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>{isSubmitting ? "Belgeler kontrol ediliyor..." : "Teslimatı Tamamla"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

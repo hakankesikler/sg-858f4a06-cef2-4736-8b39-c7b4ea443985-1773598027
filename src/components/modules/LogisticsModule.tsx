@@ -11,12 +11,12 @@ import { shipmentService, type ShipmentRevisionRequest } from "@/services/shipme
 import { transportJobService, type TransportJob } from "@/services/transportJobService";
 import { transportComplianceService, type TransportComplianceAlert } from "@/services/transportComplianceService";
 import { crmService } from "@/services/crmService";
-import { openPrivateDocument } from "@/lib/private-storage";
 import { downloadCsv, parseCsv } from "@/lib/csv";
 import { DriverForm } from "@/components/DriverForm";
 import { VehicleForm } from "@/components/VehicleForm";
 import { ShipmentForm } from "@/components/ShipmentForm";
 import { DeliveryModal } from "@/components/DeliveryModal";
+import { DeliveryDocumentsDialog } from "@/components/DeliveryDocumentsDialog";
 import { generateWaybill } from "@/components/WaybillGenerator";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { ShipmentHistoryDialog } from "@/components/ShipmentHistoryDialog";
@@ -68,6 +68,7 @@ export function LogisticsModule() {
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [invoicingShipment, setInvoicingShipment] = useState<any | null>(null);
   const [historyShipment, setHistoryShipment] = useState<any | null>(null);
+  const [documentsShipment, setDocumentsShipment] = useState<any | null>(null);
   const [exceptionShipment, setExceptionShipment] = useState<any | null>(null);
   const [historyJob, setHistoryJob] = useState<TransportJob | null>(null);
   const [cancellingShipment, setCancellingShipment] = useState<any | null>(null);
@@ -853,7 +854,7 @@ export function LogisticsModule() {
                           {shipment.status === "teslim_edildi" && shipment.delivery_proof_url && (
                             <button
                               type="button"
-                              onClick={() => void openPrivateDocument(shipment.delivery_proof_url, 'shipment-documents')}
+                              onClick={() => setDocumentsShipment(shipment)}
                               className="text-blue-600 hover:text-blue-800"
                               title="Teslim evrakını görüntüle"
                             >
@@ -891,6 +892,14 @@ export function LogisticsModule() {
                             title="Değişiklik geçmişi"
                           >
                             <History className="h-4 w-4 text-slate-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDocumentsShipment(shipment)}
+                            title="Teslim belge paketi, önizleme ve sürüm geçmişi"
+                          >
+                            <FileText className="h-4 w-4 text-cyan-700" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -1276,6 +1285,13 @@ export function LogisticsModule() {
         isOpen={!!historyShipment}
         onClose={() => setHistoryShipment(null)}
         shipment={historyShipment}
+      />
+
+      <DeliveryDocumentsDialog
+        isOpen={!!documentsShipment}
+        onClose={() => setDocumentsShipment(null)}
+        shipment={documentsShipment}
+        onChanged={loadData}
       />
 
       <ShipmentExceptionDialog

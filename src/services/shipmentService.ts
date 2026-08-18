@@ -162,13 +162,13 @@ export const shipmentService = {
     id: string,
     deliveredTo: string,
     deliveryDate: string,
-    deliveryProofUrl: string | null,
+    documentIds: string[],
   ) {
-    const { error } = await supabase.rpc("rex_mark_shipment_delivered" as any, {
+    const { error } = await supabase.rpc("rex_mark_shipment_delivered_v2" as any, {
       p_shipment_id: id,
       p_delivered_to: deliveredTo,
       p_delivery_date: deliveryDate,
-      p_delivery_proof_url: deliveryProofUrl,
+      p_document_ids: documentIds,
     } as any);
     if (error) throw error;
   },
@@ -184,6 +184,7 @@ export const shipmentService = {
         customer:customers!shipments_customer_id_fkey(id, customer_code, name)
         ,uetds_details:shipment_uetds_details(*)
         ,exceptions:shipment_exceptions(id, exception_type, status, occurred_at)
+        ,delivery_documents(id, document_type, scan_status, is_active, version_number)
       `)
       .order("created_at", { ascending: false });
 

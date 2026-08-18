@@ -10,11 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DeliveryDocumentsDialog } from "@/components/DeliveryDocumentsDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadCsv } from "@/lib/csv";
 import { downloadCustomerWaybill } from "@/lib/customer-waybill";
-import { openPrivateDocument } from "@/lib/private-storage";
 import {
   customerPortalService,
   type CustomerPortalProfile,
@@ -47,6 +47,7 @@ export default function CustomerShipmentsPage() {
   const [receiverQuery, setReceiverQuery] = useState("");
   const [routeQuery, setRouteQuery] = useState("");
   const [status, setStatus] = useState("all");
+  const [documentsShipment, setDocumentsShipment] = useState<CustomerShipment | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -133,12 +134,6 @@ export default function CustomerShipmentsPage() {
     toast({ title: `${rows.length} irsaliye hazırlandı` });
   };
 
-  const openProof = async (shipment: CustomerShipment) => {
-    if (!shipment.delivery_proof_url) return;
-    try { await openPrivateDocument(shipment.delivery_proof_url, "shipment-documents"); }
-    catch { toast({ title: "Teslim evrakı açılamadı", description: "Belge henüz yüklenmemiş veya arşivde bulunamıyor.", variant: "destructive" }); }
-  };
-
   const logout = async () => {
     await supabase.auth.signOut();
     await router.replace("/musteri-giris");
@@ -216,7 +211,7 @@ export default function CustomerShipmentsPage() {
                       <td className="p-3"><div className="flex justify-center gap-1">
                         <button onClick={() => downloadCustomerWaybill(shipment, profile)} className="p-2 rounded-lg text-blue-700 hover:bg-blue-100" title="İrsaliye indir"><Download className="h-4 w-4" /></button>
                         <button onClick={() => window.open(trackingUrl(shipment), "_blank", "noopener,noreferrer")} className="p-2 rounded-lg text-slate-700 hover:bg-slate-100" title="Canlı takip"><ExternalLink className="h-4 w-4" /></button>
-                        {shipment.delivery_proof_url && <button onClick={() => void openProof(shipment)} className="p-2 rounded-lg text-green-700 hover:bg-green-100" title="Teslim evrakını görüntüle"><FileText className="h-4 w-4" /></button>}
+                        {shipment.delivery_proof_url && <button onClick={() => setDocumentsShipment(shipment)} className="p-2 rounded-lg text-green-700 hover:bg-green-100" title="Teslim belge paketini görüntüle"><FileText className="h-4 w-4" /></button>}
                       </div></td>
                     </tr>;
                   })}
@@ -226,6 +221,12 @@ export default function CustomerShipmentsPage() {
             </div>
           </Card>
         </main>
+        <DeliveryDocumentsDialog
+          isOpen={!!documentsShipment}
+          onClose={() => setDocumentsShipment(null)}
+          shipment={documentsShipment}
+          readOnly
+        />
       </div>
     </>
   );

@@ -20,3 +20,13 @@ CRON_SECRET=
 Önce cari kartındaki **KolayBi Contact ID** ve **Address ID** alanları eşleştirilir. Taşıma hizmeti için `KOLAYBI_PRODUCT_ID` veya `invoice_product_mappings` tablosundaki `HIZMET` eşlemesi kullanılır. Anahtarlar ya da eşlemeler eksikse yerel taslak korunur, sevkiyat faturalandı sayılmaz ve hata muhasebe ekranında gösterilir.
 
 Fatura durumları: `draft` → `queued` → `submitted` → `official`. Geçici bağlantı hataları artan bekleme süreleriyle yeniden denenir. Sevkiyat yalnızca `official` durumunda `faturalandi` olur. Vercel zamanlayıcısı kuyruğu her gün işler; muhasebe ekranı açıkken vadesi gelen işler ayrıca her dakika işlenir.
+
+## Teslim evrakı virüs taraması
+
+Teslim evrakları önce özel `shipment-documents/delivery-documents` karantina alanına yüklenir. Gerçek sunucu tarafı tarama için canlı Vercel ortamında şu değişken tanımlanmalıdır:
+
+```text
+CLOUDMERSIVE_API_KEY=
+```
+
+Anahtar tarayıcıya gönderilmez ve kesinlikle `NEXT_PUBLIC_` ön ekiyle tanımlanmaz. Tarama servisi bağlı değilse yeni belge `pending` durumunda özel karantinada kalır ve müşteriye gösterilmez. `delivery_document_settings.scan_enforcement_enabled` değeri yalnızca tarama anahtarı canlı ortamda doğrulandıktan sonra `true` yapılmalıdır. Zararlı sonucu alan dosyalar bu ayardan bağımsız olarak teslimatta kullanılamaz ve önizlemeye açılmaz.
