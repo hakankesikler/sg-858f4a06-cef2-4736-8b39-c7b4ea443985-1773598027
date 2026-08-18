@@ -27,18 +27,27 @@ export function storageReference(bucket: string, path: string) {
   return `storage://${bucket}/${path}`;
 }
 
-export async function openPrivateDocument(reference: string, fallbackBucket?: string) {
+export async function getPrivateDocumentSignedUrl(reference: string, fallbackBucket?: string) {
   const parsed = parseStorageReference(reference, fallbackBucket);
   if (!parsed) throw new Error("Belge adresi geçersiz.");
 
-  const popup = window.open("about:blank", "_blank");
-  if (popup) popup.opener = null;
   const { data, error } = await supabase.storage.from(parsed.bucket).createSignedUrl(parsed.path, 300);
   if (error || !data?.signedUrl) {
-    popup?.close();
     throw error || new Error("Belge bağlantısı oluşturulamadı.");
   }
+  return data.signedUrl;
+}
 
-  if (popup) popup.location.href = data.signedUrl;
-  else window.location.assign(data.signedUrl);
+export async function openPrivateDocument(reference: string, fallbackBucket?: string) {
+  const popup = window.open("about:blank", "_blank");
+  if (popup) popup.opener = null;
+
+  try {
+    const signedUrl = await getPrivateDocumentSignedUrl(reference, fallbackBucket);
+    if (popup) popup.location.href = signedUrl;
+    else window.location.assign(signedUrl);
+  } catch (error) {
+    popup?.close();
+    throw error;
+  }
 }

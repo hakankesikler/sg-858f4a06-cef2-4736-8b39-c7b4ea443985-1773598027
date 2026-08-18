@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, Copy, FileCheck2, Loader2, MapPin, Package, Search, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { openPrivateDocument } from "@/lib/private-storage";
+import { getPrivateDocumentSignedUrl } from "@/lib/private-storage";
 import { publicTrackingService, type PublicTrackingResult } from "@/services/publicTrackingService";
 
 interface TrackingSectionProps {
@@ -54,6 +54,8 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState("");
+  const [documentError, setDocumentError] = useState("");
+  const [documentLoading, setDocumentLoading] = useState(false);
   const { toast } = useToast();
 
   const lookup = useCallback(async (number: string, silent = false) => {
@@ -118,10 +120,15 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
 
   const openDeliveryProof = async () => {
     if (!result?.delivery_proof_url) return;
+    setDocumentLoading(true);
+    setDocumentError("");
     try {
-      await openPrivateDocument(result.delivery_proof_url, "shipment-documents");
+      const signedUrl = await getPrivateDocumentSignedUrl(result.delivery_proof_url, "shipment-documents");
+      window.location.assign(signedUrl);
     } catch (documentError: any) {
-      toast({ title: "Belge açılamadı", description: documentError?.message, variant: "destructive" });
+      setDocumentError("Bu eski teslim evrakının fiziksel dosyası bulunamadı. REX Lojistik ile iletişime geçebilirsiniz.");
+    } finally {
+      setDocumentLoading(false);
     }
   };
 
@@ -212,11 +219,13 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
                           </p>
                         </div>
                         {result.delivery_proof_url && (
-                          <Button type="button" onClick={() => void openDeliveryProof()} className="bg-green-700 hover:bg-green-800">
-                            <FileCheck2 className="mr-2 h-4 w-4" /> Teslim Evrakını Görüntüle
+                          <Button type="button" onClick={() => void openDeliveryProof()} className="bg-green-700 hover:bg-green-800" disabled={documentLoading}>
+                            {documentLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileCheck2 className="mr-2 h-4 w-4" />}
+                            Teslim Evrakını Görüntüle
                           </Button>
                         )}
                       </div>
+                      {documentError && <p className="mt-3 text-sm text-red-700">{documentError}</p>}
                     </div>
                   )}
 
