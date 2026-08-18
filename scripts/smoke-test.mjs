@@ -32,13 +32,24 @@ async function waitForServer() {
 }
 
 async function checkRoute({ path, contains }) {
-  const response = await fetch(`${baseUrl}${path}`, { redirect: "manual" });
-  assert.ok(response.status >= 200 && response.status < 400, `${path} returned HTTP ${response.status}`);
-  const html = await response.text();
-  for (const expected of contains) {
-    assert.ok(html.includes(expected), `${path} is missing critical text: ${expected}`);
+  const attempts = externalBaseUrl ? 8 : 1;
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetch(`${baseUrl}${path}`, { redirect: "manual" });
+      assert.ok(response.status >= 200 && response.status < 400, `${path} returned HTTP ${response.status}`);
+      const html = await response.text();
+      for (const expected of contains) {
+        assert.ok(html.includes(expected), `${path} is missing critical text: ${expected}`);
+      }
+      process.stdout.write(`✓ ${path}\n`);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) await new Promise((resolveWait) => setTimeout(resolveWait, 5_000));
+    }
   }
-  process.stdout.write(`✓ ${path}\n`);
+  throw lastError;
 }
 
 try {

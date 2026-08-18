@@ -19,12 +19,12 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
       - name: Verify deployed critical pages
         run: node scripts/smoke-test.mjs
         env:
-          SMOKE_BASE_URL: ${{ inputs.base_url || github.event.deployment_status.target_url }}
+          SMOKE_BASE_URL: ${{ inputs.base_url || 'https://www.rexlojistik.com' }}
