@@ -40,6 +40,8 @@ const eventLabels: Record<string, string> = {
   invoice_retry_scheduled: "Fatura gönderimi yeniden denenecek",
   invoice_status_checked: "KolayBi fatura durumu sorgulandı",
   invoice_refund_created: "İade faturası oluşturuldu",
+  exception_created: "Sevkiyat istisnası oluşturuldu",
+  exception_resolved: "Sevkiyat istisnası sonuçlandırıldı",
 };
 
 const fieldLabels: Record<string, string> = {
@@ -78,6 +80,10 @@ const fieldLabels: Record<string, string> = {
   official_invoice_no: "Resmî fatura numarası",
   official_uuid: "Fatura UUID (ETTN)",
   cancellation_reason: "İptal nedeni",
+  exception_type: "İstisna türü",
+  responsible_email: "Sorumlu kişi",
+  photo_count: "Fotoğraf sayısı",
+  resolution_note: "Sonuç açıklaması",
 };
 
 function displayValue(value: unknown) {

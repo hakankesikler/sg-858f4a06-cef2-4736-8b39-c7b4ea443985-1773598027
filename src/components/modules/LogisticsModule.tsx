@@ -22,6 +22,7 @@ import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { ShipmentHistoryDialog } from "@/components/ShipmentHistoryDialog";
 import { TransportJobHistoryDialog } from "@/components/TransportJobHistoryDialog";
 import { UetdsPanel } from "@/components/UetdsPanel";
+import { ShipmentExceptionDialog } from "@/components/ShipmentExceptionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -67,6 +68,7 @@ export function LogisticsModule() {
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [invoicingShipment, setInvoicingShipment] = useState<any | null>(null);
   const [historyShipment, setHistoryShipment] = useState<any | null>(null);
+  const [exceptionShipment, setExceptionShipment] = useState<any | null>(null);
   const [historyJob, setHistoryJob] = useState<TransportJob | null>(null);
   const [cancellingShipment, setCancellingShipment] = useState<any | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
@@ -859,6 +861,16 @@ export function LogisticsModule() {
                             </button>
                           )}
                         </div>
+                        {shipment.exceptions?.filter((item: any) => item.status === "open").length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setExceptionShipment(shipment)}
+                            className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800"
+                          >
+                            <AlertTriangle className="h-3 w-3" />
+                            {shipment.exceptions.filter((item: any) => item.status === "open").length} Açık İstisna
+                          </button>
+                        )}
                       </td>
                       <td className="p-4">
                         <div className="flex gap-2">
@@ -879,6 +891,14 @@ export function LogisticsModule() {
                             title="Değişiklik geçmişi"
                           >
                             <History className="h-4 w-4 text-slate-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setExceptionShipment(shipment)}
+                            title="İstisna kaydı ekle veya geçmişi görüntüle"
+                          >
+                            <AlertTriangle className="h-4 w-4 text-amber-600" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -1256,6 +1276,13 @@ export function LogisticsModule() {
         isOpen={!!historyShipment}
         onClose={() => setHistoryShipment(null)}
         shipment={historyShipment}
+      />
+
+      <ShipmentExceptionDialog
+        isOpen={!!exceptionShipment}
+        onClose={() => setExceptionShipment(null)}
+        shipment={exceptionShipment}
+        onSuccess={loadData}
       />
 
       <TransportJobHistoryDialog

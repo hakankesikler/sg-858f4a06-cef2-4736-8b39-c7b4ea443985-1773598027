@@ -183,6 +183,7 @@ export const shipmentService = {
         vehicle:vehicles(id, vehicle_code, cekici_plakasi, arac_tipi),
         customer:customers!shipments_customer_id_fkey(id, customer_code, name)
         ,uetds_details:shipment_uetds_details(*)
+        ,exceptions:shipment_exceptions(id, exception_type, status, occurred_at)
       `)
       .order("created_at", { ascending: false });
 

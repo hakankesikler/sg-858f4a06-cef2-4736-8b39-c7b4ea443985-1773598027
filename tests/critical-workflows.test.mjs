@@ -339,3 +339,34 @@ test("TIO carrier and shipment data is validated before U-ETDS submission", asyn
   assert.match(sql, /rex_save_shipment_with_uetds/);
   assert.match(sql, /uetds_cancellation_queued/);
 });
+
+test("shipment exceptions require a responsible person and preserve private evidence", async () => {
+  const [sql, service, dialog, logistics] = await Promise.all([
+    read("supabase/migrations/20260819040000_shipment_exceptions.sql"),
+    read("src/services/shipmentExceptionService.ts"),
+    read("src/components/ShipmentExceptionDialog.tsx"),
+    read("src/components/modules/LogisticsModule.tsx"),
+  ]);
+  assert.match(sql, /'gecikme','arac_arizasi','hasarli_teslimat','eksik_teslimat'/);
+  assert.match(sql, /'teslim_edilemedi','iade','iptal'/);
+  assert.match(sql, /description text NOT NULL CHECK \(length\(trim\(description\)\) >= 10\)/);
+  assert.match(sql, /responsible_user_id uuid NOT NULL/);
+  assert.match(sql, /photo_urls text\[\] NOT NULL/);
+  assert.match(sql, /'shipment-exception-documents','shipment-exception-documents',false/);
+  assert.match(sql, /CREATE TRIGGER rex_shipment_exception_events_append_only[\s\S]*BEFORE UPDATE OR DELETE/);
+  assert.match(service, /rex_create_shipment_exception/);
+  assert.match(service, /shipment-exception-documents/);
+  assert.match(dialog, /Sevkiyat İstisnaları/);
+  assert.match(dialog, /Sorumlu Kişi/);
+  assert.match(dialog, /Fotoğraflar \(en fazla 5\)/);
+  assert.match(logistics, /Açık İstisna/);
+});
+
+test("exception cancellation uses the existing guarded shipment cancellation workflow", async () => {
+  const sql = await read("supabase/migrations/20260819040000_shipment_exceptions.sql");
+  assert.match(sql, /IF p_exception_type='iptal'/);
+  assert.match(sql, /PERFORM public\.rex_cancel_shipment\(p_shipment_id,trim\(p_description\)\)/);
+  assert.match(sql, /exception_created/);
+  assert.match(sql, /exception_resolved/);
+  assert.match(sql, /REVOKE ALL ON public\.shipment_exceptions,public\.shipment_exception_events FROM PUBLIC,anon,authenticated/);
+});
