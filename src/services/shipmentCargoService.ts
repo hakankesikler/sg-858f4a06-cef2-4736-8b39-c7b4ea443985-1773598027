@@ -10,6 +10,12 @@ export interface CargoItemInput {
   sira_no: number;
   birim_fiyat?: number;
   alt_toplam_fiyat?: number;
+  uetds_load_type_code?: string;
+  uetds_unit_code?: string;
+  dangerous_goods?: boolean;
+  un_number?: string;
+  dangerous_transport_code?: number;
+  uetds_description?: string;
 }
 
 export const shipmentCargoService = {
@@ -37,11 +43,17 @@ export const shipmentCargoService = {
       sira_no: item.sira_no,
       birim_fiyat: item.birim_fiyat || 0,
       alt_toplam_fiyat: item.alt_toplam_fiyat || 0
+      ,uetds_load_type_code: item.uetds_load_type_code || null
+      ,uetds_unit_code: item.uetds_unit_code || "KG"
+      ,dangerous_goods: Boolean(item.dangerous_goods)
+      ,un_number: item.un_number || null
+      ,dangerous_transport_code: item.dangerous_transport_code || null
+      ,uetds_description: item.uetds_description || null
     }));
 
     const { error } = await supabase
       .from("shipment_cargo_items")
-      .insert(itemsToInsert);
+      .insert(itemsToInsert as any);
 
     if (error) {
       console.error("Error creating cargo items:", error);

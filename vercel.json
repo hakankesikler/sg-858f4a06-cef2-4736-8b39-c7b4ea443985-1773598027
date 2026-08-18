@@ -4,6 +4,10 @@
     {
       "path": "/api/kolaybi/process-queue?limit=10",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/uetds/process-queue?limit=10",
+      "schedule": "*/5 * * * *"
     }
   ],
   "redirects": [

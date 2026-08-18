@@ -286,3 +286,56 @@ test("managers receive 30-day warnings only for assignment-blocking documents", 
   assert.match(logistics, /Atama Engelli/);
   assert.match(logistics, /Süre Yaklaşıyor/);
 });
+
+test("U-ETDS readiness keeps legacy shipments working until enforcement is explicitly enabled", async () => {
+  const [sql, form, service, panel] = await Promise.all([
+    read("supabase/migrations/20260819033000_uetds_readiness.sql"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/services/uetdsService.ts"),
+    read("src/components/UetdsPanel.tsx"),
+  ]);
+  assert.match(sql, /environment text NOT NULL DEFAULT 'disabled'/);
+  assert.match(sql, /enforcement_enabled boolean NOT NULL DEFAULT false/);
+  assert.match(sql, /IF coalesce\(v_enforce,false\) THEN/);
+  assert.match(sql, /'accepted','carrier_reported'/);
+  assert.match(form, /U-ETDS Bildirim Bilgileri/);
+  assert.match(form, /planned_departure_at/);
+  assert.match(form, /uetds_load_type_code/);
+  assert.match(service, /rex_uetds_dashboard/);
+  assert.match(panel, /Taşıyıcı U-ETDS referansı/);
+});
+
+test("U-ETDS queue is idempotent, retryable and keeps an immutable audit history", async () => {
+  const [sql, integration, queueApi] = await Promise.all([
+    read("supabase/migrations/20260819033000_uetds_readiness.sql"),
+    read("src/lib/uetds.ts"),
+    read("src/pages/api/uetds/process-queue.ts"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.uetds_journeys/);
+  assert.match(sql, /shipment_id uuid NOT NULL UNIQUE/);
+  assert.match(sql, /CREATE TRIGGER rex_uetds_attempts_append_only[\s\S]*BEFORE UPDATE OR DELETE/);
+  assert.match(sql, /FOR UPDATE SKIP LOCKED/);
+  assert.match(sql, /attempt_count<8/);
+  assert.match(sql, /power\(2,attempt_count\)/);
+  assert.match(sql, /auth\.role\(\)<>'service_role'/);
+  assert.doesNotMatch(sql, /uetds_password|uetds_username|web_service_token/);
+  assert.match(integration, /yeniYukKaydiBildirV2/);
+  assert.match(integration, /seferIptalEt/);
+  assert.match(integration, /UETDS_GATEWAY_URL/);
+  assert.match(integration, /UETDS_GATEWAY_TOKEN/);
+  assert.match(queueApi, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(queueApi, /CRON_SECRET/);
+});
+
+test("TIO carrier and shipment data is validated before U-ETDS submission", async () => {
+  const sql = await read("supabase/migrations/20260819033000_uetds_readiness.sql");
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_uetds_readiness/);
+  assert.match(sql, /Sürücü T\.C\. kimlik numarası/);
+  assert.match(sql, /Araç plakası/);
+  assert.match(sql, /Gönderici VKN\/TCKN/);
+  assert.match(sql, /Yükleme il\/ilçe MERSİS kodları/);
+  assert.match(sql, /TİO işinde C1\/K2 taşıyıcı kullanılamaz/);
+  assert.match(sql, /dangerous_goods AND \(nullif\(trim\(c\.un_number/);
+  assert.match(sql, /rex_save_shipment_with_uetds/);
+  assert.match(sql, /uetds_cancellation_queued/);
+});

@@ -85,16 +85,24 @@ export const shipmentService = {
       kg_ds: number;
       birim_fiyat?: number;
       alt_toplam_fiyat?: number;
+      uetds_load_type_code?: string;
+      uetds_unit_code?: string;
+      dangerous_goods?: boolean;
+      un_number?: string;
+      dangerous_transport_code?: number;
+      uetds_description?: string;
     }>,
     completedEditConfirmation?: string,
+    uetdsDetails: Record<string, unknown> = {},
   ): Promise<string> {
-    const { data, error } = await supabase.rpc("rex_save_shipment" as any, {
+    const { data, error } = await supabase.rpc("rex_save_shipment_with_uetds" as any, {
       p_shipment_id: shipmentId,
       p_shipment: {
         ...shipment,
         _owner_confirmation_code: completedEditConfirmation || null,
       },
       p_cargo_items: cargoItems,
+      p_uetds_details: uetdsDetails,
     } as any);
 
     if (error) throw error;
@@ -174,6 +182,7 @@ export const shipmentService = {
         driver:drivers(id, driver_code, full_name),
         vehicle:vehicles(id, vehicle_code, cekici_plakasi, arac_tipi),
         customer:customers!shipments_customer_id_fkey(id, customer_code, name)
+        ,uetds_details:shipment_uetds_details(*)
       `)
       .order("created_at", { ascending: false });
 

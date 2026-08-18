@@ -115,8 +115,25 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   
   // Cargo items state
   const [cargoItems, setCargoItems] = useState<CargoItemInput[]>([
-    { adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }
+    { adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false }
   ]);
+
+  const [uetdsData, setUetdsData] = useState({
+    reporter_mode: "carrier",
+    carrier_authorization_type: "",
+    carrier_authorization_number: "",
+    sender_tax_id: "",
+    receiver_tax_id: "",
+    loading_country_code: "TR",
+    loading_city_code: "",
+    loading_district_code: "",
+    unloading_country_code: "TR",
+    unloading_city_code: "",
+    unloading_district_code: "",
+    planned_departure_at: "",
+    planned_arrival_at: "",
+    transport_type: "2",
+  });
   
   // Manual total price for reverse calculation
   const [manualTotalPrice, setManualTotalPrice] = useState<string>("");
@@ -221,6 +238,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       kg_ds: 0, 
       birim_fiyat: 0,
       alt_toplam_fiyat: 0,
+      uetds_unit_code: "KG",
+      dangerous_goods: false,
       sira_no: cargoItems.length + 1 
     }]);
   };
@@ -235,16 +254,26 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     }
   };
 
-  const updateCargoItem = (index: number, field: keyof CargoItemInput, value: string | number) => {
+  const updateCargoItem = (index: number, field: keyof CargoItemInput, value: string | number | boolean) => {
     const updated = [...cargoItems];
     if (field === 'adet') {
-      updated[index].adet = typeof value === 'string' ? parseInt(value) || 0 : value;
+      updated[index].adet = typeof value === 'string' ? parseInt(value) || 0 : Number(value);
     } else if (field === 'cinsi') {
       updated[index].cinsi = value.toString();
     } else if (field === 'kg_ds') {
-      updated[index].kg_ds = typeof value === 'string' ? parseFloat(value) || 0 : value;
+      updated[index].kg_ds = typeof value === 'string' ? parseFloat(value) || 0 : Number(value);
     } else if (field === 'birim_fiyat') {
-      updated[index].birim_fiyat = typeof value === 'string' ? parseFloat(value) || 0 : value;
+      updated[index].birim_fiyat = typeof value === 'string' ? parseFloat(value) || 0 : Number(value);
+    } else if (field === 'dangerous_goods') {
+      updated[index].dangerous_goods = Boolean(value);
+      if (!value) {
+        updated[index].un_number = "";
+        updated[index].dangerous_transport_code = undefined;
+      }
+    } else if (field === 'dangerous_transport_code') {
+      updated[index].dangerous_transport_code = typeof value === 'string' ? parseInt(value) || undefined : Number(value) || undefined;
+    } else {
+      (updated[index] as unknown as Record<string, unknown>)[field] = value;
     }
     
     updated[index].alt_toplam_fiyat = updated[index].adet * (updated[index].birim_fiyat || 0);
@@ -311,6 +340,24 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         customers.length > 0) {
       console.log("🔢 SHIPMENT CODE SET (editMode useEffect):", initialData.shipment_code || "SHP-000001");
       setShipmentCode(initialData.shipment_code || "SHP-000001");
+      const detail = Array.isArray(initialData.uetds_details) ? initialData.uetds_details[0] : initialData.uetds_details;
+      const toLocalDateTime = (value?: string | null) => value ? new Date(value).toISOString().slice(0, 16) : "";
+      setUetdsData({
+        reporter_mode: detail?.reporter_mode || "carrier",
+        carrier_authorization_type: detail?.carrier_authorization_type || "",
+        carrier_authorization_number: detail?.carrier_authorization_number || "",
+        sender_tax_id: detail?.sender_tax_id || "",
+        receiver_tax_id: detail?.receiver_tax_id || "",
+        loading_country_code: detail?.loading_country_code || "TR",
+        loading_city_code: detail?.loading_city_code?.toString() || "",
+        loading_district_code: detail?.loading_district_code?.toString() || "",
+        unloading_country_code: detail?.unloading_country_code || "TR",
+        unloading_city_code: detail?.unloading_city_code?.toString() || "",
+        unloading_district_code: detail?.unloading_district_code?.toString() || "",
+        planned_departure_at: toLocalDateTime(detail?.planned_departure_at),
+        planned_arrival_at: toLocalDateTime(detail?.planned_arrival_at),
+        transport_type: detail?.transport_type?.toString() || "2",
+      });
       setFormData({
         supplier_id: initialData.supplier_id || "",
         driver_id: initialData.driver_id || "",
@@ -360,13 +407,19 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           birim_fiyat: item.birim_fiyat || 0,
           alt_toplam_fiyat: item.alt_toplam_fiyat || 0,
           sira_no: item.sira_no
+          ,uetds_load_type_code: (item as any).uetds_load_type_code || ""
+          ,uetds_unit_code: (item as any).uetds_unit_code || "KG"
+          ,dangerous_goods: Boolean((item as any).dangerous_goods)
+          ,un_number: (item as any).un_number || ""
+          ,dangerous_transport_code: (item as any).dangerous_transport_code || undefined
+          ,uetds_description: (item as any).uetds_description || ""
         })));
       } else {
-        setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
+        setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false }]);
       }
     } catch (error) {
       console.error("Error loading cargo items:", error);
-      setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
+      setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false }]);
     }
   };
 
@@ -551,7 +604,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         adet: formData.adet ? parseInt(formData.adet) : (editMode && initialData && initialData.adet ? initialData.adet : null),
         cinsi: formData.cinsi || (editMode && initialData ? initialData.cinsi : null),
         kg_ds: formData.kg_ds ? parseFloat(formData.kg_ds) : (editMode && initialData && initialData.kg_ds ? initialData.kg_ds : null),
-        toplam_kg_ds: totalKgDs
+        toplam_kg_ds: totalKgDs,
+        _uetds_details: uetdsData,
       };
 
       if (isCompletedEdit) {
@@ -570,6 +624,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         editMode && initialData ? initialData.id : null,
         submitData,
         cargoItems,
+        undefined,
+        uetdsData,
       );
 
       if (editMode && initialData) {
@@ -657,10 +713,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     });
     setPickupDate("");
     setEstimatedDeliveryDate("");
+    setUetdsData({
+      reporter_mode: "carrier", carrier_authorization_type: "", carrier_authorization_number: "",
+      sender_tax_id: "", receiver_tax_id: "", loading_country_code: "TR", loading_city_code: "",
+      loading_district_code: "", unloading_country_code: "TR", unloading_city_code: "",
+      unloading_district_code: "", planned_departure_at: "", planned_arrival_at: "", transport_type: "2",
+    });
     setRevisionReason("");
     console.log("🔢 SHIPMENT CODE RESET (resetForm):", "SHP-000001");
     setShipmentCode("SHP-000001");
-    setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
+    setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false }]);
     setManualTotalPrice("");
     setSearchSupplier("");
     setSearchDriver("");
@@ -992,6 +1054,65 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">U-ETDS Yük Türü Kodu</Label>
+                    <Input
+                      value={item.uetds_load_type_code || ""}
+                      onChange={(e) => updateCargoItem(index, 'uetds_load_type_code', e.target.value)}
+                      placeholder="Bakanlık kodu"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">U-ETDS Birimi</Label>
+                    <select
+                      value={item.uetds_unit_code || "KG"}
+                      onChange={(e) => updateCargoItem(index, 'uetds_unit_code', e.target.value)}
+                      className="h-10 w-full rounded-md border bg-white px-3 text-sm"
+                    >
+                      <option value="KG">Kilogram</option>
+                      <option value="LT">Litre</option>
+                      <option value="AD">Adet</option>
+                      <option value="M3">Metreküp</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Tehlikeli Madde</Label>
+                    <select
+                      value={item.dangerous_goods ? "yes" : "no"}
+                      onChange={(e) => updateCargoItem(index, 'dangerous_goods', e.target.value === "yes")}
+                      className="h-10 w-full rounded-md border bg-white px-3 text-sm"
+                    >
+                      <option value="no">Hayır</option>
+                      <option value="yes">Evet</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">UN Numarası</Label>
+                    <Input
+                      value={item.un_number || ""}
+                      onChange={(e) => updateCargoItem(index, 'un_number', e.target.value)}
+                      placeholder="UN 1203"
+                      disabled={!item.dangerous_goods}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Tehlikeli Taşıma Kodu</Label>
+                    <Input
+                      type="number"
+                      value={item.dangerous_transport_code || ""}
+                      onChange={(e) => updateCargoItem(index, 'dangerous_transport_code', e.target.value)}
+                      placeholder="Bakanlık kodu"
+                      disabled={!item.dangerous_goods}
+                    />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs">U-ETDS Yük Açıklaması</Label>
+                    <Input
+                      value={item.uetds_description || ""}
+                      onChange={(e) => updateCargoItem(index, 'uetds_description', e.target.value)}
+                      placeholder="Gerekirse ayrıntılı yük açıklaması"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -1056,6 +1177,60 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 onChange={(e) => setEstimatedDeliveryDate(e.target.value)}
                 className="w-full"
               />
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <div className="mb-4">
+              <h3 className="font-semibold">U-ETDS Bildirim Bilgileri</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Bu alanlar sevkiyatı kaydetmeye engel olmaz. Tamamlandığında U-ETDS sekmesinde kayıt “Hazır” görünür.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label>Bildirimi Kim Yapacak?</Label>
+                <Select value={uetdsData.reporter_mode} onValueChange={(value) => setUetdsData({ ...uetdsData, reporter_mode: value })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="carrier">Taşıyıcı firma</SelectItem><SelectItem value="rex">REX Lojistik</SelectItem></SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Gönderici VKN/TCKN</Label>
+                <Input value={uetdsData.sender_tax_id} onChange={(e) => setUetdsData({ ...uetdsData, sender_tax_id: e.target.value.replace(/\D/g, '').slice(0, 11) })} placeholder="10 veya 11 hane" />
+              </div>
+              <div className="space-y-2">
+                <Label>Alıcı VKN/TCKN</Label>
+                <Input value={uetdsData.receiver_tax_id} onChange={(e) => setUetdsData({ ...uetdsData, receiver_tax_id: e.target.value.replace(/\D/g, '').slice(0, 11) })} placeholder="10 veya 11 hane" />
+              </div>
+
+              {uetdsData.reporter_mode === "carrier" && <>
+                <div className="space-y-2">
+                  <Label>Taşıyıcı Yetki Belgesi Türü</Label>
+                  <Input value={uetdsData.carrier_authorization_type} onChange={(e) => setUetdsData({ ...uetdsData, carrier_authorization_type: e.target.value.toUpperCase() })} placeholder="K1, L1, C2..." />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Taşıyıcı Yetki Belgesi Numarası</Label>
+                  <Input value={uetdsData.carrier_authorization_number} onChange={(e) => setUetdsData({ ...uetdsData, carrier_authorization_number: e.target.value })} />
+                </div>
+              </>}
+
+              <div className="space-y-2"><Label>Yükleme Ülke Kodu</Label><Input value={uetdsData.loading_country_code} onChange={(e) => setUetdsData({ ...uetdsData, loading_country_code: e.target.value.toUpperCase().slice(0, 2) })} /></div>
+              <div className="space-y-2"><Label>Yükleme İl Kodu</Label><Input type="number" value={uetdsData.loading_city_code} onChange={(e) => setUetdsData({ ...uetdsData, loading_city_code: e.target.value })} placeholder="Bakanlık/MERNİS kodu" /></div>
+              <div className="space-y-2"><Label>Yükleme İlçe Kodu</Label><Input type="number" value={uetdsData.loading_district_code} onChange={(e) => setUetdsData({ ...uetdsData, loading_district_code: e.target.value })} placeholder="Bakanlık/MERNİS kodu" /></div>
+              <div className="space-y-2"><Label>Boşaltma Ülke Kodu</Label><Input value={uetdsData.unloading_country_code} onChange={(e) => setUetdsData({ ...uetdsData, unloading_country_code: e.target.value.toUpperCase().slice(0, 2) })} /></div>
+              <div className="space-y-2"><Label>Boşaltma İl Kodu</Label><Input type="number" value={uetdsData.unloading_city_code} onChange={(e) => setUetdsData({ ...uetdsData, unloading_city_code: e.target.value })} placeholder="Bakanlık/MERNİS kodu" /></div>
+              <div className="space-y-2"><Label>Boşaltma İlçe Kodu</Label><Input type="number" value={uetdsData.unloading_district_code} onChange={(e) => setUetdsData({ ...uetdsData, unloading_district_code: e.target.value })} placeholder="Bakanlık/MERNİS kodu" /></div>
+              <div className="space-y-2"><Label>Planlanan Hareket</Label><Input type="datetime-local" value={uetdsData.planned_departure_at} onChange={(e) => setUetdsData({ ...uetdsData, planned_departure_at: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Planlanan Varış</Label><Input type="datetime-local" value={uetdsData.planned_arrival_at} onChange={(e) => setUetdsData({ ...uetdsData, planned_arrival_at: e.target.value })} /></div>
+              <div className="space-y-2">
+                <Label>Taşıma Türü</Label>
+                <Select value={uetdsData.transport_type} onValueChange={(value) => setUetdsData({ ...uetdsData, transport_type: value })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="2">Yurt içi</SelectItem><SelectItem value="1">Uluslararası</SelectItem></SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
