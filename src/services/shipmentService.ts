@@ -34,7 +34,31 @@ export interface Shipment {
   updated_at?: string;
 }
 
+export interface ShipmentEvent {
+  id: string;
+  shipment_id: string;
+  shipment_code?: string | null;
+  event_type: string;
+  old_status?: string | null;
+  new_status?: string | null;
+  changed_fields: Record<string, { old?: unknown; new?: unknown } | unknown>;
+  actor_email?: string | null;
+  actor_role?: string | null;
+  event_at: string;
+  source: string;
+  note?: string | null;
+}
+
 export const shipmentService = {
+  async getShipmentHistory(shipmentId: string): Promise<ShipmentEvent[]> {
+    const { data, error } = await (supabase.from("shipment_events" as any) as any)
+      .select("*")
+      .eq("shipment_id", shipmentId)
+      .order("event_at", { ascending: false });
+    if (error) throw error;
+    return (data || []) as ShipmentEvent[];
+  },
+
   async saveShipmentWithCargo(
     shipmentId: string | null,
     shipment: Partial<Shipment>,

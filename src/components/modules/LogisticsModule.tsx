@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown } from "lucide-react";
+import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService } from "@/services/shipmentService";
@@ -16,6 +16,7 @@ import { ShipmentForm } from "@/components/ShipmentForm";
 import { DeliveryModal } from "@/components/DeliveryModal";
 import { generateWaybill } from "@/components/WaybillGenerator";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
+import { ShipmentHistoryDialog } from "@/components/ShipmentHistoryDialog";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -55,6 +56,7 @@ export function LogisticsModule() {
   // Invoice dialog state
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [invoicingShipment, setInvoicingShipment] = useState<any | null>(null);
+  const [historyShipment, setHistoryShipment] = useState<any | null>(null);
 
   // Excel import state
   const [isImporting, setIsImporting] = useState(false);
@@ -729,6 +731,14 @@ export function LogisticsModule() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => setHistoryShipment(shipment)}
+                            title="Değişiklik geçmişi"
+                          >
+                            <History className="h-4 w-4 text-slate-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={async () => {
                               try {
                                 await generateWaybill(shipment);
@@ -992,6 +1002,12 @@ export function LogisticsModule() {
           shipment={invoicingShipment}
         />
       )}
+
+      <ShipmentHistoryDialog
+        isOpen={!!historyShipment}
+        onClose={() => setHistoryShipment(null)}
+        shipment={historyShipment}
+      />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
