@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
+import Link from "next/link";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUserRole } from "@/lib/access-control";
 import { useToast } from "@/hooks/use-toast";
@@ -128,71 +128,69 @@ export default function LoginPage() {
 
   return (
     <>
-      <SEO title="Giriş Yap - Rex Portal" description="Rex Lojistik yetkili personel portalı." />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center mb-4">
-              <Image
-                src="/rexlogo.png"
-                alt="Rex Lojistik"
-                width={120}
-                height={120}
-                priority
-                className="rounded-2xl shadow-lg"
-              />
+      <SEO title="Giriş Yap - REX Personel Portalı" description="REX Lojistik yetkili personel operasyon portalı." noIndex />
+      <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center px-4 py-8">
+        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-500/15 blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
+        <div className="relative w-full max-w-md">
+          <Link href="/" className="flex justify-center mb-6" aria-label="REX Lojistik ana sayfası">
+            <div className="bg-white rounded-2xl px-6 py-3 shadow-xl ring-1 ring-white/20">
+              <Image src="/rex.png" alt="REX Lojistik" width={170} height={78} priority className="h-16 w-auto object-contain" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Rex Portal</h1>
-            <p className="text-gray-600">Lojistik Yönetim Sistemi</p>
-          </div>
+          </Link>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <CardHeader className="space-y-2">
-              <CardTitle className="text-2xl text-center">{recoveryMode ? "Yeni Şifre Oluştur" : "REX Portal Giriş"}</CardTitle>
-              <CardDescription className="text-center">
-                {recoveryMode ? "Hesabınız için güvenli bir şifre belirleyin" : "Yalnızca yetkili personel giriş yapabilir"}
-              </CardDescription>
-            </CardHeader>
+          <section className="bg-white rounded-3xl shadow-2xl border border-white/60 p-7 sm:p-9">
+            <div className="flex justify-center mb-4">
+              <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-orange-700">
+                <ShieldCheck className="h-4 w-4" /> Yetkili Personel
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 text-center">
+              {recoveryMode ? "Yeni Şifre Oluştur" : "REX Operasyon Portalı"}
+            </h1>
+            <p className="text-sm text-slate-500 text-center mt-2 mb-7">
+              {recoveryMode ? "Hesabınız için güvenli bir şifre belirleyin." : "Lojistik yönetim sistemine güvenli giriş yapın."}
+            </p>
 
-            <CardContent className="space-y-6 pt-6">
+            <div className="space-y-6">
               {recoveryMode ? (
                 <form onSubmit={handleUpdatePassword} className="space-y-4">
                   <div>
-                    <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-2">Yeni Şifre</label>
+                    <label htmlFor="new-password" className="block text-sm font-medium text-slate-700 mb-1.5">Yeni Şifre</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <Input id="new-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="pl-10 pr-10" disabled={loading} />
+                      <Input id="new-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="pl-10 pr-10 h-11" disabled={loading} />
                       <button type="button" aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"} onClick={() => setShowPassword((value) => !value)} className="absolute inset-y-0 right-0 px-3 flex items-center" disabled={loading}>
                         {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">Yeni Şifre Tekrar</label>
+                    <label htmlFor="confirm-password" className="block text-sm font-medium text-slate-700 mb-1.5">Yeni Şifre Tekrar</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <Input id="confirm-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="pl-10" disabled={loading} />
+                      <Input id="confirm-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="pl-10 h-11" disabled={loading} />
                     </div>
                   </div>
-                  <Button type="submit" className="w-full bg-[#E94E1B] hover:bg-[#d4451a]" disabled={loading}>
+                  <Button type="submit" className="w-full h-11 bg-orange-600 hover:bg-orange-700 shadow-md" disabled={loading}>
                     {loading ? "Kaydediliyor..." : "Şifreyi Kaydet"}
                   </Button>
                 </form>
               ) : (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">E-posta</label>
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">E-posta</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input id="email" type="email" autoComplete="email" placeholder="ornek@email.com" value={email} onChange={(event) => setEmail(event.target.value)} className="pl-10" disabled={loading} />
+                    <Input id="email" type="email" autoComplete="email" placeholder="ornek@email.com" value={email} onChange={(event) => setEmail(event.target.value)} className="pl-10 h-11" disabled={loading} />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Şifre</label>
+                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">Şifre</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} className="pl-10 pr-10" disabled={loading} />
+                    <Input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} className="pl-10 pr-10 h-11" disabled={loading} />
                     <button type="button" aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"} onClick={() => setShowPassword((value) => !value)} className="absolute inset-y-0 right-0 px-3 flex items-center" disabled={loading}>
                       {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
                     </button>
@@ -200,22 +198,25 @@ export default function LoginPage() {
                 </div>
 
                 <div className="text-right">
-                  <button type="button" onClick={handlePasswordReset} className="text-sm text-blue-600 hover:text-blue-700 font-medium" disabled={loading || resetting}>
+                  <button type="button" onClick={handlePasswordReset} className="text-sm text-blue-600 hover:text-blue-700 font-semibold" disabled={loading || resetting}>
                     {resetting ? "Gönderiliyor..." : "Şifremi unuttum"}
                   </button>
                 </div>
 
-                <Button type="submit" className="w-full bg-[#E94E1B] hover:bg-[#d4451a]" disabled={loading}>
+                <Button type="submit" className="w-full h-11 bg-orange-600 hover:bg-orange-700 shadow-md" disabled={loading}>
                   {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
                 </Button>
               </form>
               )}
-            </CardContent>
-          </div>
+            </div>
+          </section>
 
-          <p className="mt-8 text-center text-sm text-gray-500">© 2026 Rex Lojistik. Tüm hakları saklıdır.</p>
+          <div className="mt-5 text-center text-sm text-slate-300 space-y-1">
+            <p>Bu alan yalnızca REX Lojistik yetkili personeli içindir.</p>
+            <p>© 2026 REX Lojistik. Tüm hakları saklıdır.</p>
+          </div>
         </div>
-      </div>
+      </main>
     </>
   );
 }
