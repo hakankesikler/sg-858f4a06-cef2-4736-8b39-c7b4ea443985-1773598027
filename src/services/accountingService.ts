@@ -739,16 +739,6 @@ export const accountingService = {
     return invoice;
   },
 
-  async deleteSalesInvoice(id: string): Promise<boolean> {
-    const { error } = await supabase
-      .from("sales_invoices")
-      .delete()
-      .eq("id", id);
-
-    if (error) throw error;
-    return true;
-  },
-
   async getSalesInvoiceStats(): Promise<any> {
     const { data } = await supabase.from("sales_invoices").select("grand_total, payment_status, invoice_date");
 

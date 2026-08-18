@@ -120,3 +120,48 @@ test("work order history remains visible from the logistics screen", async () =>
   assert.match(dialog, /actor_email/);
   assert.match(dialog, /old_status/);
 });
+
+test("shipment deletion and cancellation remain status-aware and reasoned", async () => {
+  const sql = await read("supabase/migrations/20260818234500_shipment_cancellation_and_revision_workflow.sql");
+  assert.match(sql, /v_shipment\.status IN \('yolda','Yolda','Dağıtımda','teslim_edildi','Teslim Edildi','iptal','İptal'\)/);
+  assert.match(sql, /v_shipment\.sale_invoice_id IS NOT NULL/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_cancel_shipment/);
+  assert.match(sql, /İptal nedeni en az 10 karakter olmalıdır/);
+  assert.match(sql, /Faturalı sevkiyat iptal edilemez/);
+  assert.match(sql, /cancelled_by=auth\.uid\(\)/);
+});
+
+test("completed shipment revisions require a formal owner approval workflow", async () => {
+  const [sql, form, logistics] = await Promise.all([
+    read("supabase/migrations/20260818234500_shipment_cancellation_and_revision_workflow.sql"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/components/modules/LogisticsModule.tsx"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.shipment_revision_requests/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_request_shipment_revision/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_review_shipment_revision/);
+  assert.match(sql, /v_email <> 'info@rexlojistik\.com'/);
+  assert.match(sql, /rex_completed_shipment_critical_guard/);
+  assert.match(sql, /rex_completed_cargo_revision_guard/);
+  assert.match(form, /shipmentService\.requestRevision/);
+  assert.match(form, /Revizyon Talebi Oluştur/);
+  assert.match(logistics, /value="revisions"/);
+  assert.match(logistics, /handleReviewRevision/);
+});
+
+test("invoice cancellation is soft, reasoned and external-reference gated", async () => {
+  const [sql, service, accounting, accountingService] = await Promise.all([
+    read("supabase/migrations/20260818234500_shipment_cancellation_and_revision_workflow.sql"),
+    read("src/services/workflowService.ts"),
+    read("src/components/modules/AccountingModule.tsx"),
+    read("src/services/accountingService.ts"),
+  ]);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_cancel_sales_invoice/);
+  assert.match(sql, /KolayBi\/e-Fatura iptal veya iade işlemi tamamlanıp dış sistem referansı girilmelidir/);
+  assert.match(sql, /SET payment_status='İptal'/);
+  assert.match(sql, /Faturalar silinemez; iptal\/iade süreci kullanılmalıdır/);
+  assert.match(sql, /rex_sales_invoices_no_direct_delete/);
+  assert.match(service, /rex_cancel_sales_invoice/);
+  assert.match(accounting, /Fatura İptal \/ İade Süreci/);
+  assert.doesNotMatch(accountingService, /from\("sales_invoices"\)[\s\S]{0,100}\.delete\(\)/);
+});

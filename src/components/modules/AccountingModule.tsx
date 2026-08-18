@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -162,6 +163,10 @@ export function AccountingModule() {
   const [showPendingInvoicesDialog, setShowPendingInvoicesDialog] = useState(false);
   const [transactionsCustomer, setTransactionsCustomer] = useState<any>(null);
   const [showTransactionsDialog, setShowTransactionsDialog] = useState(false);
+  const [cancellationInvoice, setCancellationInvoice] = useState<any | null>(null);
+  const [invoiceCancellationReason, setInvoiceCancellationReason] = useState("");
+  const [invoiceCancellationType, setInvoiceCancellationType] = useState<"iptal" | "iade">("iptal");
+  const [invoiceCancellationReference, setInvoiceCancellationReference] = useState("");
 
   const loadData = async () => {
     try {
@@ -771,16 +776,25 @@ export function AccountingModule() {
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteInvoice = async (id: string) => {
-    if (!window.confirm("Faturayı silmek istediğinize emin misiniz?")) return;
+  const handleCancelInvoice = async () => {
+    if (!cancellationInvoice || invoiceCancellationReason.trim().length < 10) return;
     try {
       setIsLoading(true);
-      await workflowService.deleteSalesInvoice(id);
-      toast({ title: "Başarılı", description: "Fatura silindi" });
-      loadData();
+      await workflowService.cancelSalesInvoice({
+        invoiceId: cancellationInvoice.id,
+        reason: invoiceCancellationReason.trim(),
+        cancellationType: invoiceCancellationType,
+        externalReference: invoiceCancellationReference.trim() || undefined,
+      });
+      toast({ title: "Fatura kaydı korundu", description: "İptal/iade işlemi tamamlandı ve sevkiyat bağlantısı çözüldü." });
+      setCancellationInvoice(null);
+      setInvoiceCancellationReason("");
+      setInvoiceCancellationReference("");
+      setInvoiceCancellationType("iptal");
+      await loadData();
     } catch (err: any) {
       console.error(err);
-      toast({ title: "Hata", description: "Silinirken hata oluştu", variant: "destructive" });
+      toast({ title: "İptal/iade tamamlanamadı", description: err?.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -1038,14 +1052,21 @@ export function AccountingModule() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeleteInvoice(invoice.id)}
-                            title="Sil"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
+                          {invoice.payment_status !== "İptal" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setCancellationInvoice(invoice);
+                                setInvoiceCancellationType(invoice.payment_status === "Ödendi" || invoice.payment_status === "Kısmi Ödendi" ? "iade" : "iptal");
+                                setInvoiceCancellationReason("");
+                                setInvoiceCancellationReference("");
+                              }}
+                              title="Faturayı iptal/iade et"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1456,6 +1477,70 @@ export function AccountingModule() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!cancellationInvoice} onOpenChange={(open) => {
+        if (!open) {
+          setCancellationInvoice(null);
+          setInvoiceCancellationReason("");
+          setInvoiceCancellationReference("");
+          setInvoiceCancellationType("iptal");
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Fatura İptal / İade Süreci</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-lg border bg-slate-50 p-3 text-sm">
+              <p className="font-semibold">{cancellationInvoice?.invoice_no}</p>
+              <p className="text-slate-600">Fatura silinmeyecek, iptal/iade kaydı ve işlem geçmişi korunacaktır.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>İşlem Türü</Label>
+              <Select value={invoiceCancellationType} onValueChange={(value: "iptal" | "iade") => setInvoiceCancellationType(value)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="iptal">İptal</SelectItem>
+                  <SelectItem value="iade">İade</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>İptal / İade Nedeni *</Label>
+              <Textarea
+                value={invoiceCancellationReason}
+                onChange={(event) => setInvoiceCancellationReason(event.target.value)}
+                placeholder="En az 10 karakterlik açıklama yazın"
+                rows={4}
+              />
+            </div>
+            {(cancellationInvoice?.kolaybi_document_id || cancellationInvoice?.e_invoice_status === "oluşturuldu") && (
+              <div className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
+                <Label>Dış Sistem İptal/İade Referansı *</Label>
+                <p className="text-xs text-amber-800">KolayBi/e-Fatura işlemini tamamladıktan sonra oluşan referans numarasını girin.</p>
+                <Input
+                  value={invoiceCancellationReference}
+                  onChange={(event) => setInvoiceCancellationReference(event.target.value)}
+                  placeholder="KolayBi veya e-Fatura referansı"
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancellationInvoice(null)}>Vazgeç</Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleCancelInvoice()}
+              disabled={
+                isLoading || invoiceCancellationReason.trim().length < 10 ||
+                (Boolean(cancellationInvoice?.kolaybi_document_id || cancellationInvoice?.e_invoice_status === "oluşturuldu") && !invoiceCancellationReference.trim())
+              }
+            >
+              {isLoading ? "İşleniyor..." : invoiceCancellationType === "iade" ? "İade Sürecini Tamamla" : "Faturayı İptal Et"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <InvoiceDialog
         isOpen={isManualInvoiceDialogOpen}

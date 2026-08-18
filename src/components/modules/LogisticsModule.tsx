@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy } from "lucide-react";
+import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
-import { shipmentService } from "@/services/shipmentService";
+import { shipmentService, type ShipmentRevisionRequest } from "@/services/shipmentService";
 import { transportJobService, type TransportJob } from "@/services/transportJobService";
 import { crmService } from "@/services/crmService";
 import { openPrivateDocument } from "@/lib/private-storage";
@@ -40,6 +41,7 @@ export function LogisticsModule() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [transportJobs, setTransportJobs] = useState<TransportJob[]>([]);
+  const [revisionRequests, setRevisionRequests] = useState<ShipmentRevisionRequest[]>([]);
   const [isDriverFormOpen, setIsDriverFormOpen] = useState(false);
   const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false);
   const [isShipmentFormOpen, setIsShipmentFormOpen] = useState(false);
@@ -63,6 +65,8 @@ export function LogisticsModule() {
   const [invoicingShipment, setInvoicingShipment] = useState<any | null>(null);
   const [historyShipment, setHistoryShipment] = useState<any | null>(null);
   const [historyJob, setHistoryJob] = useState<TransportJob | null>(null);
+  const [cancellingShipment, setCancellingShipment] = useState<any | null>(null);
+  const [cancellationReason, setCancellationReason] = useState("");
 
   // Excel import state
   const [isImporting, setIsImporting] = useState(false);
@@ -93,6 +97,11 @@ export function LogisticsModule() {
       setTransportJobs(await transportJobService.list());
     } catch (error) {
       console.error("Error loading transport jobs:", error);
+    }
+    try {
+      setRevisionRequests(await shipmentService.getRevisionRequests());
+    } catch (error) {
+      console.error("Error loading shipment revisions:", error);
     }
     // Load drivers
     try {
@@ -245,6 +254,36 @@ export function LogisticsModule() {
       await loadData();
     } catch (error: any) {
       toast({ title: "İşlem tamamlanamadı", description: error?.message, variant: "destructive" });
+    }
+  };
+
+  const handleCancelShipment = async () => {
+    if (!cancellingShipment || cancellationReason.trim().length < 10) return;
+    try {
+      await shipmentService.cancelShipment(cancellingShipment.id, cancellationReason.trim());
+      toast({ title: "Sevkiyat iptal edildi", description: "İptal nedeni işlem geçmişine kaydedildi." });
+      setCancellingShipment(null);
+      setCancellationReason("");
+      await loadData();
+    } catch (error: any) {
+      toast({ title: "İptal işlemi tamamlanamadı", description: error?.message, variant: "destructive" });
+    }
+  };
+
+  const handleReviewRevision = async (request: ShipmentRevisionRequest, decision: "approve" | "reject") => {
+    const note = decision === "reject"
+      ? window.prompt("Revizyonun ret nedenini yazın (en az 5 karakter):")
+      : window.prompt("Onay notu ekleyebilirsiniz:") || undefined;
+    if (decision === "reject" && (!note || note.trim().length < 5)) return;
+    try {
+      await shipmentService.reviewRevision(request.id, decision, note || undefined);
+      toast({
+        title: decision === "approve" ? "Revizyon onaylandı" : "Revizyon reddedildi",
+        description: decision === "approve" ? "Onaylanan değişiklikler sevkiyata uygulandı." : undefined,
+      });
+      await loadData();
+    } catch (error: any) {
+      toast({ title: "Revizyon işlemi tamamlanamadı", description: error?.message, variant: "destructive" });
     }
   };
 
@@ -516,7 +555,7 @@ export function LogisticsModule() {
       </div>
 
       <Tabs defaultValue="jobs" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="jobs" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             İş Emirleri
@@ -524,6 +563,15 @@ export function LogisticsModule() {
           <TabsTrigger value="shipments" className="flex items-center gap-2">
             <Package className="h-4 w-4" />
             Sevkiyatlar
+          </TabsTrigger>
+          <TabsTrigger value="revisions" className="flex items-center gap-2">
+            <ClipboardCheck className="h-4 w-4" />
+            Revizyonlar
+            {revisionRequests.some((request) => request.status === "pending") && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+                {revisionRequests.filter((request) => request.status === "pending").length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="drivers" className="flex items-center gap-2">
             <User className="h-4 w-4" />
@@ -818,26 +866,39 @@ export function LogisticsModule() {
                               <FileText className="h-4 w-4 text-green-600" />
                             </Button>
                           )}
-                          {(!["teslim_edildi", "Teslim Edildi"].includes(shipment.status) ||
-                            currentUserEmail === "info@rexlojistik.com") && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                console.log("Editing shipment:", shipment);
-                                setEditingShipment(shipment);
-                                setIsShipmentFormOpen(true);
-                              }}
-                              title={
-                                ["teslim_edildi", "Teslim Edildi"].includes(shipment.status)
-                                  ? "Tamamlanmış sevkiyatı sahip onayıyla düzenle"
-                                  : "Sevkiyatı düzenle"
-                              }
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {currentUserEmail === "info@rexlojistik.com" && (
+                          {!["teslim_edildi", "Teslim Edildi", "iptal", "İptal"].includes(shipment.status) &&
+                            !shipment.sale_invoice_id && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setCancellationReason("");
+                                  setCancellingShipment(shipment);
+                                }}
+                                title="Sevkiyatı neden belirterek iptal et"
+                              >
+                                <CircleX className="h-4 w-4 text-amber-600" />
+                              </Button>
+                            )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              console.log("Editing shipment:", shipment);
+                              setEditingShipment(shipment);
+                              setIsShipmentFormOpen(true);
+                            }}
+                            title={
+                              ["teslim_edildi", "Teslim Edildi"].includes(shipment.status)
+                                ? "Yönetici onaylı revizyon talebi oluştur"
+                                : "Sevkiyatı düzenle"
+                            }
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          {currentUserEmail === "info@rexlojistik.com" &&
+                            ["atama_bekliyor", "beklemede", "hazirlaniyor", "hazırlanıyor", "Hazırlanıyor"].includes(shipment.status) &&
+                            !shipment.sale_invoice_id && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -856,6 +917,56 @@ export function LogisticsModule() {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="revisions" className="space-y-4">
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b bg-gray-50">
+                  <tr>
+                    <th className="p-4 text-left">SEVKİYAT</th>
+                    <th className="p-4 text-left">TALEP EDEN</th>
+                    <th className="p-4 text-left">GEREKÇE</th>
+                    <th className="p-4 text-left">TARİH</th>
+                    <th className="p-4 text-left">DURUM</th>
+                    <th className="p-4 text-left">İŞLEMLER</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {revisionRequests.map((request) => (
+                    <tr key={request.id} className="border-b hover:bg-gray-50">
+                      <td className="p-4 font-medium">{request.shipment_code}</td>
+                      <td className="p-4">{request.requested_by_email || "Kullanıcı"}</td>
+                      <td className="max-w-md p-4 text-sm">{request.reason}</td>
+                      <td className="p-4 text-sm">{format(new Date(request.requested_at), "dd MMM yyyy HH:mm", { locale: tr })}</td>
+                      <td className="p-4">
+                        <span className={`rounded-full px-2 py-1 text-xs ${
+                          request.status === "pending" ? "bg-amber-100 text-amber-800" :
+                          request.status === "applied" ? "bg-green-100 text-green-800" :
+                          request.status === "rejected" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"
+                        }`}>
+                          {request.status === "pending" ? "Onay Bekliyor" : request.status === "applied" ? "Uygulandı" : request.status === "rejected" ? "Reddedildi" : "Onaylandı"}
+                        </span>
+                        {request.review_note && <p className="mt-1 text-xs text-slate-500">{request.review_note}</p>}
+                      </td>
+                      <td className="p-4">
+                        {request.status === "pending" && currentUserEmail === "info@rexlojistik.com" && (
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => void handleReviewRevision(request, "approve")}>Onayla ve Uygula</Button>
+                            <Button size="sm" variant="outline" onClick={() => void handleReviewRevision(request, "reject")}>Reddet</Button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {revisionRequests.length === 0 && (
+                    <tr><td colSpan={6} className="p-8 text-center text-gray-500">Henüz revizyon talebi bulunmuyor.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1076,6 +1187,38 @@ export function LogisticsModule() {
         onClose={() => setHistoryJob(null)}
         job={historyJob}
       />
+
+      <AlertDialog open={!!cancellingShipment} onOpenChange={(open) => {
+        if (!open) {
+          setCancellingShipment(null);
+          setCancellationReason("");
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sevkiyatı İptal Et</AlertDialogTitle>
+            <AlertDialogDescription>
+              {cancellingShipment?.shipment_code} sevkiyatı silinmeyecek; iptal olarak işaretlenip nedeni kalıcı işlem geçmişine yazılacaktır.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            value={cancellationReason}
+            onChange={(event) => setCancellationReason(event.target.value)}
+            placeholder="İptal nedenini ayrıntılı yazın (en az 10 karakter)"
+            rows={4}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Vazgeç</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleCancelShipment()}
+              disabled={cancellationReason.trim().length < 10}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              İptal Olarak İşaretle
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={(open) => {
         setIsDeleteDialogOpen(open);

@@ -31,8 +31,24 @@ export interface Shipment {
   delivered_to?: string | null;
   delivery_proof_url?: string | null;
   actual_delivery_date?: string | null;
+  cancellation_reason?: string | null;
+  cancelled_at?: string | null;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface ShipmentRevisionRequest {
+  id: string;
+  shipment_id: string;
+  shipment_code: string;
+  reason: string;
+  status: "pending" | "rejected" | "approved" | "applied";
+  requested_by_email?: string | null;
+  requested_at: string;
+  reviewed_by_email?: string | null;
+  reviewed_at?: string | null;
+  review_note?: string | null;
+  applied_at?: string | null;
 }
 
 export interface ShipmentEvent {
@@ -85,10 +101,51 @@ export const shipmentService = {
     return data as unknown as string;
   },
 
-  async setShipmentStatus(id: string, status: "hazirlaniyor" | "yolda" | "iptal") {
+  async setShipmentStatus(id: string, status: "hazirlaniyor" | "yolda") {
     const { error } = await supabase.rpc("rex_set_shipment_status" as any, {
       p_shipment_id: id,
       p_status: status,
+    } as any);
+    if (error) throw error;
+  },
+
+  async cancelShipment(id: string, reason: string) {
+    const { error } = await supabase.rpc("rex_cancel_shipment" as any, {
+      p_shipment_id: id,
+      p_reason: reason,
+    } as any);
+    if (error) throw error;
+  },
+
+  async requestRevision(
+    shipmentId: string,
+    reason: string,
+    proposedShipment: Partial<Shipment>,
+    proposedCargoItems: unknown[],
+  ) {
+    const { data, error } = await supabase.rpc("rex_request_shipment_revision" as any, {
+      p_shipment_id: shipmentId,
+      p_reason: reason,
+      p_proposed_shipment: proposedShipment,
+      p_proposed_cargo_items: proposedCargoItems,
+    } as any);
+    if (error) throw error;
+    return data as unknown as string;
+  },
+
+  async getRevisionRequests(): Promise<ShipmentRevisionRequest[]> {
+    const { data, error } = await (supabase.from("shipment_revision_requests" as any) as any)
+      .select("*")
+      .order("requested_at", { ascending: false });
+    if (error) throw error;
+    return (data || []) as ShipmentRevisionRequest[];
+  },
+
+  async reviewRevision(id: string, decision: "approve" | "reject", note?: string) {
+    const { error } = await supabase.rpc("rex_review_shipment_revision" as any, {
+      p_request_id: id,
+      p_decision: decision,
+      p_note: note || null,
     } as any);
     if (error) throw error;
   },

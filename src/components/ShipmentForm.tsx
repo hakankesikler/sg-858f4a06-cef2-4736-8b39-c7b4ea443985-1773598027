@@ -70,9 +70,12 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [shipmentCode, setShipmentCode] = useState("SHP-000001");
   const [pickupDate, setPickupDate] = useState("");
   const [estimatedDeliveryDate, setEstimatedDeliveryDate] = useState("");
-  const [completedEditConfirmation, setCompletedEditConfirmation] = useState("");
+  const [revisionReason, setRevisionReason] = useState("");
   const isCompletedEdit = Boolean(
-    editMode && initialData && ["teslim_edildi", "Teslim Edildi"].includes(initialData.status),
+    editMode && initialData && (
+      ["teslim_edildi", "Teslim Edildi"].includes(initialData.status) ||
+      ["faturalandi", "kismenfaturalandi"].includes(initialData.invoice_status)
+    ),
   );
   
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -293,7 +296,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
   useEffect(() => {
     if (isOpen) {
-      setCompletedEditConfirmation("");
+      setRevisionReason("");
       loadSelectionData();
       if (!editMode) {
         loadNextShipmentCode();
@@ -496,10 +499,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isCompletedEdit && completedEditConfirmation !== initialData.shipment_code) {
+    if (isCompletedEdit && revisionReason.trim().length < 10) {
       toast({
-        title: "Onay kodu hatalı",
-        description: "Tamamlanmış sevkiyatı değiştirmek için sevkiyat kodunu eksiksiz yazın.",
+        title: "Revizyon gerekçesi gerekli",
+        description: "Tamamlanmış sevkiyat için en az 10 karakterlik revizyon gerekçesi yazın.",
         variant: "destructive",
       });
       return;
@@ -547,11 +550,22 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         toplam_kg_ds: totalKgDs
       };
 
+      if (isCompletedEdit) {
+        await shipmentService.requestRevision(initialData.id, revisionReason.trim(), submitData, cargoItems);
+        toast({
+          title: "Revizyon talebi oluşturuldu",
+          description: "Değişiklikler şirket sahibi onayından sonra uygulanacak.",
+        });
+        onSuccess();
+        onClose();
+        resetForm();
+        return;
+      }
+
       const shipmentId = await shipmentService.saveShipmentWithCargo(
         editMode && initialData ? initialData.id : null,
         submitData,
         cargoItems,
-        isCompletedEdit ? completedEditConfirmation : undefined,
       );
 
       if (editMode && initialData) {
@@ -639,7 +653,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     });
     setPickupDate("");
     setEstimatedDeliveryDate("");
-    setCompletedEditConfirmation("");
+    setRevisionReason("");
     console.log("🔢 SHIPMENT CODE RESET (resetForm):", "SHP-000001");
     setShipmentCode("SHP-000001");
     setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1 }]);
@@ -1088,16 +1102,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
           {isCompletedEdit && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-2">
-              <p className="font-semibold text-amber-900">Şirket sahibi onayı gerekli</p>
+              <p className="font-semibold text-amber-900">Yönetici onaylı revizyon</p>
               <p className="text-sm text-amber-800">
-                Teslim edilmiş sevkiyatın müşteri, fiyat, güzergâh veya yük bilgileri değiştiriliyor.
-                Onaylamak için <strong>{initialData.shipment_code}</strong> kodunu yazın.
+                Müşteri, fiyat, güzergâh veya yük değişiklikleri doğrudan uygulanmaz.
+                Talebiniz şirket sahibinin onayına gönderilecektir.
               </p>
-              <Input
-                value={completedEditConfirmation}
-                onChange={(event) => setCompletedEditConfirmation(event.target.value)}
-                placeholder={initialData.shipment_code}
-                autoComplete="off"
+              <Textarea
+                value={revisionReason}
+                onChange={(event) => setRevisionReason(event.target.value)}
+                placeholder="Revizyonun neden gerekli olduğunu açıklayın (en az 10 karakter)"
+                rows={3}
               />
             </div>
           )}
@@ -1108,9 +1122,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || (isCompletedEdit && completedEditConfirmation !== initialData?.shipment_code)}
+              disabled={isSubmitting || (isCompletedEdit && revisionReason.trim().length < 10)}
             >
-              {isSubmitting ? "Kaydediliyor..." : editMode ? "Güncelle" : "Kaydet"}
+              {isSubmitting ? "Kaydediliyor..." : isCompletedEdit ? "Revizyon Talebi Oluştur" : editMode ? "Güncelle" : "Kaydet"}
             </Button>
           </DialogFooter>
         </form>

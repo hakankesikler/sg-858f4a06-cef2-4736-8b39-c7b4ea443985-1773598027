@@ -29,6 +29,11 @@ const eventLabels: Record<string, string> = {
   kolaybi_sync_started: "KolayBi fatura aktarımı başlatıldı",
   kolaybi_sync_succeeded: "KolayBi fatura aktarımı tamamlandı",
   kolaybi_sync_failed: "KolayBi fatura aktarımı tamamlanamadı",
+  cancelled: "Sevkiyat iptal edildi",
+  revision_requested: "Revizyon talebi oluşturuldu",
+  revision_rejected: "Revizyon talebi reddedildi",
+  revision_applied: "Revizyon onaylandı ve uygulandı",
+  invoice_cancelled: "Fatura iptal/iade süreci tamamlandı",
 };
 
 const fieldLabels: Record<string, string> = {
@@ -62,6 +67,7 @@ const fieldLabels: Record<string, string> = {
   sale_invoice_id: "Fatura bağlantısı",
   kolaybi_status: "KolayBi durumu",
   kolaybi_document_id: "KolayBi belge numarası",
+  cancellation_reason: "İptal nedeni",
 };
 
 function displayValue(value: unknown) {

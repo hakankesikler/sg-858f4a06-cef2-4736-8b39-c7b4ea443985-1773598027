@@ -32,9 +32,17 @@ export const workflowService = {
     return data as unknown as string;
   },
 
-  async deleteSalesInvoice(invoiceId: string) {
-    const { error } = await supabase.rpc("rex_delete_sales_invoice" as any, {
-      p_invoice_id: invoiceId,
+  async cancelSalesInvoice(input: {
+    invoiceId: string;
+    reason: string;
+    cancellationType: "iptal" | "iade";
+    externalReference?: string;
+  }) {
+    const { error } = await supabase.rpc("rex_cancel_sales_invoice" as any, {
+      p_invoice_id: input.invoiceId,
+      p_reason: input.reason,
+      p_cancellation_type: input.cancellationType,
+      p_external_reference: input.externalReference || null,
     } as any);
     if (error) throw error;
   },
