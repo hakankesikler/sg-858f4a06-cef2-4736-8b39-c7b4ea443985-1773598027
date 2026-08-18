@@ -201,3 +201,37 @@ test("KolayBi invoices use a retryable idempotent state machine and only officia
   assert.match(statusApi, /rex_queue_invoice_status_check/);
   assert.match(pdfApi, /Content-Type", "application\/pdf/);
 });
+
+test("incoming purchase invoices require documents, human matching and owner approval", async () => {
+  const [sql, inbox, service] = await Promise.all([
+    read("supabase/migrations/20260819013000_purchase_invoice_matching.sql"),
+    read("src/components/PurchaseInvoiceInbox.tsx"),
+    read("src/services/purchaseInvoiceService.ts"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.incoming_purchase_invoices/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.supplier_invoice_issuers/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.purchase_invoice_allocations/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.purchase_invoice_events/);
+  assert.match(sql, /BEFORE UPDATE OR DELETE ON public\.purchase_invoice_events/);
+  assert.match(sql, /Fatura ve iş bilgileri kontrol edildi onayı zorunludur/);
+  assert.match(sql, /v_email<>'info@rexlojistik\.com'/);
+  assert.match(sql, /Sevkiyat dağılımı ve genel gider toplamı fatura toplamına eşit olmalıdır/);
+  assert.match(sql, /incoming_purchase_invoices_legal_unique/);
+  assert.match(inbox, /KolayBi’den Kontrol Et/);
+  assert.match(inbox, /Kontrol Edildi, Eşleştir/);
+  assert.match(service, /purchase-invoice-documents/);
+  assert.match(service, /crypto\.subtle\.digest\("SHA-256"/);
+});
+
+test("KolayBi inbound purchase invoices are synchronized without exposing credentials", async () => {
+  const [syncApi, pdfApi] = await Promise.all([
+    read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
+    read("src/pages/api/kolaybi/purchase-invoices/[invoiceId]/pdf.ts"),
+  ]);
+  assert.match(syncApi, /direction: "inbound"/);
+  assert.match(syncApi, /KOLAYBI_COMPANY_ID/);
+  assert.match(syncApi, /rex_import_kolaybi_purchase_invoice/);
+  assert.match(syncApi, /Authorization: `Bearer \$\{accessToken\}`/);
+  assert.match(pdfApi, /invoices\/e-document\/view\?uuid=/);
+  assert.match(pdfApi, /Cache-Control", "private, no-store"/);
+});

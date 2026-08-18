@@ -61,6 +61,7 @@ import { EditInvoiceDialog } from "@/components/EditInvoiceDialog";
 import { CustomerTransactionsDialog } from "@/components/CustomerTransactionsDialog";
 import { workflowService } from "@/services/workflowService";
 import { invoiceIntegrationService } from "@/services/invoiceIntegrationService";
+import { PurchaseInvoiceInbox } from "@/components/PurchaseInvoiceInbox";
 
 const INVOICE_INTEGRATION_LABELS: Record<string, string> = {
   draft: "Fatura Taslağı",
@@ -1192,6 +1193,8 @@ export function AccountingModule() {
         </TabsContent>
 
         <TabsContent value="purchase" className="space-y-4">
+          <PurchaseInvoiceInbox />
+          <div className="hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="p-4 border-l-4 border-l-green-500">
               <div className="flex items-center justify-between">
@@ -1273,6 +1276,7 @@ export function AccountingModule() {
               </TableBody>
             </Table>
           </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="cari" className="space-y-4">
