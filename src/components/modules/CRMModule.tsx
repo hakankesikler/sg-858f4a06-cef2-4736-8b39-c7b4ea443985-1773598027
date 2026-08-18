@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Building2, Eye, Edit, Trash2, Users, Filter, CreditCard } from "lucide-react";
+import { Search, Plus, Building2, Eye, Edit, Trash2, Users, Filter, CreditCard, KeyRound, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { bankAccountService, type BankAccount } from "@/services/bankAccountService";
 import { downloadCsv, parseCsv } from "@/lib/csv";
+import { customerPortalService } from "@/services/customerPortalService";
 
 // Helper function to normalize Turkish characters for search
 const normalizeTurkish = (str: string): string => {
@@ -56,6 +57,10 @@ export function CRMModule() {
   const [deletingCustomer, setDeletingCustomer] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inviteCustomer, setInviteCustomer] = useState<any>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteLink, setInviteLink] = useState("");
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   
   // Bank account states
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
@@ -168,6 +173,35 @@ export function CRMModule() {
     setSelectedCustomer(customer);
     setIsDetailDialogOpen(true);
     loadBankAccounts(customer.id);
+  };
+
+  const openPortalInvite = (customer: any) => {
+    setInviteCustomer(customer);
+    setInviteEmail(customer.authorized_person_email || customer.email || customer.invoice_email || "");
+    setInviteLink("");
+    setIsInviteDialogOpen(true);
+  };
+
+  const createPortalInvite = async () => {
+    if (!inviteCustomer || !inviteEmail.trim()) {
+      toast({ title: "E-posta gerekli", description: "Müşterinin giriş yapacağı e-posta adresini yazın.", variant: "destructive" });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const invite = await customerPortalService.createInvite(inviteCustomer.id, inviteEmail.trim());
+      setInviteLink(`${window.location.origin}/musteri-kayit?token=${encodeURIComponent(invite.token)}`);
+      toast({ title: "Müşteri portalı daveti hazır", description: "Bağlantı 72 saat boyunca ve tek kullanım için geçerlidir." });
+    } catch (error: any) {
+      toast({ title: "Davet oluşturulamadı", description: error?.message || "Bu işlem için yönetici yetkisi gerekir.", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const copyInviteLink = async () => {
+    await navigator.clipboard.writeText(inviteLink);
+    toast({ title: "Davet bağlantısı kopyalandı" });
   };
 
   const filteredCustomers = useMemo(() => {
@@ -647,6 +681,16 @@ export function CRMModule() {
                       >
                         <Trash2 className="h-4 w-4 text-red-600" />
                       </button>
+                      {(customer.account_type === "musteri" || !customer.account_type) && (
+                        <button
+                          type="button"
+                          onClick={() => openPortalInvite(customer)}
+                          className="p-1 hover:bg-blue-50 rounded transition-colors"
+                          title="Müşteri portalı daveti oluştur"
+                        >
+                          <KeyRound className="h-4 w-4 text-blue-600" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -676,6 +720,34 @@ export function CRMModule() {
         onClose={() => setIsFormOpen(false)}
         onSuccess={loadCustomers}
       />
+
+      <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Kurumsal Müşteri Portalı Daveti</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-900">
+              <strong>{inviteCustomer?.name}</strong> kullanıcısı yalnızca kendi şirketine ait sevkiyatları ve teslim evraklarını görebilir.
+            </div>
+            <div>
+              <Label htmlFor="portal-invite-email">Giriş yapacak kişinin e-posta adresi</Label>
+              <Input id="portal-invite-email" type="email" value={inviteEmail} onChange={(event) => { setInviteEmail(event.target.value); setInviteLink(""); }} className="mt-1" placeholder="musteri@firma.com" disabled={Boolean(inviteLink)} />
+            </div>
+            {inviteLink && (
+              <div className="space-y-2">
+                <Label>Tek kullanımlık hesap açma bağlantısı</Label>
+                <div className="flex gap-2"><Input value={inviteLink} readOnly className="font-mono text-xs" /><Button type="button" variant="outline" onClick={copyInviteLink}><Copy className="h-4 w-4" /></Button></div>
+                <p className="text-xs text-slate-500">Bağlantı 72 saat geçerlidir. Müşteri bağlantıyı açıp kendi şifresini belirler.</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>Kapat</Button>
+            {!inviteLink ? <Button onClick={createPortalInvite} disabled={isSubmitting}>{isSubmitting ? "Hazırlanıyor..." : "Davet Bağlantısı Oluştur"}</Button> : <Button onClick={() => window.open(inviteLink, "_blank", "noopener,noreferrer")}><ExternalLink className="h-4 w-4 mr-2" />Bağlantıyı Aç</Button>}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* View Customer Dialog with Bank Accounts Tab */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>

@@ -70,6 +70,12 @@ export function Header() {
                 </svg>
                 Rex Portal
               </Link>
+              <Link
+                href="/musteri-giris"
+                className="text-orange-600 hover:text-orange-700 transition-colors font-semibold"
+              >
+                Müşteri Girişi
+              </Link>
             </nav>
 
             {/* Desktop CTA */}
@@ -183,6 +189,15 @@ export function Header() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   Rex Portal
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/musteri-giris"
+                  onClick={closeMobileMenu}
+                  className="block px-4 py-3 text-orange-600 hover:bg-orange-50 hover:text-orange-700 rounded-lg transition-colors font-semibold"
+                >
+                  Müşteri Girişi
                 </Link>
               </li>
             </ul>
