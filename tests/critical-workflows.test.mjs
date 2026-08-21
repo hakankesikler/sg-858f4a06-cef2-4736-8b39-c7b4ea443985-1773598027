@@ -431,6 +431,8 @@ test("web analytics collects server-trusted demographics without leaking URL tok
   assert.match(sql, /split_part\(split_part\(coalesce\(page_url, '\/'\), '\?', 1\), '#', 1\)/);
   assert.match(sql, /ip_address[\s\S]*NULL/);
   assert.match(sql, /auth\.role\(\) <> 'service_role'/);
+  assert.match(sql, /visitor_id = p_visitor_id::text/);
+  assert.match(sql, /p_visitor_id::text,/);
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.rex_record_visit_secure[\s\S]*FROM PUBLIC, anon, authenticated/);
   assert.match(api, /x-vercel-ip-country/);
   assert.match(api, /x-vercel-ip-city/);
