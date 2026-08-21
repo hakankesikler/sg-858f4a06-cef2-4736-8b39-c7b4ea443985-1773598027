@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS public.app_user_roles (
   user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email text NOT NULL,
-  role text NOT NULL CHECK (role IN ('admin', 'operations', 'accounting', 'hr', 'viewer', 'demo')),
+  role text NOT NULL CHECK (role IN ('admin', 'sales', 'operations', 'accounting', 'hr', 'viewer', 'demo')),
   active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -87,11 +87,11 @@ DO $$
 DECLARE
   table_name text;
 BEGIN
-  -- CRM: operations and accounting staff need customer/cari records.
+  -- CRM: sales, operations and accounting staff need customer/cari records.
   FOREACH table_name IN ARRAY ARRAY['customers','cari_cards','customer_bank_accounts','customer_payments','leads'] LOOP
     IF to_regclass(format('public.%I', table_name)) IS NOT NULL THEN
-      EXECUTE format('CREATE POLICY rex_select ON public.%I FOR SELECT TO authenticated USING (public.rex_has_role(ARRAY[''admin'',''operations'',''accounting'']))', table_name);
-      EXECUTE format('CREATE POLICY rex_write ON public.%I FOR ALL TO authenticated USING (public.rex_has_role(ARRAY[''admin'',''operations'',''accounting''])) WITH CHECK (public.rex_has_role(ARRAY[''admin'',''operations'',''accounting'']))', table_name);
+      EXECUTE format('CREATE POLICY rex_select ON public.%I FOR SELECT TO authenticated USING (public.rex_has_role(ARRAY[''admin'',''sales'',''operations'',''accounting'']))', table_name);
+      EXECUTE format('CREATE POLICY rex_write ON public.%I FOR ALL TO authenticated USING (public.rex_has_role(ARRAY[''admin'',''sales'',''operations'',''accounting''])) WITH CHECK (public.rex_has_role(ARRAY[''admin'',''sales'',''operations'',''accounting'']))', table_name);
     END IF;
   END LOOP;
 
@@ -200,7 +200,7 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
   SELECT CASE
-    WHEN public.rex_has_role(ARRAY['admin','operations','accounting','hr','viewer','demo']) THEN
+    WHEN public.rex_has_role(ARRAY['admin','sales','operations','accounting','hr','viewer','demo']) THEN
       jsonb_build_object(
         'totalShipments', (SELECT count(*) FROM public.shipments),
         'deliveredShipments', (SELECT count(*) FROM public.shipments WHERE status = 'teslim_edildi'),

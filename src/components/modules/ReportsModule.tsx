@@ -57,7 +57,7 @@ export function ReportsModule() {
       const { data: dashboard } = await supabase.rpc("rex_dashboard_stats" as any);
       const next = { ...initialSummary, ...(dashboard as any || {}) };
 
-      if (currentRole && ["admin", "operations", "accounting"].includes(currentRole)) {
+      if (currentRole && ["admin", "sales", "operations", "accounting"].includes(currentRole)) {
         const { count } = await supabase.from("customers").select("id", { count: "exact", head: true });
         next.customers = count || 0;
       }
@@ -107,7 +107,7 @@ export function ReportsModule() {
 
   const canLogistics = role === "admin" || role === "operations";
   const canFinance = role === "admin" || role === "accounting";
-  const canCustomers = canLogistics || canFinance;
+  const canCustomers = canLogistics || canFinance || role === "sales";
 
   return (
     <div className="space-y-6">

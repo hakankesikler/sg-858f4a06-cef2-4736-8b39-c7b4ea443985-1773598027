@@ -69,6 +69,12 @@ export default function LoginPage() {
         return;
       }
 
+      if (data.session.user.user_metadata?.must_change_password === true) {
+        toast({ title: "Şifre değişikliği gerekli", description: "İlk girişinizde geçici şifrenizi yenilemelisiniz." });
+        await router.push("/personel/sifre-olustur");
+        return;
+      }
+
       toast({ title: "Giriş başarılı", description: "Rex Portal'a hoş geldiniz." });
       await router.push(safeRedirect(router.query.redirect));
     } catch {

@@ -1,10 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "operations" | "accounting" | "hr" | "viewer" | "demo";
+export type AppRole = "admin" | "sales" | "operations" | "accounting" | "hr" | "viewer" | "demo";
 export type PortalModule = "dashboard" | "crm" | "logistics" | "accounting" | "hr" | "analytics" | "reports" | "settings";
 
 export const roleLabels: Record<AppRole, string> = {
   admin: "Yönetici",
+  sales: "Satış",
   operations: "Operasyon",
   accounting: "Muhasebe",
   hr: "İnsan Kaynakları",
@@ -14,6 +15,7 @@ export const roleLabels: Record<AppRole, string> = {
 
 const roleModules: Record<AppRole, PortalModule[]> = {
   admin: ["dashboard", "crm", "logistics", "accounting", "hr", "analytics", "reports", "settings"],
+  sales: ["dashboard", "crm", "reports"],
   operations: ["dashboard", "crm", "logistics", "analytics", "reports"],
   accounting: ["dashboard", "crm", "accounting", "reports"],
   hr: ["dashboard", "hr"],

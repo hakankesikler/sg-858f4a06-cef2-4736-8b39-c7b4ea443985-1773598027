@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, User, Bell, Shield, Palette, Globe, Save, RefreshCw } from "lucide-react";
+import { Building2, User, UserCog, Bell, Shield, Palette, Globe, Save, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { StaffUsersManager } from "@/components/settings/StaffUsersManager";
 
 export function SettingsModule() {
   const [activeTab, setActiveTab] = useState("company");
@@ -136,7 +137,7 @@ export function SettingsModule() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-6 w-full">
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 w-full h-auto">
           <TabsTrigger value="company" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             Şirket
@@ -144,6 +145,10 @@ export function SettingsModule() {
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="w-4 h-4" />
             Profil
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <UserCog className="w-4 h-4" />
+            Kullanıcılar
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell className="w-4 h-4" />
@@ -423,6 +428,10 @@ export function SettingsModule() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Kullanıcı Profili</h3>
             <p className="text-gray-600">Kullanıcı profil ayarları yakında eklenecek...</p>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="users">
+          <StaffUsersManager />
         </TabsContent>
 
         <TabsContent value="notifications">

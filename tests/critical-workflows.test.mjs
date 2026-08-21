@@ -445,3 +445,29 @@ test("web analytics collects server-trusted demographics without leaking URL tok
   assert.match(dashboard, /İşletim Sistemleri/);
   assert.match(dashboard, /Dil Dağılımı/);
 });
+
+test("staff account creation and department roles remain owner-controlled and server-enforced", async () => {
+  const [sql, api, manager, access, setup] = await Promise.all([
+    read("supabase/migrations/20260821030000_staff_user_access_management.sql"),
+    read("src/pages/api/admin/staff-users.ts"),
+    read("src/components/settings/StaffUsersManager.tsx"),
+    read("src/lib/access-control.ts"),
+    read("src/pages/personel/sifre-olustur.tsx"),
+  ]);
+  assert.match(sql, /role IN \('admin','sales','operations','accounting','hr','viewer','demo'\)/);
+  assert.match(sql, /lower\(email\) = 'info@rexlojistik\.com'/);
+  assert.match(sql, /staff_access_events/);
+  assert.match(sql, /rex_sales_write/);
+  assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(api, /auth\.admin\.createUser/);
+  assert.match(api, /must_change_password: true/);
+  assert.match(api, /Şirket sahibi hesabının yetkisi veya durumu değiştirilemez/);
+  assert.doesNotMatch(api, /MANAGEABLE_ROLES[^\n]*admin/);
+  assert.match(manager, /Yeni Personel Hesabı Aç/);
+  assert.match(manager, /Geçici Şifre/);
+  assert.match(manager, /Satış/);
+  assert.match(manager, /Operasyon/);
+  assert.match(manager, /Muhasebe/);
+  assert.match(access, /sales: \["dashboard", "crm", "reports"\]/);
+  assert.match(setup, /must_change_password: false/);
+});
