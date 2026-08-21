@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,10 @@ import {
   Tablet,
   ExternalLink,
   MapPin,
-  Activity
+  Activity,
+  Compass,
+  Languages,
+  Laptop,
 } from "lucide-react";
 import {
   getActiveVisitors,
@@ -25,6 +28,9 @@ import {
   getLocationStats,
   getTotalVisits,
   getUniqueVisitors,
+  getBrowserStats,
+  getOsStats,
+  getLanguageStats,
 } from "@/services/analyticsService";
 
 interface DailyStat {
@@ -51,7 +57,86 @@ interface ReferrerStat {
 interface LocationStat {
   country: string;
   city: string;
+  region: string;
   count: number;
+}
+
+interface BreakdownStat {
+  name: string;
+  count: number;
+}
+
+function countryName(code: string) {
+  if (!code) return "Bilinmiyor";
+  try {
+    return new Intl.DisplayNames(["tr"], { type: "region" }).of(code.toUpperCase()) || code;
+  } catch {
+    return code;
+  }
+}
+
+function languageName(code: string) {
+  if (!code) return "Bilinmiyor";
+  try {
+    return new Intl.DisplayNames(["tr"], { type: "language" }).of(code.split("-")[0]) || code;
+  } catch {
+    return code;
+  }
+}
+
+function BreakdownCard({
+  title,
+  description,
+  icon,
+  data,
+  loading,
+  label = (value) => value,
+  className = "",
+}: {
+  title: string;
+  description: string;
+  icon: ReactNode;
+  data: BreakdownStat[];
+  loading: boolean;
+  label?: (value: string) => string;
+  className?: string;
+}) {
+  const breakdownTotal = data.reduce((sum, item) => sum + item.count, 0);
+  return (
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">{icon}{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">Yükleniyor...</div>
+        ) : data.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">Yeni ziyaretlerle veri oluşacaktır</div>
+        ) : (
+          <div className="space-y-3">
+            {data.map((item) => {
+              const percentage = breakdownTotal > 0 ? Math.round((item.count / breakdownTotal) * 100) : 0;
+              return (
+                <div key={item.name} className="space-y-2 p-3 rounded-lg border">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium truncate">{label(item.name)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">%{percentage}</span>
+                      <Badge variant="secondary">{item.count}</Badge>
+                    </div>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-1.5">
+                    <div className="bg-primary h-1.5 rounded-full" style={{ width: `${percentage}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export function AnalyticsModule() {
@@ -63,6 +148,9 @@ export function AnalyticsModule() {
   const [topReferrers, setTopReferrers] = useState<ReferrerStat[]>([]);
   const [deviceStats, setDeviceStats] = useState({ desktop: 0, mobile: 0, tablet: 0 });
   const [locationStats, setLocationStats] = useState<LocationStat[]>([]);
+  const [browserStats, setBrowserStats] = useState<BreakdownStat[]>([]);
+  const [osStats, setOsStats] = useState<BreakdownStat[]>([]);
+  const [languageStats, setLanguageStats] = useState<BreakdownStat[]>([]);
   const [timeRange, setTimeRange] = useState<"7" | "30" | "90">("30");
   const [loading, setLoading] = useState(true);
 
@@ -93,6 +181,9 @@ export function AnalyticsModule() {
         referrersData,
         devicesData,
         locationsData,
+        browsersData,
+        operatingSystemsData,
+        languagesData,
       ] = await Promise.all([
         getActiveVisitors(),
         getTotalVisits(days),
@@ -102,6 +193,9 @@ export function AnalyticsModule() {
         getTopReferrers(10),
         getDeviceStats(days),
         getLocationStats(days, 10),
+        getBrowserStats(days),
+        getOsStats(days),
+        getLanguageStats(days),
       ]);
 
       setActiveVisitors(activeCount);
@@ -112,6 +206,9 @@ export function AnalyticsModule() {
       setTopReferrers(referrersData as unknown as ReferrerStat[]);
       setDeviceStats(devicesData);
       setLocationStats(locationsData as unknown as LocationStat[]);
+      setBrowserStats(browsersData);
+      setOsStats(operatingSystemsData);
+      setLanguageStats(languagesData);
     } catch (error) {
       console.error("Error loading analytics:", error);
     } finally {
@@ -197,9 +294,17 @@ export function AnalyticsModule() {
 
         {/* Detailed Statistics */}
         <TabsContent value={timeRange} className="space-y-6 mt-6">
+          <div>
+            <h3 className="text-xl font-semibold flex items-center gap-2">
+              <Globe className="h-5 w-5" /> Ziyaretçi Profili ve Demografi
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ülke, şehir, cihaz ve teknik kullanım dağılımları; IP adresi saklanmaz.
+            </p>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Top Pages */}
-            <Card>
+            <Card className="order-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
@@ -232,7 +337,7 @@ export function AnalyticsModule() {
             </Card>
 
             {/* Top Referrers */}
-            <Card>
+            <Card className="order-7">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Globe className="h-5 w-5" />
@@ -268,7 +373,7 @@ export function AnalyticsModule() {
             </Card>
 
             {/* Device Statistics */}
-            <Card>
+            <Card className="order-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Smartphone className="h-5 w-5" />
@@ -351,7 +456,7 @@ export function AnalyticsModule() {
             </Card>
 
             {/* Location Statistics */}
-            <Card>
+            <Card className="order-1">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
@@ -363,14 +468,18 @@ export function AnalyticsModule() {
                 {loading ? (
                   <div className="text-center py-8 text-muted-foreground">Yükleniyor...</div>
                 ) : locationStats.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">Henüz konum verisi yok</div>
+                  <div className="text-center py-8 text-muted-foreground">
+                    Konum bilgisi yeni ziyaretlerle birlikte oluşacaktır
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {locationStats.map((location, index) => (
                       <div key={index} className="flex items-center justify-between gap-4 p-3 rounded-lg border">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm">{location.country}</p>
-                          <p className="text-xs text-muted-foreground">{location.city}</p>
+                          <p className="font-medium text-sm">{countryName(location.country)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {[location.city, location.region].filter(Boolean).join(" / ") || "Şehir bilinmiyor"}
+                          </p>
                         </div>
                         <Badge variant="secondary">{location.count}</Badge>
                       </div>
@@ -379,6 +488,34 @@ export function AnalyticsModule() {
                 )}
               </CardContent>
             </Card>
+
+            <BreakdownCard
+              title="Tarayıcılar"
+              description="Kullanılan internet tarayıcıları"
+              icon={<Compass className="h-5 w-5" />}
+              data={browserStats}
+              loading={loading}
+              className="order-3"
+            />
+
+            <BreakdownCard
+              title="İşletim Sistemleri"
+              description="Ziyaretçilerin kullandığı sistemler"
+              icon={<Laptop className="h-5 w-5" />}
+              data={osStats}
+              loading={loading}
+              className="order-4"
+            />
+
+            <BreakdownCard
+              title="Dil Dağılımı"
+              description="Tarayıcı dil tercihlerine göre"
+              icon={<Languages className="h-5 w-5" />}
+              data={languageStats}
+              loading={loading}
+              label={languageName}
+              className="order-5"
+            />
           </div>
 
           {/* Daily Trend Chart */}

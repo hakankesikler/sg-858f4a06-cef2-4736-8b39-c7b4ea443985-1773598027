@@ -420,3 +420,26 @@ test("delivery file antivirus scanning is server-side, quarantined and fail-visi
   assert.match(service, /\/api\/security\/scan-delivery-document/);
   assert.match(service, /crypto\.subtle\.digest\("SHA-256"/);
 });
+
+test("web analytics collects server-trusted demographics without leaking URL tokens or IP addresses", async () => {
+  const [sql, api, service, dashboard] = await Promise.all([
+    read("supabase/migrations/20260821010000_secure_web_analytics_demographics.sql"),
+    read("src/pages/api/analytics/visit.ts"),
+    read("src/services/analyticsService.ts"),
+    read("src/components/modules/AnalyticsModule.tsx"),
+  ]);
+  assert.match(sql, /split_part\(split_part\(coalesce\(page_url, '\/'\), '\?', 1\), '#', 1\)/);
+  assert.match(sql, /ip_address[\s\S]*NULL/);
+  assert.match(sql, /auth\.role\(\) <> 'service_role'/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.rex_record_visit_secure[\s\S]*FROM PUBLIC, anon, authenticated/);
+  assert.match(api, /x-vercel-ip-country/);
+  assert.match(api, /x-vercel-ip-city/);
+  assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(service, /split\(\/\[\?#\]\//);
+  assert.match(service, /\/api\/analytics\/visit/);
+  assert.doesNotMatch(service, /p_user_agent/);
+  assert.match(dashboard, /Coğrafi Konum/);
+  assert.match(dashboard, /Tarayıcılar/);
+  assert.match(dashboard, /İşletim Sistemleri/);
+  assert.match(dashboard, /Dil Dağılımı/);
+});

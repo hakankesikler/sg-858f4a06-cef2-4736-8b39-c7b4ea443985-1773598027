@@ -16,7 +16,6 @@ export default function App({ Component, pageProps }: AppProps) {
         page_url: url,
         page_title: document.title,
         referrer: document.referrer,
-        user_agent: navigator.userAgent,
       });
     };
 

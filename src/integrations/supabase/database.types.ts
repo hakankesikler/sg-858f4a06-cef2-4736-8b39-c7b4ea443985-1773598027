@@ -2218,6 +2218,7 @@ export type Database = {
           id: string
           ip_address: string | null
           is_new_visitor: boolean | null
+          language: string | null
           os: string | null
           page_title: string | null
           page_url: string
@@ -2228,6 +2229,7 @@ export type Database = {
           session_duration: number | null
           session_id: string | null
           time_on_page: number | null
+          timezone: string | null
           user_agent: string | null
           utm_campaign: string | null
           utm_medium: string | null
@@ -2245,6 +2247,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           is_new_visitor?: boolean | null
+          language?: string | null
           os?: string | null
           page_title?: string | null
           page_url: string
@@ -2255,6 +2258,7 @@ export type Database = {
           session_duration?: number | null
           session_id?: string | null
           time_on_page?: number | null
+          timezone?: string | null
           user_agent?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null
@@ -2272,6 +2276,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           is_new_visitor?: boolean | null
+          language?: string | null
           os?: string | null
           page_title?: string | null
           page_url?: string
@@ -2282,6 +2287,7 @@ export type Database = {
           session_duration?: number | null
           session_id?: string | null
           time_on_page?: number | null
+          timezone?: string | null
           user_agent?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null

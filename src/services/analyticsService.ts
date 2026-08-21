@@ -8,7 +8,21 @@ interface VisitorInfo {
   page_url: string;
   page_title?: string;
   referrer?: string;
-  user_agent?: string;
+}
+
+function sanitizePageUrl(value: string): string {
+  const route = (value || "/").split(/[?#]/, 1)[0];
+  return route.startsWith("/") ? route.slice(0, 500) || "/" : "/";
+}
+
+function sanitizeReferrer(value: string): string {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    return `${url.origin}${url.pathname}`.slice(0, 500);
+  } catch {
+    return "";
+  }
 }
 
 // Generate or get visitor ID
@@ -29,43 +43,29 @@ function getOrCreateVisitorId(): string {
   return visitorId;
 }
 
-// Track a page visit through the constrained database function.
+// Track through the same-origin server route so geographic headers cannot be spoofed.
 export async function trackPageVisit(visitorInfo: VisitorInfo) {
   try {
-    const deviceType = getDeviceType(visitorInfo.user_agent || navigator.userAgent);
     const visitorId = getOrCreateVisitorId();
-
-    const { error } = await supabase.rpc("rex_record_visit" as any, {
-      p_visitor_id: visitorId,
-      p_page_url: visitorInfo.page_url,
-      p_page_title: visitorInfo.page_title || document.title,
-      p_referrer: visitorInfo.referrer || document.referrer,
-      p_user_agent: visitorInfo.user_agent || navigator.userAgent,
-      p_device_type: deviceType,
-    } as any);
-
-    if (error) {
-      console.error("Error tracking visit:", error);
-    }
+    const response = await fetch("/api/analytics/visit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        visitorId,
+        pageUrl: sanitizePageUrl(visitorInfo.page_url),
+        pageTitle: (visitorInfo.page_title || document.title).slice(0, 300),
+        referrer: sanitizeReferrer(visitorInfo.referrer || document.referrer),
+        screenResolution: `${window.screen.width}x${window.screen.height}`,
+        language: navigator.language,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }),
+    });
+    if (!response.ok) console.error("Error tracking visit:", response.status);
   } catch (error) {
     console.error("Error in trackPageVisit:", error);
     // Even if everything fails, don't throw - just log
   }
-}
-
-// Get device type from user agent
-function getDeviceType(userAgent: string): "desktop" | "mobile" | "tablet" {
-  const ua = userAgent.toLowerCase();
-  
-  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
-    return "tablet";
-  }
-  
-  if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
-    return "mobile";
-  }
-  
-  return "desktop";
 }
 
 // Get real-time active visitors (last 5 minutes)
@@ -118,7 +118,7 @@ export async function getTopPages(limit: number = 10, days: number = 30) {
 
   // Count page visits
   const pageCounts = (data || []).reduce((acc: Record<string, { url: string; title: string; count: number }>, visit) => {
-    const key = (visit.page_url || "/").split("?")[0];
+    const key = (visit.page_url || "/").split(/[?#]/)[0];
     if (!acc[key]) {
       acc[key] = { url: key, title: visit.page_title || "", count: 0 };
     }
@@ -180,7 +180,7 @@ export async function getLocationStats(days: number = 30, limit: number = 10) {
 
   const { data, error } = await supabase
     .from("website_visits")
-    .select("country, city")
+    .select("country, city, region")
     .gte("visited_at", startDate)
     .not("country", "is", null);
 
@@ -190,10 +190,10 @@ export async function getLocationStats(days: number = 30, limit: number = 10) {
   }
 
   // Count by location
-  const locationCounts = (data || []).reduce((acc: Record<string, { country: string; city: string; count: number }>, visit) => {
-    const key = `${visit.country}-${visit.city}`;
+  const locationCounts = (data || []).reduce((acc: Record<string, { country: string; city: string; region: string; count: number }>, visit) => {
+    const key = `${visit.country}-${visit.region}-${visit.city}`;
     if (!acc[key]) {
-      acc[key] = { country: visit.country || "", city: visit.city || "", count: 0 };
+      acc[key] = { country: visit.country || "", city: visit.city || "", region: visit.region || "", count: 0 };
     }
     acc[key].count++;
     return acc;
@@ -241,3 +241,36 @@ export async function getUniqueVisitors(days: number = 30) {
   const uniqueVisitors = new Set((data || []).map(v => v.visitor_id));
   return uniqueVisitors.size;
 }
+
+async function getBreakdown(
+  column: "browser" | "os" | "language",
+  days: number,
+  limit: number,
+) {
+  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("website_visits")
+    .select(column)
+    .gte("visited_at", startDate)
+    .not(column, "is", null);
+
+  if (error) {
+    console.error(`Error fetching ${column} stats:`, error);
+    return [];
+  }
+
+  const counts = (data || []).reduce((acc: Record<string, number>, visit: Record<string, unknown>) => {
+    const value = typeof visit[column] === "string" && visit[column] ? visit[column] : "Bilinmiyor";
+    acc[value] = (acc[value] || 0) + 1;
+    return acc;
+  }, {});
+
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+export const getBrowserStats = (days = 30, limit = 8) => getBreakdown("browser", days, limit);
+export const getOsStats = (days = 30, limit = 8) => getBreakdown("os", days, limit);
+export const getLanguageStats = (days = 30, limit = 8) => getBreakdown("language", days, limit);
