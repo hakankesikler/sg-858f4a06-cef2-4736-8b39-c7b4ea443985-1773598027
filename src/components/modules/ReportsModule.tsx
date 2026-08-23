@@ -3,7 +3,8 @@ import { BarChart3, Download, Package, Users, Wallet } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { AppRole, getCurrentUserRole } from "@/lib/access-control";
+import { getCurrentUserAccess } from "@/lib/access-control";
+import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 import { useToast } from "@/hooks/use-toast";
 
 type ReportSummary = {
@@ -43,7 +44,7 @@ function downloadCsv(fileName: string, rows: Record<string, unknown>[]) {
 
 export function ReportsModule() {
   const { toast } = useToast();
-  const [role, setRole] = useState<AppRole | null>(null);
+  const [permissions, setPermissions] = useState<PermissionMap | null>(null);
   const [summary, setSummary] = useState(initialSummary);
   const [loading, setLoading] = useState(true);
 
@@ -51,18 +52,19 @@ export function ReportsModule() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const currentRole = await getCurrentUserRole(user.id);
-      setRole(currentRole);
+      const currentAccess = await getCurrentUserAccess(user.id);
+      if (!currentAccess) return;
+      setPermissions(currentAccess.permissions);
 
       const { data: dashboard } = await supabase.rpc("rex_dashboard_stats" as any);
       const next = { ...initialSummary, ...(dashboard as any || {}) };
 
-      if (currentRole && ["admin", "sales", "operations", "accounting"].includes(currentRole)) {
+      if (hasPermission(currentAccess.permissions, "reports.sales")) {
         const { count } = await supabase.from("customers").select("id", { count: "exact", head: true });
         next.customers = count || 0;
       }
 
-      if (currentRole === "admin" || currentRole === "accounting") {
+      if (hasPermission(currentAccess.permissions, "reports.accounting")) {
         const [{ data: sales }, { data: purchases }] = await Promise.all([
           supabase.from("sales_invoices").select("grand_total"),
           supabase.from("purchases").select("total"),
@@ -105,9 +107,9 @@ export function ReportsModule() {
 
   if (loading) return <div className="p-8 text-center text-gray-500">Raporlar hazırlanıyor...</div>;
 
-  const canLogistics = role === "admin" || role === "operations";
-  const canFinance = role === "admin" || role === "accounting";
-  const canCustomers = canLogistics || canFinance || role === "sales";
+  const canLogistics = !!permissions && hasPermission(permissions, "reports.operations");
+  const canFinance = !!permissions && hasPermission(permissions, "reports.accounting");
+  const canCustomers = !!permissions && hasPermission(permissions, "reports.sales");
 
   return (
     <div className="space-y-6">

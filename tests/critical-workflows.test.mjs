@@ -471,3 +471,31 @@ test("staff account creation and department roles remain owner-controlled and se
   assert.match(access, /sales: \["dashboard", "crm", "reports"\]/);
   assert.match(setup, /must_change_password: false/);
 });
+
+test("staff permissions support audited per-person cross-department view and manage levels", async () => {
+  const [sql, api, manager, permissions, portal] = await Promise.all([
+    read("supabase/migrations/20260821040000_staff_granular_permissions.sql"),
+    read("src/pages/api/admin/staff-users.ts"),
+    read("src/components/settings/StaffUsersManager.tsx"),
+    read("src/lib/staff-permissions.ts"),
+    read("src/pages/personel/profil.tsx"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.staff_permission_overrides/);
+  assert.match(sql, /access_level IN \('none','view','manage'\)/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_has_permission/);
+  assert.match(sql, /CREATE TRIGGER rex_granular_permission_guard/);
+  assert.match(sql, /rex_create_customer_portal_invite[\s\S]*crm\.portal_invites/);
+  assert.match(sql, /permissions_changed/);
+  assert.match(sql, /public\.rex_is_owner_admin\(\)/);
+  assert.match(api, /req\.method === "PUT"/);
+  assert.match(api, /staff_permission_overrides/);
+  assert.match(api, /Yönetici hesaplarının tam yetkisi kişisel izinlerle daraltılamaz/);
+  assert.match(manager, /Kişiye Özel Çapraz Yetkiler/);
+  assert.match(manager, /Sadece görüntüleme/);
+  assert.match(manager, /İşlem yapabilir/);
+  assert.match(permissions, /accounting\.purchase/);
+  assert.match(permissions, /operations\.shipments/);
+  assert.match(permissions, /sales\.work_orders/);
+  assert.match(portal, /getCurrentUserAccess/);
+  assert.match(portal, /hasPermission\(permissions, "crm\.customers", "manage"\)/);
+});

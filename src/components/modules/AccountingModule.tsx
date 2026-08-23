@@ -62,6 +62,7 @@ import { CustomerTransactionsDialog } from "@/components/CustomerTransactionsDia
 import { workflowService } from "@/services/workflowService";
 import { invoiceIntegrationService } from "@/services/invoiceIntegrationService";
 import { PurchaseInvoiceInbox } from "@/components/PurchaseInvoiceInbox";
+import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 
 const INVOICE_INTEGRATION_LABELS: Record<string, string> = {
   draft: "Fatura Taslağı",
@@ -120,8 +121,14 @@ interface ExpenseCategory {
 
 const CUSTOMER_PAGE_SIZE = 50;
 
-export function AccountingModule() {
+export function AccountingModule({ permissions }: { permissions: PermissionMap }) {
   const { toast } = useToast();
+  const canViewSales = hasPermission(permissions, "accounting.sales");
+  const canManageSales = hasPermission(permissions, "accounting.sales", "manage");
+  const canViewPurchase = hasPermission(permissions, "accounting.purchase");
+  const canViewAccounts = hasPermission(permissions, "accounting.accounts");
+  const canViewExpenses = hasPermission(permissions, "accounting.expenses");
+  const defaultAccountingTab = canViewSales ? "sales" : canViewPurchase ? "purchase" : canViewAccounts ? "cari" : "expenses";
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -197,67 +204,47 @@ export function AccountingModule() {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const customersData = await crmService.getCustomers();
-      console.log("=== ACCOUNTING MODULE - LOADED CUSTOMERS ===");
-      console.log("Total customers:", customersData.length);
-      customersData.forEach((c: any) => {
-        console.log(`Customer: ${c.name}, VKN: ${c.vergi_no}, TC: ${c.tc_no}`);
-      });
-      setCustomers(customersData);
+      if (canViewAccounts) {
+        const customersData = await crmService.getCustomers();
+        setCustomers(customersData);
+      }
       
-      const { data: purchasesData, error: purchasesError } = await supabase
+      if (canViewPurchase) {
+        const { data: purchasesData, error: purchasesError } = await supabase
         .from("purchases")
         .select("*")
         .order("created_at", { ascending: false });
-      
-      console.log("=== ACCOUNTING - PURCHASES ===");
-      console.log("Purchases data:", purchasesData);
-      console.log("Purchases error:", purchasesError);
-      console.log("Purchases count:", purchasesData?.length || 0);
-      
-      if (purchasesError) {
-        console.error("Purchases error:", purchasesError);
-      } else {
+        if (purchasesError) throw purchasesError;
         setPurchaseInvoices((purchasesData || []).filter(invoice =>
           !invoice.purchase_no?.startsWith("BORC-") && !invoice.purchase_no?.startsWith("ALACAK-")
         ));
       }
       
-      const { data: salesData, error: salesError } = await supabase
+      if (canViewSales) {
+        const { data: salesData, error: salesError } = await supabase
         .from("sales_invoices")
         .select("*")
         .order("created_at", { ascending: false });
-      
-      console.log("=== ACCOUNTING - SALES INVOICES ===");
-      console.log("Sales data:", salesData);
-      console.log("Sales error:", salesError);
-      console.log("Sales count:", salesData?.length || 0);
-      if (salesData && salesData.length > 0) {
-        console.log("First invoice:", salesData[0]);
-        console.log("First invoice customer_id:", salesData[0].customer_id);
-        console.log("First invoice shipment_id:", salesData[0].shipment_id);
-      }
-      
-      if (salesError) {
-        console.error("Sales error:", salesError);
-      } else {
+        if (salesError) throw salesError;
         setSalesInvoices((salesData || []).filter(invoice =>
           !invoice.invoice_no?.startsWith("BORC-") && !invoice.invoice_no?.startsWith("ALACAK-")
         ));
       }
 
-      const { data: paymentsData, error: paymentsError } = await supabase
-        .from("customer_payments")
-        .select("customer_id, transaction_type, amount, currency");
-      if (paymentsError) throw paymentsError;
-      setCustomerPayments(paymentsData || []);
+      if (canViewAccounts) {
+        const { data: paymentsData, error: paymentsError } = await supabase
+          .from("customer_payments")
+          .select("customer_id, transaction_type, amount, currency");
+        if (paymentsError) throw paymentsError;
+        setCustomerPayments(paymentsData || []);
 
-      const { data: adjustmentsData, error: adjustmentsError } = await (supabase as any)
-        .from("account_transactions")
-        .select("customer_id, transaction_type, amount, currency")
-        .not("customer_id", "is", null);
-      if (adjustmentsError) throw adjustmentsError;
-      setCustomerAdjustments(adjustmentsData || []);
+        const { data: adjustmentsData, error: adjustmentsError } = await (supabase as any)
+          .from("account_transactions")
+          .select("customer_id, transaction_type, amount, currency")
+          .not("customer_id", "is", null);
+        if (adjustmentsError) throw adjustmentsError;
+        setCustomerAdjustments(adjustmentsData || []);
+      }
     } catch (error) {
       console.error("Error loading accounting data:", error);
       toast({
@@ -275,6 +262,7 @@ export function AccountingModule() {
   }, []);
 
   useEffect(() => {
+    if (!canManageSales) return;
     let active = true;
     const processDueInvoices = async () => {
       try {
@@ -290,7 +278,7 @@ export function AccountingModule() {
       active = false;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [canManageSales]);
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -883,14 +871,13 @@ export function AccountingModule() {
 
   return (
     <div className="p-6 space-y-6">
-      <Tabs defaultValue="panel" className="w-full">
-        <TabsList>
-          <TabsTrigger value="panel">Panel</TabsTrigger>
-          <TabsTrigger value="sales">Satış</TabsTrigger>
-          <TabsTrigger value="purchase">Alış</TabsTrigger>
-          <TabsTrigger value="cari">Cari Hesaplar</TabsTrigger>
-          <TabsTrigger value="expenses">Giderler</TabsTrigger>
-          <TabsTrigger value="accounts">Hesaplar</TabsTrigger>
+      <Tabs defaultValue={defaultAccountingTab} className="w-full">
+        <TabsList className="flex flex-wrap h-auto">
+          {canViewSales && <TabsTrigger value="sales">Satış</TabsTrigger>}
+          {canViewPurchase && <TabsTrigger value="purchase">Alış</TabsTrigger>}
+          {canViewAccounts && <TabsTrigger value="cari">Cari Hesaplar</TabsTrigger>}
+          {canViewExpenses && <TabsTrigger value="expenses">Giderler</TabsTrigger>}
+          {canViewAccounts && <TabsTrigger value="accounts">Hesaplar</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="panel" className="space-y-4">

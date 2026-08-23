@@ -14,7 +14,8 @@ import { AnalyticsModule } from "@/components/modules/AnalyticsModule";
 import { ReportsModule } from "@/components/modules/ReportsModule";
 import { SettingsModule } from "@/components/modules/SettingsModule";
 import { supabase } from "@/integrations/supabase/client";
-import { AppRole, PortalModule, canAccessModule, canEditOperations, getCurrentUserRole, roleLabels } from "@/lib/access-control";
+import { AppRole, PortalModule, canAccessModule, getCurrentUserAccess, roleLabels } from "@/lib/access-control";
+import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 import { useToast } from "@/hooks/use-toast";
 import {
   Activity as ActivityIcon,
@@ -72,6 +73,7 @@ export default function PersonelProfil() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [permissions, setPermissions] = useState<PermissionMap | null>(null);
   const [stats, setStats] = useState<DashboardStats>(emptyStats);
 
   useEffect(() => {
@@ -84,8 +86,8 @@ export default function PersonelProfil() {
         return;
       }
 
-      const currentRole = await getCurrentUserRole(session.user.id);
-      if (!currentRole) {
+      const currentAccess = await getCurrentUserAccess(session.user.id);
+      if (!currentAccess) {
         await supabase.auth.signOut();
         toast({ title: "Erişim reddedildi", description: "Bu hesabın portal yetkisi bulunmuyor.", variant: "destructive" });
         await router.replace("/login");
@@ -94,10 +96,11 @@ export default function PersonelProfil() {
 
       if (!mounted) return;
       setUser(session.user);
-      setRole(currentRole);
+      setRole(currentAccess.role);
+      setPermissions(currentAccess.permissions);
 
       const requestedModule = typeof router.query.module === "string" ? router.query.module as PortalModule : "dashboard";
-      if (canAccessModule(currentRole, requestedModule)) {
+      if (canAccessModule(currentAccess.role, requestedModule, currentAccess.permissions)) {
         setActiveModule(requestedModule);
       } else {
         setActiveModule("dashboard");
@@ -127,12 +130,12 @@ export default function PersonelProfil() {
   }, [role]);
 
   const modules = useMemo(
-    () => role ? moduleDefinitions.filter((module) => canAccessModule(role, module.id)) : [],
-    [role],
+    () => role && permissions ? moduleDefinitions.filter((module) => canAccessModule(role, module.id, permissions)) : [],
+    [role, permissions],
   );
 
   const handleModuleClick = async (moduleId: PortalModule) => {
-    if (!role || !canAccessModule(role, moduleId)) return;
+    if (!role || !permissions || !canAccessModule(role, moduleId, permissions)) return;
     setActiveModule(moduleId);
     setSidebarOpen(false);
     await router.replace({ pathname: "/personel/profil", query: { module: moduleId } }, undefined, { shallow: true });
@@ -144,7 +147,7 @@ export default function PersonelProfil() {
     await router.replace("/login");
   };
 
-  if (loading || !role) {
+  if (loading || !role || !permissions) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -156,7 +159,8 @@ export default function PersonelProfil() {
   }
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Kullanıcı";
-  const editableOperations = canEditOperations(role);
+  const canManageCustomers = hasPermission(permissions, "crm.customers", "manage");
+  const canManageWorkOrders = hasPermission(permissions, "sales.work_orders", "manage");
 
   const renderDashboard = () => (
     <div className="space-y-6">
@@ -198,20 +202,20 @@ export default function PersonelProfil() {
         </Card>
       </div>
 
-      {editableOperations && (
+      {(canManageCustomers || canManageWorkOrders) && (
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Hızlı İşlemler</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="p-6 border-2 border-blue-200">
+            {canManageCustomers && <Card className="p-6 border-2 border-blue-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Yeni Cari Ekle</h3>
               <p className="text-sm text-gray-600 mb-4">Müşteri veya tedarikçi kaydı oluşturun.</p>
               <Button className="w-full" onClick={() => setIsCariFormOpen(true)}><Plus className="w-4 h-4 mr-2" />Cari Formu Aç</Button>
-            </Card>
-            <Card className="p-6 border-2 border-green-200">
+            </Card>}
+            {canManageWorkOrders && <Card className="p-6 border-2 border-green-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Yeni İş Girişi</h3>
               <p className="text-sm text-gray-600 mb-4">Yeni sevkiyat kaydı oluşturun.</p>
               <Button className="w-full bg-green-700 hover:bg-green-800" onClick={() => setIsIsGirisFormOpen(true)}><Package className="w-4 h-4 mr-2" />İş Giriş Formu Aç</Button>
-            </Card>
+            </Card>}
           </div>
         </div>
       )}
@@ -219,11 +223,11 @@ export default function PersonelProfil() {
   );
 
   const renderModuleContent = () => {
-    if (!canAccessModule(role, activeModule)) return renderDashboard();
+    if (!canAccessModule(role, activeModule, permissions)) return renderDashboard();
     switch (activeModule) {
-      case "crm": return <CRMModule />;
+      case "crm": return <CRMModule permissions={permissions} />;
       case "logistics": return <LogisticsModule />;
-      case "accounting": return <AccountingModule />;
+      case "accounting": return <AccountingModule permissions={permissions} />;
       case "hr": return <HRModule />;
       case "analytics": return <AnalyticsModule />;
       case "reports": return <ReportsModule />;
@@ -289,8 +293,8 @@ export default function PersonelProfil() {
         </div>
       </SidebarProvider>
 
-      {editableOperations && <CariForm isOpen={isCariFormOpen} onClose={() => setIsCariFormOpen(false)} />}
-      {editableOperations && <IsGirisForm isOpen={isIsGirisFormOpen} onClose={() => setIsIsGirisFormOpen(false)} />}
+      {canManageCustomers && <CariForm isOpen={isCariFormOpen} onClose={() => setIsCariFormOpen(false)} />}
+      {canManageWorkOrders && <IsGirisForm isOpen={isIsGirisFormOpen} onClose={() => setIsIsGirisFormOpen(false)} />}
     </>
   );
 }

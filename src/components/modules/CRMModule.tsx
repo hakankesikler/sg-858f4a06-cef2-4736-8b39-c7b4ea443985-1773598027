@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { bankAccountService, type BankAccount } from "@/services/bankAccountService";
 import { downloadCsv, parseCsv } from "@/lib/csv";
 import { customerPortalService } from "@/services/customerPortalService";
+import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 
 // Helper function to normalize Turkish characters for search
 const normalizeTurkish = (str: string): string => {
@@ -41,8 +42,10 @@ const normalizeTurkish = (str: string): string => {
 
 const PAGE_SIZE = 50;
 
-export function CRMModule() {
+export function CRMModule({ permissions }: { permissions: PermissionMap }) {
   const { toast } = useToast();
+  const canManageCustomers = hasPermission(permissions, "crm.customers", "manage");
+  const canManagePortalInvites = hasPermission(permissions, "crm.portal_invites", "manage");
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -443,20 +446,20 @@ export function CRMModule() {
 
       {/* Actions */}
       <div className="flex flex-wrap gap-4">
-        <Button onClick={() => setIsFormOpen(true)} className="bg-green-600 hover:bg-green-700">
+        {canManageCustomers && <Button onClick={() => setIsFormOpen(true)} className="bg-green-600 hover:bg-green-700">
           <Plus className="h-4 w-4 mr-2" />
           Cari Oluştur
-        </Button>
+        </Button>}
         <Button onClick={downloadCariTemplate} variant="outline">
           Cari Şablon İndir
         </Button>
-        <Button 
+        {canManageCustomers && <Button
           variant="outline"
           onClick={() => document.getElementById("cari-import-input")?.click()}
           disabled={isImporting}
         >
           {isImporting ? "Yükleniyor..." : "CSV'den Cari Yükle"}
-        </Button>
+        </Button>}
         <input
           id="cari-import-input"
           type="file"
@@ -665,23 +668,23 @@ export function CRMModule() {
                       >
                         <Eye className="h-4 w-4 text-gray-600" />
                       </button>
-                      <button
+                      {canManageCustomers && <button
                         type="button"
                         onClick={() => handleEditCustomer(customer)}
                         className="p-1 hover:bg-gray-100 rounded transition-colors"
                         title="Düzenle"
                       >
                         <Edit className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button
+                      </button>}
+                      {canManageCustomers && <button
                         type="button"
                         onClick={() => handleDeleteClick(customer)}
                         className="p-1 hover:bg-gray-100 rounded transition-colors"
                         title="Sil"
                       >
                         <Trash2 className="h-4 w-4 text-red-600" />
-                      </button>
-                      {(customer.account_type === "musteri" || !customer.account_type) && (
+                      </button>}
+                      {canManagePortalInvites && (customer.account_type === "musteri" || !customer.account_type) && (
                         <button
                           type="button"
                           onClick={() => openPortalInvite(customer)}

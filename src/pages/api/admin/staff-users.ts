@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { permissionCatalog, type PermissionKey, type PermissionLevel } from "@/lib/staff-permissions";
 
 const MANAGEABLE_ROLES = ["sales", "operations", "accounting", "viewer"] as const;
 type ManageableRole = (typeof MANAGEABLE_ROLES)[number];
@@ -10,6 +11,18 @@ function text(value: unknown, max: number) {
 
 function isManageableRole(value: unknown): value is ManageableRole {
   return typeof value === "string" && MANAGEABLE_ROLES.includes(value as ManageableRole);
+}
+
+const permissionKeys = new Set<string>(permissionCatalog.map((item) => item.key));
+
+function parsePermissionOverrides(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const result: Partial<Record<PermissionKey, PermissionLevel>> = {};
+  for (const [key, level] of Object.entries(value)) {
+    if (!permissionKeys.has(key) || !["inherit", "none", "view", "manage"].includes(String(level))) return null;
+    if (level !== "inherit") result[key as PermissionKey] = level as PermissionLevel;
+  }
+  return result;
 }
 
 function requestOriginIsValid(req: NextApiRequest) {
@@ -27,7 +40,7 @@ export const config = { api: { bodyParser: { sizeLimit: "8kb" } } };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader("Cache-Control", "private, no-store");
-  if (!["GET", "POST", "PATCH"].includes(req.method || "")) {
+  if (!["GET", "POST", "PATCH", "PUT"].includes(req.method || "")) {
     return res.status(405).json({ error: "Desteklenmeyen işlem." });
   }
   if (!requestOriginIsValid(req)) return res.status(403).json({ error: "Geçersiz istek kaynağı." });
@@ -65,12 +78,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === "GET") {
-    const [{ data: roleRows, error: roleError }, { data: authUsers, error: usersError }] = await Promise.all([
+    const [{ data: roleRows, error: roleError }, { data: authUsers, error: usersError }, { data: overrideRows, error: overridesError }] = await Promise.all([
       adminDb.from("app_user_roles").select("user_id,email,role,active,created_at,updated_at").order("created_at"),
       adminDb.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      adminDb.from("staff_permission_overrides").select("user_id,permission_key,access_level"),
     ]);
-    if (roleError || usersError) return res.status(500).json({ error: "Kullanıcı listesi alınamadı." });
+    if (roleError || usersError || overridesError) return res.status(500).json({ error: "Kullanıcı listesi ve kişisel yetkiler alınamadı." });
     const authMap = new Map((authUsers.users || []).map((user) => [user.id, user]));
+    const overridesByUser = new Map<string, Record<string, PermissionLevel>>();
+    for (const row of overrideRows || []) {
+      const current = overridesByUser.get(row.user_id) || {};
+      current[row.permission_key] = row.access_level as PermissionLevel;
+      overridesByUser.set(row.user_id, current);
+    }
     return res.status(200).json({
       users: (roleRows || []).map((row) => {
         const authUser = authMap.get(row.user_id);
@@ -80,9 +100,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           last_sign_in_at: authUser?.last_sign_in_at || null,
           invited_at: authUser?.invited_at || null,
           is_owner: row.email.toLowerCase() === "info@rexlojistik.com",
+          permission_overrides: overridesByUser.get(row.user_id) || {},
         };
       }),
     });
+  }
+
+  if (req.method === "PUT") {
+    const userId = text(req.body?.userId, 36);
+    const overrides = parsePermissionOverrides(req.body?.overrides);
+    if (!/^[0-9a-f-]{36}$/i.test(userId)) return res.status(400).json({ error: "Kullanıcı kimliği geçersiz." });
+    if (!overrides) return res.status(400).json({ error: "Kişisel yetki listesi geçersiz." });
+
+    const { data: target, error: targetError } = await adminDb
+      .from("app_user_roles")
+      .select("email,role,active")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (targetError || !target) return res.status(404).json({ error: "Kullanıcı bulunamadı." });
+    if (target.email.toLowerCase() === "info@rexlojistik.com" || target.role === "admin") {
+      return res.status(403).json({ error: "Yönetici hesaplarının tam yetkisi kişisel izinlerle daraltılamaz." });
+    }
+
+    const { data: previousRows, error: previousError } = await adminDb
+      .from("staff_permission_overrides")
+      .select("user_id,permission_key,access_level,updated_by,created_at,updated_at")
+      .eq("user_id", userId);
+    if (previousError) return res.status(500).json({ error: "Mevcut kişisel yetkiler okunamadı." });
+    const { error: deleteError } = await adminDb.from("staff_permission_overrides").delete().eq("user_id", userId);
+    if (deleteError) return res.status(500).json({ error: "Önceki kişisel yetkiler temizlenemedi." });
+    const rows = Object.entries(overrides).map(([permissionKey, accessLevel]) => ({
+      user_id: userId,
+      permission_key: permissionKey,
+      access_level: accessLevel,
+      updated_by: actor.id,
+      updated_at: new Date().toISOString(),
+    }));
+    if (rows.length) {
+      const { error: insertError } = await adminDb.from("staff_permission_overrides").insert(rows);
+      if (insertError) {
+        if (previousRows?.length) await adminDb.from("staff_permission_overrides").insert(previousRows);
+        return res.status(500).json({ error: "Kişisel yetkiler kaydedilemedi; önceki ayarlar korundu." });
+      }
+    }
+    await adminDb.from("staff_access_events").insert({
+      target_user_id: userId,
+      target_email: target.email,
+      event_type: "permissions_changed",
+      old_role: target.role,
+      new_role: target.role,
+      old_active: target.active,
+      new_active: target.active,
+      actor_id: actor.id,
+      actor_email: actor.email || actorRole.email,
+    });
+    return res.status(200).json({ success: true });
   }
 
   if (req.method === "POST") {

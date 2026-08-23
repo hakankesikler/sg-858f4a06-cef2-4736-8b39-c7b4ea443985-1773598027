@@ -243,7 +243,7 @@ export const crmService = {
 
     const { data, error } = await supabase
       .from("customers")
-      .insert(customer)
+      .insert(customer as any)
       .select()
       .single();
 
@@ -259,7 +259,7 @@ export const crmService = {
   async updateCustomer(id: string, updates: Partial<Customer>) {
     const { data, error } = await supabase
       .from("customers")
-      .update(updates)
+      .update(updates as any)
       .eq("id", id)
       .select()
       .single();
