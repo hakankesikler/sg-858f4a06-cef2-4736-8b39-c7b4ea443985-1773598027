@@ -245,8 +245,8 @@ export default function PersonelProfil() {
             <div className="p-4 lg:p-5 border-b border-slate-800">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="w-14 h-10 min-w-14 rounded-lg bg-white p-1 shadow-sm flex items-center justify-center">
-                    <img src="/rex-logo-header.png" alt="Rex Lojistik" className="w-full h-full object-contain" />
+                  <div className="relative w-14 h-10 min-w-10 overflow-hidden rounded-lg bg-white shadow-sm">
+                    <img src="/rex-logo-header.png" alt="Rex Lojistik" className="absolute left-0 top-1/2 h-auto w-20 max-w-none -translate-y-1/2" />
                   </div>
                   <span className={`text-xl font-bold whitespace-nowrap ${sidebarOpen ? "opacity-100" : "lg:opacity-0 lg:group-hover:opacity-100"}`}>Rex Portal</span>
                 </div>
@@ -283,7 +283,7 @@ export default function PersonelProfil() {
 
           <main className="flex-1 min-w-0">
             <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-3"><div className="w-12 h-8 rounded-lg bg-white border p-1 flex items-center justify-center"><img src="/rex-logo-header.png" alt="Rex Lojistik" className="w-full h-full object-contain" /></div><span className="font-bold text-lg">Rex Portal</span></div>
+              <div className="flex items-center gap-3"><div className="relative w-12 h-8 overflow-hidden rounded-lg bg-white border"><img src="/rex-logo-header.png" alt="Rex Lojistik" className="absolute left-0 top-1/2 h-auto w-[4.5rem] max-w-none -translate-y-1/2" /></div><span className="font-bold text-lg">Rex Portal</span></div>
               <div className="flex items-center gap-2">
                 <Button onClick={() => void handleLogout()} variant="outline" size="sm"><LogOut className="w-4 h-4 mr-1" />Çıkış</Button>
                 <button aria-label="Menüyü aç" onClick={() => setSidebarOpen((value) => !value)} className="p-2 hover:bg-gray-100 rounded-lg">{sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}</button>
