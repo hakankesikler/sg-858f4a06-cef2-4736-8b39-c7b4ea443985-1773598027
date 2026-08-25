@@ -49,7 +49,7 @@ export function SettingsModule() {
 
   useEffect(() => {
     const requestedTab = typeof router.query.tab === "string" ? router.query.tab : "";
-    if (["company", "users", "notifications", "security", "regional"].includes(requestedTab)) setActiveTab(requestedTab);
+    if (["company", "users", "notifications", "security"].includes(requestedTab)) setActiveTab(requestedTab);
   }, [router.query.tab]);
 
   const loadCompanySettings = async () => {
@@ -146,7 +146,7 @@ export function SettingsModule() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm md:grid-cols-3 xl:grid-cols-5">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm md:grid-cols-4">
           <TabsTrigger value="company" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             Şirket
@@ -162,10 +162,6 @@ export function SettingsModule() {
           <TabsTrigger value="security" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
             Güvenlik
-          </TabsTrigger>
-          <TabsTrigger value="regional" className="flex items-center gap-2">
-            <Globe className="w-4 h-4" />
-            Bölgesel
           </TabsTrigger>
         </TabsList>
 
@@ -438,12 +434,6 @@ export function SettingsModule() {
           <SecuritySettings />
         </TabsContent>
 
-        <TabsContent value="regional">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Bölgesel Ayarlar</h3>
-            <p className="text-gray-600">Dil ve zaman dilimi ayarları yakında eklenecek...</p>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
