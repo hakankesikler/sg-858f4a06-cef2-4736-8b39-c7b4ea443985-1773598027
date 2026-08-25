@@ -98,6 +98,13 @@
 }
 
 @layer utilities {
+  .rex-portal-canvas {
+    background-color: #f5f7fb;
+    background-image:
+      radial-gradient(circle at 88% 4%, rgba(233, 109, 37, 0.07), transparent 24rem),
+      radial-gradient(circle at 56% 28%, rgba(45, 105, 165, 0.06), transparent 28rem);
+  }
+
   .text-balance {
     text-wrap: balance;
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, UserCog, Bell, Shield, Palette, Globe, Save, RefreshCw } from "lucide-react";
+import { Building2, UserCog, Bell, Shield, Globe, Save, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +49,7 @@ export function SettingsModule() {
 
   useEffect(() => {
     const requestedTab = typeof router.query.tab === "string" ? router.query.tab : "";
-    if (["company", "users", "notifications", "security", "appearance", "regional"].includes(requestedTab)) setActiveTab(requestedTab);
+    if (["company", "users", "notifications", "security", "regional"].includes(requestedTab)) setActiveTab(requestedTab);
   }, [router.query.tab]);
 
   const loadCompanySettings = async () => {
@@ -139,13 +139,14 @@ export function SettingsModule() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Ayarlar</h2>
-        <p className="text-gray-600 mt-1">Sistem ve şirket ayarlarınızı yönetin</p>
+      <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-white via-blue-50/60 to-orange-50/70 px-6 py-5 shadow-sm">
+        <div className="mb-3 h-1 w-16 rounded-full bg-[#e96d25]" />
+        <h2 className="text-2xl font-bold text-[#10213e]">Ayarlar</h2>
+        <p className="mt-1 text-slate-600">Sistem ve şirket ayarlarınızı güvenli biçimde yönetin</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 w-full h-auto">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm md:grid-cols-3 xl:grid-cols-5">
           <TabsTrigger value="company" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             Şirket
@@ -161,10 +162,6 @@ export function SettingsModule() {
           <TabsTrigger value="security" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
             Güvenlik
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex items-center gap-2">
-            <Palette className="w-4 h-4" />
-            Görünüm
           </TabsTrigger>
           <TabsTrigger value="regional" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
@@ -439,13 +436,6 @@ export function SettingsModule() {
 
         <TabsContent value="security">
           <SecuritySettings />
-        </TabsContent>
-
-        <TabsContent value="appearance">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Görünüm Ayarları</h3>
-            <p className="text-gray-600">Tema ve görünüm ayarları yakında eklenecek...</p>
-          </Card>
         </TabsContent>
 
         <TabsContent value="regional">
