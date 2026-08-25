@@ -63,6 +63,7 @@ import { workflowService } from "@/services/workflowService";
 import { invoiceIntegrationService } from "@/services/invoiceIntegrationService";
 import { PurchaseInvoiceInbox } from "@/components/PurchaseInvoiceInbox";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
+import { downloadExcel } from "@/lib/excel";
 
 const INVOICE_INTEGRATION_LABELS: Record<string, string> = {
   draft: "Fatura Taslağı",
@@ -316,30 +317,22 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
     setIsDetailDialogOpen(true);
   };
 
-  const handleExportExcel = () => {
-    const csvContent = [
-      ["Kod", "Unvan", "Cari Tipi", "Email", "Telefon", "Şehir", "VKN/TCKN", "Durum"].join(","),
-      ...filteredCustomers.map(c => [
-        c.id.substring(0, 8),
-        c.company || c.name,
-        getAccountTypeLabel(c.account_type || "musteri"),
-        c.email,
-        c.phone || "",
-        c.city || "",
-        c.tax_number || "",
-        c.status
-      ].join(","))
-    ].join("\n");
-
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `cari_listesi_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    toast({
-      title: "Başarılı",
-      description: "Excel dosyası indirildi!",
-    });
+  const handleExportExcel = async () => {
+    try {
+      await downloadExcel(`cari_listesi_${new Date().toISOString().split('T')[0]}.xlsx`, filteredCustomers.map(c => ({
+        "Kod": c.id.substring(0, 8),
+        "Unvan": c.company || c.name,
+        "Cari Tipi": getAccountTypeLabel(c.account_type || "musteri"),
+        "E-posta": c.email || "",
+        "Telefon": c.phone || "",
+        "Şehir": c.city || "",
+        "VKN/TCKN": c.tax_number || "",
+        "Durum": c.status,
+      })), "Cari Listesi");
+      toast({ title: "Başarılı", description: "Excel dosyası indirildi!" });
+    } catch (error: any) {
+      toast({ title: "Excel oluşturulamadı", description: error?.message || "Dışarı aktarma başarısız", variant: "destructive" });
+    }
   };
 
   const toggleCustomerSelection = (customerId: string) => {
@@ -1014,7 +1007,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                 </Button>
                 <Button variant="outline" size="sm">
                   <Upload className="mr-2 h-4 w-4" />
-                  Dışarıya Aktar
+                  Excel'e Aktar
                 </Button>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

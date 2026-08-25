@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { DeliveryDocumentsDialog } from "@/components/DeliveryDocumentsDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { downloadCsv } from "@/lib/csv";
+import { downloadExcel } from "@/lib/excel";
 import { downloadCustomerWaybill } from "@/lib/customer-waybill";
 import {
   customerPortalService,
@@ -102,9 +102,9 @@ export default function CustomerShipmentsPage() {
     toast({ title: "Takip bağlantısı kopyalandı", description: "Müşterinizle veya alıcınızla paylaşabilirsiniz." });
   };
 
-  const downloadList = () => {
+  const downloadList = async () => {
     try {
-      downloadCsv(`REX_Sevkiyatlar_${new Date().toISOString().slice(0, 10)}.csv`, filtered.map((shipment) => ({
+      await downloadExcel(`REX_Sevkiyatlar_${new Date().toISOString().slice(0, 10)}.xlsx`, filtered.map((shipment) => ({
         "Sevkiyat No": shipment.shipment_code,
         "Takip No": shipment.tracking_number,
         "Durum": statusMap[shipment.status || ""]?.label || shipment.status || "-",
@@ -117,7 +117,7 @@ export default function CustomerShipmentsPage() {
         "Varış": shipment.destination || "-",
         "Ağırlık": formatWeight(shipment.toplam_kg_ds),
         "Teslim Alan": shipment.delivered_to || "-",
-      })));
+      })), "Sevkiyatlar");
     } catch (error: any) {
       toast({ title: "Liste indirilemedi", description: error?.message, variant: "destructive" });
     }
@@ -180,7 +180,7 @@ export default function CustomerShipmentsPage() {
             <div className="flex flex-wrap gap-3 mt-5 pt-5 border-t">
               <Button className="bg-blue-600 hover:bg-blue-700"><Search className="h-4 w-4 mr-2" />{filtered.length} Sonuç</Button>
               <Button variant="outline" onClick={resetFilters}><RotateCcw className="h-4 w-4 mr-2" />Temizle</Button>
-              <Button variant="outline" onClick={downloadList} disabled={!filtered.length}><FileDown className="h-4 w-4 mr-2" />Excel / CSV İndir</Button>
+              <Button variant="outline" onClick={() => void downloadList()} disabled={!filtered.length}><FileDown className="h-4 w-4 mr-2" />Excel İndir</Button>
               <Button variant="outline" onClick={downloadSelectedWaybills} disabled={!filtered.length}><FileText className="h-4 w-4 mr-2" />{selected.length ? `Seçili İrsaliyeler (${selected.length})` : "İrsaliyeleri İndir"}</Button>
             </div>
           </Card>

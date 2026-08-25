@@ -552,6 +552,8 @@ test("integration center imports customer shipments idempotently with row-level 
   assert.match(sql, /rex_integration_events_append_only/);
   assert.match(module, /Dosya seçildiğinde satırlar kaydedilmeden önce burada kontrol edilir/);
   assert.match(module, /Mükerrerlik koruması/);
+  assert.match(module, /accept="\.xlsx,application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet"/);
+  assert.doesNotMatch(module, /CSV/);
   assert.match(parser, /readSheet/);
   assert.match(parser, /\["csv", "xlsx"\]/);
   assert.match(parser, /Aynı dosyada mükerrer referans/);
@@ -563,4 +565,23 @@ test("integration center imports customer shipments idempotently with row-level 
   assert.match(portal, /<IntegrationsModule permissions=\{permissions\}/);
   assert.match(logistics, /Güvenli Toplu Aktarım/);
   assert.doesNotMatch(logistics, /handleCsvImport/);
+});
+
+test("all user-facing reports and exports generate real XLSX workbooks", async () => {
+  const [excel, reports, logistics, accounting, transactions, customers, customerPortal, integrations] = await Promise.all([
+    read("src/lib/excel.ts"),
+    read("src/components/modules/ReportsModule.tsx"),
+    read("src/components/modules/LogisticsModule.tsx"),
+    read("src/components/modules/AccountingModule.tsx"),
+    read("src/components/CustomerTransactionsDialog.tsx"),
+    read("src/components/modules/CRMModule.tsx"),
+    read("src/pages/musteri/sevkiyatlar.tsx"),
+    read("src/components/modules/IntegrationsModule.tsx"),
+  ]);
+  assert.match(excel, /write-excel-file\/browser/);
+  assert.match(excel, /\.xlsx/);
+  for (const source of [reports, logistics, accounting, transactions, customers, customerPortal, integrations]) {
+    assert.match(source, /downloadExcel/);
+    assert.doesNotMatch(source, /downloadCsv|text\/csv|\.csv\b/);
+  }
 });

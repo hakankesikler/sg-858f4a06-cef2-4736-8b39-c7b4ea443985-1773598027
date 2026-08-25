@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { downloadCsv } from "@/lib/csv";
+import { downloadExcel } from "@/lib/excel";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 import {
   readShipmentImportFile, shipmentImportTemplate, validateShipmentImportRows,
@@ -157,10 +157,10 @@ export function IntegrationsModule({ permissions }: { permissions: PermissionMap
           <Card className="p-5 md:p-6">
             <div className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
               <div className="space-y-4">
-                <div><h2 className="text-xl font-semibold text-[#10213e]">Müşteri dosyasını hazırlayın</h2><p className="mt-1 text-sm text-slate-500">CSV veya XLSX, en fazla 8 MB ve 1000 sevkiyat.</p></div>
+                <div><h2 className="text-xl font-semibold text-[#10213e]">Müşteri dosyasını hazırlayın</h2><p className="mt-1 text-sm text-slate-500">XLSX Excel dosyası, en fazla 8 MB ve 1000 sevkiyat.</p></div>
                 <div className="space-y-2"><Label>Anlaşmalı müşteri</Label><Select value={customerId} onValueChange={(value) => { setCustomerId(value); resetPreview(); }} disabled={!canImport}><SelectTrigger><SelectValue placeholder="Müşteri seçin" /></SelectTrigger><SelectContent>{customers.map((customer) => <SelectItem key={customer.id} value={customer.id!}>{customer.customer_code ? `${customer.customer_code} — ` : ""}{customer.name}</SelectItem>)}</SelectContent></Select></div>
-                <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => downloadCsv("rex-toplu-sevkiyat-sablonu.csv", shipmentImportTemplate)}><FileSpreadsheet className="mr-2 h-4 w-4" />Şablonu İndir</Button><Button onClick={() => document.getElementById("integration-shipment-file")?.click()} disabled={!customerId || !canImport || processingFile}><Upload className="mr-2 h-4 w-4" />{processingFile ? "Kontrol ediliyor..." : "Dosya Seç"}</Button></div>
-                <Input id="integration-shipment-file" className="hidden" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { void handleFile(event.target.files?.[0]); event.target.value = ""; }} />
+                <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => void downloadExcel("rex-toplu-sevkiyat-sablonu.xlsx", shipmentImportTemplate, "Sevkiyat Şablonu")}><FileSpreadsheet className="mr-2 h-4 w-4" />Excel Şablonu İndir</Button><Button onClick={() => document.getElementById("integration-shipment-file")?.click()} disabled={!customerId || !canImport || processingFile}><Upload className="mr-2 h-4 w-4" />{processingFile ? "Kontrol ediliyor..." : "Excel Dosyası Seç"}</Button></div>
+                <Input id="integration-shipment-file" className="hidden" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { void handleFile(event.target.files?.[0]); event.target.value = ""; }} />
                 <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-slate-700"><ShieldCheck className="mb-2 h-5 w-5 text-[#173f73]" /><strong>Mükerrerlik koruması:</strong> Aynı dosya veya müşteri referansı tekrar gönderildiğinde ikinci sevkiyat açılmaz.</div>
               </div>
               <div className="rounded-2xl border bg-slate-50 p-5">

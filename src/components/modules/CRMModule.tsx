@@ -15,7 +15,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { bankAccountService, type BankAccount } from "@/services/bankAccountService";
-import { downloadCsv, parseCsv } from "@/lib/csv";
+import { downloadExcel, readExcelObjects } from "@/lib/excel";
 import { customerPortalService } from "@/services/customerPortalService";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 
@@ -244,8 +244,8 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
   const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / PAGE_SIZE));
   const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  // Download Cari CSV template
-  const downloadCariTemplate = () => {
+  // Download Cari Excel template
+  const downloadCariTemplate = async () => {
     try {
       const templateData = [
         {
@@ -263,7 +263,7 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
         },
       ];
 
-      downloadCsv("Cari_Sablonu.csv", templateData);
+      await downloadExcel("Cari_Sablonu.xlsx", templateData, "Cari Şablonu");
 
       toast({
         title: "Başarılı",
@@ -279,7 +279,28 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
     }
   };
 
-  // Handle Cari CSV import
+  const exportCustomers = async () => {
+    try {
+      await downloadExcel(`Cari_Listesi_${new Date().toISOString().slice(0, 10)}.xlsx`, filteredCustomers.map((customer) => ({
+        "Cari Kodu": customer.customer_code || "",
+        "Cari Adı": customer.name || "",
+        "Cari Tipi": customer.account_type || "",
+        "Vergi No": customer.vergi_no || customer.tax_number || "",
+        "TC No": customer.tc_no || "",
+        "Vergi Dairesi": customer.tax_office || "",
+        "İl": customer.city || "",
+        "İlçe": customer.district || "",
+        "Telefon": customer.phone || "",
+        "E-posta": customer.email || "",
+        "Durum": customer.status || "",
+      })), "Cari Listesi");
+      toast({ title: "Başarılı", description: `${filteredCustomers.length} cari Excel olarak indirildi` });
+    } catch (error: any) {
+      toast({ title: "Excel oluşturulamadı", description: error?.message || "Dışarı aktarma başarısız", variant: "destructive" });
+    }
+  };
+
+  // Handle Cari Excel import
   const handleCariImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -288,9 +309,9 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
 
     try {
       if (file.size > 2 * 1024 * 1024) {
-        throw new Error("CSV dosyası 2 MB'den büyük olamaz");
+        throw new Error("Excel dosyası 2 MB'den büyük olamaz");
       }
-      const jsonData = parseCsv(await file.text());
+      const jsonData = await readExcelObjects(file);
 
       let successCount = 0;
       let errorCount = 0;
@@ -381,10 +402,10 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
       // Reload data
       await loadCustomers();
     } catch (error) {
-      console.error("CSV import error:", error);
+      console.error("Excel import error:", error);
       toast({
         title: "Hata",
-        description: error instanceof Error ? error.message : "CSV dosyası okunurken bir hata oluştu",
+        description: error instanceof Error ? error.message : "Excel dosyası okunurken bir hata oluştu",
         variant: "destructive",
       });
     } finally {
@@ -450,24 +471,24 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
           <Plus className="h-4 w-4 mr-2" />
           Cari Oluştur
         </Button>}
-        <Button onClick={downloadCariTemplate} variant="outline">
-          Cari Şablon İndir
+        <Button onClick={() => void downloadCariTemplate()} variant="outline">
+          Excel Şablonu İndir
         </Button>
         {canManageCustomers && <Button
           variant="outline"
           onClick={() => document.getElementById("cari-import-input")?.click()}
           disabled={isImporting}
         >
-          {isImporting ? "Yükleniyor..." : "CSV'den Cari Yükle"}
+          {isImporting ? "Yükleniyor..." : "Excel'den Cari Yükle"}
         </Button>}
         <input
           id="cari-import-input"
           type="file"
-          accept=".csv,text/csv"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           onChange={handleCariImport}
           style={{ display: "none" }}
         />
-        <Button variant="outline">Dışarıya Aktar</Button>
+        <Button variant="outline" onClick={() => void exportCustomers()}>Excel'e Aktar</Button>
       </div>
 
       {/* Filter Tabs */}

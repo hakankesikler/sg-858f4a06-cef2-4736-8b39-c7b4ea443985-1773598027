@@ -28,6 +28,7 @@ import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
 import { PaymentDialog } from "@/components/PaymentDialog";
 import { CollectionDialog } from "@/components/CollectionDialog";
+import { downloadExcel } from "@/lib/excel";
 import { workflowService } from "@/services/workflowService";
 
 interface CustomerTransactionsDialogProps {
@@ -302,26 +303,17 @@ export function CustomerTransactionsDialog({
     );
   });
 
-  const handleExport = () => {
-    const csvContent = [
-      ["İşlem Tarihi", "İşlem Türü", "Evrak/Seri No", "Borç", "Alacak", "Döviz Kuru", "Yerel Tutar", "Bakiye"].join(","),
-      ...filteredTransactions.map(tx => [
-        new Date(tx.date).toLocaleDateString("tr-TR"),
-        tx.type,
-        tx.documentNo,
-        tx.debit.toLocaleString("tr-TR"),
-        tx.credit.toLocaleString("tr-TR"),
-        tx.exchangeRate,
-        tx.localAmount.toLocaleString("tr-TR"),
-        tx.balance.toLocaleString("tr-TR")
-      ].join(","))
-    ].join("\n");
-
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `cari_hareketleri_${customer?.name}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+  const handleExport = async () => {
+    await downloadExcel(`cari_hareketleri_${customer?.name}_${new Date().toISOString().split('T')[0]}.xlsx`, filteredTransactions.map(tx => ({
+      "İşlem Tarihi": new Date(tx.date).toLocaleDateString("tr-TR"),
+      "İşlem Türü": tx.type,
+      "Evrak/Seri No": tx.documentNo,
+      "Borç": tx.debit,
+      "Alacak": tx.credit,
+      "Döviz Kuru": tx.exchangeRate,
+      "Yerel Tutar": tx.localAmount,
+      "Bakiye": tx.balance,
+    })), "Cari Hareketleri");
   };
 
   return (
@@ -472,9 +464,9 @@ export function CustomerTransactionsDialog({
               <Upload className="w-4 h-4 mr-2" />
               İçe Aktar
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExport}>
+            <Button variant="outline" size="sm" onClick={() => void handleExport()}>
               <Download className="w-4 h-4 mr-2" />
-              Dışarıya Aktar
+              Excel'e Aktar
             </Button>
             <Button variant="outline" size="sm">
               <Filter className="w-4 h-4" />

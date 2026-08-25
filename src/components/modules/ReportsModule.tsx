@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUserAccess } from "@/lib/access-control";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
+import { downloadExcel } from "@/lib/excel";
 import { useToast } from "@/hooks/use-toast";
 
 type ReportSummary = {
@@ -24,23 +25,6 @@ const initialSummary: ReportSummary = {
   sales: 0,
   purchases: 0,
 };
-
-function csvValue(value: unknown) {
-  return `"${String(value ?? "").replace(/"/g, '""')}"`;
-}
-
-function downloadCsv(fileName: string, rows: Record<string, unknown>[]) {
-  if (!rows.length) return false;
-  const headers = Object.keys(rows[0]);
-  const content = [headers.map(csvValue).join(","), ...rows.map((row) => headers.map((header) => csvValue(row[header])).join(","))].join("\n");
-  const url = URL.createObjectURL(new Blob(["\uFEFF", content], { type: "text/csv;charset=utf-8" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
-  return true;
-}
 
 export function ReportsModule() {
   const { toast } = useToast();
@@ -81,28 +65,35 @@ export function ReportsModule() {
 
   const exportReport = async (type: "shipments" | "customers" | "finance") => {
     let rows: Record<string, unknown>[] = [];
-    let fileName = "rex_rapor.csv";
+    let fileName = "rex_rapor.xlsx";
+    let sheetName = "Rapor";
 
     if (type === "shipments") {
       const { data, error } = await supabase.from("shipments").select("shipment_code,pickup_date,sender_name,receiver,sender_ii,receiver_district,receiver_ii,status,delivery_date").order("pickup_date", { ascending: false });
       if (error) return toast({ title: "Yetki gerekli", description: "Sevkiyat raporu için operasyon yetkisi gerekiyor.", variant: "destructive" });
       rows = data || [];
-      fileName = "sevkiyat_raporu.csv";
+      fileName = "sevkiyat_raporu.xlsx";
+      sheetName = "Sevkiyatlar";
     } else if (type === "customers") {
       const { data, error } = await supabase.from("customers").select("customer_code,name,account_type,city,status").order("name");
       if (error) return toast({ title: "Yetki gerekli", description: "Cari raporu için CRM yetkisi gerekiyor.", variant: "destructive" });
       rows = data || [];
-      fileName = "cari_raporu.csv";
+      fileName = "cari_raporu.xlsx";
+      sheetName = "Cariler";
     } else {
       const { data, error } = await supabase.from("sales_invoices").select("invoice_no,invoice_date,grand_total,currency,payment_status").order("invoice_date", { ascending: false });
       if (error) return toast({ title: "Yetki gerekli", description: "Finans raporu için muhasebe yetkisi gerekiyor.", variant: "destructive" });
       rows = data || [];
-      fileName = "finans_raporu.csv";
+      fileName = "finans_raporu.xlsx";
+      sheetName = "Finans";
     }
 
-    if (!downloadCsv(fileName, rows)) {
+    if (!rows.length) {
       toast({ title: "Kayıt bulunamadı", description: "Bu rapor için dışarı aktarılacak kayıt yok." });
+      return;
     }
+    await downloadExcel(fileName, rows, sheetName);
+    toast({ title: "Excel raporu hazırlandı", description: `${rows.length} kayıt XLSX olarak indirildi.` });
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Raporlar hazırlanıyor...</div>;

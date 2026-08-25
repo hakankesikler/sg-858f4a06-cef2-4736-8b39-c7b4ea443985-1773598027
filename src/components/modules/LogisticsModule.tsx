@@ -10,7 +10,7 @@ import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService, type ShipmentRevisionRequest } from "@/services/shipmentService";
 import { transportJobService, type TransportJob } from "@/services/transportJobService";
 import { transportComplianceService, type TransportComplianceAlert } from "@/services/transportComplianceService";
-import { downloadCsv } from "@/lib/csv";
+import { downloadExcel } from "@/lib/excel";
 import { DriverForm } from "@/components/DriverForm";
 import { VehicleForm } from "@/components/VehicleForm";
 import { ShipmentForm } from "@/components/ShipmentForm";
@@ -361,8 +361,8 @@ export function LogisticsModule() {
     );
   });
 
-  // Export to CSV
-  const exportToCSV = () => {
+  // Export to Excel
+  const exportToExcel = async () => {
     try {
       const rows = filteredShipments.map((shipment) => ({
         "Sevkiyat Kodu": shipment.shipment_code || "-",
@@ -378,17 +378,17 @@ export function LogisticsModule() {
         "Teslim Alan": shipment.delivered_to || "-",
         "Durum": getStatusLabel(shipment.status),
       }));
-      downloadCsv(`Sevkiyatlar_${format(new Date(), "dd-MM-yyyy_HH-mm")}.csv`, rows);
+      await downloadExcel(`Sevkiyatlar_${format(new Date(), "dd-MM-yyyy_HH-mm")}.xlsx`, rows, "Sevkiyatlar");
 
       toast({
         title: "Başarılı",
-        description: "CSV dosyası indirildi",
+        description: "Excel dosyası indirildi",
       });
     } catch (error) {
-      console.error("CSV export error:", error);
+      console.error("Excel export error:", error);
       toast({
         title: "Hata",
-        description: "CSV dosyası oluşturulurken bir hata oluştu",
+        description: "Excel dosyası oluşturulurken bir hata oluştu",
         variant: "destructive",
       });
     }
@@ -508,9 +508,9 @@ export function LogisticsModule() {
         <TabsContent value="shipments" className="space-y-4">
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
-              <Button onClick={exportToCSV} variant="outline">
+              <Button onClick={() => void exportToExcel()} variant="outline">
                 <FileText className="h-4 w-4 mr-2" />
-                CSV İndir
+                Excel İndir
               </Button>
               <Button variant="outline" onClick={() => window.location.assign("/personel/profil?module=integrations")}>
                 <FileDown className="h-4 w-4 mr-2" />

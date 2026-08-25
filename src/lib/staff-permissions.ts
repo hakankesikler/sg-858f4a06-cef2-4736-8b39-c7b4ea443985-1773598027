@@ -21,7 +21,7 @@ export const permissionCatalog = [
   { key: "reports.accounting", group: "Raporlar", label: "Finans raporları", description: "Fatura, ödeme ve kârlılık raporları" },
   { key: "analytics.web", group: "Raporlar", label: "Web Analitik", description: "Site ziyaretçi ve trafik istatistikleri" },
   { key: "integrations.connections", group: "Entegrasyon", label: "Bağlantı yönetimi", description: "Müşteri, taşıyıcı ve muhasebe bağlantılarını yapılandırma" },
-  { key: "integrations.imports", group: "Entegrasyon", label: "Toplu sevkiyat", description: "Müşteri Excel/CSV dosyalarını kontrol etme ve aktarma" },
+  { key: "integrations.imports", group: "Entegrasyon", label: "Toplu sevkiyat", description: "Müşteri XLSX Excel dosyalarını kontrol etme ve aktarma" },
   { key: "integrations.monitoring", group: "Entegrasyon", label: "İşlem takibi", description: "Entegrasyon durumlarını, hataları ve aktarım geçmişini izleme" },
 ] as const;
 
