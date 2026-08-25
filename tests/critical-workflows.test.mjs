@@ -585,3 +585,48 @@ test("all user-facing reports and exports generate real XLSX workbooks", async (
     assert.doesNotMatch(source, /downloadCsv|text\/csv|\.csv\b/);
   }
 });
+
+test("public logistics services have dedicated SEO pages and internal navigation", async () => {
+  const slugs = [
+    "yurtici-parsiyel-tasimacilik",
+    "komple-tasimacilik",
+    "uluslararasi-karayolu-tasimaciligi",
+    "hava-kargo",
+    "denizyolu-tasimaciligi",
+    "express-kargo",
+    "depolama",
+    "hakkimizda",
+    "iletisim",
+  ];
+  const [content, pageTemplate, seo, header, footer, services, sitemap, robots] = await Promise.all([
+    read("src/content/marketing-pages.ts"),
+    read("src/components/MarketingPage.tsx"),
+    read("src/components/SEO.tsx"),
+    read("src/components/Header.tsx"),
+    read("src/components/Footer.tsx"),
+    read("src/components/Services.tsx"),
+    read("public/sitemap.xml"),
+    read("public/robots.txt"),
+  ]);
+
+  for (const slug of slugs) {
+    const route = await read(`src/pages/${slug}.tsx`);
+    assert.match(route, new RegExp(`marketingPages\\["${slug}"\\]`));
+    assert.match(content, new RegExp(`slug: "${slug}"`));
+    assert.match(sitemap, new RegExp(`https://www\\.rexlojistik\\.com/${slug}`));
+  }
+
+  for (const serviceSlug of slugs.slice(0, 7)) {
+    assert.match(header, new RegExp(`/${serviceSlug}`));
+    assert.match(footer, new RegExp(`/${serviceSlug}`));
+    assert.match(services, new RegExp(`/${serviceSlug === "yurtici-parsiyel-tasimacilik" || serviceSlug !== "komple-tasimacilik" ? serviceSlug : "komple-tasimacilik"}`));
+  }
+  assert.match(pageTemplate, /"@type": "Service"/);
+  assert.match(pageTemplate, /"@type": "BreadcrumbList"/);
+  assert.match(pageTemplate, /<h1/);
+  assert.match(pageTemplate, /<details/);
+  assert.match(seo, /application\/ld\+json/);
+  assert.match(seo, /rel="canonical"/);
+  assert.match(robots, /Disallow: \/personel\//);
+  assert.doesNotMatch(sitemap, /\/login<\/loc>/);
+});

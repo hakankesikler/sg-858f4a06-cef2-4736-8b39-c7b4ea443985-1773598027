@@ -12,12 +12,11 @@ Disallow: /contact/
 Disallow: /transpress
 Disallow: /fraser-freight
 
-# Allow only Turkish pages
-Allow: /
-Allow: /login
-Allow: /gizlilik-politikasi
-Allow: /kullanim-kosullari
-Allow: /kvkk-aydinlatma-metni
+# Keep private portals and service endpoints out of search results
+Disallow: /login
+Disallow: /personel/
+Disallow: /musteri/
+Disallow: /api/
 
 # Sitemaps
 Sitemap: https://www.rexlojistik.com/sitemap.xml

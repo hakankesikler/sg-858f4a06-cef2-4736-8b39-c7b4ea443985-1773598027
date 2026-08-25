@@ -19,12 +19,13 @@ export function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">HİZMETLERİMİZ</h3>
             <ul className="space-y-2 text-sm">
-              <li>Hava Yolu Taşımacılığı</li>
-              <li>Deniz Yolu Taşımacılığı</li>
-              <li>Kara Yolu Taşımacılığı</li>
-              <li>Depolama Hizmetleri</li>
-              <li>Paketleme ve Elleçleme</li>
-              <li>Uluslararası Taşımacılık</li>
+              <li><Link href="/yurtici-parsiyel-tasimacilik" className="hover:text-orange-300 transition-colors">Yurtiçi Parsiyel</Link></li>
+              <li><Link href="/komple-tasimacilik" className="hover:text-orange-300 transition-colors">Komple Taşımacılık</Link></li>
+              <li><Link href="/uluslararasi-karayolu-tasimaciligi" className="hover:text-orange-300 transition-colors">Uluslararası Karayolu</Link></li>
+              <li><Link href="/hava-kargo" className="hover:text-orange-300 transition-colors">Hava Kargo</Link></li>
+              <li><Link href="/denizyolu-tasimaciligi" className="hover:text-orange-300 transition-colors">Denizyolu Taşımacılığı</Link></li>
+              <li><Link href="/express-kargo" className="hover:text-orange-300 transition-colors">Express Kargo</Link></li>
+              <li><Link href="/depolama" className="hover:text-orange-300 transition-colors">Depolama Hizmetleri</Link></li>
             </ul>
           </div>
 
@@ -33,22 +34,22 @@ export function Footer() {
             <h3 className="text-lg font-semibold mb-4">KURUMSAL</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/" className="hover:text-white/80 transition-colors">
+                <Link href="/hakkimizda" className="hover:text-white/80 transition-colors">
                   Hakkımızda
                 </Link>
               </li>
               <li>
-                <Link href="/" className="hover:text-white/80 transition-colors">
+                <Link href="/#hizmetler" className="hover:text-white/80 transition-colors">
                   Hizmetlerimiz
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="hover:text-white/80 transition-colors">
-                  Rex Portal
+                <Link href="/musteri-giris" className="hover:text-white/80 transition-colors">
+                  Müşteri Portalı
                 </Link>
               </li>
               <li>
-                <Link href="/" className="hover:text-white/80 transition-colors">
+                <Link href="/iletisim" className="hover:text-white/80 transition-colors">
                   İletişim
                 </Link>
               </li>
