@@ -17,6 +17,7 @@ import {
   type PermissionOverrideLevel,
 } from "@/lib/staff-permissions";
 import type { AppRole } from "@/lib/access-control";
+import { passwordPolicyError } from "@/lib/security";
 
 type StaffRole = "sales" | "operations" | "accounting" | "viewer";
 type StaffUser = {
@@ -184,9 +185,9 @@ export function StaffUsersManager() {
           <div><Label htmlFor="staff-password">Geçici Şifre</Label><div className="flex gap-2"><div className="relative flex-1"><Input id="staff-password" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" className="pr-10" /><button type="button" aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button></div><Button type="button" variant="outline" size="icon" title="Güçlü şifre üret" onClick={() => setPassword(generateTemporaryPassword())}><KeyRound className="w-4 h-4" /></Button><Button type="button" variant="outline" size="icon" title="Şifreyi kopyala" disabled={!password} onClick={() => { void navigator.clipboard.writeText(password); toast({ title: "Geçici şifre kopyalandı" }); }}><Copy className="w-4 h-4" /></Button></div></div>
           <div><Label>Ana Görev Grubu</Label><Select value={role} onValueChange={(value) => setRole(value as StaffRole)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(roleDetails).map(([value, detail]) => <SelectItem key={value} value={value}>{detail.label}</SelectItem>)}</SelectContent></Select></div>
         </div>
-        <p className="mt-3 text-xs text-slate-500">Geçici şifre en az 10 karakter, bir harf ve bir rakam içermelidir. Oluşturduktan sonra çalışanla güvenli bir kanaldan paylaşın.</p>
+        <p className="mt-3 text-xs text-slate-500">Geçici şifre en az 12 karakter; büyük harf, küçük harf ve rakam içermelidir. Oluşturduktan sonra çalışanla güvenli bir kanaldan paylaşın.</p>
         <div className="mt-4 rounded-lg border border-blue-200 bg-white p-3 text-sm text-gray-700"><strong>{roleDetails[role].label}:</strong> {roleDetails[role].description}. Hesabı oluşturduktan sonra kişiye özel çapraz yetkileri aşağıdaki listeden açabilirsiniz.</div>
-        <Button className="mt-4" onClick={() => void createAccount()} disabled={saving || !fullName.trim() || !email.trim() || password.length < 10}><UserPlus className="w-4 h-4 mr-2" />{saving ? "Oluşturuluyor..." : "Personel Hesabını Oluştur"}</Button>
+        <Button className="mt-4" onClick={() => void createAccount()} disabled={saving || !fullName.trim() || !email.trim() || Boolean(passwordPolicyError(password))}><UserPlus className="w-4 h-4 mr-2" />{saving ? "Oluşturuluyor..." : "Personel Hesabını Oluştur"}</Button>
       </Card>
 
       <Card className="p-6">

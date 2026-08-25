@@ -10,8 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffUsersManager } from "@/components/settings/StaffUsersManager";
+import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { useRouter } from "next/router";
 
 export function SettingsModule() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("company");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,6 +46,11 @@ export function SettingsModule() {
   useEffect(() => {
     loadCompanySettings();
   }, []);
+
+  useEffect(() => {
+    const requestedTab = typeof router.query.tab === "string" ? router.query.tab : "";
+    if (["company", "users", "notifications", "security", "appearance", "regional"].includes(requestedTab)) setActiveTab(requestedTab);
+  }, [router.query.tab]);
 
   const loadCompanySettings = async () => {
     try {
@@ -430,10 +438,7 @@ export function SettingsModule() {
         </TabsContent>
 
         <TabsContent value="security">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Güvenlik Ayarları</h3>
-            <p className="text-gray-600">Güvenlik ayarları yakında eklenecek...</p>
-          </Card>
+          <SecuritySettings />
         </TabsContent>
 
         <TabsContent value="appearance">

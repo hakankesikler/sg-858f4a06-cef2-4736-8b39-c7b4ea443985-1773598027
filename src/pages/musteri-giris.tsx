@@ -6,9 +6,11 @@ import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TurnstileWidget, turnstileSiteKey } from "@/components/security/TurnstileWidget";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { customerPortalService } from "@/services/customerPortalService";
+import { passwordPolicyError } from "@/lib/security";
 
 export default function CustomerLoginPage() {
   const router = useRouter();
@@ -20,6 +22,7 @@ export default function CustomerLoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -36,7 +39,7 @@ export default function CustomerLoginPage() {
     if (!email.trim() || !password) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password, options: turnstileSiteKey ? { captchaToken } : undefined });
       if (error || !data.session) throw new Error("E-posta veya şifre hatalı.");
 
       const claim = typeof router.query.claim === "string" ? router.query.claim : "";
@@ -66,6 +69,7 @@ export default function CustomerLoginPage() {
     setResetting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/musteri-giris`,
+      captchaToken: turnstileSiteKey ? captchaToken : undefined,
     });
     setResetting(false);
     toast(error
@@ -75,8 +79,9 @@ export default function CustomerLoginPage() {
 
   const handlePasswordUpdate = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (password.length < 8 || password !== confirmPassword) {
-      toast({ title: "Şifreyi kontrol edin", description: "Şifre en az 8 karakter olmalı ve iki alan eşleşmelidir.", variant: "destructive" });
+    const policyError = passwordPolicyError(password);
+    if (policyError || password !== confirmPassword) {
+      toast({ title: "Şifreyi kontrol edin", description: policyError || "İki alana aynı şifreyi yazın.", variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -137,7 +142,8 @@ export default function CustomerLoginPage() {
                   <button type="button" onClick={handleReset} disabled={resetting} className="text-sm font-medium text-blue-600 hover:text-blue-700">{resetting ? "Gönderiliyor..." : "Şifremi unuttum"}</button>
                 </div>
               )}
-              <Button type="submit" disabled={loading} className="w-full h-11 bg-blue-600 hover:bg-blue-700">{loading ? "İşlem yapılıyor..." : recoveryMode ? "Şifreyi Kaydet" : "Giriş Yap"}</Button>
+              {!recoveryMode && <TurnstileWidget onToken={setCaptchaToken} />}
+              <Button type="submit" disabled={loading || Boolean(!recoveryMode && turnstileSiteKey && !captchaToken)} className="w-full h-11 bg-blue-600 hover:bg-blue-700">{loading ? "İşlem yapılıyor..." : recoveryMode ? "Şifreyi Kaydet" : "Giriş Yap"}</Button>
             </form>
           </section>
           <p className="text-center text-sm text-slate-300 mt-5">Hesabınız yoksa REX Lojistik yetkilinizden davet bağlantısı isteyin.</p>

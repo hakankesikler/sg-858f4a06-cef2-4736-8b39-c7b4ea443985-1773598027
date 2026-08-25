@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppRole, PortalModule, canAccessModule, getCurrentUserAccess, roleLabels } from "@/lib/access-control";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 import { useToast } from "@/hooks/use-toast";
+import { useStaffSessionSecurity } from "@/hooks/use-staff-session-security";
+import { clearStaffSessionClock, getMfaState, roleRequiresMfa } from "@/lib/security";
 import {
   Activity as ActivityIcon,
   BarChart3,
@@ -75,6 +77,7 @@ export default function PersonelProfil() {
   const [role, setRole] = useState<AppRole | null>(null);
   const [permissions, setPermissions] = useState<PermissionMap | null>(null);
   const [stats, setStats] = useState<DashboardStats>(emptyStats);
+  useStaffSessionSecurity(Boolean(role));
 
   useEffect(() => {
     let mounted = true;
@@ -92,6 +95,26 @@ export default function PersonelProfil() {
         toast({ title: "Erişim reddedildi", description: "Bu hesabın portal yetkisi bulunmuyor.", variant: "destructive" });
         await router.replace("/login");
         return;
+      }
+
+      try {
+        const mfa = await getMfaState();
+        const needsMfa = roleRequiresMfa(currentAccess.role) || mfa.nextLevel === "aal2";
+        if (needsMfa && mfa.currentLevel !== "aal2") {
+          const redirect = typeof window === "undefined"
+            ? "/personel/profil"
+            : `${window.location.pathname}${window.location.search}`;
+          await router.replace(`/personel/mfa?redirect=${encodeURIComponent(redirect)}`);
+          return;
+        }
+      } catch {
+        if (roleRequiresMfa(currentAccess.role)) {
+          await supabase.auth.signOut();
+          clearStaffSessionClock();
+          toast({ title: "Güvenlik doğrulaması yapılamadı", description: "Lütfen yeniden giriş yapın.", variant: "destructive" });
+          await router.replace("/login");
+          return;
+        }
       }
 
       if (!mounted) return;
@@ -143,6 +166,7 @@ export default function PersonelProfil() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    clearStaffSessionClock();
     toast({ title: "Çıkış yapıldı", description: "Oturumunuz güvenli şekilde kapatıldı." });
     await router.replace("/login");
   };

@@ -499,3 +499,33 @@ test("staff permissions support audited per-person cross-department view and man
   assert.match(portal, /getCurrentUserAccess/);
   assert.match(portal, /hasPermission\(permissions, "crm\.customers", "manage"\)/);
 });
+
+test("staff security requires MFA for privileged roles and records immutable security events", async () => {
+  const [sql, login, mfa, settings, session, api, config] = await Promise.all([
+    read("supabase/migrations/20260825090000_staff_security_controls.sql"),
+    read("src/pages/login.tsx"),
+    read("src/pages/personel/mfa.tsx"),
+    read("src/components/settings/SecuritySettings.tsx"),
+    read("src/hooks/use-staff-session-security.ts"),
+    read("src/pages/api/admin/staff-users.ts"),
+    read("next.config.mjs"),
+  ]);
+  assert.match(sql, /p_role IN \('admin', 'accounting'\)/);
+  assert.match(sql, /auth\.jwt\(\) ->> 'aal'[^\n]*'aal2'/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.staff_security_events/);
+  assert.match(sql, /CREATE TRIGGER rex_staff_security_events_append_only/);
+  assert.match(sql, /REVOKE INSERT, UPDATE, DELETE ON public\.staff_security_events/);
+  assert.match(login, /getAuthenticatorAssuranceLevel|getMfaState/);
+  assert.match(login, /personel\/mfa/);
+  assert.match(mfa, /mfa\.enroll/);
+  assert.match(mfa, /mfa\.challenge/);
+  assert.match(mfa, /mfa\.verify/);
+  assert.match(settings, /Diğer Tüm Cihazlardan Çıkış Yap/);
+  assert.match(settings, /Güvenlik Hareketleri/);
+  assert.match(session, /STAFF_IDLE_TIMEOUT_MS/);
+  assert.match(session, /STAFF_MAX_SESSION_MS/);
+  assert.match(api, /tokenAssuranceLevel\(token\) !== "aal2"/);
+  assert.match(config, /Content-Security-Policy/);
+  assert.match(config, /Strict-Transport-Security/);
+  assert.match(config, /X-Frame-Options/);
+});

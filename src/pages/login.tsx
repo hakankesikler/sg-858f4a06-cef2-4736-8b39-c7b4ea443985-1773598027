@@ -5,16 +5,19 @@ import Link from "next/link";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TurnstileWidget, turnstileSiteKey } from "@/components/security/TurnstileWidget";
 import { Eye, EyeOff, Mail, Lock, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUserRole } from "@/lib/access-control";
+import {
+  getMfaState,
+  passwordPolicyError,
+  recordSecurityEvent,
+  roleRequiresMfa,
+  safePortalRedirect,
+  startStaffSessionClock,
+} from "@/lib/security";
 import { useToast } from "@/hooks/use-toast";
-
-function safeRedirect(value: unknown) {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
-    ? value
-    : "/personel/profil";
-}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,6 +29,7 @@ export default function LoginPage() {
   const [resetting, setResetting] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -51,6 +55,7 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
+        options: turnstileSiteKey ? { captchaToken } : undefined,
       });
 
       if (error || !data.session) {
@@ -70,13 +75,25 @@ export default function LoginPage() {
       }
 
       if (data.session.user.user_metadata?.must_change_password === true) {
+        startStaffSessionClock();
         toast({ title: "Şifre değişikliği gerekli", description: "İlk girişinizde geçici şifrenizi yenilemelisiniz." });
         await router.push("/personel/sifre-olustur");
         return;
       }
 
+      const redirect = safePortalRedirect(router.query.redirect);
+      const mfa = await getMfaState();
+      const needsMfa = roleRequiresMfa(role) || mfa.nextLevel === "aal2";
+      if (needsMfa && mfa.currentLevel !== "aal2") {
+        startStaffSessionClock();
+        await router.push(`/personel/mfa?redirect=${encodeURIComponent(redirect)}`);
+        return;
+      }
+
+      startStaffSessionClock();
+      await recordSecurityEvent("login_success", "Personel portalına giriş yapıldı.", { aal: mfa.currentLevel });
       toast({ title: "Giriş başarılı", description: "Rex Portal'a hoş geldiniz." });
-      await router.push(safeRedirect(router.query.redirect));
+      await router.push(redirect);
     } catch {
       toast({ title: "Giriş başarısız", description: "Lütfen daha sonra tekrar deneyin.", variant: "destructive" });
     } finally {
@@ -93,6 +110,7 @@ export default function LoginPage() {
     setResetting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/login`,
+      captchaToken: turnstileSiteKey ? captchaToken : undefined,
     });
     setResetting(false);
 
@@ -106,8 +124,9 @@ export default function LoginPage() {
 
   const handleUpdatePassword = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (password.length < 8) {
-      toast({ title: "Şifre çok kısa", description: "Şifreniz en az 8 karakter olmalıdır.", variant: "destructive" });
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      toast({ title: "Şifre yeterince güçlü değil", description: policyError, variant: "destructive" });
       return;
     }
     if (password !== confirmPassword) {
@@ -123,6 +142,7 @@ export default function LoginPage() {
       return;
     }
 
+    await recordSecurityEvent("password_changed", "Personel şifresi yenileme bağlantısıyla değiştirildi.");
     await supabase.auth.signOut();
     setRecoveryMode(false);
     setPassword("");
@@ -209,7 +229,9 @@ export default function LoginPage() {
                   </button>
                 </div>
 
-                <Button type="submit" className="w-full h-11 bg-orange-600 hover:bg-orange-700 shadow-md" disabled={loading}>
+                <TurnstileWidget onToken={setCaptchaToken} />
+
+                <Button type="submit" className="w-full h-11 bg-orange-600 hover:bg-orange-700 shadow-md" disabled={loading || Boolean(turnstileSiteKey && !captchaToken)}>
                   {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
                 </Button>
               </form>

@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { permissionCatalog, type PermissionKey, type PermissionLevel } from "@/lib/staff-permissions";
+import { passwordPolicyError } from "@/lib/security";
 
 const MANAGEABLE_ROLES = ["sales", "operations", "accounting", "viewer"] as const;
 type ManageableRole = (typeof MANAGEABLE_ROLES)[number];
@@ -36,6 +37,15 @@ function requestOriginIsValid(req: NextApiRequest) {
   }
 }
 
+function tokenAssuranceLevel(token: string) {
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"));
+    return payload?.aal === "aal2" ? "aal2" : "aal1";
+  } catch {
+    return "aal1";
+  }
+}
+
 export const config = { api: { bodyParser: { sizeLimit: "8kb" } } };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -66,6 +76,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { data: authenticated, error: authError } = await userDb.auth.getUser(token);
   if (authError || !authenticated.user) return res.status(401).json({ error: "Oturum süresi dolmuş." });
+  if (tokenAssuranceLevel(token) !== "aal2") {
+    return res.status(403).json({ error: "Kullanıcı ve yetki yönetimi için iki aşamalı doğrulama zorunludur." });
+  }
 
   const actor = authenticated.user;
   const { data: actorRole } = await adminDb
@@ -164,9 +177,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const role = req.body?.role;
     if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: "Geçerli bir e-posta adresi girin." });
     if (!fullName) return res.status(400).json({ error: "Ad soyad zorunludur." });
-    if (password.length < 10 || !/[A-Za-zÇĞİÖŞÜçğıöşü]/.test(password) || !/\d/.test(password)) {
-      return res.status(400).json({ error: "Geçici şifre en az 10 karakter, bir harf ve bir rakam içermelidir." });
-    }
+    const policyError = passwordPolicyError(password);
+    if (policyError) return res.status(400).json({ error: policyError });
     if (!isManageableRole(role)) return res.status(400).json({ error: "Geçerli bir yetki grubu seçin." });
 
     const { data: existing } = await adminDb.from("app_user_roles").select("user_id").ilike("email", email).maybeSingle();

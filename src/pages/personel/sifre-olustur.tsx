@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { clearStaffSessionClock, passwordPolicyError, recordSecurityEvent } from "@/lib/security";
 
 export default function StaffPasswordSetupPage() {
   const router = useRouter();
@@ -38,9 +39,8 @@ export default function StaffPasswordSetupPage() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (password.length < 10 || !/[A-Za-zÇĞİÖŞÜçğıöşü]/.test(password) || !/\d/.test(password)) {
-      return toast({ title: "Şifre yeterince güçlü değil", description: "En az 10 karakter, bir harf ve bir rakam kullanın.", variant: "destructive" });
-    }
+    const policyError = passwordPolicyError(password);
+    if (policyError) return toast({ title: "Şifre yeterince güçlü değil", description: policyError, variant: "destructive" });
     if (password !== confirmation) return toast({ title: "Şifreler eşleşmiyor", variant: "destructive" });
     try {
       setSaving(true);
@@ -50,7 +50,9 @@ export default function StaffPasswordSetupPage() {
         data: { ...(current.user?.user_metadata || {}), must_change_password: false },
       });
       if (error) throw error;
+      await recordSecurityEvent("password_changed", "Personel ilk girişinde geçici şifresini değiştirdi.");
       await supabase.auth.signOut();
+      clearStaffSessionClock();
       toast({ title: "Şifreniz oluşturuldu", description: "Artık personel portalına giriş yapabilirsiniz." });
       await router.replace("/login");
     } catch (error: any) {
@@ -77,7 +79,7 @@ export default function StaffPasswordSetupPage() {
             <form className="space-y-5 mt-7" onSubmit={submit}>
               <div><Label htmlFor="password">Yeni Şifre</Label><div className="relative"><Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" className="pr-11" /><button type="button" aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button></div></div>
               <div><Label htmlFor="confirmation">Yeni Şifre Tekrarı</Label><Input id="confirmation" type={showPassword ? "text" : "password"} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} autoComplete="new-password" /></div>
-              <div className="rounded-xl bg-slate-50 border p-4 text-sm text-slate-600 space-y-1"><p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" />En az 10 karakter</p><p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" />En az bir harf ve bir rakam</p><p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" />Başka hesaplarda kullanmadığınız bir şifre</p></div>
+              <div className="rounded-xl bg-slate-50 border p-4 text-sm text-slate-600 space-y-1"><p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" />En az 12 karakter</p><p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" />Büyük harf, küçük harf ve rakam</p><p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" />Başka hesaplarda kullanmadığınız bir şifre</p></div>
               <Button type="submit" className="w-full h-11" disabled={saving}>{saving ? "Kaydediliyor..." : "Şifremi Oluştur"}</Button>
             </form>
           )}

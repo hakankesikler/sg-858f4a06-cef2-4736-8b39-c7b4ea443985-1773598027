@@ -6,9 +6,11 @@ import { Lock, Mail } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TurnstileWidget, turnstileSiteKey } from "@/components/security/TurnstileWidget";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { customerPortalService } from "@/services/customerPortalService";
+import { passwordPolicyError } from "@/lib/security";
 
 export default function CustomerRegistrationPage() {
   const router = useRouter();
@@ -19,12 +21,14 @@ export default function CustomerRegistrationPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailConfirmation, setEmailConfirmation] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
 
   const handleRegister = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!token) return;
-    if (password.length < 8 || password !== confirmPassword) {
-      toast({ title: "Şifreyi kontrol edin", description: "Şifre en az 8 karakter olmalı ve iki alan eşleşmelidir.", variant: "destructive" });
+    const policyError = passwordPolicyError(password);
+    if (policyError || password !== confirmPassword) {
+      toast({ title: "Şifreyi kontrol edin", description: policyError || "İki alana aynı şifreyi yazın.", variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -35,6 +39,7 @@ export default function CustomerRegistrationPage() {
         options: {
           emailRedirectTo: `${window.location.origin}/musteri-giris`,
           data: { rex_customer_invite_token: token },
+          captchaToken: turnstileSiteKey ? captchaToken : undefined,
         },
       });
       if (error) throw error;
@@ -79,10 +84,11 @@ export default function CustomerRegistrationPage() {
                 </div>
                 <div>
                   <label htmlFor="register-password" className="block text-sm font-medium text-slate-700 mb-1.5">Şifre</label>
-                  <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" /><Input id="register-password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-11" minLength={8} required /></div>
+                  <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" /><Input id="register-password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-11" minLength={12} required /></div>
                 </div>
-                <div><label htmlFor="register-confirm" className="block text-sm font-medium text-slate-700 mb-1.5">Şifre Tekrar</label><Input id="register-confirm" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="h-11" minLength={8} required /></div>
-                <Button type="submit" disabled={loading} className="w-full h-11 bg-blue-600 hover:bg-blue-700">{loading ? "Hesap oluşturuluyor..." : "Hesabımı Oluştur"}</Button>
+                <div><label htmlFor="register-confirm" className="block text-sm font-medium text-slate-700 mb-1.5">Şifre Tekrar</label><Input id="register-confirm" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="h-11" minLength={12} required /></div>
+                <TurnstileWidget onToken={setCaptchaToken} />
+                <Button type="submit" disabled={loading || Boolean(turnstileSiteKey && !captchaToken)} className="w-full h-11 bg-blue-600 hover:bg-blue-700">{loading ? "Hesap oluşturuluyor..." : "Hesabımı Oluştur"}</Button>
               </form>
             )}
           </div>
