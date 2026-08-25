@@ -8,6 +8,7 @@ export default function GizlilikPolitikasi() {
       <SEO
         title="Gizlilik Politikası | REX Lojistik"
         description="REX Lojistik Taşımacılık Depolama Danışmanlık Limited Şirketi gizlilik politikası ve kişisel verilerin korunması hakkında bilgiler."
+        noIndex
       />
       <Header />
       <main className="min-h-screen bg-gradient-to-b from-background to-muted/20 pt-24 pb-16">

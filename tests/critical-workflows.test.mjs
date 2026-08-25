@@ -630,3 +630,16 @@ test("public logistics services have dedicated SEO pages and internal navigation
   assert.match(robots, /Disallow: \/personel\//);
   assert.doesNotMatch(sitemap, /\/login<\/loc>/);
 });
+
+test("public SEO copy does not market customs-clearance services", async () => {
+  const [content, privacy, kvkk, terms, sitemap] = await Promise.all([
+    read("src/content/marketing-pages.ts"),
+    read("src/pages/gizlilik-politikasi.tsx"),
+    read("src/pages/kvkk-aydinlatma-metni.tsx"),
+    read("src/pages/kullanim-kosullari.tsx"),
+    read("public/sitemap.xml"),
+  ]);
+  assert.doesNotMatch(content, /gümrük/i);
+  for (const legalPage of [privacy, kvkk, terms]) assert.match(legalPage, /noIndex/);
+  assert.doesNotMatch(sitemap, /gizlilik-politikasi|kullanim-kosullari|kvkk-aydinlatma-metni/);
+});

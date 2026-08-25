@@ -9,6 +9,7 @@ export default function KVKKAydinlatmaMetni() {
       <SEO 
         title="KVKK Aydınlatma Metni - REX Lojistik"
         description="REX Lojistik Kişisel Verilerin Korunması ve İşlenmesi Aydınlatma Metni. KVKK kapsamında haklarınız ve veri işleme süreçlerimiz."
+        noIndex
       />
       <Header />
       <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">

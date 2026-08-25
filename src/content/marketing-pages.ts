@@ -130,9 +130,9 @@ export const marketingPages: Record<string, MarketingPageData> = {
         title: "Sınır ötesi yükler için planlı karayolu çözümü",
         paragraphs: [
           "Uluslararası karayolu taşımacılığı, Türkiye ile Avrupa başta olmak üzere karayolu bağlantısı bulunan pazarlardaki ticari yükler için kapıdan kapıya esneklik sağlar. REX Lojistik, gönderinin hacmine göre parsiyel veya komple araç planlar.",
-          "Çıkış ülkesi, teslim ülkesi, gümrük süreci, ürün niteliği ve teslim şekli teklif öncesinde değerlendirilir. Gümrükleme işlemleri yetkili taraflarla koordineli yürütülür; taşıma operasyonu ilgili evraklarla birlikte takip edilir.",
+          "Çıkış ülkesi, teslim ülkesi, sınır geçişinde ihtiyaç duyulan taşıma evrakları, ürün niteliği ve teslim şekli teklif öncesinde değerlendirilir. İthalat ve ihracata ilişkin resmi işlemler müşteri ile müşterinin kendi yetkili danışmanları tarafından yürütülür; REX Lojistik taşıma operasyonuna odaklanır.",
         ],
-        bullets: ["Avrupa yönlü ithalat ve ihracat sevkiyatları", "Komple araç ve parsiyel yük organizasyonu", "Kapıdan kapıya veya terminal bağlantılı teslimat", "Taşıma belgesi ve gümrük koordinasyonu"],
+        bullets: ["Avrupa yönlü ithalat ve ihracat sevkiyatları", "Komple araç ve parsiyel yük organizasyonu", "Kapıdan kapıya veya terminal bağlantılı teslimat", "Taşıma belgesi ve sınır geçişi koordinasyonu"],
       },
       {
         title: "Uluslararası taşıma teklifinde hangi bilgiler gerekir?",
@@ -150,8 +150,8 @@ export const marketingPages: Record<string, MarketingPageData> = {
     ],
     faq: [
       { question: "Uluslararası parsiyel ve komple taşıma yapılabiliyor mu?", answer: "Evet. Yük miktarı ve teslim beklentisine göre parsiyel ya da komple araç seçeneği planlanabilir." },
-      { question: "Gümrükleme hizmeti taşıma fiyatına dahil mi?", answer: "Gümrükleme kapsamı sevkiyata ve anlaşmaya göre değişir. Yetkili gümrük müşaviriyle yürütülecek işlemler teklif aşamasında ayrıca netleştirilir." },
-      { question: "Transit süre nasıl belirlenir?", answer: "Transit süre; ülke, güzergâh, sınır ve gümrük süreçleri, araç planı ve teslimat koşullarına göre belirlenir. Tahmini süre teklif sırasında paylaşılır." },
+      { question: "REX Lojistik uluslararası taşımada hangi kapsamı yönetir?", answer: "REX Lojistik araç, hat, taşıma evrakı ve teslimat operasyonunu yönetir. İthalat ve ihracata ilişkin resmi işlemler müşterinin kendi yetkili danışmanları tarafından yürütülür ve REX Lojistik hizmet kapsamının dışındadır." },
+      { question: "Transit süre nasıl belirlenir?", answer: "Transit süre; ülke, güzergâh, sınır geçişleri ve resmi işlemler, araç planı ve teslimat koşullarına göre belirlenir. Tahmini süre teklif sırasında paylaşılır." },
       { question: "Hangi belgeler gerekir?", answer: "Fatura, çeki listesi ve taşıma belgeleri başta olmak üzere gereklilikler yük ve ülkeye göre değişebilir. Operasyon öncesi kontrol listesi paylaşılır." },
     ],
     related: ["komple-tasimacilik", "hava-kargo", "denizyolu-tasimaciligi"],
@@ -198,7 +198,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Hava kargo fiyatı nasıl hesaplanır?", answer: "Fiyat; çıkış-varış hattı, gerçek ve hacimsel ağırlık, ürün niteliği, uçuş seçeneği ve kapı teslim hizmetlerine göre hesaplanır." },
       { question: "Kapıdan kapıya hava kargo yapılabilir mi?", answer: "Uygun ülkelerde çıkış ve varış kara transferleri hava taşımasına eklenerek kapıdan kapıya çözüm planlanabilir." },
       { question: "Her ürün hava kargoyla taşınabilir mi?", answer: "Hayır. Tehlikeli maddeler, bataryalar, sıvılar ve bazı özel ürünler için havayolu kabul kuralları bulunur. Ürün detayları rezervasyon öncesi kontrol edilir." },
-      { question: "Teslim süresi ne kadardır?", answer: "Süre uçuş hattı, rezervasyon durumu, aktarma, gümrük ve kapı teslim kapsamına göre değişir; teklif sırasında tahmini transit süre belirtilir." },
+      { question: "Teslim süresi ne kadardır?", answer: "Süre uçuş hattı, rezervasyon durumu, aktarma, ülke giriş koşulları ve kapı teslim kapsamına göre değişir; teklif sırasında tahmini transit süre belirtilir." },
     ],
     related: ["express-kargo", "uluslararasi-karayolu-tasimaciligi", "denizyolu-tasimaciligi"],
   },
@@ -229,7 +229,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Denizyolu teklifinde maliyet şeffaflığı",
         paragraphs: [
-          "Navlun dışında çıkış ve varış yerel masrafları, terminal hizmetleri, gümrükleme, ardiye riski ve kara transferleri toplam maliyeti etkileyebilir. Teklif kapsamının hangi hizmetleri içerdiği açık biçimde belirlenmelidir.",
+          "Navlun dışında çıkış ve varış yerel masrafları, terminal hizmetleri, resmi ithalat ve ihracat giderleri, ardiye riski ve kara transferleri toplam maliyeti etkileyebilir. Teklif kapsamının hangi hizmetleri içerdiği açık biçimde belirlenmelidir.",
           "Konteyner serbest süreleri ve liman teslim kuralları operasyon öncesinde değerlendirilerek gecikme riskini azaltacak takvim oluşturulur.",
         ],
       },
@@ -242,7 +242,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
     ],
     faq: [
       { question: "FCL ve LCL arasındaki fark nedir?", answer: "FCL'de konteyner tek bir müşteriye ayrılır; LCL'de birden fazla göndericinin yükü aynı konteyner kapasitesini paylaşır." },
-      { question: "Denizyolu taşıma süresi nasıl belirlenir?", answer: "Gemi programı, çıkış ve varış limanı, aktarma, liman yoğunluğu, gümrük ve kara bağlantıları toplam süreyi etkiler." },
+      { question: "Denizyolu taşıma süresi nasıl belirlenir?", answer: "Gemi programı, çıkış ve varış limanı, aktarma, liman yoğunluğu, resmi işlemler ve kara bağlantıları toplam süreyi etkiler." },
       { question: "Kapıdan kapıya denizyolu hizmeti alınabilir mi?", answer: "Uygun hatlarda çıkış ve varış kara taşımaları denizyolu operasyonuna eklenerek kapıdan kapıya plan yapılabilir." },
       { question: "Konteyner türünü kim belirler?", answer: "Yükün ölçüsü, ağırlığı, ambalajı, yükleme biçimi ve özel gereksinimleri incelenerek uygun konteyner seçeneği önerilir." },
     ],
@@ -267,13 +267,13 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Express kargo hangi gönderiler için uygundur?",
         paragraphs: [
-          "Express kargo; dosya, numune, küçük yedek parça, e-ticaret paketi ve zaman hassasiyetli düşük hacimli gönderiler için pratik bir çözümdür. Servis seçimi yapılırken yalnızca hız değil, ülke kapsaması, gümrük koşulları, ürün kabul kuralları ve teslimat bölgesi de değerlendirilir.",
+          "Express kargo; dosya, numune, küçük yedek parça, e-ticaret paketi ve zaman hassasiyetli düşük hacimli gönderiler için pratik bir çözümdür. Servis seçimi yapılırken yalnızca hız değil, ülke kapsaması, ülke giriş koşulları, ürün kabul kuralları ve teslimat bölgesi de değerlendirilir.",
           "REX Lojistik gönderi bilgilerini kontrol ederek uygun express servis alternatifini sunar ve takip numarası üzerinden sürecin izlenmesini sağlar.",
         ],
         bullets: ["Ticari numune ve evrak gönderileri", "Küçük yedek parça ve paketler", "Kapıdan kapıya uluslararası teslimat", "Takip numarasıyla gönderi sorgulama"],
       },
       {
-        title: "Gümrük ve ürün kabul koşulları",
+        title: "Ürün kabul ve ülke giriş koşulları",
         paragraphs: [
           "Uluslararası express gönderilerde ürün tanımı, miktar, değer ve kullanım amacı açık olmalıdır. Ticari fatura ya da proforma gereksinimi gönderi türüne göre belirlenir.",
           "Batarya, sıvı, gıda, kozmetik, ilaç ve benzeri ürünlerde ülke ve taşıyıcı kuralları farklılaşabilir. Rezervasyon öncesinde içerik mutlaka doğru beyan edilmelidir.",
@@ -289,7 +289,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
     faq: [
       { question: "Express kargo ile hangi ülkelere gönderim yapılır?", answer: "Kapsama, seçilen iş ortağına ve gönderi içeriğine göre değişir. Adres ve ürün bilgisiyle ülke/posta kodu uygunluğu kontrol edilir." },
       { question: "Fiyat için hangi bilgiler gerekir?", answer: "Çıkış-varış posta kodu, koli adedi, her kolinin ölçüsü ve ağırlığı, ürün tanımı ve beyan değeri gerekir." },
-      { question: "Gümrük vergileri fiyata dahil mi?", answer: "Varış ülkesindeki vergi ve harçlar teslim şekline göre alıcıya veya göndericiye ait olabilir. Teklif kapsamı rezervasyon öncesi netleştirilir." },
+      { question: "Varış ülkesindeki vergi ve harçlar fiyata dahil mi?", answer: "Varış ülkesindeki vergi ve harçlar teslim şekline göre alıcıya veya göndericiye ait olabilir. Teklif kapsamı rezervasyon öncesi netleştirilir." },
       { question: "Gönderimi nasıl takip ederim?", answer: "Oluşturulan takip numarasıyla taşıma hareketleri takip edilir; REX Lojistik operasyon ekibi gerektiğinde süreç hakkında destek verir." },
     ],
     related: ["hava-kargo", "yurtici-parsiyel-tasimacilik", "uluslararasi-karayolu-tasimaciligi"],
@@ -435,4 +435,3 @@ export const marketingPages: Record<string, MarketingPageData> = {
 };
 
 export const marketingPageList = Object.values(marketingPages);
-

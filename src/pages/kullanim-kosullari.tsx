@@ -9,6 +9,7 @@ export default function KullanimKosullari() {
       <SEO 
         title="Kullanım Koşulları | REX Lojistik"
         description="REX Lojistik web sitesi kullanım koşulları, hizmet şartları ve yasal uyarılar."
+        noIndex
       />
       <Header />
       <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
