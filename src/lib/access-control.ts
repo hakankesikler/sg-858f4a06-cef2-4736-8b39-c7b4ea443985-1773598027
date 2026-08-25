@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { canAccessModuleWithPermissions, hasPermission, PermissionMap, PermissionOverrides, resolvePermissions } from "@/lib/staff-permissions";
 
 export type AppRole = "admin" | "sales" | "operations" | "accounting" | "hr" | "viewer" | "demo";
-export type PortalModule = "dashboard" | "crm" | "logistics" | "accounting" | "hr" | "analytics" | "reports" | "settings";
+export type PortalModule = "dashboard" | "crm" | "logistics" | "accounting" | "hr" | "analytics" | "reports" | "integrations" | "settings";
 
 export const roleLabels: Record<AppRole, string> = {
   admin: "Yönetici",
@@ -15,10 +15,10 @@ export const roleLabels: Record<AppRole, string> = {
 };
 
 const roleModules: Record<AppRole, PortalModule[]> = {
-  admin: ["dashboard", "crm", "logistics", "accounting", "hr", "analytics", "reports", "settings"],
-  sales: ["dashboard", "crm", "reports"],
-  operations: ["dashboard", "crm", "logistics", "analytics", "reports"],
-  accounting: ["dashboard", "crm", "accounting", "reports"],
+  admin: ["dashboard", "crm", "logistics", "accounting", "hr", "analytics", "reports", "integrations", "settings"],
+  sales: ["dashboard", "crm", "reports", "integrations"],
+  operations: ["dashboard", "crm", "logistics", "analytics", "reports", "integrations"],
+  accounting: ["dashboard", "crm", "accounting", "reports", "integrations"],
   hr: ["dashboard", "hr"],
   viewer: ["dashboard"],
   demo: ["dashboard"],

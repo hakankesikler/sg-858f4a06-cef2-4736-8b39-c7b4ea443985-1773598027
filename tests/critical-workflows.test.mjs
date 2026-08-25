@@ -468,7 +468,7 @@ test("staff account creation and department roles remain owner-controlled and se
   assert.match(manager, /Satış/);
   assert.match(manager, /Operasyon/);
   assert.match(manager, /Muhasebe/);
-  assert.match(access, /sales: \["dashboard", "crm", "reports"\]/);
+  assert.match(access, /sales: \["dashboard", "crm", "reports", "integrations"\]/);
   assert.match(setup, /must_change_password: false/);
 });
 
@@ -528,4 +528,39 @@ test("staff security requires MFA for privileged roles and records immutable sec
   assert.match(config, /Content-Security-Policy/);
   assert.match(config, /Strict-Transport-Security/);
   assert.match(config, /X-Frame-Options/);
+});
+
+test("integration center imports customer shipments idempotently with row-level audit", async () => {
+  const [sql, module, parser, service, permissions, portal, logistics] = await Promise.all([
+    read("supabase/migrations/20260825180000_integration_center.sql"),
+    read("src/components/modules/IntegrationsModule.tsx"),
+    read("src/lib/shipment-import.ts"),
+    read("src/services/integrationService.ts"),
+    read("src/lib/staff-permissions.ts"),
+    read("src/pages/personel/profil.tsx"),
+    read("src/components/modules/LogisticsModule.tsx"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.integration_partners/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.integration_import_batches/);
+  assert.match(sql, /UNIQUE \(partner_id, idempotency_key\)/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.integration_external_references/);
+  assert.match(sql, /UNIQUE \(partner_id, entity_type, external_id\)/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_import_customer_shipments/);
+  assert.match(sql, /integrations\.imports','manage'/);
+  assert.match(sql, /operations\.shipments','manage'/);
+  assert.match(sql, /integration_imported/);
+  assert.match(sql, /rex_integration_events_append_only/);
+  assert.match(module, /Dosya seçildiğinde satırlar kaydedilmeden önce burada kontrol edilir/);
+  assert.match(module, /Mükerrerlik koruması/);
+  assert.match(parser, /readSheet/);
+  assert.match(parser, /\["csv", "xlsx"\]/);
+  assert.match(parser, /Aynı dosyada mükerrer referans/);
+  assert.match(service, /rex_import_customer_shipments/);
+  assert.match(permissions, /integrations\.connections/);
+  assert.match(permissions, /integrations\.imports/);
+  assert.match(permissions, /integrations\.monitoring/);
+  assert.match(portal, /Entegrasyon Merkezi/);
+  assert.match(portal, /<IntegrationsModule permissions=\{permissions\}/);
+  assert.match(logistics, /Güvenli Toplu Aktarım/);
+  assert.doesNotMatch(logistics, /handleCsvImport/);
 });

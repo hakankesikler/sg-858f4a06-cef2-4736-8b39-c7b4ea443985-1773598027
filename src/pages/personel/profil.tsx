@@ -12,6 +12,7 @@ import { AccountingModule } from "@/components/modules/AccountingModule";
 import { HRModule } from "@/components/modules/HRModule";
 import { AnalyticsModule } from "@/components/modules/AnalyticsModule";
 import { ReportsModule } from "@/components/modules/ReportsModule";
+import { IntegrationsModule } from "@/components/modules/IntegrationsModule";
 import { SettingsModule } from "@/components/modules/SettingsModule";
 import { supabase } from "@/integrations/supabase/client";
 import { AppRole, PortalModule, canAccessModule, getCurrentUserAccess, roleLabels } from "@/lib/access-control";
@@ -28,6 +29,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Network,
   Package,
   Plus,
   Settings,
@@ -62,6 +64,7 @@ const moduleDefinitions = [
   { id: "hr" as const, name: "İnsan Kaynakları", icon: UserCircle },
   { id: "analytics" as const, name: "Web Analitik", icon: ActivityIcon },
   { id: "reports" as const, name: "Raporlama", icon: BarChart3 },
+  { id: "integrations" as const, name: "Entegrasyon Merkezi", icon: Network },
   { id: "settings" as const, name: "Ayarlar", icon: Settings },
 ];
 
@@ -269,6 +272,7 @@ export default function PersonelProfil() {
       case "hr": return <HRModule />;
       case "analytics": return <AnalyticsModule />;
       case "reports": return <ReportsModule />;
+      case "integrations": return <IntegrationsModule permissions={permissions} />;
       case "settings": return <SettingsModule />;
       default: return renderDashboard();
     }

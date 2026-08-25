@@ -20,6 +20,9 @@ export const permissionCatalog = [
   { key: "reports.operations", group: "Raporlar", label: "Operasyon raporları", description: "Sevkiyat ve teslimat raporları" },
   { key: "reports.accounting", group: "Raporlar", label: "Finans raporları", description: "Fatura, ödeme ve kârlılık raporları" },
   { key: "analytics.web", group: "Raporlar", label: "Web Analitik", description: "Site ziyaretçi ve trafik istatistikleri" },
+  { key: "integrations.connections", group: "Entegrasyon", label: "Bağlantı yönetimi", description: "Müşteri, taşıyıcı ve muhasebe bağlantılarını yapılandırma" },
+  { key: "integrations.imports", group: "Entegrasyon", label: "Toplu sevkiyat", description: "Müşteri Excel/CSV dosyalarını kontrol etme ve aktarma" },
+  { key: "integrations.monitoring", group: "Entegrasyon", label: "İşlem takibi", description: "Entegrasyon durumlarını, hataları ve aktarım geçmişini izleme" },
 ] as const;
 
 export type PermissionKey = (typeof permissionCatalog)[number]["key"];
@@ -32,16 +35,18 @@ const roleDefaults: Record<AppRole, PermissionOverrides> = {
   admin: Object.fromEntries(permissionCatalog.map((item) => [item.key, "manage"])) as PermissionOverrides,
   sales: {
     "crm.customers": "manage", "crm.portal_invites": "manage", "sales.work_orders": "manage",
-    "reports.sales": "view",
+    "reports.sales": "view", "integrations.monitoring": "view",
   },
   operations: {
     "crm.customers": "view", "sales.work_orders": "manage", "operations.shipments": "manage",
     "operations.assignments": "manage", "operations.delivery": "manage", "operations.exceptions": "manage",
-    "operations.uetds": "manage", "reports.operations": "view", "analytics.web": "view",
+    "operations.uetds": "manage", "integrations.imports": "manage", "integrations.monitoring": "view",
+    "reports.operations": "view", "analytics.web": "view",
   },
   accounting: {
     "crm.customers": "view", "accounting.sales": "manage", "accounting.purchase": "manage",
     "accounting.accounts": "manage", "accounting.expenses": "manage", "reports.accounting": "view",
+    "integrations.monitoring": "view",
   },
   hr: {}, viewer: {}, demo: {},
 };
@@ -67,6 +72,7 @@ export function canAccessModuleWithPermissions(role: AppRole, permissions: Permi
   if (module === "accounting") return ["accounting.sales", "accounting.purchase", "accounting.accounts", "accounting.expenses"].some((key) => hasPermission(permissions, key as PermissionKey));
   if (module === "analytics") return hasPermission(permissions, "analytics.web");
   if (module === "reports") return ["reports.sales", "reports.operations", "reports.accounting"].some((key) => hasPermission(permissions, key as PermissionKey));
+  if (module === "integrations") return ["integrations.connections", "integrations.imports", "integrations.monitoring"].some((key) => hasPermission(permissions, key as PermissionKey));
   if (module === "hr") return role === "hr";
   return false;
 }

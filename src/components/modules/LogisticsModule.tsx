@@ -10,8 +10,7 @@ import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService, type ShipmentRevisionRequest } from "@/services/shipmentService";
 import { transportJobService, type TransportJob } from "@/services/transportJobService";
 import { transportComplianceService, type TransportComplianceAlert } from "@/services/transportComplianceService";
-import { crmService } from "@/services/crmService";
-import { downloadCsv, parseCsv } from "@/lib/csv";
+import { downloadCsv } from "@/lib/csv";
 import { DriverForm } from "@/components/DriverForm";
 import { VehicleForm } from "@/components/VehicleForm";
 import { ShipmentForm } from "@/components/ShipmentForm";
@@ -73,10 +72,6 @@ export function LogisticsModule() {
   const [historyJob, setHistoryJob] = useState<TransportJob | null>(null);
   const [cancellingShipment, setCancellingShipment] = useState<any | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
-
-  // Excel import state
-  const [isImporting, setIsImporting] = useState(false);
-  const fileInputRef = useState<HTMLInputElement | null>(null)[0];
 
   // Column filters
   const [filters, setFilters] = useState({
@@ -399,166 +394,6 @@ export function LogisticsModule() {
     }
   };
 
-  // Download CSV template
-  const downloadExcelTemplate = () => {
-    try {
-      const templateData = [
-        {
-          "Müşteri Cari Adı": "Örn: Medbar A.Ş",
-          "Gönderici Adı": "Örn: Medbar A.Ş",
-          "Gönderici İl": "Örn: İzmir",
-          "Alıcı Adı": "Örn: ASG Havaleli Depo",
-          "Alıcı İlçe": "Örn: SANCAKTEPE",
-          "Alıcı İl": "Örn: İstanbul",
-          "Sürücü Adı": "Örn: Enes Özbay",
-          "Araç Plakası": "Örn: 63AJL095",
-          "Yükleme Tarihi": "Örn: 15.04.2026",
-          "Yük Cinsi": "Örn: Paletli Malzeme",
-          "Adet": 1,
-          "Kg/Desi": 100,
-          "Birim Fiyat": 2500,
-        },
-      ];
-
-      downloadCsv("Sevkiyat_Sablonu.csv", templateData);
-
-      toast({
-        title: "Başarılı",
-        description: "CSV şablonu indirildi",
-      });
-    } catch (error) {
-      console.error("Template download error:", error);
-      toast({
-        title: "Hata",
-        description: "Şablon indirilirken bir hata oluştu",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Handle CSV import
-  const handleCsvImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsImporting(true);
-
-    try {
-      if (file.size > 2 * 1024 * 1024) {
-        throw new Error("CSV dosyası 2 MB'den büyük olamaz");
-      }
-      const jsonData = parseCsv(await file.text());
-      const customers = await crmService.getCustomers();
-
-      let successCount = 0;
-      let errorCount = 0;
-      const errors: string[] = [];
-
-      for (let i = 0; i < jsonData.length; i++) {
-        const row: any = jsonData[i];
-        
-        try {
-          // Find driver by name
-          const driverName = row["Sürücü Adı"] || row["Sürücü"] || "";
-          const driver = drivers.find((d) => 
-            d.full_name?.toLowerCase().includes(driverName.toLowerCase())
-          );
-
-          // Find vehicle by plate
-          const vehiclePlate = row["Araç Plakası"] || row["Araç"] || "";
-          const vehicle = vehicles.find((v) => 
-            v.cekici_plakasi?.toLowerCase().includes(vehiclePlate.toLowerCase())
-          );
-
-          const customerName = row["Müşteri Cari Adı"] || row["Gönderici Adı"] || row["Gönderici"] || "";
-          const customer = customers.find((c) =>
-            normalize(c.name || c.company || "") === normalize(customerName)
-          );
-          const cargoQuantity = Number(row["Adet"] || 0);
-          const cargoWeight = Number(row["Kg/Desi"] || 0);
-          const cargoUnitPrice = Number(row["Birim Fiyat"] || 0);
-          const cargoKind = row["Yük Cinsi"] || "";
-
-          // Parse date
-          let pickupDate = new Date().toISOString().split("T")[0];
-          if (row["Yükleme Tarihi"]) {
-            const dateParts = row["Yükleme Tarihi"].toString().split(".");
-            if (dateParts.length === 3) {
-              pickupDate = `${dateParts[2]}-${dateParts[1].padStart(2, "0")}-${dateParts[0].padStart(2, "0")}`;
-            }
-          }
-
-          const shipmentData = {
-            sender_name: row["Gönderici Adı"] || row["Gönderici"] || "",
-            origin: row["Gönderici İl"] || "",
-            receiver: row["Alıcı Adı"] || row["Alıcı"] || "",
-            receiver_district: row["Alıcı İlçe"] || "",
-            destination: row["Alıcı İl"] || "",
-            driver_id: driver?.id || null,
-            vehicle_id: vehicle?.id || null,
-            customer_id: customer?.id || null,
-            pickup_date: pickupDate,
-            status: "beklemede" as const,
-          };
-
-          // Validate required fields
-          if (!shipmentData.sender_name || !shipmentData.receiver || !customer || !driver || !vehicle ||
-              cargoQuantity <= 0 || cargoWeight <= 0 || !cargoKind.trim()) {
-            errors.push(`Satır ${i + 2}: Cari, sürücü, araç, gönderici/alıcı ve yük bilgileri eksik`);
-            errorCount++;
-            continue;
-          }
-
-          await shipmentService.saveShipmentWithCargo(null, shipmentData, [{
-            adet: cargoQuantity,
-            cinsi: cargoKind,
-            kg_ds: cargoWeight,
-            birim_fiyat: cargoUnitPrice,
-            alt_toplam_fiyat: cargoQuantity * cargoUnitPrice,
-          }]);
-          successCount++;
-        } catch (error) {
-          console.error(`Row ${i + 2} error:`, error);
-          errors.push(`Satır ${i + 2}: Hata oluştu`);
-          errorCount++;
-        }
-      }
-
-      // Show results
-      if (successCount > 0) {
-        toast({
-          title: "İçe Aktarma Tamamlandı",
-          description: `${successCount} sevkiyat başarıyla oluşturuldu${errorCount > 0 ? `, ${errorCount} hata` : ""}`,
-        });
-      }
-
-      if (errors.length > 0 && errors.length <= 5) {
-        setTimeout(() => {
-          toast({
-            title: "Hatalar",
-            description: errors.join("\n"),
-            variant: "destructive",
-          });
-        }, 500);
-      }
-
-      // Reload data
-      await loadData();
-    } catch (error) {
-      console.error("CSV import error:", error);
-      toast({
-        title: "Hata",
-        description: error instanceof Error ? error.message : "CSV dosyası okunurken bir hata oluştu",
-        variant: "destructive",
-      });
-    } finally {
-      setIsImporting(false);
-      if (event.target) {
-        event.target.value = "";
-      }
-    }
-  };
-
   const complianceFor = (entityType: "driver" | "vehicle", entityId: string) =>
     complianceAlerts.filter((alert) => alert.entity_type === entityType && alert.entity_id === entityId);
   const blockedComplianceCount = complianceAlerts.filter((alert) => alert.severity === "blocked").length;
@@ -677,25 +512,10 @@ export function LogisticsModule() {
                 <FileText className="h-4 w-4 mr-2" />
                 CSV İndir
               </Button>
-              <Button onClick={downloadExcelTemplate} variant="outline">
-                <FileText className="h-4 w-4 mr-2" />
-                Şablon İndir
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => document.getElementById("excel-import-input")?.click()}
-                disabled={isImporting}
-              >
+              <Button variant="outline" onClick={() => window.location.assign("/personel/profil?module=integrations")}>
                 <FileDown className="h-4 w-4 mr-2" />
-                {isImporting ? "Yükleniyor..." : "CSV'den Yükle"}
+                Güvenli Toplu Aktarım
               </Button>
-              <input
-                id="excel-import-input"
-                type="file"
-                accept=".csv,text/csv"
-                onChange={handleCsvImport}
-                style={{ display: "none" }}
-              />
             </div>
             <Button onClick={() => {
               setEditingShipment(undefined);
