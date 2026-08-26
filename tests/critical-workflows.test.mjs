@@ -674,3 +674,19 @@ test("public homepage protects customer confidentiality and avoids unverifiable 
   assert.match(cta, /fiyat teklifimizi hazırlayıp sizinle paylaşalım/);
   assert.doesNotMatch(cta, /fiyat teklifi alalım/);
 });
+
+test("public quote request is a two-step form with flexible contact validation", async () => {
+  const [form, endpoint] = await Promise.all([
+    read("src/components/QuoteForm.tsx"),
+    read("src/pages/api/send-quote.ts"),
+  ]);
+  assert.match(form, /İletişim ve güzergâh/);
+  assert.match(form, /Taşıma ve yük/);
+  assert.match(form, /Adım \{step\} \/ 2/);
+  assert.match(form, /Telefon veya e-postadan en az birini giriniz/);
+  assert.match(form, /goToShipmentDetails/);
+  assert.match(endpoint, /\(!emailProvided && !phoneProvided\)/);
+  assert.match(endpoint, /Yükleme Noktası: \$\{data\.loadingPoint\}/);
+  assert.match(endpoint, /validPositiveNumber/);
+  assert.doesNotMatch(endpoint, /data\.senderCountry|data\.receiverCountry/);
+});

@@ -30,6 +30,12 @@ function validText(value: unknown, maxLength: number) {
   return typeof value === "string" && value.trim().length > 0 && value.length <= maxLength;
 }
 
+function validPositiveNumber(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number") return false;
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) && numericValue > 0;
+}
+
 function formatEmailText(data: any): string {
   const serviceTypeLabel = data.serviceType === "domestic" ? "Yurt İçi" : "Uluslararası";
   
@@ -72,8 +78,8 @@ REX Lojistik - Teklif Formu
 ============================================
 Ad Soyad: ${data.fullName}
 Firma İsmi: ${data.companyName}
-E-posta: ${data.email}
-Telefon: ${data.phone}
+E-posta: ${data.email || "Belirtilmedi"}
+Telefon: ${data.phone || "Belirtilmedi"}
 
 ============================================
 📦 HİZMET BİLGİLERİ
@@ -83,25 +89,20 @@ Taşıma Türü: ${transportModeLabels[data.transportMode] || data.transportMode
 ${data.transportDetail ? `Detay: ${transportDetailLabels[data.transportDetail] || data.transportDetail}` : ""}
 
 ============================================
-📍 GÖNDEREN BİLGİLERİ
+📍 GÜZERGÂH
 ============================================
-Ülke: ${data.senderCountry}
-İl / İlçe: ${data.senderCity} / ${data.senderDistrict}
-Posta Kodu: ${data.senderPostalCode}
-Adres: ${data.senderAddress}
-
-============================================
-🎯 ALICI BİLGİLERİ
-============================================
-Ülke: ${data.receiverCountry}
-İl / İlçe: ${data.receiverCity} / ${data.receiverDistrict}
-Posta Kodu: ${data.receiverPostalCode}
-Adres: ${data.receiverAddress}
+Yükleme Noktası: ${data.loadingPoint}
+Teslimat Noktası: ${data.deliveryPoint}
 
 ============================================
 📏 YÜK ÖZELLİKLERİ (${data.cargos.length} Adet Yük)
 ============================================
 ${cargosText}
+
+============================================
+📝 EK NOTLAR
+============================================
+${data.specialRequirements || "Belirtilmedi"}
 
 ============================================
 Bu e-posta REX Lojistik web sitesi teklif formundan otomatik olarak gönderilmiştir.
@@ -130,12 +131,22 @@ export default async function handler(
       return res.status(429).json({ success: false, message: "Çok fazla istek gönderdiniz. Lütfen daha sonra tekrar deneyin." });
     }
 
+    const emailProvided = validText(formData?.email, 200);
+    const phoneProvided = validText(formData?.phone, 40);
+    const emailValid = !formData?.email || (emailProvided && /^\S+@\S+\.\S+$/.test(formData.email));
+    const phoneValid = !formData?.phone || (phoneProvided && formData.phone.replace(/\D/g, "").length >= 10);
+
     if (
       !validText(formData?.fullName, 120) ||
       !validText(formData?.companyName, 160) ||
-      !validText(formData?.email, 200) ||
-      !validText(formData?.phone, 40) ||
-      !/^\S+@\S+\.\S+$/.test(formData.email)
+      (!emailProvided && !phoneProvided) ||
+      !emailValid ||
+      !phoneValid ||
+      !["domestic", "international"].includes(formData?.serviceType) ||
+      !["road", "air", "sea"].includes(formData?.transportMode) ||
+      !validText(formData?.loadingPoint, 200) ||
+      !validText(formData?.deliveryPoint, 200) ||
+      (formData?.specialRequirements && (typeof formData.specialRequirements !== "string" || formData.specialRequirements.length > 2000))
     ) {
       return res.status(400).json({ success: false, message: "Form bilgileri geçersiz" });
     }
@@ -147,12 +158,22 @@ export default async function handler(
       });
     }
 
+    if (formData.cargos.some((cargo: any) => (
+      !validPositiveNumber(cargo?.width) ||
+      !validPositiveNumber(cargo?.length) ||
+      !validPositiveNumber(cargo?.height) ||
+      !validPositiveNumber(cargo?.weight) ||
+      !validPositiveNumber(cargo?.quantity)
+    ))) {
+      return res.status(400).json({ success: false, message: "Yük bilgileri geçersiz" });
+    }
+
     const emailText = formatEmailText(formData);
 
     const { data, error } = await resend.emails.send({
       from: "REX Lojistik <onboarding@resend.dev>",
       to: ["hakankesikler@gmail.com"],
-      replyTo: formData.email,
+      ...(emailProvided ? { replyTo: formData.email.trim() } : {}),
       subject: `Yeni Teklif Talebi - ${formData.companyName}`,
       text: emailText,
     });
