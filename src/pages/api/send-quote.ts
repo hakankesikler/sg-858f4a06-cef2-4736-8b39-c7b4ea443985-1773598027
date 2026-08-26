@@ -188,7 +188,7 @@ export default async function handler(
 
     const { data, error } = await resend.emails.send({
       from: "REX Lojistik <onboarding@resend.dev>",
-      to: ["hakankesikler@gmail.com"],
+      to: ["info@rexlojistik.com"],
       ...(emailProvided ? { replyTo: formData.email.trim() } : {}),
       subject: `Yeni Teklif Talebi - ${formData.companyName}`,
       text: emailText,

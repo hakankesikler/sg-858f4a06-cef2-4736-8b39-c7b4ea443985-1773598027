@@ -699,6 +699,8 @@ test("public quote request is a two-step form with flexible contact validation",
   assert.match(endpoint, /formData\?\.kvkkAcknowledged !== true/);
   assert.match(endpoint, /Ticari Elektronik İleti İzni/);
   assert.match(endpoint, /PRIVACY_NOTICE_VERSION/);
+  assert.match(endpoint, /to: \["info@rexlojistik\.com"\]/);
+  assert.doesNotMatch(endpoint, /hakankesikler@gmail\.com/);
   assert.match(privacyNotice, /Kişisel Verilerin İşlenmesinin Hukuki Sebepleri/);
   assert.match(privacyNotice, /teklif talebinin işleme alınmasının şartı değildir/);
 });
