@@ -92,7 +92,7 @@ export default function LoginPage() {
 
       startStaffSessionClock();
       await recordSecurityEvent("login_success", "Personel portalına giriş yapıldı.", { aal: mfa.currentLevel });
-      toast({ title: "Giriş başarılı", description: "Rex Portal'a hoş geldiniz." });
+      toast({ title: "Giriş başarılı", description: "REX TYS'ye hoş geldiniz." });
       await router.push(redirect);
     } catch {
       toast({ title: "Giriş başarısız", description: "Lütfen daha sonra tekrar deneyin.", variant: "destructive" });
@@ -154,7 +154,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <SEO title="Giriş Yap - REX Personel Portalı" description="REX Lojistik yetkili personel operasyon portalı." noIndex />
+      <SEO title="REX TYS Giriş | Taşıma Yönetim Sistemi" description="REX Lojistik yetkili personel taşıma yönetim sistemi girişi." noIndex />
       <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center px-4 py-8">
         <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-500/15 blur-3xl" />
         <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
@@ -172,10 +172,10 @@ export default function LoginPage() {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 text-center">
-              {recoveryMode ? "Yeni Şifre Oluştur" : "REX Operasyon Portalı"}
+              {recoveryMode ? "Yeni Şifre Oluştur" : "Taşıma Yönetim Sistemi"}
             </h1>
             <p className="text-sm text-slate-500 text-center mt-2 mb-7">
-              {recoveryMode ? "Hesabınız için güvenli bir şifre belirleyin." : "Lojistik yönetim sistemine güvenli giriş yapın."}
+              {recoveryMode ? "Hesabınız için güvenli bir şifre belirleyin." : "REX TYS'ye güvenli giriş yapın."}
             </p>
 
             <div className="space-y-6">

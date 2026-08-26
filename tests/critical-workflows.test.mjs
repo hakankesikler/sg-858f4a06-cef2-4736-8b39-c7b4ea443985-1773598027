@@ -75,7 +75,9 @@ test("critical public and staff entry points remain wired", async () => {
   assert.match(header, /Müşteri Portalı/);
   assert.match(home, /<TrackingSection \/>/);
   assert.match(tracking, /rex_public_track_shipment|publicTrackingService\.track/);
-  assert.match(staffLogin, /REX Operasyon Portalı/);
+  assert.match(staffLogin, /Taşıma Yönetim Sistemi/);
+  assert.match(staffLogin, /REX TYS'ye güvenli giriş yapın/);
+  assert.doesNotMatch(staffLogin, /REX Operasyon Portalı/);
   assert.match(customerLogin, /customerPortalService\.getProfile/);
 });
 
@@ -627,7 +629,8 @@ test("public logistics services have dedicated SEO pages and internal navigation
   assert.match(pageTemplate, /<details/);
   assert.match(seo, /application\/ld\+json/);
   assert.match(seo, /rel="canonical"/);
-  assert.match(footer, /href="\/login"[\s\S]*Personel Girişi/);
+  assert.match(footer, /href="\/login"[\s\S]*REX TYS/);
+  assert.doesNotMatch(footer, /Personel Girişi/);
   assert.doesNotMatch(footer, /href="\/musteri-giris"[\s\S]*Müşteri Portalı/);
   assert.match(robots, /Disallow: \/personel\//);
   assert.doesNotMatch(sitemap, /\/login<\/loc>/);

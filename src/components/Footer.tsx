@@ -44,8 +44,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="hover:text-white/80 transition-colors">
-                  Personel Girişi
+                <Link href="/login" title="REX Taşıma Yönetim Sistemi" className="hover:text-white/80 transition-colors">
+                  REX TYS
                 </Link>
               </li>
               <li>
