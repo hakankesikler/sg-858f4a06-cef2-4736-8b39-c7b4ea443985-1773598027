@@ -10,7 +10,7 @@ export function CTA() {
               Lojistik Çözümleriniz İçin Hemen İletişime Geçin
             </h2>
             <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-              REX Lojistik ile güvenli, hızlı ve ekonomik taşımacılık hizmetinden yararlanın. Detaylı teklif formumuzu doldurun, size özel fiyat teklifi alalım.
+              REX Lojistik ile güvenli, hızlı ve ekonomik taşımacılık hizmetinden yararlanın. Formu doldurun, ihtiyacınıza özel fiyat teklifimizi hazırlayıp sizinle paylaşalım.
             </p>
           </div>
 

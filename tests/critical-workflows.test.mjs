@@ -671,4 +671,6 @@ test("public homepage protects customer confidentiality and avoids unverifiable 
   assert.doesNotMatch(cta, /100%|Müşteri Memnuniyeti/);
   assert.match(hero, /Paletten Başlayan/);
   assert.match(cta, /81[\s\S]*İl Kapsama/);
+  assert.match(cta, /fiyat teklifimizi hazırlayıp sizinle paylaşalım/);
+  assert.doesNotMatch(cta, /fiyat teklifi alalım/);
 });
