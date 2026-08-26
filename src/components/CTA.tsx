@@ -28,8 +28,8 @@ export function CTA() {
               <div className="text-sm text-blue-200">Yıllık Tecrübe</div>
             </div>
             <div className="text-center text-white">
-              <div className="text-3xl font-heading font-bold mb-1">100%</div>
-              <div className="text-sm text-blue-200">Müşteri Memnuniyeti</div>
+              <div className="text-3xl font-heading font-bold mb-1">81</div>
+              <div className="text-sm text-blue-200">İl Kapsama</div>
             </div>
           </div>
         </div>

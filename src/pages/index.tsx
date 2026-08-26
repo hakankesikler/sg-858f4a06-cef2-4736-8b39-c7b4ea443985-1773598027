@@ -4,7 +4,6 @@ import { Hero } from "@/components/Hero";
 import { Services } from "@/components/Services";
 import { TrackingSection } from "@/components/TrackingSection";
 import { Features } from "@/components/Features";
-import { Testimonials } from "@/components/Testimonials";
 import { CTA } from "@/components/CTA";
 import { Footer } from "@/components/Footer";
 
@@ -34,7 +33,6 @@ export default function Home() {
           <Services />
           <TrackingSection />
           <Features />
-          <Testimonials />
           <CTA />
         </main>
         <Footer />

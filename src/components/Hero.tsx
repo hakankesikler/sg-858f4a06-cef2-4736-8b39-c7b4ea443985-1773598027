@@ -84,8 +84,8 @@ export function Hero() {
               <div className="text-xs sm:text-sm md:text-base text-white/90">Yıl Deneyim</div>
             </div>
             <div className="text-center sm:text-left">
-              <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-1 sm:mb-2">50K+</div>
-              <div className="text-xs sm:text-sm md:text-base text-white/90">Müşteri</div>
+              <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-1 sm:mb-2">1</div>
+              <div className="text-xs sm:text-sm md:text-base text-white/90">Paletten Başlayan</div>
             </div>
             <div className="text-center sm:text-left">
               <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-1 sm:mb-2">81</div>

@@ -659,3 +659,16 @@ test("every public page uses the enlarged REX-only favicon", async () => {
   assert.match(notFound, /\/rex-favicon-rex\.png\?v=2/);
   assert.doesNotMatch(notFound, /\/favicon\.ico/);
 });
+
+test("public homepage protects customer confidentiality and avoids unverifiable proof points", async () => {
+  const [home, hero, cta] = await Promise.all([
+    read("src/pages/index.tsx"),
+    read("src/components/Hero.tsx"),
+    read("src/components/CTA.tsx"),
+  ]);
+  assert.doesNotMatch(home, /Testimonials|referanslar/);
+  assert.doesNotMatch(hero, /50K\+|Müşteri\s*</);
+  assert.doesNotMatch(cta, /100%|Müşteri Memnuniyeti/);
+  assert.match(hero, /Paletten Başlayan/);
+  assert.match(cta, /81[\s\S]*İl Kapsama/);
+});
