@@ -11,7 +11,7 @@ export default function NotFound() {
         <title>404 - Sayfa Bulunamadı | Rex Lojistik</title>
         <meta name="description" content="Aradığınız sayfa bulunamadı. Rex Lojistik ana sayfasına dönün." />
         <meta name="robots" content="noindex, nofollow" />
-        <link rel="icon" type="image/png" href="/rex-favicon.png?v=1" />
+        <link rel="icon" type="image/png" href="/rex-favicon-rex.png?v=2" />
       </Head>
       
       <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center px-4">

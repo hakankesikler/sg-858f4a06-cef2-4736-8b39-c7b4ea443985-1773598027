@@ -649,13 +649,13 @@ test("public SEO copy does not market customs-clearance services", async () => {
   assert.doesNotMatch(sitemap, /gizlilik-politikasi|kullanim-kosullari|kvkk-aydinlatma-metni/);
 });
 
-test("every public page uses the approved REX favicon", async () => {
+test("every public page uses the enlarged REX-only favicon", async () => {
   const [document, notFound] = await Promise.all([
     read("src/pages/_document.tsx"),
     read("src/pages/404.tsx"),
   ]);
-  assert.match(document, /rel="icon"[\s\S]*\/rex-favicon\.png\?v=1/);
-  assert.match(document, /rel="apple-touch-icon"[\s\S]*\/rex-favicon\.png\?v=1/);
-  assert.match(notFound, /\/rex-favicon\.png\?v=1/);
+  assert.match(document, /rel="icon"[\s\S]*\/rex-favicon-rex\.png\?v=2/);
+  assert.match(document, /rel="apple-touch-icon"[\s\S]*\/rex-favicon-rex\.png\?v=2/);
+  assert.match(notFound, /\/rex-favicon-rex\.png\?v=2/);
   assert.doesNotMatch(notFound, /\/favicon\.ico/);
 });
