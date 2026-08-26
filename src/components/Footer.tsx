@@ -44,8 +44,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/musteri-giris" className="hover:text-white/80 transition-colors">
-                  Müşteri Portalı
+                <Link href="/login" className="hover:text-white/80 transition-colors">
+                  Personel Girişi
                 </Link>
               </li>
               <li>
