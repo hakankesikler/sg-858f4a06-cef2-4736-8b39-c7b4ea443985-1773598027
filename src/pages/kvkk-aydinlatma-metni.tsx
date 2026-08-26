@@ -28,6 +28,7 @@ export default function KVKKAydinlatmaMetni() {
             <div className="mt-6 text-sm text-gray-500">
               REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ
             </div>
+            <div className="mt-2 text-sm text-gray-500">Güncelleme tarihi: 26 Ağustos 2026</div>
           </div>
 
           <div className="max-w-5xl mx-auto">
@@ -52,13 +53,13 @@ export default function KVKKAydinlatmaMetni() {
                     <p className="text-gray-700">
                       Folkart Towers A Kule No:47/B K:26 D:2601<br />
                       Adalet Mahallesi Manas Bulvarı<br />
-                      Bayraklı, 35530, İzmir
+                      Bayraklı, 35630, İzmir
                     </p>
                   </div>
                   <div>
                     <p className="font-semibold text-primary mb-2">📞 İletişim:</p>
                     <p className="text-gray-700">
-                      Tel: +90 (232) 218-2483<br />
+                      Tel: +90 (232) 229-0014<br />
                       Mobil: +90 (543) 401-0755<br />
                       E-posta: info@rexlojistik.com
                     </p>
@@ -122,7 +123,7 @@ export default function KVKKAydinlatmaMetni() {
                       <ul className="space-y-2 text-gray-600">
                         <li className="flex items-start gap-2">
                           <span className="text-green-400 mt-1">•</span>
-                          <span>Vergi, gümrük ve taşımacılık mevzuatına uyum</span>
+                          <span>Vergi ve taşımacılık mevzuatına uyum</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-green-400 mt-1">•</span>
@@ -147,6 +148,13 @@ export default function KVKKAydinlatmaMetni() {
                           <span>Çerez yönetimi</span>
                         </li>
                       </ul>
+                    </div>
+
+                    <div className="border-l-4 border-orange-400 pl-4">
+                      <h3 className="font-semibold text-lg text-primary mb-2">2.5. Tanıtım ve Ticari İletişim</h3>
+                      <p className="text-gray-600">
+                        Ayrı ve isteğe bağlı ticari elektronik ileti izni verilmesi hâlinde iletişim bilgileriniz; kampanya, tanıtım ve duyuruların iletilmesi amacıyla kullanılabilir. Bu izin teklif talebinin işleme alınmasının şartı değildir ve her zaman geri çekilebilir.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -218,20 +226,38 @@ export default function KVKKAydinlatmaMetni() {
               </div>
             </section>
 
-            {/* 5. Aktarım */}
+            {/* 5. Hukuki Sebepler */}
+            <section className="mb-10 bg-white rounded-2xl p-8 shadow-lg border border-blue-100">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center">
+                  <Lock className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-primary mb-4">5. Kişisel Verilerin İşlenmesinin Hukuki Sebepleri</h2>
+                  <p className="text-gray-600 mb-4">Kişisel verileriniz, işleme faaliyetine göre KVKK'nın 5. maddesinde yer alan aşağıdaki hukuki sebeplere dayanılarak işlenmektedir:</p>
+                  <ul className="space-y-3 text-gray-600">
+                    <li className="flex items-start gap-3"><span className="text-teal-500 mt-1">•</span><span>Teklif talebinin değerlendirilmesi ve talep edilen hizmete ilişkin sözleşmenin kurulması veya ifasıyla doğrudan ilgili olması</span></li>
+                    <li className="flex items-start gap-3"><span className="text-teal-500 mt-1">•</span><span>Şirketimizin hukuki yükümlülüklerini yerine getirebilmesi</span></li>
+                    <li className="flex items-start gap-3"><span className="text-teal-500 mt-1">•</span><span>İlgili kişinin temel hak ve özgürlüklerine zarar vermemek kaydıyla meşru menfaatlerimiz için veri işlenmesinin zorunlu olması</span></li>
+                    <li className="flex items-start gap-3"><span className="text-teal-500 mt-1">•</span><span>Ticari elektronik ileti ve pazarlama faaliyetleri bakımından, gerekli olduğu durumlarda ayrı olarak verilen açık rıza veya iletişim onayı</span></li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            {/* 6. Aktarım */}
             <section className="mb-10 bg-white rounded-2xl p-8 shadow-lg border border-blue-100">
               <div className="flex items-start gap-4 mb-6">
                 <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
                   <Users className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-primary mb-4">5. Kişisel Verilerin Aktarıldığı Taraflar</h2>
+                  <h2 className="text-2xl font-bold text-primary mb-4">6. Kişisel Verilerin Aktarıldığı Taraflar</h2>
                   <p className="text-gray-600 mb-4">Kişisel verileriniz, KVKK'nın 8. ve 9. maddelerine uygun olarak aşağıdaki taraflarla paylaşılabilir:</p>
                   <div className="space-y-2">
                     {[
                       "Yurt içi ve yurt dışı lojistik iş ortakları",
                       "Depolama, dağıtım ve taşıma hizmet sağlayıcıları",
-                      "Gümrük müşavirlikleri",
                       "Mali müşavirlik ve hukuk danışmanları",
                       "Bilgi teknolojileri altyapı sağlayıcıları",
                       "Yetkili kamu kurumları"
@@ -246,14 +272,14 @@ export default function KVKKAydinlatmaMetni() {
               </div>
             </section>
 
-            {/* 6. Saklama Süresi */}
+            {/* 7. Saklama Süresi */}
             <section className="mb-10 bg-white rounded-2xl p-8 shadow-lg border border-blue-100">
               <div className="flex items-start gap-4 mb-6">
                 <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center">
                   <Calendar className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-primary mb-4">6. Kişisel Verilerin Saklanma Süresi</h2>
+                  <h2 className="text-2xl font-bold text-primary mb-4">7. Kişisel Verilerin Saklanma Süresi</h2>
                   <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-6 border border-cyan-200">
                     <p className="text-gray-700 mb-3">Kişisel verileriniz:</p>
                     <ul className="space-y-2 text-gray-600">
@@ -274,14 +300,14 @@ export default function KVKKAydinlatmaMetni() {
               </div>
             </section>
 
-            {/* 7. Haklarınız */}
+            {/* 8. Haklarınız */}
             <section className="mb-10 bg-white rounded-2xl p-8 shadow-lg border border-blue-100">
               <div className="flex items-start gap-4 mb-6">
                 <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center">
                   <UserCheck className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-primary mb-4">7. KVKK Kapsamındaki Haklarınız</h2>
+                  <h2 className="text-2xl font-bold text-primary mb-4">8. KVKK Kapsamındaki Haklarınız</h2>
                   <p className="text-gray-600 mb-4">KVKK'nın 11. maddesi uyarınca aşağıdaki haklara sahipsiniz:</p>
                   <div className="grid md:grid-cols-2 gap-4">
                     {[
@@ -310,14 +336,14 @@ export default function KVKKAydinlatmaMetni() {
               </div>
             </section>
 
-            {/* 8. Değişiklikler */}
+            {/* 9. Değişiklikler */}
             <section className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-8 shadow-lg text-white">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                   <AlertCircle className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold mb-3">8. Aydınlatma Metnindeki Değişiklikler</h2>
+                  <h2 className="text-2xl font-bold mb-3">9. Aydınlatma Metnindeki Değişiklikler</h2>
                   <p className="text-blue-100">
                     Bu metin, gerektiğinde güncellenebilir. Güncellemeler web sitemizde yayımlandığı tarihte yürürlüğe girer.
                   </p>
@@ -334,13 +360,13 @@ export default function KVKKAydinlatmaMetni() {
                   <p className="text-orange-100">
                     Folkart Towers A Kule No:47/B K:26 D:2601<br />
                     Adalet Mahallesi Manas Bulvarı<br />
-                    Bayraklı, 35530, İzmir
+                    Bayraklı, 35630, İzmir
                   </p>
                 </div>
                 <div>
                   <p className="font-semibold mb-2 text-orange-100">İletişim:</p>
                   <p className="text-orange-100">
-                    Tel: +90 (232) 218-2483<br />
+                    Tel: +90 (232) 229-0014<br />
                     Mobil: +90 (543) 401-0755<br />
                     E-posta: info@rexlojistik.com
                   </p>

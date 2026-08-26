@@ -7,6 +7,7 @@ type ResponseData = {
 };
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const PRIVACY_NOTICE_VERSION = "2026-08-26";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_REQUESTS = 3;
@@ -105,6 +106,14 @@ ${cargosText}
 ${data.specialRequirements || "Belirtilmedi"}
 
 ============================================
+🔐 AYDINLATMA VE İLETİŞİM TERCİHLERİ
+============================================
+KVKK Aydınlatma Kaydı: Alındı
+Ticari Elektronik İleti İzni: ${data.commercialConsent === true ? "Verildi" : "Verilmedi"}
+Kayıt Zamanı: ${data.consentRecordedAt}
+Aydınlatma Metni Sürümü: ${data.privacyNoticeVersion}
+
+============================================
 Bu e-posta REX Lojistik web sitesi teklif formundan otomatik olarak gönderilmiştir.
 Tarih: ${new Date().toLocaleString("tr-TR")}
 ============================================
@@ -146,6 +155,8 @@ export default async function handler(
       !["road", "air", "sea"].includes(formData?.transportMode) ||
       !validText(formData?.loadingPoint, 200) ||
       !validText(formData?.deliveryPoint, 200) ||
+      formData?.kvkkAcknowledged !== true ||
+      (formData?.commercialConsent !== undefined && typeof formData.commercialConsent !== "boolean") ||
       (formData?.specialRequirements && (typeof formData.specialRequirements !== "string" || formData.specialRequirements.length > 2000))
     ) {
       return res.status(400).json({ success: false, message: "Form bilgileri geçersiz" });
@@ -168,7 +179,12 @@ export default async function handler(
       return res.status(400).json({ success: false, message: "Yük bilgileri geçersiz" });
     }
 
-    const emailText = formatEmailText(formData);
+    const emailText = formatEmailText({
+      ...formData,
+      commercialConsent: formData.commercialConsent === true,
+      consentRecordedAt: new Date().toISOString(),
+      privacyNoticeVersion: PRIVACY_NOTICE_VERSION,
+    });
 
     const { data, error } = await resend.emails.send({
       from: "REX Lojistik <onboarding@resend.dev>",

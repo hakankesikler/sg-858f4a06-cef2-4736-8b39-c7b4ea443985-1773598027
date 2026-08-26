@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -42,6 +43,10 @@ const formSchema = z.object({
   loadingPoint: z.string().min(2, "Yükleme noktası giriniz"),
   deliveryPoint: z.string().min(2, "Teslimat noktası giriniz"),
   specialRequirements: z.string().optional(),
+  kvkkAcknowledged: z.boolean().refine((value) => value, {
+    message: "KVKK Aydınlatma Metni hakkında bilgilendirildiğinizi işaretleyiniz",
+  }),
+  commercialConsent: z.boolean().optional(),
 }).superRefine((data, ctx) => {
   if (!data.email && !data.phone) {
     ctx.addIssue({
@@ -106,9 +111,16 @@ export function QuoteForm() {
     watch,
     setValue,
     trigger,
+    control,
     reset,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      phone: "",
+      kvkkAcknowledged: false,
+      commercialConsent: false,
+    },
   });
 
   const serviceType = watch("serviceType");
@@ -448,6 +460,61 @@ export function QuoteForm() {
             <div>
               <Label htmlFor="specialRequirements" className="text-white">Ek Notlar</Label>
               <Textarea id="specialRequirements" {...register("specialRequirements")} className="mt-1 bg-white/95" placeholder="Varsa özel taleplerinizi buraya yazabilirsiniz..." rows={3} />
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-white/15 bg-white/5 p-4 sm:p-5">
+            <div>
+              <div className="flex items-start gap-3">
+                <Controller
+                  name="kvkkAcknowledged"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="kvkkAcknowledged"
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                      aria-invalid={Boolean(errors.kvkkAcknowledged)}
+                      className="mt-1 border-white/70 data-[state=checked]:border-accent data-[state=checked]:bg-accent"
+                    />
+                  )}
+                />
+                <Label htmlFor="kvkkAcknowledged" className="cursor-pointer text-sm font-normal leading-6 text-white">
+                  <a
+                    href="/kvkk-aydinlatma-metni"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-orange-300 underline underline-offset-2 hover:text-orange-200"
+                  >
+                    KVKK Aydınlatma Metni
+                  </a>{" "}
+                  kapsamında kişisel verilerimin teklif talebimin işleme alınması amacıyla kullanılması hakkında bilgilendirildim. *
+                </Label>
+              </div>
+              {errors.kvkkAcknowledged && <p className="ml-7 mt-1 text-sm text-red-300">{errors.kvkkAcknowledged.message}</p>}
+            </div>
+
+            <div className="border-t border-white/10 pt-3">
+              <div className="flex items-start gap-3">
+                <Controller
+                  name="commercialConsent"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="commercialConsent"
+                      checked={field.value || false}
+                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                      className="mt-1 border-white/70 data-[state=checked]:border-accent data-[state=checked]:bg-accent"
+                    />
+                  )}
+                />
+                <div>
+                  <Label htmlFor="commercialConsent" className="cursor-pointer text-sm font-normal leading-6 text-white">
+                    Kampanya, tanıtım ve duyurular için e-posta, SMS veya telefon yoluyla ticari elektronik ileti almak istiyorum. <span className="text-blue-200">(İsteğe bağlı)</span>
+                  </Label>
+                  <p className="mt-1 text-xs leading-5 text-blue-200">Bu tercih teklif talebinin gönderilmesi için zorunlu değildir ve daha sonra geri çekilebilir.</p>
+                </div>
+              </div>
             </div>
           </div>
 

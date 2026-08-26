@@ -676,9 +676,10 @@ test("public homepage protects customer confidentiality and avoids unverifiable 
 });
 
 test("public quote request is a two-step form with flexible contact validation", async () => {
-  const [form, endpoint] = await Promise.all([
+  const [form, endpoint, privacyNotice] = await Promise.all([
     read("src/components/QuoteForm.tsx"),
     read("src/pages/api/send-quote.ts"),
+    read("src/pages/kvkk-aydinlatma-metni.tsx"),
   ]);
   assert.match(form, /İletişim ve güzergâh/);
   assert.match(form, /Taşıma ve yük/);
@@ -689,4 +690,15 @@ test("public quote request is a two-step form with flexible contact validation",
   assert.match(endpoint, /Yükleme Noktası: \$\{data\.loadingPoint\}/);
   assert.match(endpoint, /validPositiveNumber/);
   assert.doesNotMatch(endpoint, /data\.senderCountry|data\.receiverCountry/);
+  assert.match(form, /href="\/kvkk-aydinlatma-metni"/);
+  assert.match(form, /name="kvkkAcknowledged"/);
+  assert.match(form, /name="commercialConsent"/);
+  assert.match(form, /İsteğe bağlı/);
+  assert.match(form, /kvkkAcknowledged: false/);
+  assert.match(form, /commercialConsent: false/);
+  assert.match(endpoint, /formData\?\.kvkkAcknowledged !== true/);
+  assert.match(endpoint, /Ticari Elektronik İleti İzni/);
+  assert.match(endpoint, /PRIVACY_NOTICE_VERSION/);
+  assert.match(privacyNotice, /Kişisel Verilerin İşlenmesinin Hukuki Sebepleri/);
+  assert.match(privacyNotice, /teklif talebinin işleme alınmasının şartı değildir/);
 });
