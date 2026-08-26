@@ -16,7 +16,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { TurnstileWidget, turnstileSiteKey } from "@/components/security/TurnstileWidget";
 import { ArrowLeft, ArrowRight, Loader2, Send, Plus, Trash2 } from "lucide-react";
+
+function createSubmissionId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+    const random = Math.floor(Math.random() * 16);
+    const value = character === "x" ? random : (random & 0x3) | 0x8;
+    return value.toString(16);
+  });
+}
 
 const cargoSchema = z.object({
   width: z.string().min(1, "En giriniz"),
@@ -99,6 +109,9 @@ export function QuoteForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaAttempt, setCaptchaAttempt] = useState(0);
+  const [submissionId, setSubmissionId] = useState(createSubmissionId);
   const [cargos, setCargos] = useState<CargoData[]>([
     { width: "", length: "", height: "", weight: "", quantity: "" }
   ]);
@@ -243,6 +256,8 @@ export function QuoteForm() {
         body: JSON.stringify({
           ...data,
           cargos,
+          submissionId,
+          captchaToken,
         }),
       });
 
@@ -264,6 +279,9 @@ export function QuoteForm() {
       setStep(1);
       setCargos([{ width: "", length: "", height: "", weight: "", quantity: "" }]);
       setCargoErrors([{}]);
+      setCaptchaToken("");
+      setCaptchaAttempt((value) => value + 1);
+      setSubmissionId(createSubmissionId());
       
       setTimeout(() => setSubmitSuccess(false), 5000);
     } catch (error) {
@@ -273,6 +291,8 @@ export function QuoteForm() {
       } else {
         setSubmitError(error instanceof Error ? error.message : "Form gönderilirken bir hata oluştu. Lütfen tekrar deneyin.");
       }
+      setCaptchaToken("");
+      setCaptchaAttempt((value) => value + 1);
       console.error("Form submission error:", error);
     } finally {
       setIsSubmitting(false);
@@ -288,6 +308,11 @@ export function QuoteForm() {
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-white/10">
           <div
+            role="progressbar"
+            aria-label="Teklif formu ilerlemesi"
+            aria-valuemin={1}
+            aria-valuemax={2}
+            aria-valuenow={step}
             className="h-full rounded-full bg-accent transition-all duration-300"
             style={{ width: step === 1 ? "50%" : "100%" }}
           />
@@ -518,11 +543,18 @@ export function QuoteForm() {
             </div>
           </div>
 
+          <div className="rounded-xl border border-white/15 bg-white/5 p-4 sm:p-5">
+            <TurnstileWidget key={captchaAttempt} onToken={setCaptchaToken} theme="dark" />
+            {turnstileSiteKey && !captchaToken && (
+              <p className="mt-2 text-center text-xs text-blue-200">Teklifi göndermek için robot doğrulamasını tamamlayın.</p>
+            )}
+          </div>
+
           <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-between">
             <Button type="button" size="lg" variant="outline" onClick={() => setStep(1)} className="h-12 border-white/20 text-white hover:bg-white/10 hover:text-white">
               <ArrowLeft className="mr-2 h-5 w-5" /> Geri
             </Button>
-            <Button type="submit" size="lg" disabled={isSubmitting} className="h-12 bg-accent px-8 text-white hover:bg-accent/90">
+            <Button type="submit" size="lg" disabled={isSubmitting || Boolean(turnstileSiteKey && !captchaToken)} className="h-12 bg-accent px-8 text-white hover:bg-accent/90">
               {isSubmitting ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Gönderiliyor...</> : <>Teklif Talep Et <Send className="ml-2 h-5 w-5" /></>}
             </Button>
           </div>

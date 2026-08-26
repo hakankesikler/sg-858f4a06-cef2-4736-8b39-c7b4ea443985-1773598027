@@ -676,10 +676,14 @@ test("public homepage protects customer confidentiality and avoids unverifiable 
 });
 
 test("public quote request is a two-step form with flexible contact validation", async () => {
-  const [form, endpoint, privacyNotice] = await Promise.all([
+  const [form, endpoint, delivery, queueApi, sql, privacyNotice, vercel] = await Promise.all([
     read("src/components/QuoteForm.tsx"),
     read("src/pages/api/send-quote.ts"),
+    read("src/lib/quote-delivery.ts"),
+    read("src/pages/api/quotes/process-queue.ts"),
+    read("supabase/migrations/20260826120000_secure_quote_requests.sql"),
     read("src/pages/kvkk-aydinlatma-metni.tsx"),
+    read("vercel.json"),
   ]);
   assert.match(form, /İletişim ve güzergâh/);
   assert.match(form, /Taşıma ve yük/);
@@ -687,20 +691,35 @@ test("public quote request is a two-step form with flexible contact validation",
   assert.match(form, /Telefon veya e-postadan en az birini giriniz/);
   assert.match(form, /goToShipmentDetails/);
   assert.match(endpoint, /\(!emailProvided && !phoneProvided\)/);
-  assert.match(endpoint, /Yükleme Noktası: \$\{data\.loadingPoint\}/);
+  assert.match(delivery, /Yükleme Noktası: \$\{data\.loading_point\}/);
   assert.match(endpoint, /validPositiveNumber/);
-  assert.doesNotMatch(endpoint, /data\.senderCountry|data\.receiverCountry/);
+  assert.doesNotMatch(delivery, /data\.senderCountry|data\.receiverCountry/);
   assert.match(form, /href="\/kvkk-aydinlatma-metni"/);
   assert.match(form, /name="kvkkAcknowledged"/);
   assert.match(form, /name="commercialConsent"/);
   assert.match(form, /İsteğe bağlı/);
   assert.match(form, /kvkkAcknowledged: false/);
   assert.match(form, /commercialConsent: false/);
-  assert.match(endpoint, /formData\?\.kvkkAcknowledged !== true/);
-  assert.match(endpoint, /Ticari Elektronik İleti İzni/);
+  assert.match(form, /TurnstileWidget/);
+  assert.match(form, /captchaToken/);
+  assert.match(form, /submissionId/);
+  assert.match(endpoint, /siteverify/);
+  assert.match(endpoint, /TURNSTILE_SECRET_KEY/);
+  assert.match(endpoint, /rex_consume_quote_rate_limit/);
+  assert.match(endpoint, /QUOTE_SECURITY_SECRET/);
+  assert.match(endpoint, /formData\.kvkkAcknowledged !== true/);
   assert.match(endpoint, /PRIVACY_NOTICE_VERSION/);
-  assert.match(endpoint, /to: \["info@rexlojistik\.com"\]/);
-  assert.doesNotMatch(endpoint, /hakankesikler@gmail\.com/);
+  assert.match(endpoint, /quote_consent_events/);
+  assert.match(delivery, /QUOTE_RECIPIENT_EMAIL \|\| "info@rexlojistik\.com"/);
+  assert.match(delivery, /Ticari Elektronik İleti İzni/);
+  assert.doesNotMatch(delivery, /hakankesikler@gmail\.com/);
+  assert.match(queueApi, /rex_claim_quote_delivery_job/);
+  assert.match(queueApi, /CRON_SECRET/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.quote_requests/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.quote_consent_events/);
+  assert.match(sql, /quote_consent_events_immutable/);
+  assert.match(sql, /REVOKE ALL ON public\.quote_consent_events FROM PUBLIC, anon, authenticated/);
+  assert.match(vercel, /\/api\/quotes\/process-queue\?limit=20/);
   assert.match(privacyNotice, /Kişisel Verilerin İşlenmesinin Hukuki Sebepleri/);
   assert.match(privacyNotice, /teklif talebinin işleme alınmasının şartı değildir/);
 });

@@ -1,5 +1,22 @@
 # Rex Lojistik Portal
 
+## Güvenli teklif formu
+
+Teklifler önce Supabase üzerindeki kalıcı kuyruğa ve değiştirilemeyen onay geçmişine kaydedilir, ardından Resend ile `info@rexlojistik.com` adresine iletilir. Geçici teslimat hataları günlük kuyruk göreviyle otomatik olarak yeniden denenir. Canlı Vercel ortamında aşağıdaki değişkenler tanımlanmalıdır:
+
+```text
+RESEND_API_KEY=
+QUOTE_RECIPIENT_EMAIL=info@rexlojistik.com
+QUOTE_FROM_EMAIL=REX Lojistik <teklif@rexlojistik.com>
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET_KEY=
+QUOTE_SECURITY_SECRET=
+SUPABASE_SERVICE_ROLE_KEY=
+CRON_SECRET=
+```
+
+`QUOTE_FROM_EMAIL` kullanılmadan önce `rexlojistik.com` alan adı Resend içinde doğrulanmalıdır. Doğrulama tamamlanana kadar bu değişken boş bırakılır ve Resend test göndericisi kullanılır. `TURNSTILE_SECRET_KEY`, `QUOTE_SECURITY_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` ve `CRON_SECRET` yalnızca sunucuda tutulur.
+
 ## KolayBi fatura bağlantısı
 
 KolayBi anahtarları yalnızca sunucu ortamında tutulur. Canlı ortamda aşağıdaki değişkenler tanımlanmalıdır:
