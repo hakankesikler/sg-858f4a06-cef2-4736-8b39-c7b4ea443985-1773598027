@@ -785,12 +785,18 @@ test("sales CRM automates tasks, approvals, customer 360 and real offer delivery
 });
 
 test("staff password recovery opens a dedicated secure reset flow", async () => {
-  const login = await read("src/pages/login.tsx");
+  const [login, security] = await Promise.all([
+    read("src/pages/login.tsx"),
+    read("src/lib/security.ts"),
+  ]);
   assert.match(login, /token_hash/);
   assert.match(login, /verifyOtp/);
   assert.match(login, /type: "recovery"/);
+  assert.match(login, /pendingRecoveryToken/);
+  assert.match(login, /Şifre Yenilemeyi Doğrula/);
   assert.match(login, /error_code/);
   assert.match(login, /otp_expired/);
   assert.match(login, /redirectTo: `\$\{window\.location\.origin\}\/login`/);
   assert.match(login, /Güvenlik doğrulaması gerekli/);
+  assert.match(security, /MIN_PASSWORD_LENGTH = 6/);
 });

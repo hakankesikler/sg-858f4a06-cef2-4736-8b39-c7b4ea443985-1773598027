@@ -28,6 +28,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
+  const [pendingRecoveryToken, setPendingRecoveryToken] = useState("");
+  const [verifyingRecovery, setVerifyingRecovery] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
 
@@ -38,35 +40,8 @@ export default function LoginPage() {
     const recoveryType = typeof router.query.type === "string" ? router.query.type : "";
     if (!tokenHash || recoveryType !== "recovery") return;
 
-    let active = true;
-    const verifyRecoveryLink = async () => {
-      setLoading(true);
-      const { error } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: "recovery",
-      });
-      if (!active) return;
-
-      setLoading(false);
-      await router.replace("/login", undefined, { shallow: true });
-      if (error) {
-        toast({
-          title: "Bağlantı geçersiz",
-          description: "Şifre yenileme bağlantısının süresi dolmuş. Lütfen yeni bir bağlantı isteyin.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setRecoveryMode(true);
-      setPassword("");
-      setConfirmPassword("");
-    };
-
-    void verifyRecoveryLink();
-    return () => {
-      active = false;
-    };
+    setPendingRecoveryToken(tokenHash);
+    void router.replace("/login", undefined, { shallow: true });
   }, [router.isReady, router.query.token_hash, router.query.type]);
 
   useEffect(() => {
@@ -176,6 +151,32 @@ export default function LoginPage() {
     toast({ title: "Bağlantı gönderildi", description: "Şifre yenileme bağlantısı e-posta adresinize gönderildi." });
   };
 
+  const handleVerifyRecoveryLink = async () => {
+    if (!pendingRecoveryToken) return;
+
+    setVerifyingRecovery(true);
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: pendingRecoveryToken,
+      type: "recovery",
+    });
+    setVerifyingRecovery(false);
+
+    if (error) {
+      setPendingRecoveryToken("");
+      toast({
+        title: "Bağlantı geçersiz",
+        description: "Şifre yenileme bağlantısının süresi dolmuş. Lütfen yeni bir bağlantı isteyin.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPendingRecoveryToken("");
+    setRecoveryMode(true);
+    setPassword("");
+    setConfirmPassword("");
+  };
+
   const handleUpdatePassword = async (event: React.FormEvent) => {
     event.preventDefault();
     const policyError = passwordPolicyError(password);
@@ -226,14 +227,22 @@ export default function LoginPage() {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 text-center">
-              {recoveryMode ? "Yeni Şifre Oluştur" : "Taşıma Yönetim Sistemi"}
+              {recoveryMode ? "Yeni Şifre Oluştur" : pendingRecoveryToken ? "Şifre Yenileme" : "Taşıma Yönetim Sistemi"}
             </h1>
             <p className="text-sm text-slate-500 text-center mt-2 mb-7">
-              {recoveryMode ? "Hesabınız için güvenli bir şifre belirleyin." : "REX TYS'ye güvenli giriş yapın."}
+              {recoveryMode
+                ? "Hesabınız için en az 6 karakterli bir şifre belirleyin."
+                : pendingRecoveryToken
+                  ? "Bağlantıyı yalnızca sizin kullandığınızı doğrulamak için aşağıdaki düğmeye basın."
+                  : "REX TYS'ye güvenli giriş yapın."}
             </p>
 
             <div className="space-y-6">
-              {recoveryMode ? (
+              {pendingRecoveryToken && !recoveryMode ? (
+                <Button type="button" className="w-full h-11 bg-orange-600 hover:bg-orange-700 shadow-md" onClick={() => void handleVerifyRecoveryLink()} disabled={verifyingRecovery}>
+                  {verifyingRecovery ? "Doğrulanıyor..." : "Şifre Yenilemeyi Doğrula"}
+                </Button>
+              ) : recoveryMode ? (
                 <form onSubmit={handleUpdatePassword} className="space-y-4">
                   <div>
                     <label htmlFor="new-password" className="block text-sm font-medium text-slate-700 mb-1.5">Yeni Şifre</label>

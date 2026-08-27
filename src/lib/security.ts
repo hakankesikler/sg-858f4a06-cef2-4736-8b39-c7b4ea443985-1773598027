@@ -3,7 +3,7 @@ import type { AppRole } from "@/lib/access-control";
 
 export const STAFF_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 export const STAFF_MAX_SESSION_MS = 8 * 60 * 60 * 1000;
-export const MIN_PASSWORD_LENGTH = 12;
+export const MIN_PASSWORD_LENGTH = 6;
 export const STAFF_SESSION_STARTED_KEY = "rex_staff_session_started_at";
 export const STAFF_LAST_ACTIVITY_KEY = "rex_staff_last_activity_at";
 

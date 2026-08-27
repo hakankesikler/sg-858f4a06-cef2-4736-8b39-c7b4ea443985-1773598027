@@ -127,7 +127,7 @@ export function SecuritySettings() {
 
         <Card className="p-6">
           <div className="flex gap-3"><span className="rounded-xl bg-orange-100 p-3 text-orange-700"><KeyRound className="w-6 h-6" /></span><div><h3 className="font-semibold text-lg">Şifre Güvenliği</h3><p className="text-sm text-slate-600 mt-1">Yeni şifreler için güçlü politika uygulanır.</p></div></div>
-          <ul className="mt-5 text-sm text-slate-700 space-y-2"><li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5" />En az 12 karakter</li><li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5" />Büyük harf, küçük harf ve rakam</li><li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5" />Geçici şifre ilk girişte değişir</li></ul>
+          <ul className="mt-5 text-sm text-slate-700 space-y-2"><li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5" />En az 6 karakter</li><li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5" />Büyük harf, küçük harf ve rakam</li><li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5" />Geçici şifre ilk girişte değişir</li></ul>
           <Button variant="outline" className="mt-5" onClick={() => void sendPasswordReset()} disabled={working}>Şifre Yenileme Bağlantısı Gönder</Button>
         </Card>
 
