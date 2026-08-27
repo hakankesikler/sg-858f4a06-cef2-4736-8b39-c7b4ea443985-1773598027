@@ -6,6 +6,7 @@ export type PermissionOverrideLevel = "inherit" | PermissionLevel;
 export const permissionCatalog = [
   { key: "crm.customers", group: "Satış ve CRM", label: "Cari ve müşteriler", description: "Müşteri/tedarikçi kartları ve iletişim bilgileri" },
   { key: "crm.portal_invites", group: "Satış ve CRM", label: "Müşteri portalı", description: "Kurumsal müşteri portalı erişim bağlantıları" },
+  { key: "crm.sales_pipeline", group: "Satış ve CRM", label: "Satış süreci ve faaliyetler", description: "Teklif talepleri, müşteri görüşmeleri, satış hunisi ve temsilci performansı" },
   { key: "sales.work_orders", group: "Satış ve CRM", label: "Teklif ve iş kayıtları", description: "Yeni iş kaydı, onay ve red işleyişi" },
   { key: "operations.shipments", group: "Operasyon", label: "Sevkiyatlar", description: "Sevkiyat görüntüleme, oluşturma ve düzenleme" },
   { key: "operations.assignments", group: "Operasyon", label: "Sürücü ve araç", description: "Sürücü/araç kayıtları ve sevkiyat ataması" },
@@ -34,7 +35,7 @@ const nonePermissions = Object.fromEntries(permissionCatalog.map((item) => [item
 const roleDefaults: Record<AppRole, PermissionOverrides> = {
   admin: Object.fromEntries(permissionCatalog.map((item) => [item.key, "manage"])) as PermissionOverrides,
   sales: {
-    "crm.customers": "manage", "crm.portal_invites": "manage", "sales.work_orders": "manage",
+    "crm.customers": "manage", "crm.portal_invites": "manage", "crm.sales_pipeline": "manage", "sales.work_orders": "manage",
     "reports.sales": "view", "integrations.monitoring": "view",
   },
   operations: {
@@ -67,7 +68,7 @@ export function hasPermission(permissions: PermissionMap, key: PermissionKey, re
 export function canAccessModuleWithPermissions(role: AppRole, permissions: PermissionMap, module: PortalModule) {
   if (role === "admin") return true;
   if (module === "dashboard") return true;
-  if (module === "crm") return hasPermission(permissions, "crm.customers") || hasPermission(permissions, "crm.portal_invites");
+  if (module === "crm") return hasPermission(permissions, "crm.customers") || hasPermission(permissions, "crm.portal_invites") || hasPermission(permissions, "crm.sales_pipeline");
   if (module === "logistics") return ["sales.work_orders", "operations.shipments", "operations.assignments", "operations.delivery", "operations.exceptions", "operations.uetds"].some((key) => hasPermission(permissions, key as PermissionKey));
   if (module === "accounting") return ["accounting.sales", "accounting.purchase", "accounting.accounts", "accounting.expenses"].some((key) => hasPermission(permissions, key as PermissionKey));
   if (module === "analytics") return hasPermission(permissions, "analytics.web");

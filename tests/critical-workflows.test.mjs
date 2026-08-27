@@ -723,3 +723,31 @@ test("public quote request is a two-step form with flexible contact validation",
   assert.match(privacyNotice, /Kişisel Verilerin İşlenmesinin Hukuki Sebepleri/);
   assert.match(privacyNotice, /teklif talebinin işleme alınmasının şartı değildir/);
 });
+
+test("sales CRM preserves the complete quote-to-first-invoice funnel", async () => {
+  const [sql, service, screen, permissions, workspace] = await Promise.all([
+    read("supabase/migrations/20260827100000_sales_crm_pipeline.sql"),
+    read("src/services/salesCrmService.ts"),
+    read("src/components/modules/SalesCRMModule.tsx"),
+    read("src/lib/staff-permissions.ts"),
+    read("src/components/modules/CRMWorkspace.tsx"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.crm_opportunities/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.crm_activities/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.crm_offers/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.crm_stage_events/);
+  assert.match(sql, /CREATE TRIGGER rex_crm_quote_to_opportunity AFTER INSERT ON public\.quote_requests/);
+  assert.match(sql, /WHEN NEW\.status='sent'[\s\S]*THEN 'follow_up'/);
+  assert.match(sql, /NEW\.integration_status='official'/);
+  assert.match(sql, /t\.status='onaylandi'/);
+  assert.match(sql, /first_job_id IS NULL OR NEW\.first_invoice_id IS NULL/);
+  assert.match(sql, /rex_crm_stage_events_immutable/);
+  assert.match(service, /addActivity/);
+  assert.match(service, /createOffer/);
+  assert.match(service, /createJobFromQuote/);
+  assert.match(screen, /Müşteri Görüşmeleri ve Teklif Süreci/);
+  assert.match(screen, /Satış Temsilcisi Performansı/);
+  assert.match(screen, /İlk iş emri onaylanıp sevkiyat tamamlandıktan/);
+  assert.match(permissions, /crm\.sales_pipeline/);
+  assert.match(workspace, /Satış CRM/);
+});

@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CariForm } from "@/components/CariForm";
 import { IsGirisForm } from "@/components/IsGirisForm";
-import { CRMModule } from "@/components/modules/CRMModule";
+import { CRMWorkspace } from "@/components/modules/CRMWorkspace";
 import { LogisticsModule } from "@/components/modules/LogisticsModule";
 import { AccountingModule } from "@/components/modules/AccountingModule";
 import { HRModule } from "@/components/modules/HRModule";
@@ -266,7 +266,7 @@ export default function PersonelProfil() {
   const renderModuleContent = () => {
     if (!canAccessModule(role, activeModule, permissions)) return renderDashboard();
     switch (activeModule) {
-      case "crm": return <CRMModule permissions={permissions} />;
+      case "crm": return <CRMWorkspace permissions={permissions} />;
       case "logistics": return <LogisticsModule />;
       case "accounting": return <AccountingModule permissions={permissions} />;
       case "hr": return <HRModule />;
