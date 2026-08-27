@@ -32,6 +32,56 @@ export default function LoginPage() {
   const [captchaToken, setCaptchaToken] = useState("");
 
   useEffect(() => {
+    if (!router.isReady) return;
+
+    const tokenHash = typeof router.query.token_hash === "string" ? router.query.token_hash : "";
+    const recoveryType = typeof router.query.type === "string" ? router.query.type : "";
+    if (!tokenHash || recoveryType !== "recovery") return;
+
+    let active = true;
+    const verifyRecoveryLink = async () => {
+      setLoading(true);
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "recovery",
+      });
+      if (!active) return;
+
+      setLoading(false);
+      await router.replace("/login", undefined, { shallow: true });
+      if (error) {
+        toast({
+          title: "Bağlantı geçersiz",
+          description: "Şifre yenileme bağlantısının süresi dolmuş. Lütfen yeni bir bağlantı isteyin.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setRecoveryMode(true);
+      setPassword("");
+      setConfirmPassword("");
+    };
+
+    void verifyRecoveryLink();
+    return () => {
+      active = false;
+    };
+  }, [router.isReady, router.query.token_hash, router.query.type]);
+
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    if (hash.get("error_code") !== "otp_expired") return;
+
+    toast({
+      title: "Bağlantının süresi dolmuş",
+      description: "Gelen kutunuzdaki en yeni bağlantıyı kullanın veya yeni bir şifre yenileme bağlantısı isteyin.",
+      variant: "destructive",
+    });
+    window.history.replaceState({}, "", `${window.location.pathname}${window.location.search}`);
+  }, []);
+
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setRecoveryMode(true);
@@ -106,6 +156,10 @@ export default function LoginPage() {
       toast({ title: "E-posta gerekli", description: "Önce e-posta adresinizi yazın." });
       return;
     }
+    if (turnstileSiteKey && !captchaToken) {
+      toast({ title: "Güvenlik doğrulaması gerekli", description: "Önce güvenlik doğrulamasını tamamlayın." });
+      return;
+    }
 
     setResetting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -115,7 +169,7 @@ export default function LoginPage() {
     setResetting(false);
 
     if (error) {
-      toast({ title: "İşlem tamamlanamadı", description: "Lütfen e-posta adresinizi kontrol edin.", variant: "destructive" });
+      toast({ title: "İşlem tamamlanamadı", description: "Güvenlik doğrulamasını yenileyip tekrar deneyin.", variant: "destructive" });
       return;
     }
 

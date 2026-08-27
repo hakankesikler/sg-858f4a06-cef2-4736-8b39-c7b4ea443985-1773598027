@@ -783,3 +783,14 @@ test("sales CRM automates tasks, approvals, customer 360 and real offer delivery
   assert.match(api, /email_status: "sent"/);
   assert.match(api, /quote_sent/);
 });
+
+test("staff password recovery opens a dedicated secure reset flow", async () => {
+  const login = await read("src/pages/login.tsx");
+  assert.match(login, /token_hash/);
+  assert.match(login, /verifyOtp/);
+  assert.match(login, /type: "recovery"/);
+  assert.match(login, /error_code/);
+  assert.match(login, /otp_expired/);
+  assert.match(login, /redirectTo: `\$\{window\.location\.origin\}\/login`/);
+  assert.match(login, /Güvenlik doğrulaması gerekli/);
+});
