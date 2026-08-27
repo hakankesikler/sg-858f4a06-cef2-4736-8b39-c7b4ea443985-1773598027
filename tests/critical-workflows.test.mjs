@@ -793,7 +793,9 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
   assert.match(login, /verifyOtp/);
   assert.match(login, /type: "recovery"/);
   assert.match(login, /pendingRecoveryToken/);
-  assert.match(login, /Şifre Yenilemeyi Doğrula/);
+  assert.match(login, /verification\.session/);
+  assert.match(login, /supabase\.auth\.setSession/);
+  assert.match(login, /önceki şifrenizden farklı/);
   assert.match(login, /error_code/);
   assert.match(login, /otp_expired/);
   assert.match(login, /redirectTo: `\$\{window\.location\.origin\}\/login`/);

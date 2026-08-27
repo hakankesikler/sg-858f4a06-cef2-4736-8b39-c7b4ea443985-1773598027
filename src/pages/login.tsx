@@ -29,7 +29,6 @@ export default function LoginPage() {
   const [resetting, setResetting] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [pendingRecoveryToken, setPendingRecoveryToken] = useState("");
-  const [verifyingRecovery, setVerifyingRecovery] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
 
@@ -41,6 +40,9 @@ export default function LoginPage() {
     if (!tokenHash || recoveryType !== "recovery") return;
 
     setPendingRecoveryToken(tokenHash);
+    setRecoveryMode(true);
+    setPassword("");
+    setConfirmPassword("");
     void router.replace("/login", undefined, { shallow: true });
   }, [router.isReady, router.query.token_hash, router.query.type]);
 
@@ -151,32 +153,6 @@ export default function LoginPage() {
     toast({ title: "Bağlantı gönderildi", description: "Şifre yenileme bağlantısı e-posta adresinize gönderildi." });
   };
 
-  const handleVerifyRecoveryLink = async () => {
-    if (!pendingRecoveryToken) return;
-
-    setVerifyingRecovery(true);
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash: pendingRecoveryToken,
-      type: "recovery",
-    });
-    setVerifyingRecovery(false);
-
-    if (error) {
-      setPendingRecoveryToken("");
-      toast({
-        title: "Bağlantı geçersiz",
-        description: "Şifre yenileme bağlantısının süresi dolmuş. Lütfen yeni bir bağlantı isteyin.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setPendingRecoveryToken("");
-    setRecoveryMode(true);
-    setPassword("");
-    setConfirmPassword("");
-  };
-
   const handleUpdatePassword = async (event: React.FormEvent) => {
     event.preventDefault();
     const policyError = passwordPolicyError(password);
@@ -190,16 +166,56 @@ export default function LoginPage() {
     }
 
     setLoading(true);
+    if (pendingRecoveryToken) {
+      const { data: verification, error: verificationError } = await supabase.auth.verifyOtp({
+        token_hash: pendingRecoveryToken,
+        type: "recovery",
+      });
+      if (verificationError || !verification.session) {
+        setPendingRecoveryToken("");
+        setRecoveryMode(false);
+        setLoading(false);
+        toast({
+          title: "Bağlantı geçersiz",
+          description: "Bağlantı kullanılmış veya süresi dolmuş. Lütfen gelen kutunuzdaki en yeni bağlantıyı kullanın.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: verification.session.access_token,
+        refresh_token: verification.session.refresh_token,
+      });
+      if (sessionError) {
+        setPendingRecoveryToken("");
+        setRecoveryMode(false);
+        setLoading(false);
+        toast({ title: "Güvenli oturum kurulamadı", description: "Lütfen yeni bir şifre yenileme bağlantısı isteyin.", variant: "destructive" });
+        return;
+      }
+    }
+
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
+      const message = error.message.toLocaleLowerCase("tr-TR");
+      const description = error.code === "same_password" || message.includes("different from the old password")
+        ? "Yeni şifreniz önceki şifrenizden farklı olmalıdır."
+        : error.code === "weak_password" || message.includes("weak")
+          ? "Şifreniz en az bir büyük harf, bir küçük harf ve bir rakam içermelidir."
+          : message.includes("session") || message.includes("jwt")
+            ? "Güvenli oturum sona ermiş. Lütfen yeni bir şifre yenileme bağlantısı isteyin."
+            : "Şifre kaydedilemedi. Lütfen farklı bir şifre deneyin veya yeni bağlantı isteyin.";
+      setPendingRecoveryToken("");
       setLoading(false);
-      toast({ title: "Şifre güncellenemedi", description: "Bağlantının süresi dolmuş olabilir. Yeni bir bağlantı isteyin.", variant: "destructive" });
+      toast({ title: "Şifre güncellenemedi", description, variant: "destructive" });
       return;
     }
 
     await recordSecurityEvent("password_changed", "Personel şifresi yenileme bağlantısıyla değiştirildi.");
     await supabase.auth.signOut();
     setRecoveryMode(false);
+    setPendingRecoveryToken("");
     setPassword("");
     setConfirmPassword("");
     setLoading(false);
@@ -227,22 +243,16 @@ export default function LoginPage() {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 text-center">
-              {recoveryMode ? "Yeni Şifre Oluştur" : pendingRecoveryToken ? "Şifre Yenileme" : "Taşıma Yönetim Sistemi"}
+              {recoveryMode ? "Yeni Şifre Oluştur" : "Taşıma Yönetim Sistemi"}
             </h1>
             <p className="text-sm text-slate-500 text-center mt-2 mb-7">
               {recoveryMode
-                ? "Hesabınız için en az 6 karakterli bir şifre belirleyin."
-                : pendingRecoveryToken
-                  ? "Bağlantıyı yalnızca sizin kullandığınızı doğrulamak için aşağıdaki düğmeye basın."
-                  : "REX TYS'ye güvenli giriş yapın."}
+                ? "Hesabınız için en az 6 karakterli, önceki şifrenizden farklı bir şifre belirleyin."
+                : "REX TYS'ye güvenli giriş yapın."}
             </p>
 
             <div className="space-y-6">
-              {pendingRecoveryToken && !recoveryMode ? (
-                <Button type="button" className="w-full h-11 bg-orange-600 hover:bg-orange-700 shadow-md" onClick={() => void handleVerifyRecoveryLink()} disabled={verifyingRecovery}>
-                  {verifyingRecovery ? "Doğrulanıyor..." : "Şifre Yenilemeyi Doğrula"}
-                </Button>
-              ) : recoveryMode ? (
+              {recoveryMode ? (
                 <form onSubmit={handleUpdatePassword} className="space-y-4">
                   <div>
                     <label htmlFor="new-password" className="block text-sm font-medium text-slate-700 mb-1.5">Yeni Şifre</label>
