@@ -38,37 +38,62 @@ export default function LoginPage() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    const tokenHash = typeof router.query.token_hash === "string" ? router.query.token_hash : "";
-    const recoveryCode = typeof router.query.code === "string" ? router.query.code : "";
-    const recoveryType = typeof router.query.type === "string" ? router.query.type : "";
-    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    const hashType = hash.get("type") || "";
-    const accessToken = hash.get("access_token") || "";
-    const refreshToken = hash.get("refresh_token") || "";
+    let active = true;
+    const prepareRecoverySession = async () => {
+      const tokenHash = typeof router.query.token_hash === "string" ? router.query.token_hash : "";
+      const recoveryCode = typeof router.query.code === "string" ? router.query.code : "";
+      const recoveryType = typeof router.query.type === "string" ? router.query.type : "";
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const hashType = hash.get("type") || "";
+      const accessToken = hash.get("access_token") || "";
+      const refreshToken = hash.get("refresh_token") || "";
 
-    if (hash.get("error_code") === "otp_expired") {
-      toast({
-        title: "Bağlantının süresi dolmuş",
-        description: "Gelen kutunuzdaki en yeni bağlantıyı kullanın veya yeni bir şifre yenileme bağlantısı isteyin.",
-        variant: "destructive",
-      });
+      if (hash.get("error_code") === "otp_expired") {
+        toast({
+          title: "Bağlantının süresi dolmuş",
+          description: "Gelen kutunuzdaki en yeni bağlantıyı kullanın veya yeni bir şifre yenileme bağlantısı isteyin.",
+          variant: "destructive",
+        });
+        window.history.replaceState({}, "", "/login");
+        return;
+      }
+
+      const hasTokenHash = Boolean(tokenHash && recoveryType === "recovery");
+      const hasPkceCode = Boolean(recoveryCode && (!recoveryType || recoveryType === "recovery"));
+      const hasImplicitTokens = Boolean(accessToken && refreshToken && (!hashType || hashType === "recovery"));
+      if (!hasTokenHash && !hasPkceCode && !hasImplicitTokens) return;
+
+      // Supabase bağlantıdaki kodu otomatik olarak bir kez tüketmiş olabilir.
+      // Önce bu hazırlığın tamamlanmasını bekleyip mevcut oturumu kullanmak,
+      // tek kullanımlık kodun ikinci kez gönderilmesini ve geçersiz sayılmasını önler.
+      let recoverySession = (await supabase.auth.getSession()).data.session;
+      if (!recoverySession && hasTokenHash) {
+        const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+        if (!error) recoverySession = data.session;
+      } else if (!recoverySession && hasPkceCode) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(recoveryCode);
+        if (!error) recoverySession = data.session;
+      } else if (!recoverySession && hasImplicitTokens) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (!error) recoverySession = data.session;
+      }
+
+      if (!active) return;
+      setPendingRecoveryToken(recoverySession ? "" : hasTokenHash ? tokenHash : "");
+      setPendingRecoveryCode(recoverySession ? "" : hasPkceCode ? recoveryCode : "");
+      setPendingAccessToken(recoverySession ? "" : hasImplicitTokens ? accessToken : "");
+      setPendingRefreshToken(recoverySession ? "" : hasImplicitTokens ? refreshToken : "");
+      setRecoveryMode(true);
+      setPassword("");
+      setConfirmPassword("");
       window.history.replaceState({}, "", "/login");
-      return;
-    }
+    };
 
-    const hasTokenHash = Boolean(tokenHash && recoveryType === "recovery");
-    const hasPkceCode = Boolean(recoveryCode && (!recoveryType || recoveryType === "recovery"));
-    const hasImplicitTokens = Boolean(accessToken && refreshToken && (!hashType || hashType === "recovery"));
-    if (!hasTokenHash && !hasPkceCode && !hasImplicitTokens) return;
-
-    setPendingRecoveryToken(hasTokenHash ? tokenHash : "");
-    setPendingRecoveryCode(hasPkceCode ? recoveryCode : "");
-    setPendingAccessToken(hasImplicitTokens ? accessToken : "");
-    setPendingRefreshToken(hasImplicitTokens ? refreshToken : "");
-    setRecoveryMode(true);
-    setPassword("");
-    setConfirmPassword("");
-    window.history.replaceState({}, "", "/login");
+    void prepareRecoverySession();
+    return () => { active = false; };
   }, [router.isReady, router.query.code, router.query.token_hash, router.query.type, toast]);
 
   useEffect(() => {
@@ -179,31 +204,26 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    let recoverySession = null;
-    if (pendingRecoveryToken) {
+    // Bağlantı sayfa açılırken Supabase tarafından otomatik olarak tüketilmiş
+    // olabilir. Bu nedenle tek kullanımlık bilgileri yeniden göndermeden önce
+    // kurulmuş olan oturumu kullanıyoruz.
+    let recoverySession = (await supabase.auth.getSession()).data.session;
+    if (!recoverySession && pendingRecoveryToken) {
       const { data: verification, error: verificationError } = await supabase.auth.verifyOtp({
         token_hash: pendingRecoveryToken,
         type: "recovery",
       });
       if (!verificationError) recoverySession = verification.session;
-    } else if (pendingRecoveryCode) {
+    } else if (!recoverySession && pendingRecoveryCode) {
       const { data: exchange, error: exchangeError } = await supabase.auth.exchangeCodeForSession(pendingRecoveryCode);
       if (!exchangeError) recoverySession = exchange.session;
-    } else if (pendingAccessToken && pendingRefreshToken) {
+    } else if (!recoverySession && pendingAccessToken && pendingRefreshToken) {
       const { data: established, error: sessionError } = await supabase.auth.setSession({
         access_token: pendingAccessToken,
         refresh_token: pendingRefreshToken,
       });
       if (!sessionError) recoverySession = established.session;
-    } else {
-      const { data: current } = await supabase.auth.getSession();
-      recoverySession = current.session;
     }
-
-    setPendingRecoveryToken("");
-    setPendingRecoveryCode("");
-    setPendingAccessToken("");
-    setPendingRefreshToken("");
 
     if (!recoverySession) {
       setRecoveryMode(false);
@@ -211,6 +231,17 @@ export default function LoginPage() {
       toast({
         title: "Bağlantı geçersiz",
         description: "Güvenli şifre yenileme oturumu kurulamadı. Lütfen yeni bir bağlantı isteyin ve yalnızca en son gelen e-postayı kullanın.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { data: verifiedUser, error: verifiedUserError } = await supabase.auth.getUser();
+    if (verifiedUserError || !verifiedUser.user) {
+      setLoading(false);
+      toast({
+        title: "Güvenli oturum doğrulanamadı",
+        description: "Lütfen yeni bir şifre yenileme bağlantısı isteyin ve yalnızca en son gelen bağlantıyı açın.",
         variant: "destructive",
       });
       return;
@@ -233,6 +264,10 @@ export default function LoginPage() {
 
     await recordSecurityEvent("password_changed", "Personel şifresi yenileme bağlantısıyla değiştirildi.");
     await supabase.auth.signOut();
+    setPendingRecoveryToken("");
+    setPendingRecoveryCode("");
+    setPendingAccessToken("");
+    setPendingRefreshToken("");
     setRecoveryMode(false);
     setPassword("");
     setConfirmPassword("");
