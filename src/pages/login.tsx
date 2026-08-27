@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,12 +28,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
-  const [pendingRecoveryToken, setPendingRecoveryToken] = useState("");
-  const [pendingRecoveryCode, setPendingRecoveryCode] = useState("");
-  const [pendingAccessToken, setPendingAccessToken] = useState("");
-  const [pendingRefreshToken, setPendingRefreshToken] = useState("");
+  const [recoverySessionReady, setRecoverySessionReady] = useState(false);
+  const [recoveryMfaRequired, setRecoveryMfaRequired] = useState(false);
+  const [recoveryMfaFactorId, setRecoveryMfaFactorId] = useState("");
+  const [recoveryMfaCode, setRecoveryMfaCode] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
+  const recoveryPreparationRef = useRef("");
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -63,17 +64,32 @@ export default function LoginPage() {
       const hasImplicitTokens = Boolean(accessToken && refreshToken && (!hashType || hashType === "recovery"));
       if (!hasTokenHash && !hasPkceCode && !hasImplicitTokens) return;
 
-      // Supabase bağlantıdaki kodu otomatik olarak bir kez tüketmiş olabilir.
-      // Önce bu hazırlığın tamamlanmasını bekleyip mevcut oturumu kullanmak,
-      // tek kullanımlık kodun ikinci kez gönderilmesini ve geçersiz sayılmasını önler.
-      let recoverySession = (await supabase.auth.getSession()).data.session;
-      if (!recoverySession && hasTokenHash) {
+      const recoveryCredential = hasTokenHash
+        ? `token:${tokenHash}`
+        : hasPkceCode
+          ? `code:${recoveryCode}`
+          : `implicit:${accessToken}`;
+      if (recoveryPreparationRef.current === recoveryCredential) return;
+      recoveryPreparationRef.current = recoveryCredential;
+
+      setRecoveryMode(true);
+      setRecoverySessionReady(false);
+      setRecoveryMfaRequired(false);
+      setRecoveryMfaFactorId("");
+      setRecoveryMfaCode("");
+      setPassword("");
+      setConfirmPassword("");
+
+      // Bağlantıda açık bir kurtarma bilgisi varsa önce onu doğrula. Tarayıcıda
+      // kalan eski bir oturumun yeni şifre bağlantısının önüne geçmesine izin verme.
+      let recoverySession = null;
+      if (hasTokenHash) {
         const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
         if (!error) recoverySession = data.session;
-      } else if (!recoverySession && hasPkceCode) {
+      } else if (hasPkceCode) {
         const { data, error } = await supabase.auth.exchangeCodeForSession(recoveryCode);
         if (!error) recoverySession = data.session;
-      } else if (!recoverySession && hasImplicitTokens) {
+      } else if (hasImplicitTokens) {
         const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
@@ -82,14 +98,38 @@ export default function LoginPage() {
       }
 
       if (!active) return;
-      setPendingRecoveryToken(recoverySession ? "" : hasTokenHash ? tokenHash : "");
-      setPendingRecoveryCode(recoverySession ? "" : hasPkceCode ? recoveryCode : "");
-      setPendingAccessToken(recoverySession ? "" : hasImplicitTokens ? accessToken : "");
-      setPendingRefreshToken(recoverySession ? "" : hasImplicitTokens ? refreshToken : "");
-      setRecoveryMode(true);
-      setPassword("");
-      setConfirmPassword("");
       window.history.replaceState({}, "", "/login");
+
+      if (!recoverySession) {
+        recoveryPreparationRef.current = "";
+        setRecoveryMode(false);
+        toast({
+          title: "Bağlantı geçersiz",
+          description: "Bu bağlantı kullanılmış veya geçersiz. Lütfen yeni bir şifre yenileme bağlantısı isteyin.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        const mfa = await getMfaState();
+        if (!active) return;
+        if (mfa.nextLevel === "aal2" && mfa.currentLevel !== "aal2") {
+          const factor = mfa.verifiedFactors[0];
+          if (!factor) throw new Error("Doğrulanmış Authenticator bulunamadı");
+          setRecoveryMfaFactorId(factor.id);
+          setRecoveryMfaRequired(true);
+        }
+        setRecoverySessionReady(true);
+      } catch {
+        if (!active) return;
+        setRecoveryMode(false);
+        toast({
+          title: "Güvenlik doğrulaması hazırlanamadı",
+          description: "Hesabın iki aşamalı doğrulama bilgisi okunamadı. Lütfen yeniden deneyin.",
+          variant: "destructive",
+        });
+      }
     };
 
     void prepareRecoverySession();
@@ -204,26 +244,9 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    // Bağlantı sayfa açılırken Supabase tarafından otomatik olarak tüketilmiş
-    // olabilir. Bu nedenle tek kullanımlık bilgileri yeniden göndermeden önce
-    // kurulmuş olan oturumu kullanıyoruz.
-    let recoverySession = (await supabase.auth.getSession()).data.session;
-    if (!recoverySession && pendingRecoveryToken) {
-      const { data: verification, error: verificationError } = await supabase.auth.verifyOtp({
-        token_hash: pendingRecoveryToken,
-        type: "recovery",
-      });
-      if (!verificationError) recoverySession = verification.session;
-    } else if (!recoverySession && pendingRecoveryCode) {
-      const { data: exchange, error: exchangeError } = await supabase.auth.exchangeCodeForSession(pendingRecoveryCode);
-      if (!exchangeError) recoverySession = exchange.session;
-    } else if (!recoverySession && pendingAccessToken && pendingRefreshToken) {
-      const { data: established, error: sessionError } = await supabase.auth.setSession({
-        access_token: pendingAccessToken,
-        refresh_token: pendingRefreshToken,
-      });
-      if (!sessionError) recoverySession = established.session;
-    }
+    const recoverySession = recoverySessionReady
+      ? (await supabase.auth.getSession()).data.session
+      : null;
 
     if (!recoverySession) {
       setRecoveryMode(false);
@@ -234,6 +257,32 @@ export default function LoginPage() {
         variant: "destructive",
       });
       return;
+    }
+
+    if (recoveryMfaRequired) {
+      if (!recoveryMfaFactorId || !/^\d{6}$/.test(recoveryMfaCode)) {
+        setLoading(false);
+        toast({ title: "Altı haneli kodu girin", description: "Microsoft Authenticator uygulamasındaki güncel kodu yazın.", variant: "destructive" });
+        return;
+      }
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: recoveryMfaFactorId });
+      if (challengeError || !challenge) {
+        setLoading(false);
+        toast({ title: "Doğrulama başlatılamadı", description: "Authenticator kodunu yenileyip tekrar deneyin.", variant: "destructive" });
+        return;
+      }
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: recoveryMfaFactorId,
+        challengeId: challenge.id,
+        code: recoveryMfaCode,
+      });
+      if (verifyError) {
+        setRecoveryMfaCode("");
+        setLoading(false);
+        toast({ title: "Kod doğrulanamadı", description: "Microsoft Authenticator uygulamasındaki yeni altı haneli kodu deneyin.", variant: "destructive" });
+        return;
+      }
+      setRecoveryMfaRequired(false);
     }
 
     const { data: verifiedUser, error: verifiedUserError } = await supabase.auth.getUser();
@@ -254,6 +303,8 @@ export default function LoginPage() {
         ? "Yeni şifreniz önceki şifrenizden farklı olmalıdır."
         : error.code === "weak_password" || message.includes("weak")
           ? "Şifreniz en az bir büyük harf, bir küçük harf ve bir rakam içermelidir."
+          : error.code === "insufficient_aal" || message.includes("aal2")
+            ? "Şifreyi değiştirmek için Microsoft Authenticator kodunu yeniden doğrulayın."
           : message.includes("session") || message.includes("jwt")
             ? "Güvenli oturum sona ermiş. Lütfen yeni bir şifre yenileme bağlantısı isteyin."
             : "Şifre kaydedilemedi. Lütfen farklı bir şifre deneyin veya yeni bağlantı isteyin.";
@@ -264,10 +315,10 @@ export default function LoginPage() {
 
     await recordSecurityEvent("password_changed", "Personel şifresi yenileme bağlantısıyla değiştirildi.");
     await supabase.auth.signOut();
-    setPendingRecoveryToken("");
-    setPendingRecoveryCode("");
-    setPendingAccessToken("");
-    setPendingRefreshToken("");
+    setRecoverySessionReady(false);
+    setRecoveryMfaRequired(false);
+    setRecoveryMfaFactorId("");
+    setRecoveryMfaCode("");
     setRecoveryMode(false);
     setPassword("");
     setConfirmPassword("");
@@ -324,8 +375,26 @@ export default function LoginPage() {
                       <Input id="confirm-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="pl-10 h-11" disabled={loading} />
                     </div>
                   </div>
-                  <Button type="submit" className="w-full h-11 bg-orange-600 hover:bg-orange-700 shadow-md" disabled={loading}>
-                    {loading ? "Kaydediliyor..." : "Şifreyi Kaydet"}
+                  {recoveryMfaRequired && (
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-3">
+                      <p className="text-sm text-blue-900">Hesabınız iki aşamalı doğrulamayla korunuyor. Microsoft Authenticator uygulamasındaki güncel altı haneli kodu girin.</p>
+                      <div>
+                        <label htmlFor="recovery-mfa-code" className="block text-sm font-medium text-slate-700 mb-1.5">Authenticator Kodu</label>
+                        <Input
+                          id="recovery-mfa-code"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          maxLength={6}
+                          value={recoveryMfaCode}
+                          onChange={(event) => setRecoveryMfaCode(event.target.value.replace(/\D/g, ""))}
+                          className="h-11 text-center text-lg tracking-[0.35em]"
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <Button type="submit" className="w-full h-11 bg-orange-600 hover:bg-orange-700 shadow-md" disabled={loading || !recoverySessionReady}>
+                    {!recoverySessionReady ? "Güvenli bağlantı doğrulanıyor..." : loading ? "Kaydediliyor..." : "Şifreyi Kaydet"}
                   </Button>
                 </form>
               ) : (
