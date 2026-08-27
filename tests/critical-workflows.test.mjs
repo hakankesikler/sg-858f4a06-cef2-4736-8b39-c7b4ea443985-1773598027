@@ -785,8 +785,9 @@ test("sales CRM automates tasks, approvals, customer 360 and real offer delivery
 });
 
 test("staff password recovery opens a dedicated secure reset flow", async () => {
-  const [login, security] = await Promise.all([
+  const [login, recoveryGate, security] = await Promise.all([
     read("src/pages/login.tsx"),
+    read("src/pages/sifre-yenile.tsx"),
     read("src/lib/security.ts"),
   ]);
   assert.match(login, /token_hash/);
@@ -806,5 +807,9 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
   assert.match(login, /otp_expired/);
   assert.match(login, /redirectTo: `\$\{window\.location\.origin\}\/login`/);
   assert.match(login, /Güvenlik doğrulaması gerekli/);
+  assert.match(recoveryGate, /Şifre Yenilemeye Devam Et/);
+  assert.match(recoveryGate, /token_hash/);
+  assert.match(recoveryGate, /type=recovery/);
+  assert.doesNotMatch(recoveryGate, /supabase\.auth/);
   assert.match(security, /MIN_PASSWORD_LENGTH = 6/);
 });
