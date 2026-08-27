@@ -751,3 +751,35 @@ test("sales CRM preserves the complete quote-to-first-invoice funnel", async () 
   assert.match(permissions, /crm\.sales_pipeline/);
   assert.match(workspace, /Satış CRM/);
 });
+
+test("sales CRM automates tasks, approvals, customer 360 and real offer delivery", async () => {
+  const [sql, service, screen, delivery, api] = await Promise.all([
+    read("supabase/migrations/20260827113000_sales_crm_automation.sql"),
+    read("src/services/salesCrmService.ts"),
+    read("src/components/modules/SalesCRMModule.tsx"),
+    read("src/lib/crm-offer-delivery.ts"),
+    read("src/pages/api/crm/offers/[offerId]/send.ts"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.crm_tasks/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.crm_offer_versions/);
+  assert.match(sql, /rex_crm_assign_and_schedule/);
+  assert.match(sql, /rex_crm_duplicate_candidates/);
+  assert.match(sql, /rex_crm_customer_360/);
+  assert.match(sql, /Kaybedilen satışlarda kayıp nedeni zorunludur/);
+  assert.match(sql, /Yüksek tutarlı teklifleri yalnızca şirket sahibi onaylayabilir/);
+  assert.match(sql, /Teklif sürüm geçmişi değiştirilemez veya silinemez/);
+  assert.match(service, /completeTask/);
+  assert.match(service, /findDuplicates/);
+  assert.match(service, /customer360/);
+  assert.match(service, /sendOffer/);
+  assert.match(screen, /Bugünün Satış Görevleri/);
+  assert.match(screen, /Müşteri 360°/);
+  assert.match(screen, /E-posta ile Gönder/);
+  assert.match(screen, /REX_CRM_/);
+  assert.match(delivery, /attachments/);
+  assert.match(delivery, /application\/pdf/);
+  assert.match(delivery, /idempotencyKey/);
+  assert.match(api, /rex_has_permission/);
+  assert.match(api, /email_status: "sent"/);
+  assert.match(api, /quote_sent/);
+});

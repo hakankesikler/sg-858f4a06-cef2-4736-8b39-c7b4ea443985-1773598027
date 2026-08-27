@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  BriefcaseBusiness, CalendarClock, CheckCircle2, ChevronRight, ClipboardList,
-  Mail, MapPin, Phone, Plus, RefreshCw, Target, TrendingUp, UserCheck, Users,
+  AlertTriangle, BriefcaseBusiness, CalendarClock, CheckCircle2, ChevronRight, ClipboardList,
+  FileSpreadsheet, Mail, MapPin, Phone, Plus, RefreshCw, Send, Target, TrendingUp, UserCheck, Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
+import { downloadExcel } from "@/lib/excel";
 import {
   salesCrmService, type ActivityOutcome, type ActivityType, type CrmActivity,
-  type CrmOffer, type CrmOpportunity, type CrmStage, type QuoteDetail,
+  type CrmOffer, type CrmOpportunity, type CrmStage, type CrmTask, type Customer360, type QuoteDetail,
   type SalesPerformance, type SalesRepresentative,
 } from "@/services/salesCrmService";
 
@@ -50,6 +51,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const [opportunities, setOpportunities] = useState<CrmOpportunity[]>([]);
   const [representatives, setRepresentatives] = useState<SalesRepresentative[]>([]);
   const [performance, setPerformance] = useState<SalesPerformance[]>([]);
+  const [tasks, setTasks] = useState<CrmTask[]>([]);
   const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [stageFilter, setStageFilter] = useState<CrmStage | "all">("all");
@@ -58,6 +60,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const [activities, setActivities] = useState<CrmActivity[]>([]);
   const [offers, setOffers] = useState<CrmOffer[]>([]);
   const [quoteDetail, setQuoteDetail] = useState<QuoteDetail | null>(null);
+  const [customer360, setCustomer360] = useState<Customer360 | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   const [offerOpen, setOfferOpen] = useState(false);
@@ -70,12 +73,13 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [opportunityRows, repRows, performanceRows] = await Promise.all([
-        salesCrmService.listOpportunities(), salesCrmService.listRepresentatives(), salesCrmService.performance(dateFrom, dateTo),
+      const [opportunityRows, repRows, performanceRows, taskRows] = await Promise.all([
+        salesCrmService.listOpportunities(), salesCrmService.listRepresentatives(), salesCrmService.performance(dateFrom, dateTo), salesCrmService.listTasks(),
       ]);
       setOpportunities(opportunityRows);
       setRepresentatives(repRows);
       setPerformance(performanceRows);
+      setTasks(taskRows);
       if (selected) setSelected(opportunityRows.find((item) => item.id === selected.id) || null);
     } catch (error: any) {
       toast({ title: "CRM yüklenemedi", description: error?.message || "Satış verileri alınamadı.", variant: "destructive" });
@@ -100,13 +104,14 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const repName = (id?: string | null) => representatives.find((item) => item.user_id === id)?.full_name || (id ? "Atanmış temsilci" : "Atanmadı");
 
   const openDetail = async (item: CrmOpportunity) => {
-    setSelected(item); setDetailOpen(true); setQuoteDetail(null);
+    setSelected(item); setDetailOpen(true); setQuoteDetail(null); setCustomer360(null);
     try {
       const [activityRows, offerRows, quote] = await Promise.all([
         salesCrmService.listActivities(item.id), salesCrmService.listOffers(item.id),
         item.quote_request_id ? salesCrmService.getQuoteDetail(item.quote_request_id) : Promise.resolve(null),
       ]);
       setActivities(activityRows); setOffers(offerRows); setQuoteDetail(quote);
+      if (item.customer_id) setCustomer360(await salesCrmService.customer360(item.customer_id));
     } catch (error: any) { toast({ title: "Detay yüklenemedi", description: error?.message, variant: "destructive" }); }
   };
 
@@ -134,10 +139,12 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
     if (!selected || !offerForm.subject.trim() || Number(offerForm.amount) < 0) return;
     setSubmitting(true);
     try {
+      const shouldSend = offerForm.status === "sent";
       const created = await salesCrmService.createOffer({ opportunity_id: selected.id, quote_request_id: selected.quote_request_id,
         customer_id: selected.customer_id, subject: offerForm.subject.trim(), amount: Number(offerForm.amount), currency: offerForm.currency,
-        status: offerForm.status, valid_until: offerForm.valid_until || null, notes: offerForm.notes || null });
-      toast({ title: created.status === "sent" ? "Teklif gönderildi ve takibe alındı" : "Teklif taslağı kaydedildi", description: created.offer_no });
+        status: "draft", valid_until: offerForm.valid_until || null, notes: offerForm.notes || null });
+      if (shouldSend && created.approval_status !== "pending") await salesCrmService.sendOffer(created.id, selected.email || undefined);
+      toast({ title: shouldSend && created.approval_status !== "pending" ? "Teklif e-posta ile gönderildi" : created.approval_status === "pending" ? "Teklif yönetici onayına gönderildi" : "Teklif taslağı kaydedildi", description: created.offer_no });
       setOfferOpen(false); setOfferForm({ subject: "Taşımacılık hizmet teklifi", amount: "", currency: "TRY", status: "sent", valid_until: "", notes: "" });
       await refreshDetail();
     } catch (error: any) { toast({ title: "Teklif kaydedilemedi", description: error?.message, variant: "destructive" }); }
@@ -148,12 +155,43 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
     if (!prospectForm.company_name.trim()) return;
     setSubmitting(true);
     try {
+      const duplicates = await salesCrmService.findDuplicates(prospectForm.company_name, prospectForm.email, prospectForm.phone);
+      if (duplicates.length && !window.confirm(`${duplicates.length} benzer müşteri veya satış kaydı bulundu. Yine de yeni kayıt oluşturulsun mu?`)) return;
       await salesCrmService.createOpportunity({ ...prospectForm, next_action_at: prospectForm.next_action_at ? new Date(prospectForm.next_action_at).toISOString() : null });
       toast({ title: "Potansiyel müşteri eklendi", description: "Tanıtım yapılacaklar listesine kaydedildi." });
       setProspectOpen(false); setProspectForm({ company_name: "", contact_name: "", email: "", phone: "", assigned_to: "", next_action_at: "", notes: "" });
       await loadAll();
     } catch (error: any) { toast({ title: "Kayıt oluşturulamadı", description: error?.message, variant: "destructive" }); }
     finally { setSubmitting(false); }
+  };
+
+  const completeTask = async (taskId: string) => {
+    try { await salesCrmService.completeTask(taskId); toast({ title: "Görev tamamlandı" }); await loadAll(); }
+    catch (error: any) { toast({ title: "Görev kapatılamadı", description: error?.message, variant: "destructive" }); }
+  };
+
+  const sendOffer = async (offer: CrmOffer) => {
+    setSubmitting(true);
+    try { await salesCrmService.sendOffer(offer.id, selected?.email || undefined); toast({ title: "Teklif müşteriye gönderildi", description: offer.offer_no }); await refreshDetail(); }
+    catch (error: any) { toast({ title: "Teklif gönderilemedi", description: error?.message, variant: "destructive" }); }
+    finally { setSubmitting(false); }
+  };
+
+  const reviewOffer = async (offer: CrmOffer, decision: "approve" | "reject") => {
+    const note = decision === "reject" ? window.prompt("Ret nedenini yazın:") || "" : "";
+    if (decision === "reject" && note.trim().length < 3) return;
+    setSubmitting(true);
+    try { await salesCrmService.reviewOffer(offer.id, decision, note); toast({ title: decision === "approve" ? "Teklif onaylandı" : "Teklif reddedildi" }); await refreshDetail(); }
+    catch (error: any) { toast({ title: "Onay işlemi yapılamadı", description: error?.message, variant: "destructive" }); }
+    finally { setSubmitting(false); }
+  };
+
+  const exportSales = async () => {
+    await downloadExcel(`REX_CRM_${dateFrom}_${dateTo}.xlsx`, opportunities.map((item) => ({
+      Firma: item.company_name, Yetkili: item.contact_name || "", Telefon: item.phone || "", "E-posta": item.email || "",
+      Aşama: stageConfig[item.stage].label, Temsilci: repName(item.assigned_to), "Sonraki İşlem": readableDate(item.next_action_at),
+      "Tahmini Değer": item.estimated_value || 0, "Para Birimi": item.currency, Kaynak: item.source,
+    })), "Satış CRM");
   };
 
   const updateOpportunity = async (updates: Partial<CrmOpportunity>, success: string) => {
@@ -189,6 +227,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
         <div className="flex flex-wrap items-center gap-2">
           <Input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="w-40 bg-white" />
           <span className="text-slate-400">—</span><Input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="w-40 bg-white" />
+          <Button variant="outline" onClick={() => void exportSales()} disabled={!opportunities.length}><FileSpreadsheet className="mr-2 h-4 w-4" />Excel</Button>
           <Button variant="outline" onClick={() => void loadAll()}><RefreshCw className="mr-2 h-4 w-4" />Yenile</Button>
           {canManage && <Button className="bg-[#e96d25] hover:bg-[#d95e1d]" onClick={() => setProspectOpen(true)}><Plus className="mr-2 h-4 w-4" />Yeni Potansiyel</Button>}
         </div>
@@ -205,6 +244,11 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
           return <Card key={String(label)} className="border-slate-200 p-4 shadow-sm"><div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${style}`}><MetricIcon className="h-4 w-4" /></div><p className="text-xs font-semibold text-slate-500">{String(label)}</p><p className="mt-1 text-2xl font-bold text-[#10213e]">{Number(value)}</p></Card>;
         })}
       </div>
+
+      <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-white p-5 shadow-sm">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><div className="flex items-center gap-2"><CalendarClock className="h-5 w-5 text-[#e96d25]" /><h2 className="text-xl font-bold text-[#10213e]">Bugünün Satış Görevleri</h2></div><p className="mt-1 text-sm text-slate-600">Web talepleri, aramalar ve teklif takipleri otomatik sıraya alınır.</p></div><Badge className="bg-[#10213e] text-white">{tasks.length} açık görev</Badge></div>
+        <div className="grid gap-3 lg:grid-cols-2">{tasks.slice(0, 8).map((task) => { const opportunity = opportunities.find((item) => item.id === task.opportunity_id); const overdue = new Date(task.due_at).getTime() < Date.now(); return <div key={task.id} className={`flex items-center justify-between gap-3 rounded-xl border bg-white p-4 ${overdue ? "border-red-200" : "border-slate-200"}`}><button className="min-w-0 flex-1 text-left" onClick={() => opportunity && void openDetail(opportunity)}><div className="flex items-center gap-2"><p className="truncate font-semibold text-[#10213e]">{task.title}</p>{overdue && <Badge className="bg-red-100 text-red-700"><AlertTriangle className="mr-1 h-3 w-3" />Gecikti</Badge>}</div><p className="mt-1 text-xs text-slate-500">{readableDate(task.due_at)} · {repName(task.assigned_to)}</p></button>{canManage && <Button size="sm" variant="outline" onClick={() => void completeTask(task.id)}><CheckCircle2 className="mr-1 h-4 w-4" />Tamamla</Button>}</div>; })}{tasks.length === 0 && <p className="col-span-2 rounded-xl border border-dashed bg-white p-6 text-center text-sm text-slate-500">Açık satış görevi bulunmuyor.</p>}</div>
+      </Card>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         {(Object.keys(stageConfig) as CrmStage[]).map((stage) => <button key={stage} onClick={() => setStageFilter(stage)} className={`rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${stageFilter === stage ? stageConfig[stage].color + " ring-2 ring-current/10" : "border-slate-200 bg-white"}`}><div className="flex items-center justify-between"><span className="text-sm font-semibold">{stageConfig[stage].label}</span><span className={`h-2.5 w-2.5 rounded-full ${stageConfig[stage].dot}`} /></div><p className="mt-2 text-3xl font-bold">{stageCounts[stage] || 0}</p></button>)}
@@ -226,9 +270,11 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle className="flex flex-wrap items-center gap-3 text-2xl text-[#10213e]">{selected?.company_name}{selected && <Badge variant="outline" className={stageConfig[selected.stage].color}>{stageConfig[selected.stage].label}</Badge>}</DialogTitle></DialogHeader>{selected && <div className="space-y-6">
         <div className="grid gap-4 rounded-2xl bg-slate-50 p-4 md:grid-cols-3"><div><p className="text-xs font-semibold uppercase text-slate-500">İlgili kişi</p><p className="mt-1 font-medium">{selected.contact_name || "-"}</p><p className="text-sm text-slate-500">{selected.phone || "-"} · {selected.email || "-"}</p></div><div><p className="text-xs font-semibold uppercase text-slate-500">Satış temsilcisi</p>{canManage ? <select value={selected.assigned_to || ""} onChange={(event) => void updateOpportunity({ assigned_to: event.target.value || null }, "Satış temsilcisi güncellendi")} className="mt-1 w-full rounded-md border bg-white px-3 py-2"><option value="">Atanmadı</option>{representatives.map((rep) => <option key={rep.user_id} value={rep.user_id}>{rep.full_name}</option>)}</select> : <p className="mt-1">{repName(selected.assigned_to)}</p>}</div><div><p className="text-xs font-semibold uppercase text-slate-500">Sonraki işlem</p><p className="mt-1 font-medium">{readableDate(selected.next_action_at)}</p><p className="text-sm text-slate-500">Tahmini değer: {money(selected.estimated_value, selected.currency)}</p></div></div>
+        {customer360 && <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5"><h3 className="mb-3 font-bold text-[#10213e]">Müşteri 360°</h3><div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4"><div><p className="text-slate-500">İş / Sevkiyat</p><p className="text-lg font-bold">{customer360.job_count || 0} / {customer360.shipment_count || 0}</p></div><div><p className="text-slate-500">Teslim edilen</p><p className="text-lg font-bold text-emerald-700">{customer360.delivered_count || 0}</p></div><div><p className="text-slate-500">Faturalanan</p><p className="text-lg font-bold">{money(customer360.invoiced_total || 0, selected.currency)}</p></div><div><p className="text-slate-500">Açık bakiye / İstisna</p><p className="text-lg font-bold text-orange-700">{money(customer360.outstanding_total || 0, selected.currency)} · {customer360.exception_count || 0}</p></div></div></div>}
         {quoteDetail && <div className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5"><div className="mb-3 flex items-center gap-2"><ClipboardList className="h-5 w-5 text-[#e96d25]" /><h3 className="font-bold text-[#10213e]">Web Sitesinden Alınan Teklif Talebi</h3></div><div className="grid gap-3 text-sm md:grid-cols-3"><div><span className="text-slate-500">Taşıma:</span><p className="font-medium">{quoteDetail.service_type === "domestic" ? "Yurtiçi" : "Uluslararası"} · {quoteDetail.transport_mode === "road" ? "Karayolu" : quoteDetail.transport_mode === "air" ? "Havayolu" : "Denizyolu"}</p></div><div><span className="text-slate-500">Güzergâh:</span><p className="font-medium">{quoteDetail.loading_point} → {quoteDetail.delivery_point}</p></div><div><span className="text-slate-500">Yük kalemi:</span><p className="font-medium">{quoteDetail.cargos?.length || 0} kalem</p></div></div>{quoteDetail.special_requirements && <p className="mt-3 rounded-lg bg-white p-3 text-sm">{quoteDetail.special_requirements}</p>}</div>}
         {canManage && <div className="flex flex-wrap gap-2"><Button onClick={() => setActivityOpen(true)}><Phone className="mr-2 h-4 w-4" />Faaliyet Kaydet</Button><Button className="bg-[#e96d25] hover:bg-[#d95e1d]" onClick={() => setOfferOpen(true)}><ClipboardList className="mr-2 h-4 w-4" />Teklif Oluştur</Button>{!selected.customer_id && canCreateCustomer && <Button variant="outline" onClick={() => void convertCustomer()} disabled={submitting}><Users className="mr-2 h-4 w-4" />Cari Oluştur</Button>}{selected.quote_request_id && selected.customer_id && !selected.first_job_id && canCreateJob && <Button variant="outline" onClick={() => void createJob()} disabled={submitting}><BriefcaseBusiness className="mr-2 h-4 w-4" />İş Emrine Dönüştür</Button>}{selected.first_job_id && <Badge className="px-3 py-2 bg-blue-100 text-blue-800">İlk iş emri oluşturuldu</Badge>}{selected.first_invoice_id && <Badge className="px-3 py-2 bg-emerald-100 text-emerald-800">İlk resmî fatura kesildi</Badge>}</div>}
-        <div className="grid gap-6 lg:grid-cols-2"><div><h3 className="mb-3 font-bold text-[#10213e]">Görüşme ve Faaliyet Geçmişi</h3><div className="space-y-3">{activities.length === 0 && <p className="rounded-xl border border-dashed p-5 text-center text-sm text-slate-500">Henüz faaliyet kaydı yok.</p>}{activities.map((item) => <div key={item.id} className="rounded-xl border border-slate-200 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{activityLabels[item.activity_type]} · {outcomeLabels[item.outcome]}</p><p className="mt-1 text-sm text-slate-600">{item.summary}</p></div><span className="whitespace-nowrap text-xs text-slate-500">{readableDate(item.activity_at)}</span></div>{item.next_action_at && <p className="mt-2 text-xs font-medium text-orange-700">Sonraki işlem: {readableDate(item.next_action_at)}</p>}</div>)}</div></div><div><h3 className="mb-3 font-bold text-[#10213e]">Verilen Teklifler</h3><div className="space-y-3">{offers.length === 0 && <p className="rounded-xl border border-dashed p-5 text-center text-sm text-slate-500">Henüz teklif oluşturulmadı.</p>}{offers.map((item) => <div key={item.id} className="rounded-xl border border-slate-200 p-4"><div className="flex justify-between gap-3"><div><p className="font-semibold">{item.offer_no}</p><p className="text-sm text-slate-600">{item.subject}</p></div><Badge variant="outline">{item.status === "sent" ? "Gönderildi" : item.status === "draft" ? "Taslak" : item.status}</Badge></div><p className="mt-3 text-lg font-bold text-[#10213e]">{money(item.amount, item.currency)}</p><p className="text-xs text-slate-500">{item.sent_at ? `Gönderim: ${readableDate(item.sent_at)}` : "Henüz gönderilmedi"}</p></div>)}</div></div></div>
+        {canManage && selected.stage !== "won" && <div className="flex flex-wrap gap-2">{selected.stage !== "lost" ? <Button variant="outline" className="text-slate-600" onClick={() => { const reason = window.prompt("Bu satışın kaybedilme nedenini yazın:") || ""; if (reason.trim().length >= 3) void updateOpportunity({ stage: "lost", lost_reason: reason.trim() }, "Kayıp nedeni kaydedildi"); }}><AlertTriangle className="mr-2 h-4 w-4" />Kaybedildi Olarak İşaretle</Button> : <Button variant="outline" onClick={() => void updateOpportunity({ stage: "introduction", lost_reason: null }, "Kayıt yeniden tanıtım aşamasına alındı")}>Yeniden Tanıtıma Al</Button>}</div>}
+        <div className="grid gap-6 lg:grid-cols-2"><div><h3 className="mb-3 font-bold text-[#10213e]">Görüşme ve Faaliyet Geçmişi</h3><div className="space-y-3">{activities.length === 0 && <p className="rounded-xl border border-dashed p-5 text-center text-sm text-slate-500">Henüz faaliyet kaydı yok.</p>}{activities.map((item) => <div key={item.id} className="rounded-xl border border-slate-200 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{activityLabels[item.activity_type]} · {outcomeLabels[item.outcome]}</p><p className="mt-1 text-sm text-slate-600">{item.summary}</p></div><span className="whitespace-nowrap text-xs text-slate-500">{readableDate(item.activity_at)}</span></div>{item.next_action_at && <p className="mt-2 text-xs font-medium text-orange-700">Sonraki işlem: {readableDate(item.next_action_at)}</p>}</div>)}</div></div><div><h3 className="mb-3 font-bold text-[#10213e]">Verilen Teklifler</h3><div className="space-y-3">{offers.length === 0 && <p className="rounded-xl border border-dashed p-5 text-center text-sm text-slate-500">Henüz teklif oluşturulmadı.</p>}{offers.map((item) => <div key={item.id} className="rounded-xl border border-slate-200 p-4"><div className="flex justify-between gap-3"><div><p className="font-semibold">{item.offer_no} · V{item.version_no || 1}</p><p className="text-sm text-slate-600">{item.subject}</p></div><Badge variant="outline">{item.email_status === "sent" ? "E-posta gönderildi" : item.approval_status === "pending" ? "Onay bekliyor" : item.status === "draft" ? "Taslak" : item.status}</Badge></div><p className="mt-3 text-lg font-bold text-[#10213e]">{money(item.amount, item.currency)}</p><p className="text-xs text-slate-500">{item.email_sent_at ? `Gönderim: ${readableDate(item.email_sent_at)}` : item.email_error ? `Hata: ${item.email_error}` : "Henüz gönderilmedi"}</p>{canManage && item.approval_status === "pending" && <div className="mt-3 flex gap-2"><Button size="sm" onClick={() => void reviewOffer(item, "approve")} disabled={submitting}>Onayla</Button><Button size="sm" variant="outline" onClick={() => void reviewOffer(item, "reject")} disabled={submitting}>Reddet</Button></div>}{canManage && ["not_required","approved"].includes(item.approval_status) && item.email_status !== "sent" && <Button size="sm" className="mt-3 bg-[#e96d25] hover:bg-[#d95e1d]" onClick={() => void sendOffer(item)} disabled={submitting}><Send className="mr-2 h-4 w-4" />E-posta ile Gönder</Button>}</div>)}</div></div></div>
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"><strong>Kazanılma kuralı:</strong> Bu kayıt elle “Kazanıldı” yapılamaz. İlk iş emri onaylanıp sevkiyat tamamlandıktan ve KolayBi üzerinden resmî e-fatura/e-arşiv oluştuğunda sistem otomatik taşır.</div>
       </div>}</DialogContent></Dialog>
 

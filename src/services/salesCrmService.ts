@@ -54,7 +54,59 @@ export type CrmOffer = {
   valid_until: string | null;
   sent_at: string | null;
   notes: string | null;
+  version_no: number;
+  recipient_email: string | null;
+  approval_status: "not_required" | "pending" | "approved" | "rejected";
+  approval_note: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  email_status: "not_sent" | "sending" | "sent" | "failed";
+  email_provider_id: string | null;
+  email_sent_at: string | null;
+  email_error: string | null;
   created_at: string;
+};
+
+export type CrmTask = {
+  id: string;
+  opportunity_id: string;
+  customer_id: string | null;
+  assigned_to: string | null;
+  task_type: "call" | "visit" | "email" | "quote" | "follow_up" | "review";
+  title: string;
+  due_at: string;
+  priority: "low" | "normal" | "high" | "urgent";
+  status: "pending" | "completed" | "cancelled";
+  source: string;
+  created_at: string;
+};
+
+export type DuplicateCandidate = {
+  record_type: "customer" | "opportunity";
+  id: string;
+  company_name: string;
+  email: string | null;
+  phone: string | null;
+  status: string;
+};
+
+export type Customer360 = {
+  customer?: Record<string, unknown>;
+  opportunity_count?: number;
+  activity_count?: number;
+  offer_count?: number;
+  offer_total?: number;
+  job_count?: number;
+  shipment_count?: number;
+  delivered_count?: number;
+  invoice_count?: number;
+  invoiced_total?: number;
+  outstanding_total?: number;
+  exception_count?: number;
+  last_activity?: string | null;
+  last_shipment?: string | null;
+  recent_jobs?: Array<Record<string, unknown>>;
+  recent_invoices?: Array<Record<string, unknown>>;
 };
 
 export type SalesRepresentative = { user_id: string; email: string; full_name: string; role: string };
@@ -110,6 +162,12 @@ export const salesCrmService = {
     return (data || []) as CrmOffer[];
   },
 
+  async listTasks(): Promise<CrmTask[]> {
+    const { data, error } = await table("crm_tasks").select("*").eq("status", "pending").order("due_at", { ascending: true }).limit(250);
+    if (error) throw error;
+    return (data || []) as CrmTask[];
+  },
+
   async listRepresentatives(): Promise<SalesRepresentative[]> {
     const { data, error } = await supabase.rpc("rex_crm_sales_representatives" as never);
     if (error) throw error;
@@ -129,7 +187,6 @@ export const salesCrmService = {
   },
 
   async createOpportunity(input: Partial<CrmOpportunity> & { company_name: string }) {
-    const { data: userData } = await supabase.auth.getUser();
     const payload = {
       company_name: input.company_name,
       contact_name: input.contact_name || null,
@@ -137,7 +194,7 @@ export const salesCrmService = {
       phone: input.phone || null,
       source: input.source || "manual",
       stage: input.stage || "introduction",
-      assigned_to: input.assigned_to || userData.user?.id || null,
+      assigned_to: input.assigned_to || null,
       next_action_at: input.next_action_at || null,
       notes: input.notes || null,
     };
@@ -174,14 +231,52 @@ export const salesCrmService = {
     subject: string;
     amount: number;
     currency: string;
-    status: CrmOffer["status"];
+    status?: CrmOffer["status"];
     valid_until?: string | null;
     notes?: string | null;
   }) {
     const { data: userData } = await supabase.auth.getUser();
-    const { data, error } = await table("crm_offers").insert({ ...input, offer_no: "", created_by: userData.user?.id }).select("*").single();
+    const { data, error } = await table("crm_offers").insert({ ...input, status: "draft", offer_no: "", created_by: userData.user?.id }).select("*").single();
     if (error) throw error;
     return data as CrmOffer;
+  },
+
+  async completeTask(taskId: string) {
+    const { error } = await supabase.rpc("rex_crm_complete_task" as never, { p_task_id: taskId } as never);
+    if (error) throw error;
+  },
+
+  async reviewOffer(offerId: string, decision: "approve" | "reject", note?: string) {
+    const { error } = await supabase.rpc("rex_crm_review_offer" as never, { p_offer_id: offerId, p_decision: decision, p_note: note || null } as never);
+    if (error) throw error;
+  },
+
+  async sendOffer(offerId: string, recipientEmail?: string) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error("Oturum süresi dolmuş. Lütfen tekrar giriş yapın.");
+    const response = await fetch(`/api/crm/offers/${offerId}/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ recipientEmail: recipientEmail || null }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Teklif e-postası gönderilemedi.");
+    return result as { success: true; alreadySent?: boolean; providerId?: string };
+  },
+
+  async findDuplicates(companyName: string, email?: string, phone?: string): Promise<DuplicateCandidate[]> {
+    const { data, error } = await supabase.rpc("rex_crm_duplicate_candidates" as never, {
+      p_company_name: companyName, p_email: email || null, p_phone: phone || null,
+    } as never);
+    if (error) throw error;
+    return (data || []) as unknown as DuplicateCandidate[];
+  },
+
+  async customer360(customerId: string): Promise<Customer360> {
+    const { data, error } = await supabase.rpc("rex_crm_customer_360" as never, { p_customer_id: customerId } as never);
+    if (error) throw error;
+    return (data || {}) as unknown as Customer360;
   },
 
   async convertToCustomer(opportunityId: string): Promise<string> {
