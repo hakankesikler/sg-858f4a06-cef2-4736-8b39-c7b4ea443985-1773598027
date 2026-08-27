@@ -29,6 +29,9 @@ export default function LoginPage() {
   const [resetting, setResetting] = useState(false);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [pendingRecoveryToken, setPendingRecoveryToken] = useState("");
+  const [pendingRecoveryCode, setPendingRecoveryCode] = useState("");
+  const [pendingAccessToken, setPendingAccessToken] = useState("");
+  const [pendingRefreshToken, setPendingRefreshToken] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
 
@@ -36,27 +39,37 @@ export default function LoginPage() {
     if (!router.isReady) return;
 
     const tokenHash = typeof router.query.token_hash === "string" ? router.query.token_hash : "";
+    const recoveryCode = typeof router.query.code === "string" ? router.query.code : "";
     const recoveryType = typeof router.query.type === "string" ? router.query.type : "";
-    if (!tokenHash || recoveryType !== "recovery") return;
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const hashType = hash.get("type") || "";
+    const accessToken = hash.get("access_token") || "";
+    const refreshToken = hash.get("refresh_token") || "";
 
-    setPendingRecoveryToken(tokenHash);
+    if (hash.get("error_code") === "otp_expired") {
+      toast({
+        title: "Bağlantının süresi dolmuş",
+        description: "Gelen kutunuzdaki en yeni bağlantıyı kullanın veya yeni bir şifre yenileme bağlantısı isteyin.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", "/login");
+      return;
+    }
+
+    const hasTokenHash = Boolean(tokenHash && recoveryType === "recovery");
+    const hasPkceCode = Boolean(recoveryCode && (!recoveryType || recoveryType === "recovery"));
+    const hasImplicitTokens = Boolean(accessToken && refreshToken && (!hashType || hashType === "recovery"));
+    if (!hasTokenHash && !hasPkceCode && !hasImplicitTokens) return;
+
+    setPendingRecoveryToken(hasTokenHash ? tokenHash : "");
+    setPendingRecoveryCode(hasPkceCode ? recoveryCode : "");
+    setPendingAccessToken(hasImplicitTokens ? accessToken : "");
+    setPendingRefreshToken(hasImplicitTokens ? refreshToken : "");
     setRecoveryMode(true);
     setPassword("");
     setConfirmPassword("");
-    void router.replace("/login", undefined, { shallow: true });
-  }, [router.isReady, router.query.token_hash, router.query.type]);
-
-  useEffect(() => {
-    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    if (hash.get("error_code") !== "otp_expired") return;
-
-    toast({
-      title: "Bağlantının süresi dolmuş",
-      description: "Gelen kutunuzdaki en yeni bağlantıyı kullanın veya yeni bir şifre yenileme bağlantısı isteyin.",
-      variant: "destructive",
-    });
-    window.history.replaceState({}, "", `${window.location.pathname}${window.location.search}`);
-  }, []);
+    window.history.replaceState({}, "", "/login");
+  }, [router.isReady, router.query.code, router.query.token_hash, router.query.type, toast]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -166,34 +179,41 @@ export default function LoginPage() {
     }
 
     setLoading(true);
+    let recoverySession = null;
     if (pendingRecoveryToken) {
       const { data: verification, error: verificationError } = await supabase.auth.verifyOtp({
         token_hash: pendingRecoveryToken,
         type: "recovery",
       });
-      if (verificationError || !verification.session) {
-        setPendingRecoveryToken("");
-        setRecoveryMode(false);
-        setLoading(false);
-        toast({
-          title: "Bağlantı geçersiz",
-          description: "Bağlantı kullanılmış veya süresi dolmuş. Lütfen gelen kutunuzdaki en yeni bağlantıyı kullanın.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: verification.session.access_token,
-        refresh_token: verification.session.refresh_token,
+      if (!verificationError) recoverySession = verification.session;
+    } else if (pendingRecoveryCode) {
+      const { data: exchange, error: exchangeError } = await supabase.auth.exchangeCodeForSession(pendingRecoveryCode);
+      if (!exchangeError) recoverySession = exchange.session;
+    } else if (pendingAccessToken && pendingRefreshToken) {
+      const { data: established, error: sessionError } = await supabase.auth.setSession({
+        access_token: pendingAccessToken,
+        refresh_token: pendingRefreshToken,
       });
-      if (sessionError) {
-        setPendingRecoveryToken("");
-        setRecoveryMode(false);
-        setLoading(false);
-        toast({ title: "Güvenli oturum kurulamadı", description: "Lütfen yeni bir şifre yenileme bağlantısı isteyin.", variant: "destructive" });
-        return;
-      }
+      if (!sessionError) recoverySession = established.session;
+    } else {
+      const { data: current } = await supabase.auth.getSession();
+      recoverySession = current.session;
+    }
+
+    setPendingRecoveryToken("");
+    setPendingRecoveryCode("");
+    setPendingAccessToken("");
+    setPendingRefreshToken("");
+
+    if (!recoverySession) {
+      setRecoveryMode(false);
+      setLoading(false);
+      toast({
+        title: "Bağlantı geçersiz",
+        description: "Güvenli şifre yenileme oturumu kurulamadı. Lütfen yeni bir bağlantı isteyin ve yalnızca en son gelen e-postayı kullanın.",
+        variant: "destructive",
+      });
+      return;
     }
 
     const { error } = await supabase.auth.updateUser({ password });
@@ -206,7 +226,6 @@ export default function LoginPage() {
           : message.includes("session") || message.includes("jwt")
             ? "Güvenli oturum sona ermiş. Lütfen yeni bir şifre yenileme bağlantısı isteyin."
             : "Şifre kaydedilemedi. Lütfen farklı bir şifre deneyin veya yeni bağlantı isteyin.";
-      setPendingRecoveryToken("");
       setLoading(false);
       toast({ title: "Şifre güncellenemedi", description, variant: "destructive" });
       return;
@@ -215,7 +234,6 @@ export default function LoginPage() {
     await recordSecurityEvent("password_changed", "Personel şifresi yenileme bağlantısıyla değiştirildi.");
     await supabase.auth.signOut();
     setRecoveryMode(false);
-    setPendingRecoveryToken("");
     setPassword("");
     setConfirmPassword("");
     setLoading(false);
