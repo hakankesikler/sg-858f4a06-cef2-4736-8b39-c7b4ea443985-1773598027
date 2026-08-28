@@ -261,8 +261,10 @@ export const salesCrmService = {
       next_action_at: input.next_action_at || null,
       notes: input.notes || null,
     };
-    const { data, error } = await table("crm_opportunities").insert(payload).select("*").single();
+    const { data: opportunityId, error } = await supabase.rpc("rex_crm_create_opportunity" as never, { p_payload: payload } as never);
     if (error) throw error;
+    const { data, error: readError } = await table("crm_opportunities").select("*").eq("id", opportunityId).single();
+    if (readError) throw readError;
     return data as CrmOpportunity;
   },
 

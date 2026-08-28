@@ -113,3 +113,17 @@ test("CRM reporting covers forecast, overdue work, margin and sales cycle", asyn
   assert.match(screen, /Satış döngüsü/);
   assert.match(screen, /Ort\. marj/);
 });
+
+test("new CRM prospects use an authorized security-definer RPC and self assignment", async () => {
+  const [sql, service] = await Promise.all([
+    read("supabase/migrations/20260828101500_crm_opportunity_create_rpc.sql"),
+    read("src/services/salesCrmService.ts"),
+  ]);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_crm_create_opportunity/);
+  assert.match(sql, /SECURITY DEFINER/);
+  assert.match(sql, /rex_has_permission\('crm\.sales_pipeline', 'manage'\)/);
+  assert.match(sql, /coalesce\(nullif\(p_payload->>'assigned_to', ''\)::uuid, auth\.uid\(\)\)/);
+  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.rex_crm_create_opportunity\(jsonb\) TO authenticated/);
+  assert.match(service, /supabase\.rpc\("rex_crm_create_opportunity"/);
+  assert.doesNotMatch(service, /table\("crm_opportunities"\)\.insert\(payload\)/);
+});
