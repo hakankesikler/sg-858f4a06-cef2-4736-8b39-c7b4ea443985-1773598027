@@ -88,6 +88,8 @@ test("CRM operations include contacts, notifications, provider events, atomic im
   assert.match(sql, /idempotency_key text NOT NULL UNIQUE/);
   assert.match(webhook, /resend\.webhooks\.verify/);
   assert.match(webhook, /RESEND_WEBHOOK_SECRET/);
+  assert.match(cron, /req\.method !== "GET" && req\.method !== "POST"/);
+  assert.match(cron, /res\.setHeader\("Allow", "GET, POST"\)/);
   assert.match(cron, /rex_crm_generate_notifications/);
   assert.match(service, /bulkImportCustomers/);
   assert.match(service, /mergeCustomers/);
