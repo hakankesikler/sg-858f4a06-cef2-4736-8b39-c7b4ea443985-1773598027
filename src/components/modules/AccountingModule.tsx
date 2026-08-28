@@ -64,6 +64,7 @@ import { invoiceIntegrationService } from "@/services/invoiceIntegrationService"
 import { PurchaseInvoiceInbox } from "@/components/PurchaseInvoiceInbox";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 import { downloadExcel } from "@/lib/excel";
+import { KolayBiOfficeModule } from "@/components/modules/KolayBiOfficeModule";
 
 const INVOICE_INTEGRATION_LABELS: Record<string, string> = {
   draft: "Fatura Taslağı",
@@ -129,7 +130,8 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
   const canViewPurchase = hasPermission(permissions, "accounting.purchase");
   const canViewAccounts = hasPermission(permissions, "accounting.accounts");
   const canViewExpenses = hasPermission(permissions, "accounting.expenses");
-  const defaultAccountingTab = canViewSales ? "sales" : canViewPurchase ? "purchase" : canViewAccounts ? "cari" : "expenses";
+  const canViewOffice = canViewSales || canViewPurchase || canViewAccounts || canViewExpenses;
+  const defaultAccountingTab = canViewOffice ? "office" : canViewSales ? "sales" : canViewPurchase ? "purchase" : canViewAccounts ? "cari" : "expenses";
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -868,12 +870,17 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
     <div className="p-6 space-y-6">
       <Tabs defaultValue={defaultAccountingTab} className="w-full">
         <TabsList className="flex flex-wrap h-auto">
+          {canViewOffice && <TabsTrigger value="office">Entegre Ofis</TabsTrigger>}
           {canViewSales && <TabsTrigger value="sales">Satış</TabsTrigger>}
           {canViewPurchase && <TabsTrigger value="purchase">Alış</TabsTrigger>}
           {canViewAccounts && <TabsTrigger value="cari">Cari Hesaplar</TabsTrigger>}
           {canViewExpenses && <TabsTrigger value="expenses">Giderler</TabsTrigger>}
           {canViewAccounts && <TabsTrigger value="accounts">Hesaplar</TabsTrigger>}
         </TabsList>
+
+        <TabsContent value="office" className="space-y-4">
+          <KolayBiOfficeModule permissions={permissions} />
+        </TabsContent>
 
         <TabsContent value="panel" className="space-y-4">
           <h2 className="text-2xl font-bold">Muhasebe Paneli</h2>

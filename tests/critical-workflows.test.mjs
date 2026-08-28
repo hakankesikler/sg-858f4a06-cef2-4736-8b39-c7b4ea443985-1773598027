@@ -820,3 +820,42 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
   assert.doesNotMatch(recoveryGate, /supabase\.auth/);
   assert.match(security, /MIN_PASSWORD_LENGTH = 6/);
 });
+
+test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
+  const [sql, api, service, office, accounting] = await Promise.all([
+    read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
+    read("src/pages/api/kolaybi/office-sync.ts"),
+    read("src/services/kolaybiOfficeService.ts"),
+    read("src/components/modules/KolayBiOfficeModule.tsx"),
+    read("src/components/modules/AccountingModule.tsx"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.kolaybi_master_records/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.kolaybi_sync_runs/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.kolaybi_sync_events/);
+  assert.match(sql, /rex_kolaybi_events_append_only/);
+  assert.match(sql, /REVOKE INSERT,UPDATE,DELETE ON public\.kolaybi_sync_events FROM authenticated/);
+  assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(api, /rex_has_permission/);
+  assert.match(api, /integrations\.connections/);
+  assert.match(api, /idempotency_key/);
+  assert.match(api, /\/associates/);
+  assert.match(api, /\/products/);
+  assert.match(api, /type=sale_invoice/);
+  assert.match(api, /type=purchase_invoice/);
+  assert.match(api, /review_required/);
+  assert.match(service, /kolaybi_master_records/);
+  assert.match(service, /kolaybi_sync_runs/);
+  assert.match(office, /KolayBi Entegre Ofis/);
+  assert.match(office, /Satış Yönetimi/);
+  assert.match(office, /Satın Alma Yönetimi/);
+  assert.match(office, /Genel Gider Yönetimi/);
+  assert.match(office, /Ürünler ve Hizmetler/);
+  assert.match(office, /Cari Hesaplar/);
+  assert.match(office, /Finans/);
+  assert.match(office, /Projeler/);
+  assert.match(office, /Raporlar/);
+  assert.match(office, /XLSX İndir/);
+  assert.match(office, /Satış – Operasyon – Muhasebe Akışı/);
+  assert.match(accounting, /Entegre Ofis/);
+  assert.match(accounting, /KolayBiOfficeModule/);
+});
