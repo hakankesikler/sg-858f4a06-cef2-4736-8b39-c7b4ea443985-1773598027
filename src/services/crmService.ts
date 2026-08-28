@@ -55,60 +55,16 @@ export interface Customer {
 export const crmService = {
   // Get all customers
   async getCustomers() {
-    console.log("=== CRM SERVICE GET CUSTOMERS START ===");
-    
     const { data, error } = await supabase
       .from("customers")
       .select("*")
-      .range(0, 9999)  // Get up to 10000 records (remove 1000 default limit)
-      .order("created_at", { ascending: false });  // Newest first instead of alphabetical
-
-    console.log("=== RAW SUPABASE QUERY RESULT ===");
-    console.log("Error:", error);
-    console.log("Data count:", data?.length || 0);
+      .is("archived_at", null)
+      .range(0, 999)
+      .order("created_at", { ascending: false });
     
     if (error) {
       console.error("Error fetching customers:", error);
       throw error;
-    }
-
-    console.log("=== SEARCHING FOR TEKNİK İSTİF ===");
-    
-    // Search with exact vergi_no
-    const byVergiNo = data?.find(c => c.vergi_no === '8360477578');
-    console.log("Search by vergi_no '8360477578':", byVergiNo ? "FOUND" : "NOT FOUND");
-    if (byVergiNo) {
-      console.log("✅ FOUND BY VERGI NO:", {
-        id: byVergiNo.id,
-        code: byVergiNo.customer_code,
-        name: byVergiNo.name,
-        account_type: byVergiNo.account_type
-      });
-    }
-    
-    // Search by name containing "TEKNİK"
-    const byName = data?.filter(c => c.name?.includes('TEKNİK'));
-    console.log("Search by name containing 'TEKNİK':", byName?.length || 0, "results");
-    if (byName && byName.length > 0) {
-      console.log("First match:", byName[0].name);
-    }
-    
-    // Search by name containing "ISTIF" (without İ)
-    const byNameAlt = data?.filter(c => c.name?.includes('ISTIF') || c.name?.includes('İSTİF'));
-    console.log("Search by name containing 'ISTIF/İSTİF':", byNameAlt?.length || 0, "results");
-    
-    // List first 20 customer codes to see the pattern
-    console.log("First 20 customer codes:", data?.slice(0, 20).map(c => c.customer_code));
-    
-    // Check CST-000306 specifically
-    const byCode = data?.find(c => c.customer_code === 'CST-000306');
-    console.log("Search by customer_code 'CST-000306':", byCode ? "FOUND" : "NOT FOUND");
-    if (byCode) {
-      console.log("✅ FOUND BY CODE:", {
-        id: byCode.id,
-        name: byCode.name,
-        account_type: byCode.account_type
-      });
     }
 
     return data || [];
@@ -214,12 +170,6 @@ export const crmService = {
       // Format with leading zeros (CST-000001, CST-000002, etc.)
       const nextCode = `${prefix}-${nextNumber.toString().padStart(6, "0")}`;
       
-      console.log("=== GENERATED CUSTOMER CODE ===");
-      console.log("Account Type:", accountType);
-      console.log("Supplier Category:", supplierCategory);
-      console.log("Prefix:", prefix);
-      console.log("Next Code:", nextCode);
-      
       return nextCode;
     } catch (error) {
       console.error("Error generating customer code:", error);
@@ -236,10 +186,6 @@ export const crmService = {
         customer.supplier_category || undefined
       );
     }
-
-    console.log("=== CREATING CUSTOMER ===");
-    console.log("Customer Code:", customer.customer_code);
-    console.log("Account Type:", customer.account_type);
 
     const { data, error } = await supabase
       .from("customers")
@@ -272,16 +218,32 @@ export const crmService = {
     return data;
   },
 
-  // Delete customer
-  async deleteCustomer(id: string) {
-    const { error } = await supabase
-      .from("customers")
-      .delete()
-      .eq("id", id);
-
+  async archiveCustomer(id: string, reason: string) {
+    const { error } = await supabase.rpc("rex_archive_customer" as never, {
+      p_customer_id: id,
+      p_reason: reason,
+    } as never);
     if (error) {
-      console.error("Error deleting customer:", error);
       throw error;
     }
+  },
+
+  async bulkImportCustomers(fileName: string, idempotencyKey: string, rows: Array<Record<string, unknown>>) {
+    const { data, error } = await supabase.rpc("rex_crm_import_customers" as never, {
+      p_file_name: fileName,
+      p_idempotency_key: idempotencyKey,
+      p_rows: rows,
+    } as never);
+    if (error) throw error;
+    return data as unknown as { batch_id: string; row_count: number; already_processed: boolean };
+  },
+
+  async mergeCustomers(sourceId: string, targetId: string, reason: string) {
+    const { error } = await supabase.rpc("rex_crm_merge_customers" as never, {
+      p_source: sourceId,
+      p_target: targetId,
+      p_reason: reason,
+    } as never);
+    if (error) throw error;
   }
 };

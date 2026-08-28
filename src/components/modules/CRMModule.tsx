@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Building2, Eye, Edit, Trash2, Users, Filter, CreditCard, KeyRound, Copy, ExternalLink } from "lucide-react";
+import { Search, Plus, Building2, Eye, Edit, Archive, Users, Filter, CreditCard, KeyRound, Copy, ExternalLink, Trash2, GitMerge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { crmService } from "@/services/crmService";
 import { CariForm } from "@/components/CariForm";
@@ -46,6 +47,8 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
   const { toast } = useToast();
   const canManageCustomers = hasPermission(permissions, "crm.customers", "manage");
   const canManagePortalInvites = hasPermission(permissions, "crm.portal_invites", "manage");
+  const canExport = hasPermission(permissions, "crm.exports", "view");
+  const canMerge = hasPermission(permissions, "crm.settings", "manage");
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,6 +62,10 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deletingCustomer, setDeletingCustomer] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [archiveReason, setArchiveReason] = useState("");
+  const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false);
+  const [mergeTargetId, setMergeTargetId] = useState("");
+  const [mergeReason, setMergeReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inviteCustomer, setInviteCustomer] = useState<any>(null);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -312,94 +319,28 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
         throw new Error("Excel dosyası 2 MB'den büyük olamaz");
       }
       const jsonData = await readExcelObjects(file);
+      const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+      const contentHash = Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 
-      let successCount = 0;
-      let errorCount = 0;
-      const errors: string[] = [];
-
-      for (let i = 0; i < jsonData.length; i++) {
-        const row: any = jsonData[i];
-        
-        try {
-          // Determine account type
-          const accountTypeRaw = (row["Cari Tipi"] || "müşteri").toString().toLowerCase();
-          let accountType = "musteri";
-          if (accountTypeRaw.includes("tedarik") || accountTypeRaw.includes("tedari")) {
-            accountType = "tedarikci";
-          } else if (accountTypeRaw.includes("personel")) {
-            accountType = "personel";
-          } else if (accountTypeRaw.includes("ortak")) {
-            accountType = "ortak";
-          }
-
-          // Determine person type
-          const personTypeRaw = (row["Kişi Tipi"] || "tüzel").toString().toLowerCase();
-          const isCorporate = personTypeRaw.includes("tüzel") || personTypeRaw.includes("tuzel");
-
-          const customerData: any = {
-            name: row["Cari Adı"] || "",
-            account_type: accountType,
-            tax_office: row["Vergi Dairesi"] || null,
-            city: row["İl"] || null,
-            district: row["İlçe"] || null,
-            address: row["Adres"] || null,
-            phone: row["Telefon"] || null,
-            email: row["E-posta"] || null,
-          };
-
-          // Add tax number or TC number based on person type
-          if (isCorporate) {
-            customerData.vergi_no = row["Vergi No"] || null;
-            customerData.tc_no = null;
-          } else {
-            customerData.tc_no = row["TC No"] || null;
-            customerData.vergi_no = null;
-          }
-
-          // Validate required fields
-          if (!customerData.name) {
-            errors.push(`Satır ${i + 2}: Cari adı gerekli`);
-            errorCount++;
-            continue;
-          }
-
-          await crmService.createCustomer(customerData);
-          successCount++;
-        } catch (error: any) {
-          console.error(`Row ${i + 2} error:`, error);
-          const errorMsg = error?.message || "Hata oluştu";
-          errors.push(`Satır ${i + 2}: ${errorMsg}`);
-          errorCount++;
-        }
-      }
-
-      // Show results
-      if (successCount > 0) {
-        toast({
-          title: "İçe Aktarma Tamamlandı",
-          description: `${successCount} cari başarıyla oluşturuldu${errorCount > 0 ? `, ${errorCount} hata` : ""}`,
-        });
-      }
-
-      if (errors.length > 0 && errors.length <= 5) {
-        setTimeout(() => {
-          toast({
-            title: "Hatalar",
-            description: errors.slice(0, 5).join("\n"),
-            variant: "destructive",
-          });
-        }, 500);
-      } else if (errors.length > 5) {
-        setTimeout(() => {
-          toast({
-            title: "Çok Fazla Hata",
-            description: `${errors.length} satırda hata var. İlk 5 hata:\n${errors.slice(0, 5).join("\n")}`,
-            variant: "destructive",
-          });
-        }, 500);
-      }
-
-      // Reload data
+      if (jsonData.length > 1000) throw new Error("Tek seferde en fazla 1000 cari aktarılabilir");
+      const importRows = jsonData.map((row: any, index) => {
+        const accountTypeRaw = String(row["Cari Tipi"] || "müşteri").toLocaleLowerCase("tr-TR");
+        const account_type = accountTypeRaw.includes("tedarik") ? "tedarikci" : accountTypeRaw.includes("personel") ? "personel" : accountTypeRaw.includes("ortak") ? "ortak" : "musteri";
+        const corporate = String(row["Kişi Tipi"] || "tüzel").toLocaleLowerCase("tr-TR").includes("tüzel");
+        const name = String(row["Cari Adı"] || "").trim();
+        if (name.length < 2) throw new Error(`Satır ${index + 2}: Cari adı zorunludur`);
+        return {
+          name, account_type, vergi_no: corporate ? String(row["Vergi No"] || "").trim() || null : null,
+          tc_no: corporate ? null : String(row["TC No"] || "").trim() || null,
+          tax_office: String(row["Vergi Dairesi"] || "").trim() || null, city: String(row["İl"] || "").trim() || null,
+          district: String(row["İlçe"] || "").trim() || null, address: String(row["Adres"] || "").trim() || null,
+          phone: String(row["Telefon"] || "").trim() || null, email: String(row["E-posta"] || "").trim().toLowerCase() || null,
+        };
+      });
+      const taxNumbers = importRows.map((row) => row.vergi_no).filter(Boolean);
+      if (new Set(taxNumbers).size !== taxNumbers.length) throw new Error("Excel dosyasında aynı vergi numarası birden fazla kez bulunuyor");
+      const result = await crmService.bulkImportCustomers(file.name, contentHash, importRows);
+      toast({ title: result.already_processed ? "Dosya daha önce aktarılmış" : "İçe Aktarma Tamamlandı", description: `${result.row_count} cari atomik ve denetimli olarak işlendi.` });
       await loadCustomers();
     } catch (error) {
       console.error("Excel import error:", error);
@@ -423,7 +364,21 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
 
   const handleDeleteClick = (customer: any) => {
     setSelectedCustomer(customer);
+    setArchiveReason("");
     setIsDeleteDialogOpen(true);
+  };
+
+  const mergeCustomer = async () => {
+    if (!selectedCustomer || !mergeTargetId || mergeReason.trim().length < 10) return;
+    setIsSubmitting(true);
+    try {
+      await crmService.mergeCustomers(selectedCustomer.id, mergeTargetId, mergeReason.trim());
+      toast({ title: "Cari kayıtları birleştirildi", description: "Bağlı işler hedef cariye aktarıldı; kaynak kayıt denetim iziyle arşivlendi." });
+      setIsMergeDialogOpen(false); setIsDetailDialogOpen(false); setMergeTargetId(""); setMergeReason("");
+      await loadCustomers();
+    } catch (error: any) {
+      toast({ title: "Cari birleştirilemedi", description: error?.message || "İşlem geri alındı.", variant: "destructive" });
+    } finally { setIsSubmitting(false); }
   };
 
   const handleDeleteConfirm = async () => {
@@ -431,10 +386,10 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
 
     try {
       setIsSubmitting(true);
-      await crmService.deleteCustomer(selectedCustomer.id);
+      await crmService.archiveCustomer(selectedCustomer.id, archiveReason);
       toast({
         title: "Başarılı",
-        description: "Cari başarıyla silindi",
+        description: "Cari arşivlendi; geçmiş işlem ve belgeler korundu.",
       });
       setIsDeleteDialogOpen(false);
       setSelectedCustomer(null);
@@ -443,7 +398,7 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
       console.error("Error deleting customer:", error);
       toast({
         title: "Hata",
-        description: "Cari silinirken bir hata oluştu",
+        description: error instanceof Error ? error.message : "Cari arşivlenirken bir hata oluştu",
         variant: "destructive",
       });
     } finally {
@@ -488,7 +443,7 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
           onChange={handleCariImport}
           style={{ display: "none" }}
         />
-        <Button variant="outline" onClick={() => void exportCustomers()}>Excel'e Aktar</Button>
+        {canExport && <Button variant="outline" onClick={() => void exportCustomers()}>Excel'e Aktar</Button>}
       </div>
 
       {/* Filter Tabs */}
@@ -701,9 +656,9 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
                         type="button"
                         onClick={() => handleDeleteClick(customer)}
                         className="p-1 hover:bg-gray-100 rounded transition-colors"
-                        title="Sil"
+                        title="Arşivle"
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Archive className="h-4 w-4 text-amber-600" />
                       </button>}
                       {canManagePortalInvites && (customer.account_type === "musteri" || !customer.account_type) && (
                         <button
@@ -945,8 +900,11 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
               </TabsContent>
             </Tabs>
           )}
+          {selectedCustomer && canMerge && <DialogFooter><Button variant="outline" className="text-violet-700" onClick={() => { setMergeTargetId(""); setMergeReason(""); setIsMergeDialogOpen(true); }}><GitMerge className="mr-2 h-4 w-4" />Mükerrer Cariyle Birleştir</Button></DialogFooter>}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isMergeDialogOpen} onOpenChange={setIsMergeDialogOpen}><DialogContent><DialogHeader><DialogTitle>Mükerrer Cari Kayıtlarını Birleştir</DialogTitle></DialogHeader><div className="space-y-4"><div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><strong>{selectedCustomer?.name}</strong> kaynak kayıt olarak arşivlenecek; tüm bağlı işlemler seçtiğiniz hedef cariye aktarılacaktır. İşlem denetim kaydına yazılır.</div><div><Label>Korunacak hedef cari *</Label><select value={mergeTargetId} onChange={(e) => setMergeTargetId(e.target.value)} className="mt-1 w-full rounded-md border px-3 py-2"><option value="">Hedef cari seçin</option>{customers.filter((customer) => customer.id !== selectedCustomer?.id && customer.account_type === selectedCustomer?.account_type).map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.vergi_no || customer.tc_no || customer.customer_code}</option>)}</select></div><div><Label>Birleştirme nedeni * (en az 10 karakter)</Label><Textarea value={mergeReason} onChange={(e) => setMergeReason(e.target.value)} placeholder="Aynı firmaya ait mükerrer kayıt olduğu doğrulandı..." /></div></div><DialogFooter><Button variant="outline" onClick={() => setIsMergeDialogOpen(false)}>Vazgeç</Button><Button onClick={() => void mergeCustomer()} disabled={isSubmitting || !mergeTargetId || mergeReason.trim().length < 10}>Birleştir</Button></DialogFooter></DialogContent></Dialog>
 
       {/* Bank Account Form Dialog */}
       <Dialog open={isBankFormOpen} onOpenChange={setIsBankFormOpen}>
@@ -1068,16 +1026,20 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
         initialData={selectedCustomer}
       />
 
-      {/* Delete Dialog */}
+      {/* Archive Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cariyi Sil</DialogTitle>
+            <DialogTitle>Cariyi Arşivle</DialogTitle>
           </DialogHeader>
           <p className="text-sm">
-            <strong>{selectedCustomer?.name}</strong> isimli cariyi silmek istediğinizden emin
-            misiniz? Bu işlem geri alınamaz.
+            <strong>{selectedCustomer?.name}</strong> isimli cari aktif listeden kaldırılacak.
+            Sevkiyat, fatura ve denetim geçmişi silinmeyecektir.
           </p>
+          <div className="space-y-2">
+            <Label htmlFor="archive-reason">Arşivleme nedeni *</Label>
+            <Textarea id="archive-reason" value={archiveReason} onChange={(event) => setArchiveReason(event.target.value)} placeholder="En az 10 karakterle arşivleme nedenini yazın" />
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
@@ -1087,11 +1049,11 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
               İptal
             </Button>
             <Button
-              variant="destructive"
+              className="bg-amber-600 hover:bg-amber-700"
               onClick={handleDeleteConfirm}
-              disabled={isSubmitting}
+              disabled={isSubmitting || archiveReason.trim().length < 10}
             >
-              {isSubmitting ? "Siliniyor..." : "Sil"}
+              {isSubmitting ? "Arşivleniyor..." : "Arşivle"}
             </Button>
           </DialogFooter>
         </DialogContent>

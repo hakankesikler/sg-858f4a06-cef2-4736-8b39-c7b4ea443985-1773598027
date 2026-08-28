@@ -7,6 +7,10 @@ export const permissionCatalog = [
   { key: "crm.customers", group: "Satış ve CRM", label: "Cari ve müşteriler", description: "Müşteri/tedarikçi kartları ve iletişim bilgileri" },
   { key: "crm.portal_invites", group: "Satış ve CRM", label: "Müşteri portalı", description: "Kurumsal müşteri portalı erişim bağlantıları" },
   { key: "crm.sales_pipeline", group: "Satış ve CRM", label: "Satış süreci ve faaliyetler", description: "Teklif talepleri, müşteri görüşmeleri, satış hunisi ve temsilci performansı" },
+  { key: "crm.team_pipeline", group: "Satış ve CRM", label: "Ekip satış kayıtları", description: "Yönetici olarak bağlı satış temsilcilerinin kayıtlarını görüntüleme ve yönetme" },
+  { key: "crm.offer_approval", group: "Satış ve CRM", label: "Teklif onayı", description: "Limit veya düşük marj nedeniyle onaya düşen teklifleri sonuçlandırma" },
+  { key: "crm.exports", group: "Satış ve CRM", label: "CRM dışa aktarma", description: "Müşteri ve satış verilerini Excel olarak dışarı aktarma" },
+  { key: "crm.settings", group: "Satış ve CRM", label: "CRM ayarları", description: "Atama, SLA, takip ve teklif limitlerini yönetme" },
   { key: "sales.work_orders", group: "Satış ve CRM", label: "Teklif ve iş kayıtları", description: "Yeni iş kaydı, onay ve red işleyişi" },
   { key: "operations.shipments", group: "Operasyon", label: "Sevkiyatlar", description: "Sevkiyat görüntüleme, oluşturma ve düzenleme" },
   { key: "operations.assignments", group: "Operasyon", label: "Sürücü ve araç", description: "Sürücü/araç kayıtları ve sevkiyat ataması" },
@@ -35,7 +39,7 @@ const nonePermissions = Object.fromEntries(permissionCatalog.map((item) => [item
 const roleDefaults: Record<AppRole, PermissionOverrides> = {
   admin: Object.fromEntries(permissionCatalog.map((item) => [item.key, "manage"])) as PermissionOverrides,
   sales: {
-    "crm.customers": "manage", "crm.portal_invites": "manage", "crm.sales_pipeline": "manage", "sales.work_orders": "manage",
+    "crm.customers": "manage", "crm.portal_invites": "manage", "crm.sales_pipeline": "manage", "crm.exports": "manage", "sales.work_orders": "manage",
     "reports.sales": "view", "integrations.monitoring": "view",
   },
   operations: {

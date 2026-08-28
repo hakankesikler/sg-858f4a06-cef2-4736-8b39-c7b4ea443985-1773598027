@@ -92,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === "GET") {
     const [{ data: roleRows, error: roleError }, { data: authUsers, error: usersError }, { data: overrideRows, error: overridesError }] = await Promise.all([
-      adminDb.from("app_user_roles").select("user_id,email,role,active,created_at,updated_at").order("created_at"),
+      adminDb.from("app_user_roles").select("user_id,email,role,active,manager_id,created_at,updated_at").order("created_at"),
       adminDb.auth.admin.listUsers({ page: 1, perPage: 1000 }),
       adminDb.from("staff_permission_overrides").select("user_id,permission_key,access_level"),
     ]);
@@ -175,11 +175,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fullName = text(req.body?.fullName, 120);
     const password = text(req.body?.password, 128);
     const role = req.body?.role;
+    const managerId = text(req.body?.managerId, 36) || null;
     if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: "Geçerli bir e-posta adresi girin." });
     if (!fullName) return res.status(400).json({ error: "Ad soyad zorunludur." });
     const policyError = passwordPolicyError(password);
     if (policyError) return res.status(400).json({ error: policyError });
     if (!isManageableRole(role)) return res.status(400).json({ error: "Geçerli bir yetki grubu seçin." });
+    if (managerId && !/^[0-9a-f-]{36}$/i.test(managerId)) return res.status(400).json({ error: "Satış yöneticisi seçimi geçersiz." });
+    if (managerId) {
+      const { data: manager } = await adminDb.from("app_user_roles").select("user_id,role,active").eq("user_id", managerId).maybeSingle();
+      if (!manager?.active || !["admin", "sales"].includes(manager.role)) return res.status(400).json({ error: "Seçilen satış yöneticisi aktif bir yönetici veya satış kullanıcısı değil." });
+    }
 
     const { data: existing } = await adminDb.from("app_user_roles").select("user_id").ilike("email", email).maybeSingle();
     if (existing) return res.status(409).json({ error: "Bu e-posta için zaten bir personel hesabı bulunuyor." });
@@ -199,9 +205,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       email,
       role,
       active: true,
+      manager_id: role === "sales" ? managerId : null,
       updated_at: new Date().toISOString(),
     });
-    if (roleError) return res.status(500).json({ error: "Kullanıcı oluşturuldu ancak yetkisi kaydedilemedi." });
+    if (roleError) {
+      await adminDb.auth.admin.deleteUser(created.user.id);
+      return res.status(500).json({ error: "Yetki kaydı oluşturulamadığı için kullanıcı oluşturma işlemi geri alındı." });
+    }
 
     await adminDb.from("staff_access_events").insert({
       target_user_id: created.user.id,
@@ -218,9 +228,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = text(req.body?.userId, 36);
   const role = req.body?.role;
   const active = req.body?.active;
+  const managerId = text(req.body?.managerId, 36) || null;
   if (!/^[0-9a-f-]{36}$/i.test(userId)) return res.status(400).json({ error: "Kullanıcı kimliği geçersiz." });
   if (!isManageableRole(role)) return res.status(400).json({ error: "Geçerli bir yetki grubu seçin." });
   if (typeof active !== "boolean") return res.status(400).json({ error: "Hesap durumu geçersiz." });
+  if (managerId && (!/^[0-9a-f-]{36}$/i.test(managerId) || managerId === userId)) return res.status(400).json({ error: "Satış yöneticisi seçimi geçersiz." });
+  if (managerId) {
+    const { data: manager } = await adminDb.from("app_user_roles").select("user_id,role,active").eq("user_id", managerId).maybeSingle();
+    if (!manager?.active || !["admin", "sales"].includes(manager.role)) return res.status(400).json({ error: "Seçilen satış yöneticisi aktif bir yönetici veya satış kullanıcısı değil." });
+  }
 
   const { data: target, error: targetError } = await adminDb
     .from("app_user_roles")
@@ -235,6 +251,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { error: updateError } = await adminDb.from("app_user_roles").update({
     role,
     active,
+    manager_id: role === "sales" ? managerId : null,
     updated_at: new Date().toISOString(),
   }).eq("user_id", userId);
   if (updateError) return res.status(500).json({ error: "Kullanıcı yetkisi güncellenemedi." });

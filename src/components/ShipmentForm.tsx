@@ -191,42 +191,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     if (!searchCustomer) return customers;
     const search = normalizeTurkish(searchCustomer);
     
-    // Debug: Show first 3 customers with normalization
-    console.log('🔍 İlk 3 Müşteri Debug:', customers.slice(0, 3).map(c => ({
-      code: c.customer_code,
-      name: c.name,
-      normalized: normalizeTurkish(c.name || ''),
-      searchTerm: search,
-      nameMatch: normalizeTurkish(c.name || '').includes(search),
-      codeMatch: normalizeTurkish(c.customer_code || '').includes(search)
-    })));
-    
-    // Check if PROLINE exists
-    const prolineCustomer = customers.find(c => c.name?.toUpperCase().includes('PROLINE'));
-    if (prolineCustomer) {
-      console.log('✅ PROLINE BULUNDU:', {
-        code: prolineCustomer.customer_code,
-        name: prolineCustomer.name,
-        normalized: normalizeTurkish(prolineCustomer.name || ''),
-        searchTerm: search,
-        match: normalizeTurkish(prolineCustomer.name || '').includes(search)
-      });
-    }
-    
     const filtered = customers.filter(c => 
       normalizeTurkish(c.name || '').includes(search) || 
       normalizeTurkish(c.customer_code || '').includes(search)
     );
-    
-    console.log('Müşteri filtreleme:', {
-      searchCustomer,
-      searchNormalized: search,
-      totalCustomers: customers.length,
-      filteredCount: filtered.length,
-      firstCustomer: customers[0]?.name,
-      firstCustomerNormalized: normalizeTurkish(customers[0]?.name || '')
-    });
-    
     return filtered;
   }, [customers, searchCustomer]);
 
@@ -338,7 +306,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         drivers.length > 0 && 
         vehicles.length > 0 && 
         customers.length > 0) {
-      console.log("🔢 SHIPMENT CODE SET (editMode useEffect):", initialData.shipment_code || "SHP-000001");
       setShipmentCode(initialData.shipment_code || "SHP-000001");
       const detail = Array.isArray(initialData.uetds_details) ? initialData.uetds_details[0] : initialData.uetds_details;
       const toLocalDateTime = (value?: string | null) => value ? new Date(value).toISOString().slice(0, 16) : "";
@@ -445,25 +412,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         (!vehicle.kasko_bitis_tarihi || vehicle.kasko_bitis_tarihi >= today)
       ));
       
-      console.log('=== SHIPMENT FORM CUSTOMER LOADING ===');
-      console.log('📦 API\'den gelen TÜM müşteriler:', customersData.length);
-      
-      const teknikIstif = customersData.find(c => c.vergi_no === '8360477578');
-      if (teknikIstif) {
-        console.log('✅ TEKNİK İSTİF FOUND IN SHIPMENT FORM:', {
-          id: teknikIstif.id,
-          code: teknikIstif.customer_code,
-          name: teknikIstif.name,
-          account_type: teknikIstif.account_type
-        });
-      } else {
-        console.log('❌ TEKNİK İSTİF NOT FOUND IN SHIPMENT FORM DATA');
-      }
-      
       // REMOVED FILTER - Show ALL customers in shipment form (any cari can be a customer)
       const customersList = customersData;
-      
-      console.log('✅ Tüm cariler müşteri olarak gösterilecek:', customersList.length);
       
       const suppliersList = customersData.filter(c => {
         const isTedarikci = c.account_type === "tedarikci";
@@ -527,11 +477,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const loadNextShipmentCode = async () => {
     try {
       const nextCode = await shipmentService.getNextShipmentCode();
-      console.log("🔢 SHIPMENT CODE SET (loadNextShipmentCode):", nextCode);
       setShipmentCode(nextCode);
     } catch (error) {
       console.error("Error loading next shipment code:", error);
-      console.log("🔢 SHIPMENT CODE SET (loadNextShipmentCode ERROR):", "SHP-000001");
       setShipmentCode("SHP-000001");
     }
   };
@@ -640,9 +588,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         const selectedVehicle = vehicles.find(v => v.id === formData.vehicle_id);
         const selectedCustomer = customers.find(c => c.id === formData.customer_id);
         
-        console.log('📞 DEBUG - Selected Driver:', selectedDriver);
-        console.log('📞 DEBUG - Driver Phone:', selectedDriver?.phone);
-        console.log('📞 DEBUG - All Drivers:', drivers);
         
         if (selectedDriver && selectedVehicle && selectedCustomer) {
           setNotificationData({
@@ -720,7 +665,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       unloading_district_code: "", planned_departure_at: "", planned_arrival_at: "", transport_type: "2",
     });
     setRevisionReason("");
-    console.log("🔢 SHIPMENT CODE RESET (resetForm):", "SHP-000001");
     setShipmentCode("SHP-000001");
     setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false }]);
     setManualTotalPrice("");
@@ -870,7 +814,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   value={searchCustomer}
                   onChange={(e) => {
                     setSearchCustomer(e.target.value);
-                    console.log('Müşteri arama:', e.target.value);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {

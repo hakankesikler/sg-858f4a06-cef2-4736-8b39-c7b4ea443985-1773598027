@@ -64,7 +64,37 @@ export type CrmOffer = {
   email_provider_id: string | null;
   email_sent_at: string | null;
   email_error: string | null;
+  pickup_location: string | null;
+  delivery_location: string | null;
+  service_type: string | null;
+  vehicle_type: string | null;
+  cargo_description: string | null;
+  weight_kg: number | null;
+  pallet_count: number | null;
+  cost_amount: number;
+  vat_rate: number;
+  payment_terms: string | null;
+  incoterm: string | null;
+  exchange_rate: number | null;
+  parent_offer_id: string | null;
+  revision_no: number;
+  decision_at: string | null;
+  decision_by_name: string | null;
+  decision_channel: string | null;
+  decision_reason: string | null;
+  crm_offer_items?: CrmOfferItem[];
   created_at: string;
+};
+
+export type CrmOfferItem = {
+  id?: string;
+  line_no?: number;
+  description: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  tax_rate: number;
+  surcharge_type?: string | null;
 };
 
 export type CrmTask = {
@@ -88,6 +118,7 @@ export type DuplicateCandidate = {
   email: string | null;
   phone: string | null;
   status: string;
+  match_score: number;
 };
 
 export type Customer360 = {
@@ -118,6 +149,38 @@ export type SalesPerformance = SalesRepresentative & {
   introductions: number;
   quotes_sent: number;
   won: number;
+  lost: number;
+  tasks_due: number;
+  tasks_completed: number;
+  tasks_overdue: number;
+  pipeline_value: number;
+  weighted_forecast: number;
+  won_value: number;
+  avg_sales_cycle_days: number;
+  avg_margin_percent: number;
+};
+
+export type CrmSettings = {
+  automatic_assignment: boolean;
+  response_sla_minutes: number;
+  offer_follow_up_days: number;
+  approval_threshold_try: number;
+  approval_threshold_usd: number;
+  approval_threshold_eur: number;
+  approval_threshold_gbp: number;
+  minimum_margin_percent: number;
+};
+
+export type CrmContact = {
+  id: string; customer_id: string; opportunity_id: string | null; full_name: string; title: string | null;
+  department: string | null; email: string | null; phone: string | null; preferred_channel: string | null;
+  is_decision_maker: boolean; is_primary: boolean; commercial_consent: boolean; active: boolean;
+};
+
+export type CrmNotification = {
+  id: string; opportunity_id: string | null; task_id: string | null; offer_id: string | null;
+  notification_type: string; title: string; message: string; severity: "info" | "warning" | "critical";
+  read_at: string | null; created_at: string;
 };
 
 export type QuoteDetail = {
@@ -155,7 +218,7 @@ export const salesCrmService = {
   },
 
   async listOffers(opportunityId?: string): Promise<CrmOffer[]> {
-    let query = table("crm_offers").select("*").order("created_at", { ascending: false });
+    let query = table("crm_offers").select("*,crm_offer_items(*)").order("created_at", { ascending: false });
     if (opportunityId) query = query.eq("opportunity_id", opportunityId);
     const { data, error } = await query;
     if (error) throw error;
@@ -234,15 +297,100 @@ export const salesCrmService = {
     status?: CrmOffer["status"];
     valid_until?: string | null;
     notes?: string | null;
+    pickup_location?: string | null;
+    delivery_location?: string | null;
+    service_type?: string | null;
+    vehicle_type?: string | null;
+    cargo_description?: string | null;
+    weight_kg?: number | null;
+    pallet_count?: number | null;
+    cost_amount?: number;
+    vat_rate?: number;
+    payment_terms?: string | null;
+    incoterm?: string | null;
+    exchange_rate?: number | null;
+    items: CrmOfferItem[];
   }) {
-    const { data: userData } = await supabase.auth.getUser();
-    const { data, error } = await table("crm_offers").insert({ ...input, status: "draft", offer_no: "", created_by: userData.user?.id }).select("*").single();
+    const { items, ...payload } = input;
+    const { data: offerId, error } = await supabase.rpc("rex_crm_create_offer" as never, { p_payload: payload, p_items: items } as never);
     if (error) throw error;
+    const { data, error: readError } = await table("crm_offers").select("*,crm_offer_items(*)").eq("id", offerId).single();
+    if (readError) throw readError;
     return data as CrmOffer;
   },
 
-  async completeTask(taskId: string) {
-    const { error } = await supabase.rpc("rex_crm_complete_task" as never, { p_task_id: taskId } as never);
+  async createOfferRevision(offerId: string, reason: string): Promise<string> {
+    const { data, error } = await supabase.rpc("rex_crm_create_offer_revision" as never, { p_offer_id: offerId, p_reason: reason } as never);
+    if (error) throw error;
+    return data as unknown as string;
+  },
+
+  async decideOffer(offerId: string, decision: "accepted" | "rejected" | "cancelled", actorName: string, channel: string, reason?: string) {
+    const { error } = await supabase.rpc("rex_crm_decide_offer" as never, {
+      p_offer_id: offerId, p_decision: decision, p_actor_name: actorName, p_channel: channel, p_reason: reason || null,
+    } as never);
+    if (error) throw error;
+  },
+
+  async canApproveOffers(): Promise<boolean> {
+    const { data, error } = await supabase.rpc("rex_has_permission" as never, { p_key: "crm.offer_approval", p_required: "manage" } as never);
+    if (error) return false;
+    return Boolean(data);
+  },
+
+  async getSettings(): Promise<CrmSettings> {
+    const { data, error } = await table("crm_settings").select("*").eq("id", true).single();
+    if (error) throw error;
+    return data as CrmSettings;
+  },
+
+  async updateSettings(settings: CrmSettings) {
+    const { error } = await supabase.rpc("rex_crm_update_settings" as never, { p_settings: settings } as never);
+    if (error) throw error;
+  },
+
+  async listContacts(customerId: string): Promise<CrmContact[]> {
+    const { data, error } = await table("crm_contacts").select("*").eq("customer_id", customerId).eq("active", true).order("is_primary", { ascending: false }).order("full_name");
+    if (error) throw error;
+    return (data || []) as CrmContact[];
+  },
+
+  async createContact(input: Omit<CrmContact, "id" | "active">) {
+    const { error } = await table("crm_contacts").insert({ ...input, active: true });
+    if (error) throw error;
+  },
+
+  async updateContact(id: string, input: Partial<Omit<CrmContact, "id" | "customer_id">>) {
+    const { error } = await table("crm_contacts").update(input).eq("id", id);
+    if (error) throw error;
+  },
+
+  async listNotifications(): Promise<CrmNotification[]> {
+    const { data, error } = await table("crm_notifications").select("*").is("read_at", null).order("created_at", { ascending: false }).limit(20);
+    if (error) throw error;
+    return (data || []) as CrmNotification[];
+  },
+
+  async markNotificationRead(id: string) {
+    const { error } = await table("crm_notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
+    if (error) throw error;
+  },
+
+  async completeTask(taskId: string, activity: {
+    activity_type: ActivityType;
+    outcome: ActivityOutcome;
+    summary: string;
+    activity_at: string;
+    next_action_at?: string | null;
+  }) {
+    const { error } = await supabase.rpc("rex_crm_complete_task_with_activity" as never, {
+      p_task_id: taskId,
+      p_activity_type: activity.activity_type,
+      p_outcome: activity.outcome,
+      p_summary: activity.summary,
+      p_activity_at: activity.activity_at,
+      p_next_action_at: activity.next_action_at || null,
+    } as never);
     if (error) throw error;
   },
 

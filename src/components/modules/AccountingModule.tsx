@@ -170,6 +170,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingCustomer, setDeletingCustomer] = useState<any>(null);
+  const [customerArchiveReason, setCustomerArchiveReason] = useState("");
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [detailCustomer, setDetailCustomer] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -720,6 +721,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
 
   const handleDeleteCustomerClick = (customer: any) => {
     setDeletingCustomer(customer);
+    setCustomerArchiveReason("");
     setIsDeleteDialogOpen(true);
   };
 
@@ -728,10 +730,10 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
 
     try {
       setIsSubmitting(true);
-      await crmService.deleteCustomer(deletingCustomer.id);
+      await crmService.archiveCustomer(deletingCustomer.id, customerArchiveReason);
       toast({
         title: "Başarılı",
-        description: "Cari başarıyla silindi",
+        description: "Cari arşivlendi; muhasebe ve işlem geçmişi korundu.",
       });
       setIsDeleteDialogOpen(false);
       setDeletingCustomer(null);
@@ -740,7 +742,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
       console.error("Error deleting customer:", error);
       toast({
         title: "Hata",
-        description: "Cari silinirken bir hata oluştu",
+        description: error instanceof Error ? error.message : "Cari arşivlenirken bir hata oluştu",
         variant: "destructive",
       });
     } finally {
@@ -1049,8 +1051,6 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                     : salesInvoices
                   ).map((invoice: any) => {
                     const customer = customers.find(c => c.id === invoice.customer_id);
-                    console.log(`Invoice ${invoice.invoice_no} - customer_id: ${invoice.customer_id}, found:`, customer);
-                    console.log(`Invoice ${invoice.invoice_no} - e_invoice_status: "${invoice.e_invoice_status}"`);
                     return (
                     <TableRow key={invoice.id} className="hover:bg-gray-50">
                       <TableCell>
@@ -1557,19 +1557,23 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cariyi Sil</AlertDialogTitle>
+            <AlertDialogTitle>Cariyi Arşivle</AlertDialogTitle>
             <AlertDialogDescription>
-              "{deletingCustomer?.name}" carisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+              "{deletingCustomer?.name}" aktif listeden kaldırılacak; faturaları ve işlem geçmişi korunacaktır.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="accounting-archive-reason">Arşivleme nedeni *</Label>
+            <Textarea id="accounting-archive-reason" value={customerArchiveReason} onChange={(event) => setCustomerArchiveReason(event.target.value)} placeholder="En az 10 karakterle arşivleme nedenini yazın" />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isSubmitting}>İptal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteCustomer}
-              disabled={isSubmitting}
-              className="bg-red-600 hover:bg-red-700"
+              disabled={isSubmitting || customerArchiveReason.trim().length < 10}
+              className="bg-amber-600 hover:bg-amber-700"
             >
-              {isSubmitting ? "Siliniyor..." : "Sil"}
+              {isSubmitting ? "Arşivleniyor..." : "Arşivle"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

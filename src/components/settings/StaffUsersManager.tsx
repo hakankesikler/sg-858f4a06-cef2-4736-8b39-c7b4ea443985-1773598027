@@ -29,6 +29,7 @@ type StaffUser = {
   last_sign_in_at: string | null;
   invited_at: string | null;
   is_owner: boolean;
+  manager_id: string | null;
   permission_overrides: Partial<Record<PermissionKey, PermissionLevel>>;
 };
 
@@ -87,6 +88,7 @@ export function StaffUsersManager() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<StaffRole>("operations");
+  const [managerId, setManagerId] = useState("");
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [permissionDraft, setPermissionDraft] = useState<Record<PermissionKey, PermissionOverrideLevel> | null>(null);
   const [savingPermissions, setSavingPermissions] = useState(false);
@@ -108,12 +110,13 @@ export function StaffUsersManager() {
   const createAccount = async () => {
     try {
       setSaving(true);
-      await staffRequest("POST", { fullName, email, password, role });
+      await staffRequest("POST", { fullName, email, password, role, managerId: role === "sales" ? managerId || null : null });
       toast({ title: "Personel hesabı oluşturuldu", description: `${email} kullanıcısı ilk girişte geçici şifresini değiştirecek.` });
       setFullName("");
       setEmail("");
       setPassword("");
       setRole("operations");
+      setManagerId("");
       await loadUsers();
     } catch (error: any) {
       toast({ title: "Hesap oluşturulamadı", description: error.message, variant: "destructive" });
@@ -122,13 +125,14 @@ export function StaffUsersManager() {
     }
   };
 
-  const updateUser = async (user: StaffUser, next: { role?: StaffRole; active?: boolean }) => {
+  const updateUser = async (user: StaffUser, next: { role?: StaffRole; active?: boolean; managerId?: string | null }) => {
     try {
       setUpdatingId(user.user_id);
       await staffRequest("PATCH", {
         userId: user.user_id,
         role: next.role || user.role,
         active: next.active ?? user.active,
+        managerId: next.managerId === undefined ? user.manager_id : next.managerId,
       });
       toast({ title: "Yetki güncellendi", description: `${user.email} için yeni ayarlar kaydedildi.` });
       await loadUsers();
@@ -179,11 +183,12 @@ export function StaffUsersManager() {
           </div>
           <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Sadece şirket sahibi yönetebilir</Badge>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mt-5">
           <div><Label htmlFor="staff-name">Ad Soyad</Label><Input id="staff-name" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Çalışanın adı soyadı" /></div>
           <div><Label htmlFor="staff-email">Kullanıcı Adı / E-posta</Label><Input id="staff-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="calisan@rexlojistik.com" /></div>
           <div><Label htmlFor="staff-password">Geçici Şifre</Label><div className="flex gap-2"><div className="relative flex-1"><Input id="staff-password" type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" className="pr-10" /><button type="button" aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button></div><Button type="button" variant="outline" size="icon" title="Güçlü şifre üret" onClick={() => setPassword(generateTemporaryPassword())}><KeyRound className="w-4 h-4" /></Button><Button type="button" variant="outline" size="icon" title="Şifreyi kopyala" disabled={!password} onClick={() => { void navigator.clipboard.writeText(password); toast({ title: "Geçici şifre kopyalandı" }); }}><Copy className="w-4 h-4" /></Button></div></div>
           <div><Label>Ana Görev Grubu</Label><Select value={role} onValueChange={(value) => setRole(value as StaffRole)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(roleDetails).map(([value, detail]) => <SelectItem key={value} value={value}>{detail.label}</SelectItem>)}</SelectContent></Select></div>
+          {role === "sales" && <div><Label>Satış yöneticisi</Label><Select value={managerId || "none"} onValueChange={(value) => setManagerId(value === "none" ? "" : value)}><SelectTrigger><SelectValue placeholder="Yönetici seçilmedi" /></SelectTrigger><SelectContent><SelectItem value="none">Yönetici seçilmedi</SelectItem>{users.filter((item) => item.active && (item.role === "admin" || item.role === "sales")).map((item) => <SelectItem key={item.user_id} value={item.user_id}>{item.full_name || item.email}</SelectItem>)}</SelectContent></Select></div>}
         </div>
         <p className="mt-3 text-xs text-slate-500">Geçici şifre en az 6 karakter; büyük harf, küçük harf ve rakam içermelidir. Oluşturduktan sonra çalışanla güvenli bir kanaldan paylaşın.</p>
         <div className="mt-4 rounded-lg border border-blue-200 bg-white p-3 text-sm text-gray-700"><strong>{roleDetails[role].label}:</strong> {roleDetails[role].description}. Hesabı oluşturduktan sonra kişiye özel çapraz yetkileri aşağıdaki listeden açabilirsiniz.</div>
@@ -202,9 +207,10 @@ export function StaffUsersManager() {
               const isExpanded = expandedUserId === user.user_id;
               return (
                 <div key={user.user_id} className="rounded-xl border overflow-hidden">
-                  <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr_0.75fr_auto] gap-4 items-center p-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr_1fr_0.75fr_auto] gap-4 items-center p-4">
                     <div className="min-w-0"><div className="flex items-center gap-2"><p className="font-semibold truncate">{user.full_name || user.email.split("@")[0]}</p>{user.is_owner && <Badge className="bg-slate-900"><ShieldCheck className="w-3 h-3 mr-1" />Şirket Sahibi</Badge>}</div><p className="text-sm text-gray-600 truncate">{user.email}</p><p className="text-xs text-gray-400 mt-1">Son giriş: {dateLabel(user.last_sign_in_at)}</p></div>
                     <div>{editable ? <Select value={user.role} disabled={updatingId === user.user_id} onValueChange={(value) => void updateUser(user, { role: value as StaffRole })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(roleDetails).map(([value, detail]) => <SelectItem key={value} value={value}>{detail.label}</SelectItem>)}</SelectContent></Select> : <Badge variant="outline" className="text-sm py-1.5 px-3">{allRoleLabels[user.role] || user.role}</Badge>}<p className="text-xs text-gray-500 mt-1">Ana görev: {user.role in roleDetails ? roleDetails[user.role as StaffRole].label : "Tam yönetim"}</p></div>
+                    <div>{user.role === "sales" && editable ? <><Label className="text-xs">Satış yöneticisi</Label><Select value={user.manager_id || "none"} disabled={updatingId === user.user_id} onValueChange={(value) => void updateUser(user, { managerId: value === "none" ? null : value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Yönetici seçilmedi</SelectItem>{users.filter((item) => item.user_id !== user.user_id && item.active && (item.role === "admin" || item.role === "sales")).map((item) => <SelectItem key={item.user_id} value={item.user_id}>{item.full_name || item.email}</SelectItem>)}</SelectContent></Select></> : <p className="text-xs text-slate-500">{user.role === "sales" ? "Satış yöneticisi yok" : "Ekip kapsamı uygulanmaz"}</p>}</div>
                     <div className="flex lg:justify-end items-center gap-3"><div className="text-right"><p className="text-sm font-medium">{user.active ? "Hesap aktif" : "Erişim kapalı"}</p><p className="text-xs text-gray-500">{user.active ? "Portala giriş yapabilir" : "Portal verilerine erişemez"}</p></div><Switch checked={user.active} disabled={!editable || updatingId === user.user_id} onCheckedChange={(checked) => void updateUser(user, { active: checked })} /></div>
                     <Button variant="outline" disabled={!editable} onClick={() => togglePermissions(user)}>
                       <Settings2 className="w-4 h-4 mr-2" />Özel Yetkiler{isExpanded ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}

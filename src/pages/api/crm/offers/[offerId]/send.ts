@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!allowed) return res.status(403).json({ error: "Teklif gönderme yetkiniz bulunmuyor." });
   const offerId = clean(req.query.offerId, 36);
   if (!/^[0-9a-f-]{36}$/i.test(offerId)) return res.status(400).json({ error: "Teklif kimliği geçersiz." });
-  const { data: offer, error: offerError } = await userDb.from("crm_offers").select("*").eq("id", offerId).maybeSingle();
+  const { data: offer, error: offerError } = await userDb.from("crm_offers").select("*,crm_offer_items(*)").eq("id", offerId).maybeSingle();
   if (offerError || !offer) return res.status(404).json({ error: "Teklif bulunamadı." });
   if (offer.email_status === "sent" && offer.email_provider_id) return res.status(200).json({ success: true, alreadySent: true, providerId: offer.email_provider_id });
   if (!["not_required", "approved"].includes(offer.approval_status)) return res.status(409).json({ error: "Teklif yönetici onayı tamamlanmadan gönderilemez." });
