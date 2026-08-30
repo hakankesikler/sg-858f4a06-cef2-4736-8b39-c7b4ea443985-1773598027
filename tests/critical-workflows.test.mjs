@@ -204,6 +204,32 @@ test("KolayBi invoices use a retryable idempotent state machine and only officia
   assert.match(pdfApi, /Content-Type", "application\/pdf/);
 });
 
+test("invoice descriptions and bank details are selected in REX TYS and snapshotted before KolayBi submission", async () => {
+  const [sql, dialog, service, integration, settings, xslt] = await Promise.all([
+    read("supabase/migrations/20260828193000_invoice_presentation_rules.sql"),
+    read("src/components/InvoiceDialog.tsx"),
+    read("src/services/invoiceIntegrationService.ts"),
+    read("src/lib/kolaybi.ts"),
+    read("src/components/InvoiceConfigurationPanel.tsx"),
+    read("docs/kolaybi-xslt/rex-tys-kolaybi-fatura.xslt.in"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.invoice_note_templates/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.invoice_bank_accounts/);
+  assert.match(sql, /bank_accounts_snapshot jsonb/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_create_sales_invoice_secure_v2/);
+  assert.match(sql, /Banka Bilgilerimiz/);
+  assert.match(sql, /v_result:=public\.rex_create_sales_invoice_secure/);
+  assert.match(dialog, /Fatura açıklama türü/);
+  assert.match(dialog, /Banka bilgilerini faturada göster/);
+  assert.match(dialog, /applyNoteTemplate/);
+  assert.match(service, /rex_create_sales_invoice_secure_v2/);
+  assert.match(integration, /invoice\.kolaybi_document_type/);
+  assert.match(integration, /vat_exemption_reason_code/);
+  assert.match(settings, /Fatura açıklama şablonları/);
+  assert.match(settings, /Faturada gösterilecek banka hesapları/);
+  assert.match(xslt, /Açıklama, Notlar ve Banka Bilgileri/);
+});
+
 test("incoming purchase invoices require documents, human matching and owner approval", async () => {
   const [sql, inbox, service] = await Promise.all([
     read("supabase/migrations/20260819013000_purchase_invoice_matching.sql"),

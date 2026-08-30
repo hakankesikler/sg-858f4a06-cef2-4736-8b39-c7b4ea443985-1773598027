@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:inv="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+  xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+  xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+  xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2"
+  exclude-result-prefixes="inv cac cbc ext">
+
+  <xsl:output method="html" encoding="UTF-8" omit-xml-declaration="yes"/>
+  <xsl:decimal-format name="tr" decimal-separator="," grouping-separator="."/>
+
+  <xsl:template name="date-tr">
+    <xsl:param name="value"/>
+    <xsl:choose>
+      <xsl:when test="string-length(normalize-space($value)) &gt;= 10">
+        <xsl:value-of select="concat(substring($value,9,2),'.',substring($value,6,2),'.',substring($value,1,4))"/>
+      </xsl:when>
+      <xsl:otherwise>-</xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template name="money">
+    <xsl:param name="value"/>
+    <xsl:param name="currency"/>
+    <xsl:choose>
+      <xsl:when test="normalize-space($value) != ''">
+        <xsl:value-of select="format-number(number($value),'#.##0,00','tr')"/>
+        <xsl:text> </xsl:text><xsl:value-of select="$currency"/>
+      </xsl:when>
+      <xsl:otherwise>-</xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template name="unit-label">
+    <xsl:param name="code"/>
+    <xsl:choose>
+      <xsl:when test="$code='C62' or $code='NIU'">Adet</xsl:when>
+      <xsl:when test="$code='KGM'">kg</xsl:when>
+      <xsl:when test="$code='TNE'">Ton</xsl:when>
+      <xsl:when test="$code='LTR'">Litre</xsl:when>
+      <xsl:when test="$code='DAY'">Gün</xsl:when>
+      <xsl:when test="$code='HUR'">Saat</xsl:when>
+      <xsl:otherwise><xsl:value-of select="$code"/></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template name="party-card">
+    <xsl:param name="party"/>
+    <xsl:param name="title"/>
+    <section class="party-card">
+      <div class="section-kicker"><xsl:value-of select="$title"/></div>
+      <div class="party-name">
+        <xsl:choose>
+          <xsl:when test="$party/cac:PartyName/cbc:Name"><xsl:value-of select="$party/cac:PartyName/cbc:Name"/></xsl:when>
+          <xsl:otherwise><xsl:value-of select="concat($party/cac:Person/cbc:FirstName,' ',$party/cac:Person/cbc:FamilyName)"/></xsl:otherwise>
+        </xsl:choose>
+      </div>
+      <div class="party-lines">
+        <div>
+          <xsl:value-of select="$party/cac:PostalAddress/cbc:StreetName"/>
+          <xsl:if test="$party/cac:PostalAddress/cbc:BuildingNumber"> No: <xsl:value-of select="$party/cac:PostalAddress/cbc:BuildingNumber"/></xsl:if>
+        </div>
+        <div>
+          <xsl:value-of select="$party/cac:PostalAddress/cbc:CitySubdivisionName"/>
+          <xsl:if test="$party/cac:PostalAddress/cbc:CityName"> / <xsl:value-of select="$party/cac:PostalAddress/cbc:CityName"/></xsl:if>
+        </div>
+        <div><xsl:value-of select="$party/cac:PostalAddress/cac:Country/cbc:Name"/></div>
+        <xsl:if test="$party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name">
+          <div><b>Vergi Dairesi:</b> <xsl:value-of select="$party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name"/></div>
+        </xsl:if>
+        <xsl:for-each select="$party/cac:PartyIdentification/cbc:ID">
+          <div><b><xsl:value-of select="@schemeID"/>:</b> <xsl:value-of select="."/></div>
+        </xsl:for-each>
+        <xsl:if test="$party/cac:Contact/cbc:Telephone"><div><b>Telefon:</b> <xsl:value-of select="$party/cac:Contact/cbc:Telephone"/></div></xsl:if>
+        <xsl:if test="$party/cac:Contact/cbc:ElectronicMail"><div><b>E-posta:</b> <xsl:value-of select="$party/cac:Contact/cbc:ElectronicMail"/></div></xsl:if>
+      </div>
+    </section>
+  </xsl:template>
+
+  <xsl:template match="/">
+    <xsl:apply-templates select="inv:Invoice"/>
+  </xsl:template>
+
+  <xsl:template match="inv:Invoice">
+    <xsl:variable name="currency" select="cbc:DocumentCurrencyCode"/>
+    <xsl:variable name="profile" select="translate(normalize-space(cbc:ProfileID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/>
+    <xsl:variable name="isArchive" select="contains($profile,'EARSIV')"/>
+    <xsl:variable name="qr" select="cac:AdditionalDocumentReference[contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'QR') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'KAREKOD') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'BARKOD') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'BARCODE')]/cac:Attachment/cbc:EmbeddedDocumentBinaryObject[1]"/>
+    <xsl:variable name="qrUrl" select="cac:AdditionalDocumentReference[contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'QR') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'KAREKOD') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'BARKOD') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'BARCODE')]/cac:Attachment/cac:ExternalReference/cbc:URI[1]"/>
+    <html lang="tr">
+      <head>
+        <meta charset="UTF-8"/>
+        <title><xsl:value-of select="cbc:ID"/> - REX Lojistik Fatura</title>
+        <style type="text/css">
+          @page { size: A4; margin: 9mm; }
+          * { box-sizing: border-box; }
+          body { margin:0; color:#15213d; background:#fff; font:10.5px Arial, Helvetica, sans-serif; }
+          .page { width:100%; max-width:192mm; margin:0 auto; }
+          .brand-line { height:4px; background:linear-gradient(90deg,#f37021 0 34%,#173763 34% 100%); border-radius:3px; margin-bottom:12px; }
+          .header { display:grid; grid-template-columns:1.15fr .9fr .8fr; align-items:center; gap:14px; min-height:94px; }
+          .rex-logo { width:178px; max-height:82px; object-fit:contain; object-position:left center; }
+          .gib-block { text-align:center; }
+          .gib-logo { width:49px; height:49px; object-fit:contain; display:block; margin:0 auto 4px; }
+          .doc-type { color:#173763; font-size:17px; font-weight:800; letter-spacing:.2px; }
+          .doc-subtype { color:#f37021; font-weight:700; font-size:10px; margin-top:3px; text-transform:uppercase; }
+          .qr-box { justify-self:end; width:92px; text-align:center; }
+          .qr { width:76px; height:76px; object-fit:contain; display:block; margin:0 auto; }
+          .qr-fallback { border:1px dashed #a8b3c4; border-radius:8px; padding:10px 5px; font-size:7.5px; color:#53617a; overflow-wrap:anywhere; }
+          .qr-caption { margin-top:3px; color:#6a7588; font-size:7px; font-weight:700; text-transform:uppercase; letter-spacing:.35px; }
+          .meta { margin:11px 0; border:1px solid #dbe2ec; border-radius:10px; display:grid; grid-template-columns:repeat(4,1fr); overflow:hidden; }
+          .meta-item { padding:8px 10px; border-right:1px solid #e7ecf2; border-bottom:1px solid #e7ecf2; min-height:46px; }
+          .meta-item:nth-child(4n) { border-right:0; }
+          .meta-label { color:#6a7588; font-size:8px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; }
+          .meta-value { margin-top:4px; font-weight:700; color:#14213d; overflow-wrap:anywhere; }
+          .parties { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0; }
+          .party-card { border:1px solid #dbe2ec; border-radius:10px; padding:11px 13px; min-height:126px; }
+          .section-kicker { color:#f37021; font-size:8.5px; font-weight:800; text-transform:uppercase; letter-spacing:.7px; margin-bottom:5px; }
+          .party-name { font-size:12.5px; font-weight:800; color:#173763; margin-bottom:7px; }
+          .party-lines { line-height:1.55; color:#38455c; }
+          .operation { border-left:4px solid #f37021; background:#f7f9fc; border-radius:0 9px 9px 0; padding:10px 12px; margin:10px 0; }
+          .operation-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px 15px; margin-top:7px; }
+          .op-label { color:#6a7588; font-size:8px; text-transform:uppercase; font-weight:700; }
+          .op-value { font-weight:700; margin-top:3px; overflow-wrap:anywhere; }
+          table { width:100%; border-collapse:collapse; }
+          .lines { margin-top:10px; border:1px solid #dbe2ec; border-radius:9px; overflow:hidden; }
+          .lines table { table-layout:fixed; }
+          th { background:#173763; color:#fff; padding:7px 5px; font-size:8px; text-transform:uppercase; letter-spacing:.35px; text-align:left; }
+          td { border-bottom:1px solid #e7ecf2; padding:7px 5px; vertical-align:top; }
+          tbody tr:nth-child(even) { background:#fafbfd; }
+          .num { text-align:right; white-space:nowrap; }
+          .lines th { padding:7px 3px; font-size:7.2px; }
+          .lines td { padding:7px 3px; }
+          .lines td.num { font-size:7.4px; letter-spacing:-.12px; }
+          .center { text-align:center; }
+          .item-name { font-weight:700; color:#173763; }
+          .item-desc { color:#697489; font-size:8.5px; margin-top:3px; line-height:1.35; white-space:pre-line; }
+          .summary { display:grid; grid-template-columns:1.15fr .85fr; gap:12px; margin-top:11px; align-items:start; }
+          .info-card { border:1px solid #dbe2ec; border-radius:9px; padding:10px 12px; margin-bottom:9px; }
+          .info-title { font-size:10px; font-weight:800; color:#173763; margin-bottom:7px; }
+          .notes { white-space:pre-line; color:#455168; line-height:1.5; overflow-wrap:anywhere; }
+          .tax-table th { background:#eef2f7; color:#263650; }
+          .tax-table td { padding:5px 4px; font-size:8.5px; }
+          .totals { border:1px solid #dbe2ec; border-radius:9px; overflow:hidden; }
+          .total-row { display:flex; justify-content:space-between; padding:7px 11px; border-bottom:1px solid #e7ecf2; }
+          .total-row:last-child { border-bottom:0; }
+          .total-row strong { color:#173763; }
+          .grand { background:#173763; color:#fff; font-size:12px; font-weight:800; padding:10px 11px; }
+          .grand strong { color:#fff; }
+          .archive-note { background:#fff7f0; color:#9b451b; border:1px solid #fed8bd; border-radius:8px; padding:8px 10px; margin-top:9px; font-weight:700; }
+          .footer { margin-top:12px; border-top:2px solid #173763; padding-top:8px; display:grid; grid-template-columns:1fr auto; gap:12px; color:#5e697d; font-size:8.5px; line-height:1.5; }
+          .footer strong { color:#173763; }
+          .electronic { text-align:right; }
+          @media print { .page { max-width:none; } }
+        </style>
+      </head>
+      <body>
+        <main class="page">
+          <div class="brand-line"></div>
+          <header class="header">
+            <div><img class="rex-logo" alt="REX Lojistik" src="data:image/jpeg;base64,__REX_LOGO_BASE64__"/></div>
+            <div class="gib-block">
+              <img class="gib-logo" alt="Gelir İdaresi Başkanlığı" src="data:image/jpeg;base64,__GIB_LOGO_BASE64__"/>
+              <div class="doc-type"><xsl:choose><xsl:when test="$isArchive">e-Arşiv Fatura</xsl:when><xsl:otherwise>e-Fatura</xsl:otherwise></xsl:choose></div>
+              <div class="doc-subtype"><xsl:value-of select="cbc:InvoiceTypeCode"/></div>
+            </div>
+            <div class="qr-box">
+              <xsl:choose>
+                <xsl:when test="$qr">
+                  <img class="qr" alt="Fatura karekodu">
+                    <xsl:attribute name="src">data:<xsl:value-of select="$qr/@mimeCode"/>;base64,<xsl:value-of select="normalize-space($qr)"/></xsl:attribute>
+                  </img>
+                </xsl:when>
+                <xsl:when test="$qrUrl"><img class="qr" alt="Fatura karekodu"><xsl:attribute name="src"><xsl:value-of select="$qrUrl"/></xsl:attribute></img></xsl:when>
+                <xsl:otherwise><div class="qr-fallback"><b>ETTN</b><br/><xsl:value-of select="cbc:UUID"/><br/><span>Karekod UBL verisinden alınır</span></div></xsl:otherwise>
+              </xsl:choose>
+              <div class="qr-caption">GİB Karekod</div>
+            </div>
+          </header>
+
+          <section class="meta">
+            <div class="meta-item"><div class="meta-label">Fatura No</div><div class="meta-value"><xsl:value-of select="cbc:ID"/></div></div>
+            <div class="meta-item"><div class="meta-label">Düzenleme Tarihi</div><div class="meta-value"><xsl:call-template name="date-tr"><xsl:with-param name="value" select="cbc:IssueDate"/></xsl:call-template><xsl:if test="cbc:IssueTime"> · <xsl:value-of select="substring(cbc:IssueTime,1,5)"/></xsl:if></div></div>
+            <div class="meta-item"><div class="meta-label">Senaryo</div><div class="meta-value"><xsl:value-of select="cbc:ProfileID"/></div></div>
+            <div class="meta-item"><div class="meta-label">Para Birimi</div><div class="meta-value"><xsl:value-of select="$currency"/></div></div>
+            <div class="meta-item"><div class="meta-label">ETTN</div><div class="meta-value"><xsl:value-of select="cbc:UUID"/></div></div>
+            <div class="meta-item"><div class="meta-label">Son Ödeme</div><div class="meta-value"><xsl:call-template name="date-tr"><xsl:with-param name="value" select="cbc:DueDate"/></xsl:call-template></div></div>
+            <div class="meta-item"><div class="meta-label">Özelleştirme</div><div class="meta-value"><xsl:value-of select="cbc:CustomizationID"/></div></div>
+            <div class="meta-item"><div class="meta-label">Belge Tipi</div><div class="meta-value"><xsl:value-of select="cbc:InvoiceTypeCode"/></div></div>
+          </section>
+
+          <div class="parties">
+            <xsl:call-template name="party-card"><xsl:with-param name="party" select="cac:AccountingSupplierParty/cac:Party"/><xsl:with-param name="title" select="'Hizmet Sağlayıcı'"/></xsl:call-template>
+            <xsl:call-template name="party-card"><xsl:with-param name="party" select="cac:AccountingCustomerParty/cac:Party"/><xsl:with-param name="title" select="'Sayın / Müşteri'"/></xsl:call-template>
+          </div>
+
+          <xsl:if test="cac:OrderReference or cac:DespatchDocumentReference or cac:ProjectReference or cac:Delivery or cac:AdditionalDocumentReference[contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'SEVKIYAT') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'TYS') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'TAKIP') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'IS EMRI')]">
+            <section class="operation">
+              <div class="section-kicker">REX TYS · Taşıma ve operasyon bilgileri</div>
+              <div class="operation-grid">
+                <xsl:if test="cac:OrderReference/cbc:ID"><div><div class="op-label">İş / Sipariş No</div><div class="op-value"><xsl:value-of select="cac:OrderReference/cbc:ID"/></div></div></xsl:if>
+                <xsl:if test="cac:DespatchDocumentReference/cbc:ID"><div><div class="op-label">İrsaliye No</div><div class="op-value"><xsl:value-of select="cac:DespatchDocumentReference/cbc:ID"/></div></div></xsl:if>
+                <xsl:if test="cac:ProjectReference/cbc:ID"><div><div class="op-label">Proje / Müşteri Ref.</div><div class="op-value"><xsl:value-of select="cac:ProjectReference/cbc:ID"/></div></div></xsl:if>
+                <xsl:for-each select="cac:AdditionalDocumentReference[contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'SEVKIYAT') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'TYS') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'TAKIP') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'IS EMRI')]">
+                  <div><div class="op-label"><xsl:choose><xsl:when test="cbc:DocumentType"><xsl:value-of select="cbc:DocumentType"/></xsl:when><xsl:otherwise><xsl:value-of select="cbc:DocumentTypeCode"/></xsl:otherwise></xsl:choose></div><div class="op-value"><xsl:value-of select="cbc:ID"/></div></div>
+                </xsl:for-each>
+                <xsl:if test="cac:Delivery/cbc:ActualDeliveryDate or cac:Delivery/cbc:LatestDeliveryDate"><div><div class="op-label">Teslim / Planlanan Tarih</div><div class="op-value"><xsl:call-template name="date-tr"><xsl:with-param name="value" select="(cac:Delivery/cbc:ActualDeliveryDate | cac:Delivery/cbc:LatestDeliveryDate)[1]"/></xsl:call-template></div></div></xsl:if>
+                <xsl:if test="cac:Delivery/cac:DeliveryLocation/cac:Address"><div><div class="op-label">Teslimat Yeri</div><div class="op-value"><xsl:value-of select="cac:Delivery/cac:DeliveryLocation/cac:Address/cbc:CitySubdivisionName"/> / <xsl:value-of select="cac:Delivery/cac:DeliveryLocation/cac:Address/cbc:CityName"/></div></div></xsl:if>
+              </div>
+            </section>
+          </xsl:if>
+
+          <section class="lines">
+            <table>
+              <colgroup><col style="width:4%"/><col style="width:31%"/><col style="width:9%"/><col style="width:14%"/><col style="width:10%"/><col style="width:7%"/><col style="width:12%"/><col style="width:13%"/></colgroup>
+              <thead><tr><th>#</th><th>Hizmet / Açıklama</th><th class="num">Miktar</th><th class="num">Birim Fiyat</th><th class="num">İndirim</th><th class="num">KDV %</th><th class="num">KDV</th><th class="num">Tutar</th></tr></thead>
+              <tbody>
+                <xsl:for-each select="cac:InvoiceLine">
+                  <tr>
+                    <td class="center"><xsl:value-of select="cbc:ID"/></td>
+                    <td><div class="item-name"><xsl:value-of select="cac:Item/cbc:Name"/></div><xsl:if test="cac:Item/cbc:Description"><div class="item-desc"><xsl:value-of select="cac:Item/cbc:Description"/></div></xsl:if><xsl:if test="cbc:Note"><div class="item-desc"><xsl:value-of select="cbc:Note"/></div></xsl:if></td>
+                    <td class="num"><xsl:value-of select="format-number(number(cbc:InvoicedQuantity),'#.##0,###','tr')"/><xsl:text>&#160;</xsl:text><xsl:call-template name="unit-label"><xsl:with-param name="code" select="cbc:InvoicedQuantity/@unitCode"/></xsl:call-template></td>
+                    <td class="num"><xsl:call-template name="money"><xsl:with-param name="value" select="cac:Price/cbc:PriceAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></td>
+                    <td class="num"><xsl:call-template name="money"><xsl:with-param name="value" select="sum(cac:AllowanceCharge[cbc:ChargeIndicator='false']/cbc:Amount)"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></td>
+                    <td class="num"><xsl:value-of select="format-number(number((cac:TaxTotal/cac:TaxSubtotal/cbc:Percent)[1]),'#.##0,##','tr')"/></td>
+                    <td class="num"><xsl:call-template name="money"><xsl:with-param name="value" select="cac:TaxTotal/cbc:TaxAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></td>
+                    <td class="num"><xsl:call-template name="money"><xsl:with-param name="value" select="cbc:LineExtensionAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></td>
+                  </tr>
+                </xsl:for-each>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="summary">
+            <div>
+              <xsl:if test="cac:TaxTotal/cac:TaxSubtotal">
+                <div class="info-card"><div class="info-title">Vergi Özeti</div><table class="tax-table"><thead><tr><th>Vergi</th><th class="num">Matrah</th><th class="num">Oran</th><th class="num">Tutar</th></tr></thead><tbody>
+                  <xsl:for-each select="cac:TaxTotal/cac:TaxSubtotal"><tr><td><xsl:value-of select="cac:TaxCategory/cac:TaxScheme/cbc:Name"/><xsl:if test="cac:TaxCategory/cbc:TaxExemptionReason"><div class="item-desc"><xsl:value-of select="cac:TaxCategory/cbc:TaxExemptionReason"/></div></xsl:if></td><td class="num"><xsl:call-template name="money"><xsl:with-param name="value" select="cbc:TaxableAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></td><td class="num">% <xsl:value-of select="format-number(number(cbc:Percent),'#.##0,##','tr')"/></td><td class="num"><xsl:call-template name="money"><xsl:with-param name="value" select="cbc:TaxAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></td></tr></xsl:for-each>
+                </tbody></table></div>
+              </xsl:if>
+              <xsl:if test="cac:PaymentMeans or cac:PaymentTerms">
+                <div class="info-card"><div class="info-title">Ödeme Bilgileri</div><div class="party-lines">
+                  <xsl:if test="cac:PaymentMeans/cbc:PaymentMeansCode"><div><b>Ödeme Yöntemi:</b> <xsl:value-of select="cac:PaymentMeans/cbc:PaymentMeansCode/@name"/><xsl:if test="cac:PaymentMeans/cbc:PaymentMeansCode/@name"><xsl:text> (</xsl:text></xsl:if><xsl:value-of select="cac:PaymentMeans/cbc:PaymentMeansCode"/><xsl:if test="cac:PaymentMeans/cbc:PaymentMeansCode/@name"><xsl:text>)</xsl:text></xsl:if></div></xsl:if>
+                  <xsl:if test="cac:PaymentMeans/cbc:PaymentDueDate"><div><b>Vade:</b> <xsl:call-template name="date-tr"><xsl:with-param name="value" select="cac:PaymentMeans/cbc:PaymentDueDate"/></xsl:call-template></div></xsl:if>
+                  <xsl:if test="cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID"><div><b>IBAN / Hesap:</b> <xsl:value-of select="cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID"/></div></xsl:if>
+                  <xsl:if test="cac:PaymentTerms/cbc:Note"><div><xsl:value-of select="cac:PaymentTerms/cbc:Note"/></div></xsl:if>
+                </div></div>
+              </xsl:if>
+              <xsl:if test="cbc:Note"><div class="info-card"><div class="info-title">Açıklama, Notlar ve Banka Bilgileri</div><div class="notes"><xsl:for-each select="cbc:Note"><xsl:value-of select="."/><xsl:if test="position()!=last()"><br/><br/></xsl:if></xsl:for-each></div></div></xsl:if>
+            </div>
+            <div>
+              <div class="totals">
+                <div class="total-row"><span>Mal / Hizmet Toplamı</span><strong><xsl:call-template name="money"><xsl:with-param name="value" select="cac:LegalMonetaryTotal/cbc:LineExtensionAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></strong></div>
+                <xsl:if test="cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount and number(cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount) != 0"><div class="total-row"><span>Toplam İndirim</span><strong><xsl:call-template name="money"><xsl:with-param name="value" select="cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></strong></div></xsl:if>
+                <xsl:if test="cac:LegalMonetaryTotal/cbc:ChargeTotalAmount and number(cac:LegalMonetaryTotal/cbc:ChargeTotalAmount) != 0"><div class="total-row"><span>Masraf / Artırım</span><strong><xsl:call-template name="money"><xsl:with-param name="value" select="cac:LegalMonetaryTotal/cbc:ChargeTotalAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></strong></div></xsl:if>
+                <div class="total-row"><span>KDV Hariç Toplam</span><strong><xsl:call-template name="money"><xsl:with-param name="value" select="cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></strong></div>
+                <div class="total-row"><span>Hesaplanan KDV</span><strong><xsl:call-template name="money"><xsl:with-param name="value" select="cac:TaxTotal/cbc:TaxAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></strong></div>
+                <xsl:if test="cac:WithholdingTaxTotal/cbc:TaxAmount"><div class="total-row"><span>Tevkifat</span><strong><xsl:call-template name="money"><xsl:with-param name="value" select="cac:WithholdingTaxTotal/cbc:TaxAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></strong></div></xsl:if>
+                <div class="total-row"><span>Vergiler Dahil Toplam</span><strong><xsl:call-template name="money"><xsl:with-param name="value" select="cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></strong></div>
+                <div class="total-row grand"><span>Ödenecek Tutar</span><strong><xsl:call-template name="money"><xsl:with-param name="value" select="cac:LegalMonetaryTotal/cbc:PayableAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></strong></div>
+              </div>
+              <xsl:if test="$isArchive"><div class="archive-note">Bu belge e-Arşiv Fatura kapsamında elektronik ortamda düzenlenmiş ve iletilmiştir.</div></xsl:if>
+            </div>
+          </section>
+
+          <footer class="footer">
+            <div><strong>REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ</strong><br/>TİO Yetki Belgesi: İZM.U-NET.TİO.35.6323 · www.rexlojistik.com · info@rexlojistik.com</div>
+            <div class="electronic">Bu fatura elektronik ortamda oluşturulmuştur.<br/>Doğrulama bilgisi: <xsl:value-of select="cbc:UUID"/></div>
+          </footer>
+        </main>
+      </body>
+    </html>
+  </xsl:template>
+</xsl:stylesheet>

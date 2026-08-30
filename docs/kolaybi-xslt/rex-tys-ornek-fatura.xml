@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
+  <cbc:ProfileID>TEMELFATURA</cbc:ProfileID>
+  <cbc:ID>REX2026000000123</cbc:ID>
+  <cbc:UUID>f93b41dd-a23f-461c-9b61-1421e863d747</cbc:UUID>
+  <cbc:IssueDate>2026-08-28</cbc:IssueDate>
+  <cbc:IssueTime>14:25:00</cbc:IssueTime>
+  <cbc:DueDate>2026-09-12</cbc:DueDate>
+  <cbc:InvoiceTypeCode>SATIS</cbc:InvoiceTypeCode>
+  <cbc:Note>İzmir - İstanbul komple taşıma hizmetidir.</cbc:Note>
+  <cbc:DocumentCurrencyCode>TRY</cbc:DocumentCurrencyCode>
+  <cac:OrderReference><cbc:ID>IS-2026-00458</cbc:ID></cac:OrderReference>
+  <cac:DespatchDocumentReference><cbc:ID>IRS2026000000458</cbc:ID><cbc:IssueDate>2026-08-27</cbc:IssueDate></cac:DespatchDocumentReference>
+  <cac:AdditionalDocumentReference><cbc:ID>SVK-2026-000123</cbc:ID><cbc:DocumentTypeCode>REX_TYS_SEVKIYAT</cbc:DocumentTypeCode><cbc:DocumentType>Sevkiyat No</cbc:DocumentType></cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference><cbc:ID>REX-TR-26000123</cbc:ID><cbc:DocumentTypeCode>REX_TYS_TAKIP</cbc:DocumentTypeCode><cbc:DocumentType>Takip No</cbc:DocumentType></cac:AdditionalDocumentReference>
+  <cac:AccountingSupplierParty><cac:Party><cac:PartyIdentification><cbc:ID schemeID="VKN">7342549288</cbc:ID></cac:PartyIdentification><cac:PartyName><cbc:Name>REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LTD. ŞTİ.</cbc:Name></cac:PartyName><cac:PostalAddress><cbc:StreetName>Adalet Mahallesi Manas Bulvarı Folkart Towers No:47/B D:2601</cbc:StreetName><cbc:CitySubdivisionName>Bayraklı</cbc:CitySubdivisionName><cbc:CityName>İzmir</cbc:CityName><cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country></cac:PostalAddress><cac:PartyTaxScheme><cac:TaxScheme><cbc:Name>Karşıyaka</cbc:Name></cac:TaxScheme></cac:PartyTaxScheme><cac:Contact><cbc:Telephone>+90 543 401 07 55</cbc:Telephone><cbc:ElectronicMail>info@rexlojistik.com</cbc:ElectronicMail></cac:Contact></cac:Party></cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty><cac:Party><cac:PartyIdentification><cbc:ID schemeID="VKN">1234567890</cbc:ID></cac:PartyIdentification><cac:PartyName><cbc:Name>ÖRNEK SANAYİ VE TİCARET LTD. ŞTİ.</cbc:Name></cac:PartyName><cac:PostalAddress><cbc:StreetName>Örnek Sanayi Sitesi 10. Sokak No:12</cbc:StreetName><cbc:CitySubdivisionName>Başakşehir</cbc:CitySubdivisionName><cbc:CityName>İstanbul</cbc:CityName><cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country></cac:PostalAddress><cac:PartyTaxScheme><cac:TaxScheme><cbc:Name>İkitelli</cbc:Name></cac:TaxScheme></cac:PartyTaxScheme></cac:Party></cac:AccountingCustomerParty>
+  <cac:Delivery><cbc:LatestDeliveryDate>2026-08-29</cbc:LatestDeliveryDate><cac:DeliveryLocation><cac:Address><cbc:CitySubdivisionName>Başakşehir</cbc:CitySubdivisionName><cbc:CityName>İstanbul</cbc:CityName></cac:Address></cac:DeliveryLocation></cac:Delivery>
+  <cac:PaymentMeans><cbc:PaymentMeansCode name="Banka Havalesi">42</cbc:PaymentMeansCode><cbc:PaymentDueDate>2026-09-12</cbc:PaymentDueDate><cac:PayeeFinancialAccount><cbc:ID>TR00 0000 0000 0000 0000 0000 00</cbc:ID></cac:PayeeFinancialAccount></cac:PaymentMeans>
+  <cac:TaxTotal><cbc:TaxAmount currencyID="TRY">4000.00</cbc:TaxAmount><cac:TaxSubtotal><cbc:TaxableAmount currencyID="TRY">20000.00</cbc:TaxableAmount><cbc:TaxAmount currencyID="TRY">4000.00</cbc:TaxAmount><cbc:Percent>20</cbc:Percent><cac:TaxCategory><cac:TaxScheme><cbc:Name>KDV</cbc:Name><cbc:TaxTypeCode>0015</cbc:TaxTypeCode></cac:TaxScheme></cac:TaxCategory></cac:TaxSubtotal></cac:TaxTotal>
+  <cac:LegalMonetaryTotal><cbc:LineExtensionAmount currencyID="TRY">20000.00</cbc:LineExtensionAmount><cbc:TaxExclusiveAmount currencyID="TRY">20000.00</cbc:TaxExclusiveAmount><cbc:TaxInclusiveAmount currencyID="TRY">24000.00</cbc:TaxInclusiveAmount><cbc:PayableAmount currencyID="TRY">24000.00</cbc:PayableAmount></cac:LegalMonetaryTotal>
+  <cac:InvoiceLine><cbc:ID>1</cbc:ID><cbc:InvoicedQuantity unitCode="C62">1</cbc:InvoicedQuantity><cbc:LineExtensionAmount currencyID="TRY">20000.00</cbc:LineExtensionAmount><cbc:Note>SVK-2026-000123 numaralı sevkiyat</cbc:Note><cac:TaxTotal><cbc:TaxAmount currencyID="TRY">4000.00</cbc:TaxAmount><cac:TaxSubtotal><cbc:TaxableAmount currencyID="TRY">20000.00</cbc:TaxableAmount><cbc:TaxAmount currencyID="TRY">4000.00</cbc:TaxAmount><cbc:Percent>20</cbc:Percent><cac:TaxCategory><cac:TaxScheme><cbc:Name>KDV</cbc:Name></cac:TaxScheme></cac:TaxCategory></cac:TaxSubtotal></cac:TaxTotal><cac:Item><cbc:Description>İzmir çıkışlı, İstanbul varışlı komple karayolu taşıma hizmeti</cbc:Description><cbc:Name>Yurtiçi Karayolu Taşıma Hizmeti</cbc:Name></cac:Item><cac:Price><cbc:PriceAmount currencyID="TRY">20000.00</cbc:PriceAmount></cac:Price></cac:InvoiceLine>
+</Invoice>

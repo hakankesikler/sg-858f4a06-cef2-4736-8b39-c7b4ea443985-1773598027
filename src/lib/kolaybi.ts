@@ -185,8 +185,13 @@ function invoiceForm(invoice: any, config: KolayBiConfig) {
   form.set("description", invoice.notes || `REX ${invoice.invoice_no}`);
   form.set("receiver_email", invoice.customer.invoice_email || invoice.customer.email || "");
   form.set("type", "sale_invoice");
-  form.set("document_type", "SATIS");
+  form.set("document_type", invoice.kolaybi_document_type || "SATIS");
   form.set("document_scenario", invoice.document_scenario);
+  if (invoice.shipment_id) form.set("shipment_include", "true");
+  if ((invoice.kolaybi_document_type || "SATIS") === "ISTISNA") {
+    const exemptionCode = invoice.exemption_code || invoice.items.find((item: any) => item.exemption_code)?.exemption_code;
+    if (exemptionCode) form.set("vat_exemption_reason_code", String(exemptionCode));
+  }
 
   invoice.items.forEach((item: any, index: number) => {
     form.set(
@@ -388,4 +393,3 @@ export function publicKolayBiError(error: any) {
     status: error?.status,
   };
 }
-

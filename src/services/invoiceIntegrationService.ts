@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { InvoiceCategory } from "@/services/invoicePresentationService";
 
 export type InvoiceDocumentType = "e_invoice" | "e_archive";
 
@@ -27,6 +28,10 @@ export type SecureInvoiceInput = {
   documentScenario: "EARSIVFATURA" | "TEMELFATURA" | "TICARIFATURA" | "KAMU";
   exchangeRate: number;
   idempotencyKey: string;
+  invoiceCategory?: InvoiceCategory;
+  noteTemplateId?: string | null;
+  bankAccountIds?: string[];
+  includeBankDetails?: boolean;
 };
 
 async function authenticatedFetch(url: string, init: RequestInit = {}) {
@@ -50,7 +55,7 @@ async function responseJson(response: Response) {
 
 export const invoiceIntegrationService = {
   async createDraft(input: SecureInvoiceInput) {
-    const { data, error } = await supabase.rpc("rex_create_sales_invoice_secure" as any, {
+    const { data, error } = await supabase.rpc("rex_create_sales_invoice_secure_v2" as any, {
       p_customer_id: input.customerId,
       p_shipment_ids: input.shipmentIds,
       p_invoice_date: input.invoiceDate,
@@ -63,6 +68,10 @@ export const invoiceIntegrationService = {
       p_document_scenario: input.documentScenario,
       p_exchange_rate: input.exchangeRate,
       p_idempotency_key: input.idempotencyKey,
+      p_invoice_category: input.invoiceCategory || "domestic_transport",
+      p_note_template_id: input.noteTemplateId || null,
+      p_bank_account_ids: input.bankAccountIds || [],
+      p_include_bank_details: input.includeBankDetails === true,
     } as any);
     if (error) throw error;
     return data as unknown as {
@@ -119,4 +128,3 @@ export const invoiceIntegrationService = {
     window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   },
 };
-

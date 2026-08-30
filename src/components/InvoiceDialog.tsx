@@ -9,11 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { X, Plus, Trash2, Loader2 } from "lucide-react";
 import { invoiceIntegrationService, type InvoiceDocumentType } from "@/services/invoiceIntegrationService";
+import {
+  invoicePresentationService,
+  type InvoiceBankAccount,
+  type InvoiceCategory,
+  type InvoiceNoteTemplate,
+} from "@/services/invoicePresentationService";
 
 interface InvoiceItem {
   id: string;
@@ -37,16 +44,37 @@ interface InvoiceDialogProps {
   onSuccess?: () => void;
 }
 
-const defaultNotes = `** Taşıma İşleri Organizatörlüğü Belge Numarası: İZM.U-NET.TİO.35.6323
-** Taşımalarınız Rex Lojistik güvencesinde ve sigortalıdır.
-** İrsaliye yerine geçmektedir.
-** Faturaya 8 gün içerisinde itiraz edilmezse kabul edilmiş sayılır.
-** BU FATURA MUHTEVİYATI ALT YÜKLEMECİLER İLE YAPILDIĞINDAN DOLAYI, KDV G.U.T (I/C-2.1.3.11.2.) KANUN GEREĞİ TEVKİFAT UYGULANMAMIŞTIR
-** Banka Bilgilerimiz:
-** REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ
-** TR24 0001 5001 5800 7355 9235 06
-* Yalınızca,
-* Sicil Numarası: 240976, İşletme Merkezi: İzmir`;
+const defaultNotes = `Taşıma İşleri Organizatörlüğü Belge No: İZM.U-NET.TİO.35.6323
+Hizmetin kapsamı fatura kaleminde ve ilgili iş referansında belirtilmiştir.`;
+
+const categoryLabels: Record<InvoiceCategory, string> = {
+  domestic_transport: "Yurtiçi taşıma",
+  international_transport: "Uluslararası taşıma",
+  exempt_transport: "KDV istisnalı taşıma",
+  withholding_transport: "Tevkifatlı taşıma",
+  other: "Diğer hizmet",
+};
+
+const inferCategory = (shipment?: any): InvoiceCategory => {
+  const text = [shipment?.service_type, shipment?.transport_type, shipment?.origin_country, shipment?.destination_country, shipment?.description]
+    .filter(Boolean).join(" ").toLocaleLowerCase("tr-TR");
+  if (text.includes("uluslararası") || text.includes("international") || text.includes("ihracat") || text.includes("ithalat")) return "international_transport";
+  return "domestic_transport";
+};
+
+const renderTemplate = (value: string, shipment?: any) => {
+  const replacements: Record<string, string> = {
+    shipment_code: shipment?.shipment_code || shipment?.tracking_number || "Sevkiyat",
+    origin: shipment?.origin || shipment?.pickup_address || "Çıkış noktası",
+    destination: shipment?.destination || shipment?.delivery_address || "Varış noktası",
+    tracking_number: shipment?.tracking_number || shipment?.shipment_code || "-",
+    service_type: shipment?.service_type || shipment?.transport_type || "Taşıma",
+  };
+  return Object.entries(replacements).reduce(
+    (result, [key, replacement]) => result.replace(new RegExp(`{{${key}}}`, "g"), replacement),
+    value,
+  );
+};
 
 export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, onSuccess }: InvoiceDialogProps) {
   const { toast } = useToast();
@@ -61,6 +89,12 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
   const [documentScenario, setDocumentScenario] = useState<"EARSIVFATURA" | "TEMELFATURA" | "TICARIFATURA" | "KAMU">("EARSIVFATURA");
   const [exchangeRate, setExchangeRate] = useState("1");
   const [notes, setNotes] = useState(defaultNotes);
+  const [invoiceCategory, setInvoiceCategory] = useState<InvoiceCategory>("domestic_transport");
+  const [noteTemplates, setNoteTemplates] = useState<InvoiceNoteTemplate[]>([]);
+  const [noteTemplateId, setNoteTemplateId] = useState("");
+  const [bankAccounts, setBankAccounts] = useState<InvoiceBankAccount[]>([]);
+  const [selectedBankAccountIds, setSelectedBankAccountIds] = useState<string[]>([]);
+  const [includeBankDetails, setIncludeBankDetails] = useState(true);
   
   const [items, setItems] = useState<InvoiceItem[]>([
     {
@@ -74,6 +108,39 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       total: 0,
     },
   ]);
+
+  const applyNoteTemplate = (template: InvoiceNoteTemplate) => {
+    setInvoiceCategory(template.category);
+    setNoteTemplateId(template.id);
+    setNotes(renderTemplate(template.notes, shipment));
+    setItems((current) => current.map((item, index) => index === 0 ? calculateItemTotals({
+      ...item,
+      description: renderTemplate(template.line_description_template, shipment),
+      vatRate: Number(template.default_vat_rate),
+      exemptionCode: template.default_exemption_code || item.exemptionCode || "",
+    }) : item));
+  };
+
+  const loadPresentationOptions = async () => {
+    try {
+      const [templates, accounts] = await Promise.all([
+        invoicePresentationService.getTemplates(),
+        invoicePresentationService.getBankAccounts(),
+      ]);
+      setNoteTemplates(templates);
+      setBankAccounts(accounts);
+      setSelectedBankAccountIds(accounts.filter((account) => account.is_default).map((account) => account.id));
+      setIncludeBankDetails(accounts.length > 0);
+      const initialCategory = inferCategory(shipment);
+      setInvoiceCategory(initialCategory);
+      const initialTemplate = templates.find((template) => template.category === initialCategory && template.is_default)
+        || templates.find((template) => template.category === initialCategory)
+        || templates[0];
+      if (initialTemplate) applyNoteTemplate(initialTemplate);
+    } catch (error: any) {
+      toast({ title: "Fatura açıklama ayarları yüklenemedi", description: error.message, variant: "destructive" });
+    }
+  };
 
   // Load customers for manual invoice mode
   useEffect(() => {
@@ -99,6 +166,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       }]);
     }
   }, [isOpen, shipment]);
+
+  useEffect(() => {
+    if (isOpen) void loadPresentationOptions();
+  }, [isOpen]);
 
   const loadCustomers = async () => {
     try {
@@ -212,6 +283,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         documentScenario,
         exchangeRate: currency === "TRY" ? 1 : Number(exchangeRate),
         idempotencyKey: crypto.randomUUID(),
+        invoiceCategory,
+        noteTemplateId: noteTemplateId || null,
+        bankAccountIds: includeBankDetails ? selectedBankAccountIds : [],
+        includeBankDetails: includeBankDetails && selectedBankAccountIds.length > 0,
         items: items.map((item) => ({
           productCode: "HIZMET",
           description: item.description,
@@ -409,6 +484,53 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+          </div>
+
+          {/* FATURA AÇIKLAMA VE BANKA KURALLARI */}
+          <div className="space-y-4 rounded-lg border border-orange-200 bg-orange-50/40 p-4">
+            <div>
+              <h3 className="font-semibold text-lg">Fatura Açıklaması ve Banka Bilgileri</h3>
+              <p className="text-sm text-slate-600">Fatura türü değiştiğinde kalem açıklaması ve notlar birlikte yenilenir. Son metni aşağıda ayrıca düzenleyebilirsiniz.</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Fatura açıklama türü</Label>
+                <Select value={invoiceCategory} onValueChange={(value: InvoiceCategory) => {
+                  setInvoiceCategory(value);
+                  const template = noteTemplates.find((row) => row.category === value && row.is_default)
+                    || noteTemplates.find((row) => row.category === value);
+                  if (template) applyNoteTemplate(template);
+                }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{Object.entries(categoryLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Not şablonu</Label>
+                <Select value={noteTemplateId} onValueChange={(value) => {
+                  const template = noteTemplates.find((row) => row.id === value);
+                  if (template) applyNoteTemplate(template);
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Şablon seçin" /></SelectTrigger>
+                  <SelectContent>{noteTemplates.filter((row) => row.category === invoiceCategory).map((row) => <SelectItem key={row.id} value={row.id}>{row.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="rounded-lg border bg-white p-3">
+              <label className="flex items-center gap-2 font-medium">
+                <Checkbox checked={includeBankDetails} onCheckedChange={(checked) => setIncludeBankDetails(checked === true)} />
+                Banka bilgilerini faturada göster
+              </label>
+              {includeBankDetails && <div className="mt-3 grid gap-2 md:grid-cols-2">
+                {bankAccounts.length === 0 ? <p className="text-sm text-amber-700">Aktif fatura banka hesabı bulunmuyor. KolayBi Entegre Ofis → Finans bölümünden ekleyebilirsiniz.</p> : bankAccounts.map((account) => {
+                  const checked = selectedBankAccountIds.includes(account.id);
+                  return <label key={account.id} className="flex items-start gap-2 rounded-md border p-2 text-sm">
+                    <Checkbox checked={checked} onCheckedChange={(value) => setSelectedBankAccountIds((current) => value === true ? [...new Set([...current, account.id])] : current.filter((id) => id !== account.id))} />
+                    <span><strong>{account.label}</strong><br/><span className="text-slate-500">{account.bank_name} · {account.iban} · {account.currency}</span></span>
+                  </label>;
+                })}
+              </div>}
             </div>
           </div>
 
