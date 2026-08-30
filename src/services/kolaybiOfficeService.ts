@@ -14,17 +14,17 @@ export type KolayBiOfficeData = {
   syncRuns: any[];
 };
 
-async function rows(table: string, orderColumn = "created_at", ascending = false) {
+async function rows(table: string, orderColumn = "created_at", ascending = false, limit = 500) {
   const { data, error } = await (supabase.from(table as any) as any)
     .select("*")
     .order(orderColumn, { ascending })
-    .limit(500);
+    .limit(limit);
   if (error) throw error;
   return data || [];
 }
 
-async function optionalRows(table: string, orderColumn = "created_at") {
-  try { return await rows(table, orderColumn); } catch { return []; }
+async function optionalRows(table: string, orderColumn = "created_at", limit = 500) {
+  try { return await rows(table, orderColumn, false, limit); } catch { return []; }
 }
 
 async function authenticatedFetch(url: string, init: RequestInit = {}) {
@@ -55,7 +55,7 @@ export const kolaybiOfficeService = {
       rows("transactions", "transaction_date"),
       rows("projects", "created_at"),
       rows("shipments", "created_at"),
-      optionalRows("kolaybi_master_records", "last_seen_at"),
+      optionalRows("kolaybi_master_records", "last_seen_at", 1000),
       optionalRows("kolaybi_sync_runs", "started_at"),
     ]);
     return { salesInvoices, purchaseInvoices, expenses, products, customers, financialAccounts, transactions, projects, shipments, providerRecords, syncRuns };

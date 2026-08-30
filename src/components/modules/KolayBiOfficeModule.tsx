@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight, BarChart3, Boxes, Building2, CheckCircle2, CircleDollarSign,
   FileSpreadsheet, FolderKanban, Landmark, Loader2, PackageCheck, Receipt,
-  RefreshCw, ShoppingCart, TriangleAlert, Users,
+  RefreshCw, ShoppingCart, TriangleAlert,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -119,6 +119,55 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
     const waitingInvoice = data.shipments.filter((row) => ["beklemede", "fatura_taslagi", "kolaybi_bekliyor", "fatura_hatasi"].includes(String(row.invoice_status || "").toLowerCase())).length;
     return { sales, purchases, expenses, cash, delivered, waitingInvoice };
   }, [data]);
+
+  const accountBalanceRows = useMemo(() => data.providerRecords
+    .filter((record) => record.resource_type === "associate")
+    .flatMap((record) => {
+      let payload = record.payload || {};
+      if (typeof payload === "string") {
+        try { payload = JSON.parse(payload); } catch { payload = {}; }
+      }
+      const balances = Array.isArray(payload?.balances) ? payload.balances : [];
+      return balances.map((balance: any) => {
+        const amount = Number(balance?.balance || 0);
+        const currency = String(balance?.currency || record.currency || "TRY").toUpperCase();
+        const parsedTantamount = balance?.tantamount === null || balance?.tantamount === undefined ? Number.NaN : Number(balance.tantamount);
+        const companyAmount = Number.isFinite(parsedTantamount)
+          ? parsedTantamount
+          : currency === "TRY" ? amount : 0;
+        return {
+          externalId: record.external_id,
+          name: record.display_name || [payload?.name, payload?.surname].filter(Boolean).join(" ") || record.external_code || record.external_id,
+          code: record.external_code || payload?.code || "-",
+          accountType: payload?.associate_type || "cari",
+          currency,
+          balance: amount,
+          companyAmount,
+          direction: amount > 0 ? "Tahsil Edilecek" : "Ödenecek",
+          lastSeenAt: record.last_seen_at,
+        };
+      });
+    })
+    .filter((row) => Math.abs(row.balance) >= 0.01)
+    .sort((left, right) => Math.abs(right.companyAmount || right.balance) - Math.abs(left.companyAmount || left.balance)), [data.providerRecords]);
+
+  const balanceSummary = useMemo(() => accountBalanceRows.reduce((summary, row) => {
+    if (row.balance > 0) summary.receivable += Math.abs(row.companyAmount);
+    if (row.balance < 0) summary.payable += Math.abs(row.companyAmount);
+    return summary;
+  }, { receivable: 0, payable: 0 }), [accountBalanceRows]);
+
+  const balanceExportRows = useMemo(() => accountBalanceRows.map((row) => ({
+    "Cari Kodu": row.code,
+    "Cari Ünvanı": row.name,
+    "Cari Tipi": row.accountType,
+    "Bakiye Durumu": row.direction,
+    "Para Birimi": row.currency,
+    "Döviz Bakiyesi": Math.abs(row.balance),
+    "Şirket Para Birimi Karşılığı": Math.abs(row.companyAmount),
+    "KolayBi ID": row.externalId,
+    "Son Güncelleme": row.lastSeenAt,
+  })), [accountBalanceRows]);
 
   const recordsByType = (type: string) => data.providerRecords.filter((row) => row.resource_type === type);
   const mappingCount = data.providerRecords.filter((row) => row.match_status === "matched").length;
@@ -242,12 +291,40 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
 
         <TabsContent value="reports" className="mt-5 space-y-5">
           <div><h3 className="text-xl font-bold">Raporlar</h3><p className="text-sm text-slate-500">Satış, alış, gider, finans, proje, cari ve entegrasyon raporlarını XLSX olarak alın.</p></div>
+          {canViewAccounts && <Card>
+            <CardHeader className="gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <CardTitle>Cari Borç / Alacak Raporu</CardTitle>
+                <CardDescription>KolayBi'nin güncel cari bakiyeleri gösterilir; bakiyesi 0,00 olan cariler otomatik olarak gizlenir.</CardDescription>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {canManageSync && <Button variant="outline" disabled={syncing} onClick={() => void synchronize("associates")}>
+                  {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Bakiyeleri Yenile
+                </Button>}
+                <Button variant="outline" disabled={balanceExportRows.length === 0} onClick={() => void exportRows("rex-cari-borc-alacak-raporu", balanceExportRows)}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />XLSX İndir
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-xl border border-green-200 bg-green-50 p-4"><p className="text-sm text-green-700">Tahsil Edilecek</p><p className="mt-1 text-xl font-bold text-green-900">{money(balanceSummary.receivable)}</p></div>
+                <div className="rounded-xl border border-orange-200 bg-orange-50 p-4"><p className="text-sm text-orange-700">Ödenecek</p><p className="mt-1 text-xl font-bold text-orange-900">{money(balanceSummary.payable)}</p></div>
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4"><p className="text-sm text-blue-700">Açık Bakiyeli Cari</p><p className="mt-1 text-xl font-bold text-blue-900">{accountBalanceRows.length}</p></div>
+              </div>
+              <div className="overflow-x-auto rounded-xl border">
+                <Table><TableHeader><TableRow><TableHead>Cari</TableHead><TableHead>Kod</TableHead><TableHead>Durum</TableHead><TableHead>Para</TableHead><TableHead className="text-right">Bakiye</TableHead><TableHead className="text-right">TRY Karşılığı</TableHead></TableRow></TableHeader><TableBody>
+                  {accountBalanceRows.length === 0 ? <EmptyRow columns={6} text="Açık bakiyeli cari bulunmuyor. KolayBi bağlantısı tamamlandıktan sonra Bakiyeleri Yenile düğmesini kullanın." /> : accountBalanceRows.map((row) => <TableRow key={`${row.externalId}-${row.currency}`}><TableCell className="font-medium">{row.name}</TableCell><TableCell className="font-mono">{row.code}</TableCell><TableCell><Badge variant="outline" className={row.balance > 0 ? "border-green-200 bg-green-50 text-green-700" : "border-orange-200 bg-orange-50 text-orange-700"}>{row.direction}</Badge></TableCell><TableCell>{row.currency}</TableCell><TableCell className="text-right font-semibold">{money(Math.abs(row.balance), row.currency)}</TableCell><TableCell className="text-right">{money(Math.abs(row.companyAmount))}</TableCell></TableRow>)}
+                </TableBody></Table>
+              </div>
+              <p className="text-xs text-slate-500">0,01 altındaki yuvarlama farkları sıfır kabul edilir. Pozitif bakiye tahsil edilecek, negatif bakiye ödenecek olarak gösterilir.</p>
+            </CardContent>
+          </Card>}
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {[
               { title: "Satış Faturaları", icon: Receipt, rows: data.salesInvoices.map((r) => ({ "Fatura No": r.invoice_no, Tarih: r.invoice_date, Durum: r.integration_status, Ödeme: r.payment_status, Para: r.currency, Tutar: r.grand_total })) },
               { title: "Alış Faturaları", icon: ShoppingCart, rows: data.purchaseInvoices.map((r) => ({ "Fatura No": r.invoice_no, Tedarikçi: r.issuer_name, Tarih: r.invoice_date, Durum: r.match_status, Para: r.currency, Tutar: r.grand_total })) },
               { title: "Genel Giderler", icon: CircleDollarSign, rows: data.expenses.map((r) => ({ "Gider No": r.expense_no, Tarih: r.expense_date, Kategori: r.category, Açıklama: r.description, Durum: r.status, Tutar: r.total || r.amount })) },
-              { title: "Cari Hesaplar", icon: Users, rows: data.customers.map((r) => ({ Ünvan: r.company || r.name, Tip: r.account_type, "VKN/TCKN": r.vergi_no || r.tc_no, Eposta: r.email, Telefon: r.phone })) },
               { title: "Ürün ve Hizmetler", icon: Boxes, rows: data.products.map((r) => ({ Kod: r.code, Ad: r.name, Tip: r.type, KDV: r.tax_rate, "Satış Fiyatı": r.sale_price, Stok: r.stock_quantity })) },
               { title: "Projeler ve Kârlılık", icon: FolderKanban, rows: data.projects.map((r) => ({ Kod: r.project_code, Proje: r.project_name, Durum: r.status, Bütçe: r.budget, Maliyet: r.actual_cost, Fark: Number(r.budget || 0) - Number(r.actual_cost || 0) })) },
               { title: "Finans Hareketleri", icon: Landmark, rows: data.transactions.map((r) => ({ Tarih: r.transaction_date, "İşlem No": r.transaction_no, Tür: r.type, Açıklama: r.description, Tutar: r.amount })) },

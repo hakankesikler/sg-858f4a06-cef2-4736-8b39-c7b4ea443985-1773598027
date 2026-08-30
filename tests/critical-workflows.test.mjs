@@ -872,6 +872,12 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(service, /kolaybi_master_records/);
   assert.match(service, /kolaybi_sync_runs/);
   assert.match(office, /KolayBi Entegre Ofis/);
+  assert.match(office, /Cari Borç \/ Alacak Raporu/);
+  assert.match(office, /Math\.abs\(row\.balance\) >= 0\.01/);
+  assert.match(office, /Tahsil Edilecek/);
+  assert.match(office, /Ödenecek/);
+  assert.match(office, /rex-cari-borc-alacak-raporu/);
+  assert.match(office, /synchronize\("associates"\)/);
   assert.match(office, /Satış Yönetimi/);
   assert.match(office, /Satın Alma Yönetimi/);
   assert.match(office, /Genel Gider Yönetimi/);
