@@ -37,18 +37,24 @@ test("GPSLine pallet pricing uses aggregate desi, a 250 minimum and a 35 percent
     read("src/components/modules/SalesCRMModule.tsx"),
   ]);
   assert.equal((pricing.match(/\('gpsline','/g) || []).length, 246);
-  assert.match(pricing, /v_chargeable := greatest\(p_total_desi_kg,v_tariff\.min_chargeable_desi_kg\)/);
-  assert.match(pricing, /p_total_desi_kg > p_pallet_count \* 250/);
+  assert.match(pricing, /v_excess_desi := greatest\(p_total_desi_kg-v_tariff\.min_chargeable_desi_kg,0\)/);
+  assert.match(pricing, /v_base_cost := round\(v_base_desi\*v_tariff\.cost_per_desi_kg,2\)/);
+  assert.match(pricing, /v_cost := round\(v_base_cost\+v_excess_cost,2\)/);
+  assert.doesNotMatch(pricing, /p_total_desi_kg > p_pallet_count \* 250/);
   assert.match(pricing, /v_recommended := round\(v_cost\*\(1\+v_tariff\.markup_rate\),2\)/);
   assert.match(pricing, /0\.35,'TRY','gpsline maliyet listesi\.xlsx'/);
   assert.doesNotMatch(pricing, /�/);
   assert.match(service, /rex_calculate_gpsline_price/);
-  assert.match(estimator, /Toplu desi kuralı/);
+  assert.match(estimator, /250 desi\/kg minimum fiyatlama basamağıdır; üst sınır değildir/);
+  assert.match(estimator, /Artan \{price\.excess_desi_kg\.toLocaleString/);
   assert.match(estimator, /Önerilen minimum satış/);
-  assert.match(shipmentForm, /invalidGpslinePallet/);
+  assert.doesNotMatch(shipmentForm, /invalidGpslinePallet|her palet en fazla 250/);
   assert.match(shipmentForm, /price\.recommended_sale_amount/);
   assert.match(salesScreen, /GPSLine parsiyel taşıma hizmeti/);
   assert.match(salesScreen, /cost_amount: String\(price\.cost_amount\)/);
+  const adana450Cost = 250 * 9.09 + (450 - 250) * 9.09;
+  assert.equal(adana450Cost, 4090.5);
+  assert.equal(Math.round(adana450Cost * 1.35 * 100) / 100, 5522.18);
 });
 
 test("shipment assignment still requires driver licence and vehicle registration", async () => {

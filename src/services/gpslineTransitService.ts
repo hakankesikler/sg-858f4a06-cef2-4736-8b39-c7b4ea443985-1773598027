@@ -34,8 +34,11 @@ export type GpslinePriceEstimate = {
   entered_total_desi_kg: number;
   chargeable_desi_kg: number;
   minimum_charge_applied: boolean;
-  max_desi_per_pallet: number;
+  base_desi_kg: number;
+  excess_desi_kg: number;
   cost_per_desi_kg: number;
+  base_cost_amount: number;
+  excess_cost_amount: number;
   cost_amount: number;
   markup_rate: number;
   sales_margin_rate: number;

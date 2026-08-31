@@ -89,10 +89,6 @@ export function GpslineDeliveryEstimator({ supplierName, collectionDate, initial
       setError("Palet adedi ile toplam desi/kg değerini doğru girin.");
       return;
     }
-    if (total > pallets * 250) {
-      setError("Her palet en fazla 250 desi/kg olabilir. Palet adedini veya toplam desiyi kontrol edin.");
-      return;
-    }
     setLoading(true); setError(""); setEstimate(null); setPrice(null);
     try {
       const [deliveryResult, priceResult] = await Promise.all([
@@ -119,7 +115,7 @@ export function GpslineDeliveryEstimator({ supplierName, collectionDate, initial
         <div><Label>Alım / planlama tarihi *</Label><Input type="date" value={date} onChange={(event) => { setDate(event.target.value); setEstimate(null); }} /></div>
         <div><Label>Palet adedi *</Label><Input type="number" min="1" step="1" value={palletCount} onChange={(event) => { setPalletCount(event.target.value); setPrice(null); }} placeholder="Örn. 2" /></div>
         <div><Label>Toplam desi/kg *</Label><Input type="number" min="1" step="0.01" value={totalDesiKg} onChange={(event) => { setTotalDesiKg(event.target.value); setPrice(null); }} placeholder="Örn. 250" /></div>
-        <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-900 md:col-span-2"><strong>Toplu desi kuralı:</strong> 2 × 125 = 250 desi/kg kabul edilir. Toplam 250’nin altındaysa maliyet 250 üzerinden hesaplanır; her palet en fazla 250 olabilir.</div>
+        <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-900 md:col-span-2"><strong>Toplu desi kuralı:</strong> 250 desi/kg minimum fiyatlama basamağıdır; üst sınır değildir. Örneğin 450 desi, ilk 250 tarife + 200 artan desi olarak hesaplanır. Aynı sevkiyattaki paletler toplu değerlendirilir.</div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3"><Button type="button" onClick={() => void calculate()} disabled={loading}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Calculator className="mr-2 h-4 w-4" />}Termin ve Maliyeti Hesapla</Button>{error && <p className="text-sm font-medium text-red-600">{error}</p>}</div>
       {estimate && <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
@@ -135,6 +131,10 @@ export function GpslineDeliveryEstimator({ supplierName, collectionDate, initial
           <div className="rounded-lg bg-white p-3"><p className="text-xs text-slate-500">GPSLine maliyeti</p><p className="text-lg font-bold">{money(price.cost_amount, price.currency)}</p><p className="text-[11px] text-slate-500">{money(price.cost_per_desi_kg, price.currency)} / desi</p></div>
           <div className="rounded-lg border border-orange-200 bg-orange-50 p-3"><p className="text-xs text-orange-700">Önerilen minimum satış</p><p className="text-lg font-bold text-orange-800">{money(price.recommended_sale_amount, price.currency)}</p><p className="text-[11px] text-orange-700">Maliyete %{Math.round(price.markup_rate * 100)} eklenmiştir</p></div>
           <div className="rounded-lg bg-white p-3"><p className="text-xs text-slate-500">Öngörülen brüt kazanç</p><p className="text-lg font-bold text-emerald-700">{money(price.gross_profit_amount, price.currency)}</p><p className="text-[11px] text-slate-500">Satış fiyatı üzerinden marj %{(price.sales_margin_rate * 100).toFixed(1)}</p></div>
+        </div>
+        <div className="mt-3 rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-700">
+          <strong>Maliyet dökümü:</strong> İlk {price.base_desi_kg.toLocaleString("tr-TR")} desi = {money(price.base_cost_amount, price.currency)}
+          {price.excess_desi_kg > 0 && <> · Artan {price.excess_desi_kg.toLocaleString("tr-TR")} desi × {money(price.cost_per_desi_kg, price.currency)} = {money(price.excess_cost_amount, price.currency)}</>}
         </div>
         {price.minimum_charge_applied && <p className="mt-3 rounded-lg bg-amber-100 px-3 py-2 text-xs font-medium text-amber-900">Girilen toplam {price.entered_total_desi_kg.toLocaleString("tr-TR")} desi/kg olduğu için 250 minimum fiyatı uygulandı.</p>}
         <p className="mt-2 text-[11px] text-slate-600">{price.pricing_note}</p>
