@@ -19,6 +19,7 @@ import { crmService, Customer } from "@/services/crmService";
 import { cn } from "@/lib/utils";
 import { openPrivateDocument } from "@/lib/private-storage";
 import { ShipmentNotificationDialog } from "@/components/ShipmentNotificationDialog";
+import { GpslineDeliveryEstimator } from "@/components/GpslineDeliveryEstimator";
 
 // Helper function to convert text to title case (Turkish locale aware)
 const toTitleCase = (str: string | null | undefined): string => {
@@ -178,6 +179,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       normalizeTurkish(s.customer_code || '').includes(search)
     );
   }, [suppliers, searchSupplier]);
+
+  const selectedSupplier = useMemo(
+    () => suppliers.find((supplier) => supplier.id === formData.supplier_id),
+    [suppliers, formData.supplier_id],
+  );
 
   const filteredDrivers = useMemo(() => {
     if (!searchDriver) return drivers;
@@ -918,6 +924,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               </Select>
             </div>
           </div>
+
+          <GpslineDeliveryEstimator
+            supplierName={selectedSupplier?.company || selectedSupplier?.name}
+            collectionDate={pickupDate}
+            initialOrigin={formData.origin}
+            initialDestination={formData.destination}
+            initialDistrict={formData.receiver_district}
+            onApply={(value) => setEstimatedDeliveryDate(value.estimated_delivery_date)}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

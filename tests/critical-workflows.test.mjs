@@ -6,6 +6,28 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const read = (path) => readFile(resolve(root, path), "utf8");
 
+test("GPSLine estimates keep acceptance day excluded and respect district service days", async () => {
+  const [schema, seed, service, estimator, shipmentForm, salesScreen] = await Promise.all([
+    read("supabase/migrations/20260831110000_gpsline_transit_estimator.sql"),
+    read("supabase/migrations/20260831111000_gpsline_transit_schedule_seed.sql"),
+    read("src/services/gpslineTransitService.ts"),
+    read("src/components/GpslineDeliveryEstimator.tsx"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/components/modules/SalesCRMModule.tsx"),
+  ]);
+  assert.match(schema, /v_date := v_date \+ 1/);
+  assert.match(schema, /extract\(isodow FROM v_date\).*BETWEEN 1 AND 5/s);
+  assert.match(schema, /ANY\(v_route\.delivery_weekdays\)/);
+  assert.match(schema, /'planned_departure_date', p_collection_date \+ 1/);
+  assert.match(schema, /'adjusted_for_service_day'/);
+  assert.equal((seed.match(/\('gpsline',/g) || []).length, 12060);
+  assert.doesNotMatch(seed, /�/);
+  assert.match(service, /rex_estimate_gpsline_delivery/);
+  assert.match(estimator, /Bu Tarihi Uygula/);
+  assert.match(shipmentForm, /setEstimatedDeliveryDate\(value\.estimated_delivery_date\)/);
+  assert.match(salesScreen, /transit_schedule_snapshot/);
+});
+
 test("shipment assignment still requires driver licence and vehicle registration", async () => {
   const sql = await read("supabase/migrations/20260818143000_transport_workflow_and_kolaybi.sql");
   assert.match(sql, /ehliyet_dosyasi_url/);

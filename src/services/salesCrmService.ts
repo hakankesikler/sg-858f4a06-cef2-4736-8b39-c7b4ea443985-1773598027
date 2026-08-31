@@ -66,6 +66,11 @@ export type CrmOffer = {
   email_error: string | null;
   pickup_location: string | null;
   delivery_location: string | null;
+  supplier_id: string | null;
+  collection_date: string | null;
+  destination_district: string | null;
+  estimated_delivery_date: string | null;
+  transit_schedule_snapshot: Record<string, unknown> | null;
   service_type: string | null;
   vehicle_type: string | null;
   cargo_description: string | null;
@@ -141,6 +146,7 @@ export type Customer360 = {
 };
 
 export type SalesRepresentative = { user_id: string; email: string; full_name: string; role: string };
+export type CrmSupplier = { id: string; customer_code: string | null; name: string; company: string | null; account_type: string | null };
 export type SalesPerformance = SalesRepresentative & {
   calls: number;
   visits: number;
@@ -237,6 +243,15 @@ export const salesCrmService = {
     return (data || []) as unknown as SalesRepresentative[];
   },
 
+  async listSuppliers(): Promise<CrmSupplier[]> {
+    const { data, error } = await table("customers").select("id,customer_code,name,company,account_type").is("archived_at", null).order("name");
+    if (error) throw error;
+    return (data || []).filter((item: any) => {
+      const value = String(item.account_type || "").toLocaleLowerCase("tr-TR");
+      return value.includes("tedarik") || value.includes("her ikisi") || value.includes("her_ikisi");
+    }) as CrmSupplier[];
+  },
+
   async performance(from: string, to: string): Promise<SalesPerformance[]> {
     const { data, error } = await supabase.rpc("rex_crm_performance" as never, { p_from: from, p_to: to } as never);
     if (error) throw error;
@@ -301,6 +316,11 @@ export const salesCrmService = {
     notes?: string | null;
     pickup_location?: string | null;
     delivery_location?: string | null;
+    supplier_id?: string | null;
+    collection_date?: string | null;
+    destination_district?: string | null;
+    estimated_delivery_date?: string | null;
+    transit_schedule_snapshot?: Record<string, unknown> | null;
     service_type?: string | null;
     vehicle_type?: string | null;
     cargo_description?: string | null;

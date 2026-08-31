@@ -13,10 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 import { downloadExcel } from "@/lib/excel";
+import { GpslineDeliveryEstimator } from "@/components/GpslineDeliveryEstimator";
 import {
   salesCrmService, type ActivityOutcome, type ActivityType, type CrmActivity,
   type CrmContact, type CrmNotification, type CrmOffer, type CrmOfferItem, type CrmOpportunity, type CrmStage, type CrmTask, type Customer360, type QuoteDetail,
-  type CrmSettings, type SalesPerformance, type SalesRepresentative,
+  type CrmSettings, type CrmSupplier, type SalesPerformance, type SalesRepresentative,
 } from "@/services/salesCrmService";
 
 const stageConfig: Record<CrmStage, { label: string; short: string; color: string; dot: string }> = {
@@ -44,6 +45,7 @@ const money = (value?: number | null, currency = "TRY") => value == null ? "-" :
 const emptyOfferForm = () => ({
   subject: "Taşımacılık hizmet teklifi", currency: "TRY", status: "sent" as CrmOffer["status"], valid_until: "", notes: "",
   pickup_location: "", delivery_location: "", service_type: "Karayolu taşımacılığı", vehicle_type: "", cargo_description: "",
+  supplier_id: "", collection_date: "", destination_district: "", estimated_delivery_date: "", transit_schedule_snapshot: null as Record<string, unknown> | null,
   weight_kg: "", pallet_count: "", cost_amount: "", vat_rate: "20", payment_terms: "", incoterm: "", exchange_rate: "",
   items: [{ description: "Taşıma hizmeti", quantity: 1, unit: "sefer", unit_price: 0, tax_rate: 20 }] as CrmOfferItem[],
 });
@@ -58,6 +60,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const [loading, setLoading] = useState(true);
   const [opportunities, setOpportunities] = useState<CrmOpportunity[]>([]);
   const [representatives, setRepresentatives] = useState<SalesRepresentative[]>([]);
+  const [suppliers, setSuppliers] = useState<CrmSupplier[]>([]);
   const [performance, setPerformance] = useState<SalesPerformance[]>([]);
   const [tasks, setTasks] = useState<CrmTask[]>([]);
   const [notifications, setNotifications] = useState<CrmNotification[]>([]);
@@ -90,8 +93,8 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [opportunityRows, repRows, performanceRows, taskRows, ownerApproval, notificationRows] = await Promise.all([
-        salesCrmService.listOpportunities(), salesCrmService.listRepresentatives(), salesCrmService.performance(dateFrom, dateTo), salesCrmService.listTasks(), salesCrmService.canApproveOffers(), salesCrmService.listNotifications(),
+      const [opportunityRows, repRows, performanceRows, taskRows, ownerApproval, notificationRows, supplierRows] = await Promise.all([
+        salesCrmService.listOpportunities(), salesCrmService.listRepresentatives(), salesCrmService.performance(dateFrom, dateTo), salesCrmService.listTasks(), salesCrmService.canApproveOffers(), salesCrmService.listNotifications(), salesCrmService.listSuppliers(),
       ]);
       setOpportunities(opportunityRows);
       setRepresentatives(repRows);
@@ -99,6 +102,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
       setTasks(taskRows);
       setCanApproveOffers(ownerApproval);
       setNotifications(notificationRows);
+      setSuppliers(supplierRows);
       if (selected) setSelected(opportunityRows.find((item) => item.id === selected.id) || null);
     } catch (error: any) {
       toast({ title: "CRM yüklenemedi", description: error?.message || "Satış verileri alınamadı.", variant: "destructive" });
@@ -171,6 +175,9 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
         status: "draft", valid_until: offerForm.valid_until || null, notes: offerForm.notes || null,
         pickup_location: offerForm.pickup_location || quoteDetail?.loading_point || null,
         delivery_location: offerForm.delivery_location || quoteDetail?.delivery_point || null,
+        supplier_id: offerForm.supplier_id || null, collection_date: offerForm.collection_date || null,
+        destination_district: offerForm.destination_district || null, estimated_delivery_date: offerForm.estimated_delivery_date || null,
+        transit_schedule_snapshot: offerForm.transit_schedule_snapshot,
         service_type: offerForm.service_type || null, vehicle_type: offerForm.vehicle_type || null,
         cargo_description: offerForm.cargo_description || null, weight_kg: offerForm.weight_kg ? Number(offerForm.weight_kg) : null,
         pallet_count: offerForm.pallet_count ? Number(offerForm.pallet_count) : null, cost_amount: Number(offerForm.cost_amount || 0),
@@ -446,6 +453,18 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
             <div><Label>Teslim yeri</Label><Input value={offerForm.delivery_location} onChange={(e) => setOfferForm({ ...offerForm, delivery_location: e.target.value })} placeholder={quoteDetail?.delivery_point || "İl / ilçe"} /></div>
             <div><Label>Hizmet türü</Label><Input value={offerForm.service_type} onChange={(e) => setOfferForm({ ...offerForm, service_type: e.target.value })} /></div>
             <div><Label>Araç türü</Label><Input value={offerForm.vehicle_type} onChange={(e) => setOfferForm({ ...offerForm, vehicle_type: e.target.value })} placeholder="Tenteli, kamyonet, frigo..." /></div>
+            <div><Label>Operasyon tedarikçisi</Label><select value={offerForm.supplier_id} onChange={(e) => setOfferForm({ ...offerForm, supplier_id: e.target.value, estimated_delivery_date: "", transit_schedule_snapshot: null })} className="mt-1 w-full rounded-md border px-3 py-2"><option value="">Tedarikçi seçilmedi</option>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.customer_code ? `${supplier.customer_code} - ` : ""}{supplier.company || supplier.name}</option>)}</select></div>
+            <div><Label>Alım / planlama tarihi</Label><Input type="date" value={offerForm.collection_date} onChange={(e) => setOfferForm({ ...offerForm, collection_date: e.target.value, estimated_delivery_date: "", transit_schedule_snapshot: null })} /></div>
+            <div className="md:col-span-2"><Label>Teslim ilçesi</Label><Input value={offerForm.destination_district} onChange={(e) => setOfferForm({ ...offerForm, destination_district: e.target.value })} placeholder="İlçe" /></div>
+            <GpslineDeliveryEstimator
+              supplierName={suppliers.find((supplier) => supplier.id === offerForm.supplier_id)?.company || suppliers.find((supplier) => supplier.id === offerForm.supplier_id)?.name}
+              collectionDate={offerForm.collection_date}
+              initialOrigin={offerForm.pickup_location || quoteDetail?.loading_point}
+              initialDestination={offerForm.delivery_location || quoteDetail?.delivery_point}
+              initialDistrict={offerForm.destination_district}
+              onApply={(value) => setOfferForm({ ...offerForm, estimated_delivery_date: value.estimated_delivery_date, destination_district: value.destination_district, transit_schedule_snapshot: value as unknown as Record<string, unknown> })}
+            />
+            {offerForm.estimated_delivery_date && <div className="md:col-span-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">Teklife kaydedilecek tahmini teslim tarihi: {new Date(`${offerForm.estimated_delivery_date}T00:00:00`).toLocaleDateString("tr-TR")}</div>}
             <div className="md:col-span-2"><Label>Yük açıklaması</Label><Input value={offerForm.cargo_description} onChange={(e) => setOfferForm({ ...offerForm, cargo_description: e.target.value })} /></div>
             <div><Label>Ağırlık (kg)</Label><Input type="number" min="0" value={offerForm.weight_kg} onChange={(e) => setOfferForm({ ...offerForm, weight_kg: e.target.value })} /></div>
             <div><Label>Palet adedi</Label><Input type="number" min="0" value={offerForm.pallet_count} onChange={(e) => setOfferForm({ ...offerForm, pallet_count: e.target.value })} /></div>
