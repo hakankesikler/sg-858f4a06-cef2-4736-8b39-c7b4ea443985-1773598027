@@ -33,18 +33,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const recordId = text(req.body?.recordId);
   const action = text(req.body?.action);
   const localEntityId = text(req.body?.localEntityId);
-  if (!recordId || !["match", "ignore"].includes(action)) {
+  if (!recordId || !["match", "ignore", "approve", "reject"].includes(action)) {
     return res.status(400).json({ error: "Eşleştirme isteği geçersiz." });
   }
   if (action === "match" && !localEntityId) {
     return res.status(400).json({ error: "Eşleştirilecek TMS kaydını seçin." });
   }
 
-  const { data, error } = await userDb.rpc("rex_resolve_kolaybi_mapping" as any, {
-    p_record_id: recordId,
-    p_action: action,
-    p_local_entity_id: localEntityId || null,
-  } as any);
+  const productDecision = action === "approve" || action === "reject";
+  const { data, error } = productDecision
+    ? await userDb.rpc("rex_review_kolaybi_product" as any, {
+      p_record_id: recordId,
+      p_decision: action,
+    } as any)
+    : await userDb.rpc("rex_resolve_kolaybi_mapping" as any, {
+      p_record_id: recordId,
+      p_action: action,
+      p_local_entity_id: localEntityId || null,
+    } as any);
   if (error) {
     const message = String(error.message || "KolayBi eşleştirmesi kaydedilemedi.").slice(0, 500);
     const status = /yetkiniz yok/i.test(message) ? 403 : /bulunamadı/i.test(message) ? 404 : /zaten/i.test(message) ? 409 : 422;

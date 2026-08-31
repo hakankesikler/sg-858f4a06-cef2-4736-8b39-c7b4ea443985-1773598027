@@ -83,4 +83,12 @@ export const kolaybiOfficeService = {
       body: JSON.stringify(input),
     });
   },
+
+  async reviewImportedProduct(input: { recordId: string; decision: "approve" | "reject" }) {
+    return authenticatedFetch("/api/kolaybi/mappings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recordId: input.recordId, action: input.decision }),
+    });
+  },
 };

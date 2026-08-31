@@ -1311,16 +1311,26 @@ export type Database = {
       }
       products_services: {
         Row: {
+          approval_status: string
           category: string | null
           code: string
           created_at: string | null
           description: string | null
+          external_source: string
           id: string
           is_active: boolean | null
+          kolaybi_product_id: number | null
+          last_synced_at: string | null
           min_stock_level: number | null
           name: string
           notes: string | null
+          provider_active: boolean | null
+          provider_barcode: string | null
+          provider_code: string | null
+          provider_environment: string | null
+          purchase_currency: string | null
           purchase_price: number | null
+          sale_currency: string | null
           sale_price: number | null
           stock_quantity: number | null
           tax_rate: number | null
@@ -1329,16 +1339,26 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          approval_status?: string
           category?: string | null
           code: string
           created_at?: string | null
           description?: string | null
+          external_source?: string
           id?: string
           is_active?: boolean | null
+          kolaybi_product_id?: number | null
+          last_synced_at?: string | null
           min_stock_level?: number | null
           name: string
           notes?: string | null
+          provider_active?: boolean | null
+          provider_barcode?: string | null
+          provider_code?: string | null
+          provider_environment?: string | null
+          purchase_currency?: string | null
           purchase_price?: number | null
+          sale_currency?: string | null
           sale_price?: number | null
           stock_quantity?: number | null
           tax_rate?: number | null
@@ -1347,16 +1367,26 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          approval_status?: string
           category?: string | null
           code?: string
           created_at?: string | null
           description?: string | null
+          external_source?: string
           id?: string
           is_active?: boolean | null
+          kolaybi_product_id?: number | null
+          last_synced_at?: string | null
           min_stock_level?: number | null
           name?: string
           notes?: string | null
+          provider_active?: boolean | null
+          provider_barcode?: string | null
+          provider_code?: string | null
+          provider_environment?: string | null
+          purchase_currency?: string | null
           purchase_price?: number | null
+          sale_currency?: string | null
           sale_price?: number | null
           stock_quantity?: number | null
           tax_rate?: number | null

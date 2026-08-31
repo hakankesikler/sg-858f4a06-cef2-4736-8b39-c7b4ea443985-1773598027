@@ -931,9 +931,10 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
 });
 
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
-  const [sql, mappingSql, api, mappingApi, service, office, accounting] = await Promise.all([
+  const [sql, mappingSql, productSyncSql, api, mappingApi, service, office, accounting] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
     read("supabase/migrations/20260831210000_kolaybi_manual_mappings.sql"),
+    read("supabase/migrations/20260831223000_kolaybi_product_catalog_sync.sql"),
     read("src/pages/api/kolaybi/office-sync.ts"),
     read("src/pages/api/kolaybi/mappings.ts"),
     read("src/services/kolaybiOfficeService.ts"),
@@ -950,6 +951,12 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(mappingSql, /rex_resolve_kolaybi_mapping/);
   assert.match(mappingSql, /SECURITY DEFINER/);
   assert.match(mappingSql, /invoice_product_mappings/);
+  assert.match(productSyncSql, /provider_environment,resource_type,external_id/);
+  assert.match(productSyncSql, /products_services_kolaybi_identity_uidx/);
+  assert.match(productSyncSql, /approval_status IN \('not_required','pending','approved','rejected'\)/);
+  assert.match(productSyncSql, /rex_review_kolaybi_product/);
+  assert.match(productSyncSql, /product_approved/);
+  assert.match(productSyncSql, /product_rejected/);
   assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(api, /rex_has_permission/);
   assert.match(api, /integrations\.connections/);
@@ -959,14 +966,20 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(api, /type=sale_invoice/);
   assert.match(api, /type=purchase_invoice/);
   assert.match(api, /review_required/);
+  assert.match(api, /product_imported_pending/);
+  assert.match(api, /KB-TEST-/);
+  assert.match(api, /approval_status: "pending"/);
+  assert.match(api, /is_active: false/);
   assert.match(api, /updatePartner/);
   assert.match(api, /integration_partners/);
   assert.match(mappingApi, /integrations\.connections/);
   assert.match(mappingApi, /p_local_entity_id/);
   assert.match(mappingApi, /rex_resolve_kolaybi_mapping/);
+  assert.match(mappingApi, /rex_review_kolaybi_product/);
   assert.match(service, /kolaybi_master_records/);
   assert.match(service, /kolaybi_sync_runs/);
   assert.match(service, /resolveMapping/);
+  assert.match(service, /reviewImportedProduct/);
   assert.match(office, /KolayBi Entegre Ofis/);
   assert.match(office, /KolayBi Eşleştirme Kontrolü/);
   assert.match(office, /TMS carisi seçin/);
@@ -981,6 +994,11 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(office, /Satın Alma Yönetimi/);
   assert.match(office, /Genel Gider Yönetimi/);
   assert.match(office, /Ürünler ve Hizmetler/);
+  assert.match(office, /KolayBi'den Yenile/);
+  assert.match(office, /Onay bekliyor/);
+  assert.match(office, /reviewImportedProduct/);
+  assert.match(office, /Canlı/);
+  assert.match(office, /Test/);
   assert.match(office, /Cari Hesaplar/);
   assert.match(office, /Finans/);
   assert.match(office, /Projeler/);

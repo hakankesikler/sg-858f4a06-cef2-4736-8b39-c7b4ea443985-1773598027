@@ -33,8 +33,8 @@ const date = (value: unknown) => {
 
 const statusClass = (status: string) => {
   const value = status.toLowerCase();
-  if (["official", "matched", "completed", "ödendi", "tamamlandı", "faturalandi"].some((item) => value.includes(item))) return "border-green-200 bg-green-50 text-green-700";
-  if (["failed", "error", "iptal", "gecik"].some((item) => value.includes(item))) return "border-red-200 bg-red-50 text-red-700";
+  if (["official", "matched", "completed", "approved", "ödendi", "tamamlandı", "faturalandi"].some((item) => value.includes(item))) return "border-green-200 bg-green-50 text-green-700";
+  if (["failed", "error", "rejected", "iptal", "gecik"].some((item) => value.includes(item))) return "border-red-200 bg-red-50 text-red-700";
   if (["review", "bek", "partial", "taslak"].some((item) => value.includes(item))) return "border-amber-200 bg-amber-50 text-amber-700";
   return "border-blue-200 bg-blue-50 text-blue-700";
 };
@@ -133,8 +133,24 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
     } finally { setMappingBusy(null); }
   };
 
+  const reviewImportedProduct = async (record: any, decision: "approve" | "reject") => {
+    setMappingBusy(record.id);
+    try {
+      await kolaybiOfficeService.reviewImportedProduct({ recordId: record.id, decision });
+      await load();
+      toast({
+        title: decision === "approve" ? "Ürün kullanıma açıldı" : "Ürün pasif bırakıldı",
+        description: `${record.display_name || record.external_code || "KolayBi ürünü"} kararı denetim geçmişine işlendi.`,
+      });
+    } catch (error: any) {
+      toast({ title: "Ürün kararı kaydedilemedi", description: error.message, variant: "destructive" });
+    } finally { setMappingBusy(null); }
+  };
+
   const reviewRecords = useMemo(
-    () => data.providerRecords.filter((row) => ["associate", "product"].includes(row.resource_type) && row.match_status === "review_required"),
+    () => data.providerRecords.filter((row) => ["associate", "product"].includes(row.resource_type)
+      && row.match_status === "review_required"
+      && !(row.resource_type === "product" && row.local_entity_id)),
     [data.providerRecords],
   );
 
@@ -200,6 +216,7 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
   const recordsByType = (type: string) => data.providerRecords.filter((row) => row.resource_type === type);
   const mappingCount = data.providerRecords.filter((row) => row.match_status === "matched").length;
   const reviewCount = data.providerRecords.filter((row) => row.match_status === "review_required").length;
+  const pendingProductCount = data.products.filter((row) => row.external_source === "kolaybi" && row.approval_status === "pending").length;
 
   const exportRows = async (name: string, rows: Record<string, unknown>[]) => {
     try { await downloadExcel(name, rows, "REX TYS"); }
@@ -265,7 +282,7 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
               ))}
             </CardContent>
           </Card>
-          {reviewCount > 0 && <Card className="border-amber-200 bg-amber-50"><CardContent className="flex items-center gap-3 p-4"><TriangleAlert className="h-5 w-5 text-amber-600" /><div><p className="font-semibold text-amber-900">{reviewCount} kayıt eşleştirme kontrolü bekliyor</p><p className="text-sm text-amber-800">Yanlış cari veya ürün seçilmemesi için bilinmeyen KolayBi kayıtları otomatik oluşturulmadı.</p></div></CardContent></Card>}
+          {reviewCount > 0 && <Card className="border-amber-200 bg-amber-50"><CardContent className="flex items-center gap-3 p-4"><TriangleAlert className="h-5 w-5 text-amber-600" /><div><p className="font-semibold text-amber-900">{reviewCount} kayıt kontrol bekliyor</p><p className="text-sm text-amber-800">Yeni KolayBi ürünleri pasif kart olarak aktarılır; cari eşleştirmeleri ve ürün kullanım onayları yetkili kullanıcı tarafından tamamlanır.</p></div></CardContent></Card>}
           {reviewRecords.length > 0 && <Card>
             <CardHeader>
               <CardTitle>KolayBi Eşleştirme Kontrolü</CardTitle>
@@ -327,10 +344,27 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
         </TabsContent>
 
         <TabsContent value="products" className="mt-5 space-y-4">
-          <div className="flex items-center justify-between"><div><h3 className="text-xl font-bold">Ürünler ve Hizmetler</h3><p className="text-sm text-slate-500">Taşıma hizmeti kodları, KDV oranları, fiyatlar ve KolayBi eşleşmeleri</p></div>{canManageSync && <Button variant="outline" disabled={syncing} onClick={() => void synchronize("products")}><RefreshCw className="mr-2 h-4 w-4" />Ürünleri Yenile</Button>}</div>
-          <Card><Table><TableHeader><TableRow><TableHead>Kod</TableHead><TableHead>Ad</TableHead><TableHead>Tip</TableHead><TableHead>KDV</TableHead><TableHead>KolayBi</TableHead><TableHead className="text-right">Satış Fiyatı</TableHead></TableRow></TableHeader><TableBody>
-            {data.products.length === 0 ? <EmptyRow columns={6} /> : data.products.map((row) => { const mapped = recordsByType("product").find((record) => record.local_entity_id === row.id); return <TableRow key={row.id}><TableCell className="font-mono">{row.code}</TableCell><TableCell>{row.name}</TableCell><TableCell>{row.type}</TableCell><TableCell>%{row.tax_rate ?? 20}</TableCell><TableCell><Badge variant="outline" className={statusClass(mapped?.match_status || "review")}>{mapped ? "Eşleşti" : "Kontrol Gerekli"}</Badge></TableCell><TableCell className="text-right">{money(row.sale_price)}</TableCell></TableRow>; })}
-          </TableBody></Table></Card>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><h3 className="text-xl font-bold">Ürünler ve Hizmetler</h3><p className="text-sm text-slate-500">KolayBi ürün kartları test/canlı ortamı ayrılarak otomatik alınır; onay verilene kadar işlemlerde kullanılamaz.</p></div>{canManageSync && <Button variant="outline" disabled={syncing} onClick={() => void synchronize("products")}><RefreshCw className="mr-2 h-4 w-4" />KolayBi'den Yenile</Button>}</div>
+          {pendingProductCount > 0 && <Card className="border-amber-200 bg-amber-50"><CardContent className="flex items-center gap-3 p-4"><TriangleAlert className="h-5 w-5 text-amber-600" /><div><p className="font-semibold text-amber-900">{pendingProductCount} ürün/hizmet kullanım onayı bekliyor</p><p className="text-sm text-amber-800">Onaylanmayan kartlar teklif ve fatura seçimlerine açılmaz.</p></div></CardContent></Card>}
+          <Card><div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Kod</TableHead><TableHead>Ad</TableHead><TableHead>Tip</TableHead><TableHead>KDV</TableHead><TableHead>Kaynak</TableHead><TableHead>Durum</TableHead><TableHead className="text-right">Satış Fiyatı</TableHead><TableHead className="text-right">İşlem</TableHead></TableRow></TableHeader><TableBody>
+            {data.products.length === 0 ? <EmptyRow columns={8} /> : data.products.map((row) => {
+              const mapped = recordsByType("product").find((record) => record.local_entity_id === row.id && (!row.provider_environment || record.provider_environment === row.provider_environment));
+              const imported = row.external_source === "kolaybi";
+              const approvalLabel = row.approval_status === "pending" ? "Onay bekliyor" : row.approval_status === "approved" ? "Aktif" : row.approval_status === "rejected" ? "Reddedildi" : row.is_active === false ? "Pasif" : "Yerel kayıt";
+              const busy = mapped && mappingBusy === mapped.id;
+              return <TableRow key={row.id}>
+                <TableCell><p className="font-mono">{row.code}</p>{row.provider_code && row.provider_code !== row.code && <p className="text-xs text-slate-500">KolayBi: {row.provider_code}</p>}</TableCell>
+                <TableCell className="font-medium">{row.name}</TableCell><TableCell>{row.type}</TableCell><TableCell>%{row.tax_rate ?? 20}</TableCell>
+                <TableCell>{imported ? <div className="flex flex-wrap gap-1"><Badge variant="outline">KolayBi</Badge><Badge variant="outline" className={row.provider_environment === "live" ? "border-green-200 bg-green-50 text-green-700" : "border-blue-200 bg-blue-50 text-blue-700"}>{row.provider_environment === "live" ? "Canlı" : "Test"}</Badge></div> : <Badge variant="outline">REX TYS</Badge>}</TableCell>
+                <TableCell><Badge variant="outline" className={statusClass(row.approval_status || mapped?.match_status || "review")}>{approvalLabel}</Badge></TableCell>
+                <TableCell className="text-right">{money(row.sale_price, row.sale_currency || "TRY")}</TableCell>
+                <TableCell><div className="flex justify-end gap-2">{imported && row.approval_status === "pending" && mapped && <>
+                  <Button size="sm" disabled={!canManageSync || busy} onClick={() => void reviewImportedProduct(mapped, "approve")}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}Onayla</Button>
+                  <Button size="sm" variant="outline" disabled={!canManageSync || busy} onClick={() => void reviewImportedProduct(mapped, "reject")}><Ban className="mr-2 h-4 w-4" />Reddet</Button>
+                </>}</div></TableCell>
+              </TableRow>;
+            })}
+          </TableBody></Table></div></Card>
         </TabsContent>
 
         <TabsContent value="associates" className="mt-5 space-y-4">
