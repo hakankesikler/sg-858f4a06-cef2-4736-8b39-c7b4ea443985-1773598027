@@ -26,6 +26,28 @@ export type GpslineDeliveryEstimate = {
   disclaimer: string;
 };
 
+export type GpslinePriceEstimate = {
+  provider_code: "gpsline";
+  origin_zone: string;
+  destination_region: string;
+  pallet_count: number;
+  entered_total_desi_kg: number;
+  chargeable_desi_kg: number;
+  minimum_charge_applied: boolean;
+  max_desi_per_pallet: number;
+  cost_per_desi_kg: number;
+  cost_amount: number;
+  markup_rate: number;
+  sales_margin_rate: number;
+  recommended_sale_per_desi_kg: number;
+  recommended_sale_amount: number;
+  gross_profit_amount: number;
+  currency: "TRY";
+  source_document: string;
+  version_label: string;
+  pricing_note: string;
+};
+
 const normalize = (value?: string | null) => (value || "")
   .toLocaleLowerCase("tr-TR")
   .replace(/ı/g, "i")
@@ -73,5 +95,16 @@ export const gpslineTransitService = {
     } as never);
     if (error) throw error;
     return data as unknown as GpslineDeliveryEstimate;
+  },
+
+  async calculatePrice(input: { origin: string; destination: string; totalDesiKg: number; palletCount: number }): Promise<GpslinePriceEstimate> {
+    const { data, error } = await supabase.rpc("rex_calculate_gpsline_price" as never, {
+      p_origin: input.origin,
+      p_destination: input.destination,
+      p_total_desi_kg: input.totalDesiKg,
+      p_pallet_count: input.palletCount,
+    } as never);
+    if (error) throw error;
+    return data as unknown as GpslinePriceEstimate;
   },
 };

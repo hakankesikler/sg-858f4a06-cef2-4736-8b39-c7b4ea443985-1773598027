@@ -462,11 +462,29 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
               initialOrigin={offerForm.pickup_location || quoteDetail?.loading_point}
               initialDestination={offerForm.delivery_location || quoteDetail?.delivery_point}
               initialDistrict={offerForm.destination_district}
-              onApply={(value) => setOfferForm({ ...offerForm, estimated_delivery_date: value.estimated_delivery_date, destination_district: value.destination_district, transit_schedule_snapshot: value as unknown as Record<string, unknown> })}
+              initialTotalDesiKg={offerForm.weight_kg}
+              initialPalletCount={offerForm.pallet_count}
+              onApply={(value, price) => setOfferForm({
+                ...offerForm,
+                estimated_delivery_date: value.estimated_delivery_date,
+                destination_district: value.destination_district,
+                weight_kg: String(price.entered_total_desi_kg),
+                pallet_count: String(price.pallet_count),
+                cost_amount: String(price.cost_amount),
+                currency: price.currency,
+                transit_schedule_snapshot: { ...value, pricing: price } as unknown as Record<string, unknown>,
+                items: offerForm.items.map((item, index) => index === 0 ? {
+                  ...item,
+                  description: "GPSLine parsiyel taşıma hizmeti",
+                  quantity: 1,
+                  unit: "sefer",
+                  unit_price: price.recommended_sale_amount,
+                } : item),
+              })}
             />
             {offerForm.estimated_delivery_date && <div className="md:col-span-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">Teklife kaydedilecek tahmini teslim tarihi: {new Date(`${offerForm.estimated_delivery_date}T00:00:00`).toLocaleDateString("tr-TR")}</div>}
             <div className="md:col-span-2"><Label>Yük açıklaması</Label><Input value={offerForm.cargo_description} onChange={(e) => setOfferForm({ ...offerForm, cargo_description: e.target.value })} /></div>
-            <div><Label>Ağırlık (kg)</Label><Input type="number" min="0" value={offerForm.weight_kg} onChange={(e) => setOfferForm({ ...offerForm, weight_kg: e.target.value })} /></div>
+            <div><Label>Ağırlık / toplam desi-kg</Label><Input type="number" min="0" value={offerForm.weight_kg} onChange={(e) => setOfferForm({ ...offerForm, weight_kg: e.target.value })} /></div>
             <div><Label>Palet adedi</Label><Input type="number" min="0" value={offerForm.pallet_count} onChange={(e) => setOfferForm({ ...offerForm, pallet_count: e.target.value })} /></div>
             <div className="md:col-span-2 space-y-3 rounded-xl border p-4">
               <div className="flex items-center justify-between"><div><Label>Fiyat kalemleri *</Label><p className="text-xs text-slate-500">Navlun, yakıt, köprü veya ek hizmetleri ayrı girin.</p></div><Button type="button" size="sm" variant="outline" onClick={() => setOfferForm({ ...offerForm, items: [...offerForm.items, { description: "Ek hizmet", quantity: 1, unit: "adet", unit_price: 0, tax_rate: Number(offerForm.vat_rate || 20) }] })}><Plus className="mr-1 h-4 w-4" />Kalem</Button></div>

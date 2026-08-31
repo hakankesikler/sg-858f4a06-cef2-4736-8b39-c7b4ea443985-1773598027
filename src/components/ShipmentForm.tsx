@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { openPrivateDocument } from "@/lib/private-storage";
 import { ShipmentNotificationDialog } from "@/components/ShipmentNotificationDialog";
 import { GpslineDeliveryEstimator } from "@/components/GpslineDeliveryEstimator";
+import { isGpslineSupplier } from "@/services/gpslineTransitService";
 
 // Helper function to convert text to title case (Turkish locale aware)
 const toTitleCase = (str: string | null | undefined): string => {
@@ -184,6 +185,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     () => suppliers.find((supplier) => supplier.id === formData.supplier_id),
     [suppliers, formData.supplier_id],
   );
+  const gpslineSelected = isGpslineSupplier(selectedSupplier?.company || selectedSupplier?.name);
 
   const filteredDrivers = useMemo(() => {
     if (!searchDriver) return drivers;
@@ -268,6 +270,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const totalKgDs = cargoItems.reduce((sum, item) => {
     return sum + (item.adet * item.kg_ds);
   }, 0);
+  const totalPalletCount = cargoItems.reduce((sum, item) => sum + item.adet, 0);
 
   const totalPrice = cargoItems.reduce((sum, item) => {
     return sum + (item.alt_toplam_fiyat || 0);
@@ -540,6 +543,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     }
 
     const invalidCargo = cargoItems.some(item => item.adet <= 0 || item.kg_ds <= 0 || !item.cinsi.trim());
+    const invalidGpslinePallet = gpslineSelected && cargoItems.some(item => item.kg_ds > 250);
     const isExpress = formData.service_mode === "international_express";
     const incompleteAssignment = !isExpress && Boolean(formData.driver_id) !== Boolean(formData.vehicle_id);
     const invalidExpress = isExpress && (
@@ -547,7 +551,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       !/^[A-Z]{2}$/.test(formData.origin_country_code) ||
       !/^[A-Z]{2}$/.test(formData.destination_country_code)
     );
-    if (!formData.customer_id || incompleteAssignment || invalidExpress ||
+    if (!formData.customer_id || incompleteAssignment || invalidExpress || invalidGpslinePallet ||
         !formData.origin.trim() || !formData.destination.trim() || !pickupDate || invalidCargo) {
       toast({
         title: "Eksik Bilgi",
@@ -555,6 +559,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           ? "Sürücü ve araç birlikte seçilmelidir."
           : invalidExpress
             ? "Express gönderide sağlayıcı, dosya/paket türü ile çıkış ve varış ülke kodları zorunludur."
+          : invalidGpslinePallet
+            ? "GPSLine parsiyel gönderide her palet en fazla 250 desi/kg olabilir."
           : "Müşteri, çıkış/varış, yükleme tarihi ve geçerli yük kalemleri zorunludur.",
         variant: "destructive",
       });
@@ -931,7 +937,18 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             initialOrigin={formData.origin}
             initialDestination={formData.destination}
             initialDistrict={formData.receiver_district}
-            onApply={(value) => setEstimatedDeliveryDate(value.estimated_delivery_date)}
+            initialTotalDesiKg={totalKgDs}
+            initialPalletCount={totalPalletCount}
+            onApply={(value, price) => {
+              setEstimatedDeliveryDate(value.estimated_delivery_date);
+              setFormData((current) => ({ ...current, cost: String(price.cost_amount), cost_currency: price.currency }));
+              setManualTotalPrice(String(price.recommended_sale_amount));
+              const salePerEnteredDesi = price.recommended_sale_amount / price.entered_total_desi_kg;
+              setCargoItems((current) => current.map((item) => {
+                const unitPrice = Number((item.kg_ds * salePerEnteredDesi).toFixed(2));
+                return { ...item, birim_fiyat: unitPrice, alt_toplam_fiyat: Number((item.adet * unitPrice).toFixed(2)) };
+              }));
+            }}
           />
 
           <div className="grid grid-cols-2 gap-4">

@@ -23,9 +23,32 @@ test("GPSLine estimates keep acceptance day excluded and respect district servic
   assert.equal((seed.match(/\('gpsline',/g) || []).length, 12060);
   assert.doesNotMatch(seed, /�/);
   assert.match(service, /rex_estimate_gpsline_delivery/);
-  assert.match(estimator, /Bu Tarihi Uygula/);
+  assert.match(estimator, /Tarihi ve Fiyatı Uygula/);
   assert.match(shipmentForm, /setEstimatedDeliveryDate\(value\.estimated_delivery_date\)/);
   assert.match(salesScreen, /transit_schedule_snapshot/);
+});
+
+test("GPSLine pallet pricing uses aggregate desi, a 250 minimum and a 35 percent markup", async () => {
+  const [pricing, service, estimator, shipmentForm, salesScreen] = await Promise.all([
+    read("supabase/migrations/20260831170000_gpsline_pricing.sql"),
+    read("src/services/gpslineTransitService.ts"),
+    read("src/components/GpslineDeliveryEstimator.tsx"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/components/modules/SalesCRMModule.tsx"),
+  ]);
+  assert.equal((pricing.match(/\('gpsline','/g) || []).length, 246);
+  assert.match(pricing, /v_chargeable := greatest\(p_total_desi_kg,v_tariff\.min_chargeable_desi_kg\)/);
+  assert.match(pricing, /p_total_desi_kg > p_pallet_count \* 250/);
+  assert.match(pricing, /v_recommended := round\(v_cost\*\(1\+v_tariff\.markup_rate\),2\)/);
+  assert.match(pricing, /0\.35,'TRY','gpsline maliyet listesi\.xlsx'/);
+  assert.doesNotMatch(pricing, /�/);
+  assert.match(service, /rex_calculate_gpsline_price/);
+  assert.match(estimator, /Toplu desi kuralı/);
+  assert.match(estimator, /Önerilen minimum satış/);
+  assert.match(shipmentForm, /invalidGpslinePallet/);
+  assert.match(shipmentForm, /price\.recommended_sale_amount/);
+  assert.match(salesScreen, /GPSLine parsiyel taşıma hizmeti/);
+  assert.match(salesScreen, /cost_amount: String\(price\.cost_amount\)/);
 });
 
 test("shipment assignment still requires driver licence and vehicle registration", async () => {
