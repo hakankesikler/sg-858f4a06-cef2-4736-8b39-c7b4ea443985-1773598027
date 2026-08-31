@@ -2,7 +2,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Copy, FileCheck2, Loader2, MapPin, Package, Search, Truck } from "lucide-react";
+import { CheckCircle, Copy, ExternalLink, FileCheck2, Loader2, MapPin, Package, Search, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getPrivateDocumentSignedUrl } from "@/lib/private-storage";
 import { publicTrackingService, type PublicTrackingResult } from "@/services/publicTrackingService";
@@ -45,6 +45,16 @@ function statusRank(status?: string | null) {
   if (completedStatuses.includes(status || "")) return 3;
   if (status === "yolda" || status === "Yolda") return 2;
   if (["beklemede", "hazirlaniyor", "hazırlanıyor", "Hazırlanıyor"].includes(status || "")) return 1;
+  return 0;
+}
+
+function expressStatusRank(status?: string | null) {
+  const normalized = (status || "").toLocaleUpperCase("tr-TR");
+  if (normalized.includes("TESLİM")) return 5;
+  if (normalized.includes("DAĞITIMDA")) return 4;
+  if (normalized.includes("DAĞITIM MERKEZ")) return 3;
+  if (normalized.includes("GÜMRÜK")) return 2;
+  if (normalized.includes("ÇIKIŞ")) return 1;
   return 0;
 }
 
@@ -98,6 +108,17 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
   const stages = useMemo(() => {
     const events = result?.events || [];
     const eventDate = (statuses: string[]) => events.find((event) => statuses.includes(event.new_status || ""))?.event_at;
+    if (result?.service_mode === "international_express") {
+      const carrierDate = result.carrier_last_synced_at || result.updated_at;
+      return [
+        { label: "Gönderi Oluşturuldu", date: result.created_at, icon: Package },
+        { label: "Çıkış Noktasında", date: carrierDate, icon: CheckCircle },
+        { label: "Gümrükte", date: carrierDate, icon: Package },
+        { label: "Dağıtım Merkezinde", date: carrierDate, icon: Truck },
+        { label: "Dağıtımda", date: carrierDate, icon: Truck },
+        { label: "Teslim Edildi", date: result.delivery_date || carrierDate, icon: MapPin },
+      ];
+    }
     return [
       { label: "Kayıt Alındı", date: result?.created_at, icon: Package },
       { label: "Taşımaya Hazır", date: eventDate(["beklemede", "hazirlaniyor", "hazırlanıyor", "Hazırlanıyor"]), icon: CheckCircle },
@@ -132,7 +153,9 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
     }
   };
 
-  const currentRank = statusRank(result?.status);
+  const currentRank = result?.service_mode === "international_express"
+    ? expressStatusRank(result.carrier_status || result.status)
+    : statusRank(result?.status);
   const cancelled = ["iptal", "İptal"].includes(result?.status || "");
 
   return (
@@ -142,7 +165,7 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
           <div className="text-center mb-10">
             <h2 className="font-heading font-bold text-4xl text-navy mb-4">Gönderinizi Takip Edin</h2>
             <p className="text-muted-foreground text-lg">
-              Paylaşılan REX takip numarasıyla sevkiyatınızın güncel durumunu görüntüleyin.
+              REX takip numarası veya FedEx, UPS, DHL ve Aramex AWB numarasıyla gönderinizin güncel durumunu görüntüleyin.
             </p>
           </div>
 
@@ -153,7 +176,7 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Takip numaranızı girin (REX-...)"
+                    placeholder="REX takip numarası veya AWB girin"
                     value={trackingNumber}
                     onChange={(event) => setTrackingNumber(event.target.value.toUpperCase())}
                     className="pl-10 h-12 font-mono"
@@ -174,6 +197,13 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
                       <p className="text-xs uppercase tracking-wider text-slate-500">Takip Numarası</p>
                       <p className="mt-1 font-mono text-lg font-bold text-navy">{result.tracking_number}</p>
                       <p className="mt-1 text-sm text-slate-500">Sevkiyat: {result.shipment_code}</p>
+                      {result.service_mode === "international_express" && (
+                        <div className="mt-3 space-y-1 text-sm text-slate-600">
+                          <p><span className="font-semibold">Taşıyıcı:</span> {result.express_carrier || "Atama bekliyor"}</p>
+                          {result.awb_number && <p><span className="font-semibold">AWB:</span> <span className="font-mono">{result.awb_number}</span></p>}
+                          {result.provider_reference && <p><span className="font-semibold">QuickShipper Gönderi No:</span> <span className="font-mono">{result.provider_reference}</span></p>}
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       <span className={`rounded-full px-3 py-1.5 text-sm font-semibold ${cancelled ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-800"}`}>
@@ -182,6 +212,13 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
                       <Button type="button" variant="outline" size="sm" onClick={() => void copyTrackingLink()}>
                         <Copy className="mr-2 h-4 w-4" /> Bağlantıyı Kopyala
                       </Button>
+                      {result.carrier_tracking_url && (
+                        <Button type="button" variant="outline" size="sm" asChild>
+                          <a href={result.carrier_tracking_url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="mr-2 h-4 w-4" /> Taşıyıcıda Canlı Takip
+                          </a>
+                        </Button>
+                      )}
                     </div>
                   </div>
 
@@ -190,7 +227,19 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
                     <div><p className="text-xs text-slate-400">Varış</p><p className="mt-1 font-semibold">{result.destination || "—"}</p></div>
                     <div><p className="text-xs text-slate-400">Yükleme Tarihi</p><p className="mt-1 font-semibold">{formatDate(result.pickup_date)}</p></div>
                     <div><p className="text-xs text-slate-400">Tahmini Teslim</p><p className="mt-1 font-semibold">{formatDate(result.estimated_delivery_date)}</p></div>
+                    {result.service_mode === "international_express" && <>
+                      <div><p className="text-xs text-slate-400">Gönderi Türü</p><p className="mt-1 font-semibold">{result.package_type === "document" ? "Dosya" : "Paket"}</p></div>
+                      <div><p className="text-xs text-slate-400">Ülke Rotası</p><p className="mt-1 font-semibold">{result.origin_country_code || "—"} → {result.destination_country_code || "—"}</p></div>
+                    </>}
                   </div>
+
+                  {result.service_mode === "international_express" && result.carrier_status && (
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-900">
+                      <p className="font-semibold">Taşıyıcı durumu: {result.carrier_status}</p>
+                      {result.carrier_status_description && <p className="mt-1">{result.carrier_status_description}</p>}
+                      <p className="mt-2 text-xs text-blue-700">Son taşıyıcı güncellemesi: {formatDate(result.carrier_last_synced_at, true)}</p>
+                    </div>
+                  )}
 
                   {!cancelled && (
                     <div className="rounded-xl border bg-secondary/20 p-5 sm:p-6">

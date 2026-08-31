@@ -1874,6 +1874,17 @@ export type Database = {
           sender_name: string | null
           shipment_code: string
           tracking_number: string
+          service_mode: string
+          booking_provider: string | null
+          express_carrier: string | null
+          awb_number: string | null
+          provider_reference: string | null
+          package_type: string | null
+          origin_country_code: string | null
+          destination_country_code: string | null
+          carrier_status: string | null
+          carrier_status_description: string | null
+          carrier_last_synced_at: string | null
           status: string | null
           supplier_id: string | null
           toplam_kg_ds: number | null
@@ -1911,6 +1922,17 @@ export type Database = {
           sender_name?: string | null
           shipment_code: string
           tracking_number?: string
+          service_mode?: string
+          booking_provider?: string | null
+          express_carrier?: string | null
+          awb_number?: string | null
+          provider_reference?: string | null
+          package_type?: string | null
+          origin_country_code?: string | null
+          destination_country_code?: string | null
+          carrier_status?: string | null
+          carrier_status_description?: string | null
+          carrier_last_synced_at?: string | null
           status?: string | null
           supplier_id?: string | null
           toplam_kg_ds?: number | null
@@ -1948,6 +1970,17 @@ export type Database = {
           sender_name?: string | null
           shipment_code?: string
           tracking_number?: string
+          service_mode?: string
+          booking_provider?: string | null
+          express_carrier?: string | null
+          awb_number?: string | null
+          provider_reference?: string | null
+          package_type?: string | null
+          origin_country_code?: string | null
+          destination_country_code?: string | null
+          carrier_status?: string | null
+          carrier_status_description?: string | null
+          carrier_last_synced_at?: string | null
           status?: string | null
           supplier_id?: string | null
           toplam_kg_ds?: number | null

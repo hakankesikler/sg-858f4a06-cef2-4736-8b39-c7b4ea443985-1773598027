@@ -4,6 +4,17 @@ export interface Shipment {
   id?: string;
   shipment_code?: string;
   tracking_number?: string;
+  service_mode?: "road" | "international_express";
+  booking_provider?: "quickshipper" | "direct" | "other" | null;
+  express_carrier?: "FEDEX" | "UPS" | "DHL" | "ARAMEX" | "TNT" | "DPD" | "QS_SPECIAL" | "OTHER" | null;
+  awb_number?: string | null;
+  provider_reference?: string | null;
+  package_type?: "document" | "package" | null;
+  origin_country_code?: string | null;
+  destination_country_code?: string | null;
+  carrier_status?: string | null;
+  carrier_status_description?: string | null;
+  carrier_last_synced_at?: string | null;
   supplier_id?: string | null;
   driver_id?: string | null;
   vehicle_id?: string | null;

@@ -56,6 +56,7 @@ const categoryLabels: Record<InvoiceCategory, string> = {
 };
 
 const inferCategory = (shipment?: any): InvoiceCategory => {
+  if (shipment?.service_mode === "international_express") return "exempt_transport";
   const text = [shipment?.service_type, shipment?.transport_type, shipment?.origin_country, shipment?.destination_country, shipment?.description]
     .filter(Boolean).join(" ").toLocaleLowerCase("tr-TR");
   if (text.includes("uluslararası") || text.includes("international") || text.includes("ihracat") || text.includes("ithalat")) return "international_transport";
@@ -69,6 +70,9 @@ const renderTemplate = (value: string, shipment?: any) => {
     destination: shipment?.destination || shipment?.delivery_address || "Varış noktası",
     tracking_number: shipment?.tracking_number || shipment?.shipment_code || "-",
     service_type: shipment?.service_type || shipment?.transport_type || "Taşıma",
+    awb_number: shipment?.awb_number || "-",
+    express_carrier: shipment?.express_carrier || "Express taşıyıcı",
+    package_type: shipment?.package_type === "document" ? "dosya" : shipment?.package_type === "package" ? "paket" : "gönderi",
   };
   return Object.entries(replacements).reduce(
     (result, [key, replacement]) => result.replace(new RegExp(`{{${key}}}`, "g"), replacement),
@@ -133,9 +137,12 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       setIncludeBankDetails(accounts.length > 0);
       const initialCategory = inferCategory(shipment);
       setInvoiceCategory(initialCategory);
-      const initialTemplate = templates.find((template) => template.category === initialCategory && template.is_default)
-        || templates.find((template) => template.category === initialCategory)
-        || templates[0];
+      const initialTemplate = (
+        shipment?.service_mode === "international_express"
+          ? templates.find((template) => template.code === "EXPRESS_ISTISNA_311")
+          : templates.find((template) => template.category === initialCategory && template.is_default)
+            || templates.find((template) => template.category === initialCategory)
+      ) || templates[0];
       if (initialTemplate) applyNoteTemplate(initialTemplate);
     } catch (error: any) {
       toast({ title: "Fatura açıklama ayarları yüklenemedi", description: error.message, variant: "destructive" });
@@ -152,7 +159,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     if (shipment?.customer_id) {
       setSelectedCustomer(shipment.customer_id);
       const unitPrice = Number(shipment.satis_tutar || 0);
-      const vatRate = 20;
+      const vatRate = shipment.service_mode === "international_express" ? 0 : 20;
       setCurrency(shipment.currency || "TRY");
       setItems([{
         id: "1",
@@ -163,6 +170,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         subtotal: unitPrice,
         vatAmount: unitPrice * vatRate / 100,
         total: unitPrice * (1 + vatRate / 100),
+        exemptionCode: shipment.service_mode === "international_express" ? "311" : "",
       }]);
     }
   }, [isOpen, shipment]);

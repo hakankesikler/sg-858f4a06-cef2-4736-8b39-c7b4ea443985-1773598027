@@ -139,6 +139,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [manualTotalPrice, setManualTotalPrice] = useState<string>("");
   
   const [formData, setFormData] = useState({
+    service_mode: "road",
+    booking_provider: "quickshipper",
+    express_carrier: "",
+    awb_number: "",
+    provider_reference: "",
+    package_type: "document",
+    origin_country_code: "TR",
+    destination_country_code: "",
+    carrier_status: "GÖNDERİ OLUŞTURULDU",
+    carrier_status_description: "",
     supplier_id: "",
     driver_id: "",
     vehicle_id: "",
@@ -326,6 +336,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         transport_type: detail?.transport_type?.toString() || "2",
       });
       setFormData({
+        service_mode: initialData.service_mode || "road",
+        booking_provider: initialData.booking_provider || "quickshipper",
+        express_carrier: initialData.express_carrier || "",
+        awb_number: initialData.awb_number || "",
+        provider_reference: initialData.provider_reference || "",
+        package_type: initialData.package_type || "document",
+        origin_country_code: initialData.origin_country_code || "TR",
+        destination_country_code: initialData.destination_country_code || "",
+        carrier_status: initialData.carrier_status || "GÖNDERİ OLUŞTURULDU",
+        carrier_status_description: initialData.carrier_status_description || "",
         supplier_id: initialData.supplier_id || "",
         driver_id: initialData.driver_id || "",
         vehicle_id: initialData.vehicle_id || "",
@@ -514,13 +534,21 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     }
 
     const invalidCargo = cargoItems.some(item => item.adet <= 0 || item.kg_ds <= 0 || !item.cinsi.trim());
-    const incompleteAssignment = Boolean(formData.driver_id) !== Boolean(formData.vehicle_id);
-    if (!formData.customer_id || incompleteAssignment ||
+    const isExpress = formData.service_mode === "international_express";
+    const incompleteAssignment = !isExpress && Boolean(formData.driver_id) !== Boolean(formData.vehicle_id);
+    const invalidExpress = isExpress && (
+      !formData.booking_provider || !formData.package_type ||
+      !/^[A-Z]{2}$/.test(formData.origin_country_code) ||
+      !/^[A-Z]{2}$/.test(formData.destination_country_code)
+    );
+    if (!formData.customer_id || incompleteAssignment || invalidExpress ||
         !formData.origin.trim() || !formData.destination.trim() || !pickupDate || invalidCargo) {
       toast({
         title: "Eksik Bilgi",
         description: incompleteAssignment
           ? "Sürücü ve araç birlikte seçilmelidir."
+          : invalidExpress
+            ? "Express gönderide sağlayıcı, dosya/paket türü ile çıkış ve varış ülke kodları zorunludur."
           : "Müşteri, çıkış/varış, yükleme tarihi ve geçerli yük kalemleri zorunludur.",
         variant: "destructive",
       });
@@ -532,9 +560,19 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       
       const submitData = {
         shipment_code: shipmentCode,
+        service_mode: formData.service_mode as Shipment["service_mode"],
+        booking_provider: isExpress ? formData.booking_provider as Shipment["booking_provider"] : null,
+        express_carrier: isExpress ? (formData.express_carrier || null) as Shipment["express_carrier"] : null,
+        awb_number: isExpress ? formData.awb_number.replace(/\s+/g, "").toUpperCase() || null : null,
+        provider_reference: isExpress ? formData.provider_reference.trim().toUpperCase() || null : null,
+        package_type: isExpress ? formData.package_type as Shipment["package_type"] : null,
+        origin_country_code: isExpress ? formData.origin_country_code : null,
+        destination_country_code: isExpress ? formData.destination_country_code : null,
+        carrier_status: isExpress ? formData.carrier_status : null,
+        carrier_status_description: isExpress ? formData.carrier_status_description || null : null,
         supplier_id: formData.supplier_id || (editMode && initialData ? initialData.supplier_id : null),
-        driver_id: formData.driver_id || (editMode && initialData ? initialData.driver_id : null),
-        vehicle_id: formData.vehicle_id || (editMode && initialData ? initialData.vehicle_id : null),
+        driver_id: isExpress ? null : formData.driver_id || (editMode && initialData ? initialData.driver_id : null),
+        vehicle_id: isExpress ? null : formData.vehicle_id || (editMode && initialData ? initialData.vehicle_id : null),
         customer_id: formData.customer_id || (editMode && initialData ? initialData.customer_id : null),
         origin: formData.origin || (editMode && initialData ? initialData.origin : null),
         destination: formData.destination || (editMode && initialData ? initialData.destination : null),
@@ -612,9 +650,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         
         toast({
           title: "Başarılı",
-        description: formData.driver_id
-          ? "Sevkiyat atamasıyla birlikte oluşturuldu"
-          : "Sevkiyat oluşturuldu; sürücü ve araç ataması bekliyor",
+        description: isExpress
+          ? (formData.awb_number ? "Express gönderi AWB numarasıyla oluşturuldu" : "Express gönderi oluşturuldu; yola çıkmadan önce taşıyıcı ve AWB girilmelidir")
+          : formData.driver_id
+            ? "Sevkiyat atamasıyla birlikte oluşturuldu"
+            : "Sevkiyat oluşturuldu; sürücü ve araç ataması bekliyor",
         });
       }
 
@@ -637,6 +677,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
   const resetForm = () => {
     setFormData({
+      service_mode: "road",
+      booking_provider: "quickshipper",
+      express_carrier: "",
+      awb_number: "",
+      provider_reference: "",
+      package_type: "document",
+      origin_country_code: "TR",
+      destination_country_code: "",
+      carrier_status: "GÖNDERİ OLUŞTURULDU",
+      carrier_status_description: "",
       supplier_id: "",
       driver_id: "",
       vehicle_id: "",
@@ -687,7 +737,99 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             <Input value={shipmentCode} disabled className="bg-gray-50" />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Taşıma Hizmeti *</Label>
+                <Select value={formData.service_mode} onValueChange={(value) => setFormData({
+                  ...formData,
+                  service_mode: value,
+                  driver_id: value === "international_express" ? "" : formData.driver_id,
+                  vehicle_id: value === "international_express" ? "" : formData.vehicle_id,
+                })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="road">Karayolu taşımacılığı</SelectItem>
+                    <SelectItem value="international_express">Uluslararası express kargo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="rounded-lg bg-white p-3 text-sm text-slate-600">
+                {formData.service_mode === "international_express"
+                  ? "QuickShipper veya doğrudan FedEx, UPS, DHL, Aramex gibi taşıyıcılarla yapılan dosya ve paket gönderileri."
+                  : "Sürücü, araç ve gerektiğinde U-ETDS akışıyla yürütülen karayolu sevkiyatları."}
+              </div>
+            </div>
+
+            {formData.service_mode === "international_express" && (
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Hizmet Sağlayıcı *</Label>
+                  <Select value={formData.booking_provider} onValueChange={(value) => setFormData({ ...formData, booking_provider: value })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="quickshipper">QuickShipper</SelectItem>
+                      <SelectItem value="direct">Taşıyıcı ile doğrudan</SelectItem>
+                      <SelectItem value="other">Diğer sağlayıcı</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Entegratör / Taşıyıcı</Label>
+                  <Select value={formData.express_carrier || "pending"} onValueChange={(value) => setFormData({ ...formData, express_carrier: value === "pending" ? "" : value })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Henüz belli değil</SelectItem>
+                      <SelectItem value="FEDEX">FedEx</SelectItem>
+                      <SelectItem value="UPS">UPS</SelectItem>
+                      <SelectItem value="DHL">DHL</SelectItem>
+                      <SelectItem value="ARAMEX">Aramex</SelectItem>
+                      <SelectItem value="TNT">TNT</SelectItem>
+                      <SelectItem value="DPD">DPD</SelectItem>
+                      <SelectItem value="QS_SPECIAL">QuickShipper Özel Teslimat</SelectItem>
+                      <SelectItem value="OTHER">Diğer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Gönderi Türü *</Label>
+                  <Select value={formData.package_type} onValueChange={(value) => setFormData({ ...formData, package_type: value })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="document">Dosya</SelectItem><SelectItem value="package">Paket</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>QuickShipper Gönderi No</Label>
+                  <Input value={formData.provider_reference} onChange={(event) => setFormData({ ...formData, provider_reference: event.target.value.toUpperCase() })} placeholder="Örn. 6Q3431791689" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Entegratör AWB Numarası</Label>
+                  <Input value={formData.awb_number} onChange={(event) => setFormData({ ...formData, awb_number: event.target.value.replace(/\s+/g, "").toUpperCase() })} placeholder="Yola çıkmadan önce zorunlu" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Taşıyıcı Durumu</Label>
+                  <Select value={formData.carrier_status} onValueChange={(value) => setFormData({ ...formData, carrier_status: value })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="GÖNDERİ OLUŞTURULDU">Gönderi Oluşturuldu</SelectItem>
+                      <SelectItem value="ÇIKIŞ NOKTASINDA">Çıkış Noktasında</SelectItem>
+                      <SelectItem value="GÜMRÜKTE">Gümrükte</SelectItem>
+                      <SelectItem value="DAĞITIM MERKEZİNDE">Dağıtım Merkezinde</SelectItem>
+                      <SelectItem value="DAĞITIMDA">Dağıtımda</SelectItem>
+                      <SelectItem value="TESLİM EDİLDİ">Teslim Edildi</SelectItem>
+                      <SelectItem value="İSTİSNA">İstisna / Sorun</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2"><Label>Çıkış Ülke Kodu *</Label><Input value={formData.origin_country_code} onChange={(event) => setFormData({ ...formData, origin_country_code: event.target.value.replace(/[^a-z]/gi, "").toUpperCase().slice(0, 2) })} placeholder="TR" /></div>
+                <div className="space-y-2"><Label>Varış Ülke Kodu *</Label><Input value={formData.destination_country_code} onChange={(event) => setFormData({ ...formData, destination_country_code: event.target.value.replace(/[^a-z]/gi, "").toUpperCase().slice(0, 2) })} placeholder="DE, US, GB..." /></div>
+                <div className="space-y-2 md:col-span-3"><Label>Taşıyıcı Durum Açıklaması</Label><Input value={formData.carrier_status_description} onChange={(event) => setFormData({ ...formData, carrier_status_description: event.target.value })} placeholder="Gümrük, gecikme veya teslim bilgisi" /></div>
+                <p className="md:col-span-3 text-xs text-slate-500">AWB girildiğinde REX takip ekranı bu numarayla da sorgulanır ve müşteriyi resmî taşıyıcı takip sayfasına yönlendirir.</p>
+              </div>
+            )}
+          </div>
+
+          <div className={`grid gap-4 ${formData.service_mode === "road" ? "grid-cols-3" : "grid-cols-1"}`}>
             <div className="space-y-2">
               <Label>Tedarikçi</Label>
               <Input
@@ -717,7 +859,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className={`space-y-2 ${formData.service_mode === "road" ? "" : "hidden"}`}>
               <Label>Sürücü</Label>
               <Input
                 placeholder="Sürücü ara..."
@@ -746,7 +888,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className={`space-y-2 ${formData.service_mode === "road" ? "" : "hidden"}`}>
               <Label>Araç</Label>
               <Input
                 placeholder="Araç ara..."
@@ -1123,6 +1265,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
           </div>
 
+          {formData.service_mode === "road" && (
           <div className="border-t pt-4">
             <div className="mb-4">
               <h3 className="font-semibold">U-ETDS Bildirim Bilgileri</h3>
@@ -1176,6 +1319,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               </div>
             </div>
           </div>
+          )}
 
           {/* TESLIMAT BİLGİLERİ - Sadece teslim edilmiş sevkiyatlar için */}
           {editMode && initialData && initialData.status === "teslim_edildi" && (

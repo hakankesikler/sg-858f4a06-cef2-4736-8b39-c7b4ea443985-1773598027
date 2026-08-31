@@ -891,3 +891,42 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(accounting, /Entegre Ofis/);
   assert.match(accounting, /KolayBiOfficeModule/);
 });
+
+test("international express cargo supports QuickShipper AWB tracking and mandatory 311 exemption invoices", async () => {
+  const [sql, form, tracking, publicService, api, logistics, invoice] = await Promise.all([
+    read("supabase/migrations/20260830153000_international_express_shipments.sql"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/components/TrackingSection.tsx"),
+    read("src/services/publicTrackingService.ts"),
+    read("src/pages/api/tracking/express.ts"),
+    read("src/components/modules/LogisticsModule.tsx"),
+    read("src/components/InvoiceDialog.tsx"),
+  ]);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS service_mode/);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS awb_number/);
+  assert.match(sql, /shipments_express_awb_unique/);
+  assert.match(sql, /international_express/);
+  assert.match(sql, /EXPRESS_ISTISNA_311/);
+  assert.match(sql, /KDV Kanununun 14\/1/);
+  assert.match(sql, /GİB istisna kodu: 311/);
+  assert.match(sql, /'exemptionCode','311'/);
+  assert.match(sql, /s\.service_mode='road'/);
+  assert.match(sql, /rex_express_tracking_url/);
+  assert.match(form, /Uluslararası express kargo/);
+  assert.match(form, /QuickShipper Gönderi No/);
+  assert.match(form, /Entegratör AWB Numarası/);
+  assert.match(form, /formData\.service_mode === "road"/);
+  assert.match(tracking, /REX takip numarası veya FedEx, UPS, DHL ve Aramex AWB/);
+  assert.match(tracking, /Taşıyıcıda Canlı Takip/);
+  assert.match(tracking, /QuickShipper Gönderi No/);
+  assert.match(publicService, /\^\[A-Z0-9-\]\{6,40\}\$/);
+  assert.match(publicService, /\/api\/tracking\/express/);
+  assert.match(api, /QUICKSHIPPER_TRACKING_API_URL/);
+  assert.match(api, /QUICKSHIPPER_API_KEY/);
+  assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(api, /carrier_status_changed/);
+  assert.match(logistics, /ULUSLARARASI EXPRESS/);
+  assert.match(logistics, /AWB bekliyor/);
+  assert.match(invoice, /EXPRESS_ISTISNA_311/);
+  assert.match(invoice, /exempt_transport/);
+});

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck, AlertTriangle, RadioTower } from "lucide-react";
+import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck, AlertTriangle, RadioTower, ExternalLink } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService, type ShipmentRevisionRequest } from "@/services/shipmentService";
@@ -36,6 +36,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+function carrierTrackingUrl(carrier?: string | null, awb?: string | null) {
+  if (!carrier || !awb) return "";
+  const encoded = encodeURIComponent(awb);
+  const urls: Record<string, string> = {
+    FEDEX: `https://www.fedex.com/fedextrack/?trknbr=${encoded}`,
+    UPS: `https://www.ups.com/track?tracknum=${encoded}`,
+    DHL: `https://www.dhl.com/tr-tr/home/tracking/tracking-express.html?submit=1&tracking-id=${encoded}`,
+    ARAMEX: `https://www.aramex.com/track/results?ShipmentNumber=${encoded}`,
+    TNT: `https://www.tnt.com/express/tr_tr/site/shipping-tools/tracking.html?searchType=con&cons=${encoded}`,
+    DPD: `https://tracking.dpd.de/status/en_US/parcel/${encoded}`,
+  };
+  return urls[carrier.toUpperCase()] || "";
+}
 
 export function LogisticsModule() {
   const { toast } = useToast();
@@ -345,8 +359,8 @@ export function LogisticsModule() {
     const matchesReceiver = normalize(shipment.receiver || "").includes(normalize(filters.receiver));
     const matchesDistrict = normalize(shipment.receiver_district || "").includes(normalize(filters.receiver_district));
     const matchesDestination = normalize(shipment.destination || "").includes(normalize(filters.destination));
-    const matchesDriver = normalize(shipment.driver?.full_name || "").includes(normalize(filters.driver));
-    const matchesVehicle = normalize(shipment.vehicle?.cekici_plakasi || "").includes(normalize(filters.vehicle));
+    const matchesDriver = normalize(shipment.service_mode === "international_express" ? shipment.express_carrier || "" : shipment.driver?.full_name || "").includes(normalize(filters.driver));
+    const matchesVehicle = normalize(shipment.service_mode === "international_express" ? `${shipment.booking_provider || ""} ${shipment.provider_reference || ""} ${shipment.awb_number || ""}` : shipment.vehicle?.cekici_plakasi || "").includes(normalize(filters.vehicle));
     const matchesStatus = normalize(getStatusLabel(shipment.status)).includes(normalize(filters.status));
 
     return (
@@ -372,8 +386,8 @@ export function LogisticsModule() {
         "Alıcı": shipment.receiver || "-",
         "Alıcı İlçe": shipment.receiver_district || "-",
         "Alıcı İl": shipment.destination || "-",
-        "Sürücü": shipment.driver?.full_name || "-",
-        "Araç": shipment.vehicle?.cekici_plakasi || "-",
+        "Sürücü / Taşıyıcı": shipment.service_mode === "international_express" ? shipment.express_carrier || "-" : shipment.driver?.full_name || "-",
+        "Araç / AWB": shipment.service_mode === "international_express" ? shipment.awb_number || "-" : shipment.vehicle?.cekici_plakasi || "-",
         "Teslim Tarihi": shipment.delivery_date ? format(new Date(shipment.delivery_date), "dd.MM.yyyy", { locale: tr }) : "-",
         "Teslim Alan": shipment.delivered_to || "-",
         "Durum": getStatusLabel(shipment.status),
@@ -629,14 +643,24 @@ export function LogisticsModule() {
                       <td className="p-4">
                         <div>{shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd MMM yyyy", { locale: tr }) : "-"}</div>
                         {shipment.tracking_number && <div className="mt-1 font-mono text-[11px] text-blue-700">{shipment.tracking_number}</div>}
+                        {shipment.service_mode === "international_express" && <div className="mt-1 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-800">ULUSLARARASI EXPRESS</div>}
                       </td>
                       <td className="p-4">{shipment.sender_name || "-"}</td>
                       <td className="p-4">{shipment.receiver || "-"}</td>
                       <td className="p-4">{shipment.origin || "-"}</td>
                       <td className="p-4">{shipment.receiver_district || "-"}</td>
                       <td className="p-4">{shipment.destination || "-"}</td>
-                      <td className="p-4 font-medium">{shipment.driver?.full_name || "-"}</td>
-                      <td className="p-4">{shipment.vehicle?.cekici_plakasi || "-"}</td>
+                      <td className="p-4 font-medium">
+                        {shipment.service_mode === "international_express" ? shipment.express_carrier || "Taşıyıcı bekliyor" : shipment.driver?.full_name || "-"}
+                      </td>
+                      <td className="p-4">
+                        {shipment.service_mode === "international_express" ? (
+                          <div className="space-y-1 text-xs">
+                            <p className="font-mono font-semibold">{shipment.awb_number || "AWB bekliyor"}</p>
+                            {shipment.provider_reference && <p className="text-slate-500">QS: {shipment.provider_reference}</p>}
+                          </div>
+                        ) : shipment.vehicle?.cekici_plakasi || "-"}
+                      </td>
                       <td className="p-4">
                         {shipment.delivery_date ? format(new Date(shipment.delivery_date), "dd MMM yyyy", { locale: tr }) : "-"}
                       </td>
@@ -703,6 +727,11 @@ export function LogisticsModule() {
                               title="Müşteri takip bağlantısını kopyala"
                             >
                               <Copy className="h-4 w-4 text-blue-600" />
+                            </Button>
+                          )}
+                          {shipment.service_mode === "international_express" && carrierTrackingUrl(shipment.express_carrier, shipment.awb_number) && (
+                            <Button variant="ghost" size="sm" asChild title="Taşıyıcıda canlı takip">
+                              <a href={carrierTrackingUrl(shipment.express_carrier, shipment.awb_number)} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 text-orange-600" /></a>
                             </Button>
                           )}
                           <Button

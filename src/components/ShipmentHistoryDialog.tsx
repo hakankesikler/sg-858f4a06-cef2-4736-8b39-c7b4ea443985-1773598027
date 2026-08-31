@@ -46,6 +46,16 @@ const eventLabels: Record<string, string> = {
 
 const fieldLabels: Record<string, string> = {
   tracking_number: "Takip numarası",
+  service_mode: "Taşıma hizmeti",
+  booking_provider: "Hizmet sağlayıcı",
+  express_carrier: "Express taşıyıcı",
+  awb_number: "Taşıyıcı AWB",
+  provider_reference: "QuickShipper gönderi no",
+  package_type: "Gönderi türü",
+  origin_country_code: "Çıkış ülke kodu",
+  destination_country_code: "Varış ülke kodu",
+  carrier_status: "Taşıyıcı durumu",
+  carrier_status_description: "Taşıyıcı durum açıklaması",
   customer_id: "Müşteri",
   supplier_id: "Tedarikçi",
   driver_id: "Sürücü",
