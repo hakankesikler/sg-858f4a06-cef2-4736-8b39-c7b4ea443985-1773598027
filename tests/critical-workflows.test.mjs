@@ -57,6 +57,38 @@ test("GPSLine pallet pricing uses aggregate desi, a 250 minimum and a 35 percent
   assert.equal(Math.round(adana450Cost * 1.35 * 100) / 100, 5522.18);
 });
 
+test("supplier classification separates hauliers from corporate carriers and protects carrier assignment", async () => {
+  const [sql, permissions, form, cariForm, shipmentService, crmService] = await Promise.all([
+    read("supabase/migrations/20260831193000_supplier_carrier_classification.sql"),
+    read("src/lib/staff-permissions.ts"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/components/CariForm.tsx"),
+    read("src/services/shipmentService.ts"),
+    read("src/services/crmService.ts"),
+  ]);
+  assert.match(sql, /supplier_category IN \('nakliyeci','tasiyici','forwarder','diger'\)/);
+  assert.match(sql, /LIKE '%gpsline%'/);
+  assert.match(sql, /LIKE '%quickshipper%'/);
+  assert.match(sql, /LIKE '%ergulkargo%'/);
+  assert.match(sql, /operations\.carrier_assignment/);
+  assert.match(sql, /rex_can_assign_transport_carrier/);
+  assert.match(sql, /rex_customer_carrier_classification_guard/);
+  assert.match(sql, /Kurumsal taşıyıcı ataması için ayrıca taşıyıcı atama yetkisi gereklidir/);
+  assert.match(sql, /v_category='nakliyeci'[\s\S]*sürücü ve araç zorunludur/);
+  assert.match(sql, /v_new_category='tasiyici'[\s\S]*NEW\.status='atama_bekliyor'[\s\S]*NEW\.status:='beklemede'/);
+  assert.match(sql, /Nakliyeci sürücüsünün 11 haneli T\.C\. kimlik numarası zorunludur/);
+  assert.match(sql, /Nakliyeci aracının plakası zorunludur/);
+  assert.match(permissions, /operations\.carrier_assignment/);
+  assert.doesNotMatch(permissions, /operations:\s*\{[^}]*operations\.carrier_assignment[^}]*\}/);
+  assert.match(form, /selectedSupplierIsCarrier/);
+  assert.match(form, /selectedSupplierIsHaulier/);
+  assert.match(form, /Kurumsal taşıyıcı atandı/);
+  assert.match(form, /Nakliyeci atamasında sürücü ve araç zorunludur/);
+  assert.match(cariForm, /value="tasiyici">Taşıyıcı Firma/);
+  assert.match(shipmentService, /rex_can_assign_transport_carrier/);
+  assert.match(crmService, /supplierCategory === "tasiyici"[\s\S]*prefix = "TSY"/);
+});
+
 test("shipment assignment still requires driver licence and vehicle registration", async () => {
   const sql = await read("supabase/migrations/20260818143000_transport_workflow_and_kolaybi.sql");
   assert.match(sql, /ehliyet_dosyasi_url/);

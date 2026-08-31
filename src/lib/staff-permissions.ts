@@ -14,6 +14,7 @@ export const permissionCatalog = [
   { key: "sales.work_orders", group: "Satış ve CRM", label: "Teklif ve iş kayıtları", description: "Yeni iş kaydı, onay ve red işleyişi" },
   { key: "operations.shipments", group: "Operasyon", label: "Sevkiyatlar", description: "Sevkiyat görüntüleme, oluşturma ve düzenleme" },
   { key: "operations.assignments", group: "Operasyon", label: "Sürücü ve araç", description: "Sürücü/araç kayıtları ve sevkiyat ataması" },
+  { key: "operations.carrier_assignment", group: "Operasyon", label: "Kurumsal taşıyıcı atama", description: "GPSLine, Ergül Kargo ve QuickShipper gibi taşıyıcı carilerini sevkiyata atama" },
   { key: "operations.delivery", group: "Operasyon", label: "Teslim evrakları", description: "Teslim belgesi görüntüleme, yükleme ve tamamlama" },
   { key: "operations.exceptions", group: "Operasyon", label: "İstisna yönetimi", description: "Gecikme, hasar, eksik teslimat ve iade kayıtları" },
   { key: "operations.uetds", group: "Operasyon", label: "U-ETDS", description: "U-ETDS hazırlık, gönderim ve durum ekranları" },
@@ -73,7 +74,7 @@ export function canAccessModuleWithPermissions(role: AppRole, permissions: Permi
   if (role === "admin") return true;
   if (module === "dashboard") return true;
   if (module === "crm") return hasPermission(permissions, "crm.customers") || hasPermission(permissions, "crm.portal_invites") || hasPermission(permissions, "crm.sales_pipeline");
-  if (module === "logistics") return ["sales.work_orders", "operations.shipments", "operations.assignments", "operations.delivery", "operations.exceptions", "operations.uetds"].some((key) => hasPermission(permissions, key as PermissionKey));
+  if (module === "logistics") return ["sales.work_orders", "operations.shipments", "operations.assignments", "operations.carrier_assignment", "operations.delivery", "operations.exceptions", "operations.uetds"].some((key) => hasPermission(permissions, key as PermissionKey));
   if (module === "accounting") return ["accounting.sales", "accounting.purchase", "accounting.accounts", "accounting.expenses"].some((key) => hasPermission(permissions, key as PermissionKey));
   if (module === "analytics") return hasPermission(permissions, "analytics.web");
   if (module === "reports") return ["reports.sales", "reports.operations", "reports.accounting"].some((key) => hasPermission(permissions, key as PermissionKey));

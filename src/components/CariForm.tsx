@@ -235,6 +235,15 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.account_type === "tedarikci" && !formData.supplier_category) {
+      toast({
+        title: "Tedarikçi kategorisi gerekli",
+        description: "Nakliyeci, taşıyıcı firma, forwarder/acente veya diğer tedarikçi kategorilerinden birini seçin.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Validate required fields
     if (cariTuru === "gercek") {
@@ -537,6 +546,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                       >
                         <option value="">Seçiniz</option>
                         <option value="nakliyeci">Nakliyeci</option>
+                        <option value="tasiyici">Taşıyıcı Firma</option>
                         <option value="forwarder">Forwarder / Acente</option>
                         <option value="diger">Diğer Tedarikçiler</option>
                       </select>
@@ -646,6 +656,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                       >
                         <option value="">Seçiniz</option>
                         <option value="nakliyeci">Nakliyeci</option>
+                        <option value="tasiyici">Taşıyıcı Firma</option>
                         <option value="forwarder">Forwarder / Acente</option>
                         <option value="diger">Diğer Tedarikçiler</option>
                       </select>
@@ -846,6 +857,17 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 Adres Ekle
               </Button>
             </div>
+
+            {formData.account_type === "tedarikci" && formData.supplier_category === "tasiyici" && (
+              <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+                <p className="font-semibold">Kurumsal taşıyıcı firma</p>
+                <p className="mt-1">
+                  GPSLine, Ergül Kargo ve QuickShipper gibi kendi operasyon kaynağını kullanan firmalar bu kategoridedir.
+                  Bu cari sevkiyata atandığında sürücü, T.C. kimlik, ehliyet, plaka ve ruhsat bilgileri opsiyonel olur.
+                  Taşıyıcı ataması yalnızca ayrıca yetkilendirilmiş personel tarafından yapılabilir.
+                </p>
+              </div>
+            )}
 
             {/* Nakliyeci Specific Fields */}
             {formData.account_type === "tedarikci" && formData.supplier_category === "nakliyeci" && (

@@ -125,6 +125,8 @@ export const crmService = {
       } else if (accountType === "tedarikci") {
         if (supplierCategory === "nakliyeci") {
           prefix = "NKL";
+        } else if (supplierCategory === "tasiyici") {
+          prefix = "TSY";
         } else if (supplierCategory === "forwarder") {
           prefix = "FWD";
         } else {

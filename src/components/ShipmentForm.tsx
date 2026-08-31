@@ -83,6 +83,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [canAssignCarrier, setCanAssignCarrier] = useState(false);
   
   // Search states
   const [searchSupplier, setSearchSupplier] = useState("");
@@ -184,6 +185,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     () => suppliers.find((supplier) => supplier.id === formData.supplier_id),
     [suppliers, formData.supplier_id],
   );
+  const selectedSupplierIsCarrier = selectedSupplier?.supplier_category === "tasiyici";
+  const selectedSupplierIsHaulier = selectedSupplier?.supplier_category === "nakliyeci";
   const filteredDrivers = useMemo(() => {
     if (!searchDriver) return drivers;
     const search = normalizeTurkish(searchDriver);
@@ -418,11 +421,13 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
   const loadSelectionData = async () => {
     try {
-      const [driversData, vehiclesData, customersData] = await Promise.all([
+      const [driversData, vehiclesData, customersData, carrierPermission] = await Promise.all([
         driverService.getDrivers(),
         vehicleService.getVehicles(),
-        crmService.getCustomers()
+        crmService.getCustomers(),
+        shipmentService.canAssignTransportCarrier(),
       ]);
+      setCanAssignCarrier(carrierPermission);
       const today = new Date().toISOString().slice(0, 10);
       setDrivers(driversData.filter((driver) =>
         driver.status === "Aktif" &&
@@ -542,17 +547,24 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     const invalidCargo = cargoItems.some(item => item.adet <= 0 || item.kg_ds <= 0 || !item.cinsi.trim());
     const isExpress = formData.service_mode === "international_express";
     const incompleteAssignment = !isExpress && Boolean(formData.driver_id) !== Boolean(formData.vehicle_id);
+    const missingHaulierAssignment = !isExpress && selectedSupplierIsHaulier && (!formData.driver_id || !formData.vehicle_id);
+    const carrierAssignmentChanged = selectedSupplierIsCarrier && (!editMode || initialData?.supplier_id !== formData.supplier_id);
+    const unauthorizedCarrierAssignment = carrierAssignmentChanged && !canAssignCarrier;
     const invalidExpress = isExpress && (
       !formData.booking_provider || !formData.package_type ||
       !/^[A-Z]{2}$/.test(formData.origin_country_code) ||
       !/^[A-Z]{2}$/.test(formData.destination_country_code)
     );
-    if (!formData.customer_id || incompleteAssignment || invalidExpress ||
+    if (!formData.customer_id || incompleteAssignment || missingHaulierAssignment || unauthorizedCarrierAssignment || invalidExpress ||
         !formData.origin.trim() || !formData.destination.trim() || !pickupDate || invalidCargo) {
       toast({
         title: "Eksik Bilgi",
         description: incompleteAssignment
           ? "Sürücü ve araç birlikte seçilmelidir."
+          : missingHaulierAssignment
+            ? "Nakliyeci ile yapılan karayolu sevkiyatında sürücü ve araç zorunludur."
+          : unauthorizedCarrierAssignment
+            ? "Kurumsal taşıyıcı ataması için personel hesabınıza ayrıca yetki verilmelidir."
           : invalidExpress
             ? "Express gönderide sağlayıcı, dosya/paket türü ile çıkış ve varış ülke kodları zorunludur."
           : "Müşteri, çıkış/varış, yükleme tarihi ve geçerli yük kalemleri zorunludur.",
@@ -857,8 +869,13 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     <div className="p-2 text-sm text-gray-500">Tedarikçi bulunamadı</div>
                   ) : (
                     filteredSuppliers.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id!}>
+                      <SelectItem
+                        key={supplier.id}
+                        value={supplier.id!}
+                        disabled={supplier.supplier_category === "tasiyici" && !canAssignCarrier && supplier.id !== initialData?.supplier_id}
+                      >
                         {supplier.customer_code} - {supplier.name?.toUpperCase()}
+                        {supplier.supplier_category === "tasiyici" ? " · TAŞIYICI" : supplier.supplier_category === "nakliyeci" ? " · NAKLİYECİ" : ""}
                       </SelectItem>
                     ))
                   )}
@@ -866,7 +883,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               </Select>
             </div>
             <div className={`space-y-2 ${formData.service_mode === "road" ? "" : "hidden"}`}>
-              <Label>Sürücü</Label>
+              <Label>Sürücü {selectedSupplierIsHaulier ? "*" : selectedSupplierIsCarrier ? "(Opsiyonel)" : ""}</Label>
               <Input
                 placeholder="Sürücü ara..."
                 value={searchDriver}
@@ -895,7 +912,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               </Select>
             </div>
             <div className={`space-y-2 ${formData.service_mode === "road" ? "" : "hidden"}`}>
-              <Label>Araç</Label>
+              <Label>Araç {selectedSupplierIsHaulier ? "*" : selectedSupplierIsCarrier ? "(Opsiyonel)" : ""}</Label>
               <Input
                 placeholder="Araç ara..."
                 value={searchVehicle}
@@ -924,6 +941,17 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               </Select>
             </div>
           </div>
+
+          {formData.service_mode === "road" && selectedSupplierIsCarrier && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+              Kurumsal taşıyıcı atandı. Sürücü, T.C., ehliyet, plaka ve ruhsat bilgileri bu sevkiyat için opsiyoneldir.
+            </div>
+          )}
+          {formData.service_mode === "road" && selectedSupplierIsHaulier && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Nakliyeci atamasında sürücü ve araç zorunludur; T.C., ehliyet, plaka, ruhsat ve uygunluk kontrolleri kayıt sırasında yapılır.
+            </div>
+          )}
 
           <GpslineDeliveryEstimator
             supplierName={selectedSupplier?.company || selectedSupplier?.name}

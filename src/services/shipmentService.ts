@@ -78,6 +78,15 @@ export interface ShipmentEvent {
 }
 
 export const shipmentService = {
+  async canAssignTransportCarrier(): Promise<boolean> {
+    const { data, error } = await supabase.rpc("rex_can_assign_transport_carrier" as any);
+    if (error) {
+      console.warn("Carrier assignment permission could not be loaded:", error.message);
+      return false;
+    }
+    return data === true;
+  },
+
   async getShipmentHistory(shipmentId: string): Promise<ShipmentEvent[]> {
     const { data, error } = await (supabase.from("shipment_events" as any) as any)
       .select("*")
