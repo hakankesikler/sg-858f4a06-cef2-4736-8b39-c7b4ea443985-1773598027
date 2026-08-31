@@ -75,4 +75,12 @@ export const kolaybiOfficeService = {
       }),
     });
   },
+
+  async resolveMapping(input: { recordId: string; action: "match" | "ignore"; localEntityId?: string }) {
+    return authenticatedFetch("/api/kolaybi/mappings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+  },
 };

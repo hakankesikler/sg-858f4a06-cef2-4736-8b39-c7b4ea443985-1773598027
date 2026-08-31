@@ -931,9 +931,11 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
 });
 
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
-  const [sql, api, service, office, accounting] = await Promise.all([
+  const [sql, mappingSql, api, mappingApi, service, office, accounting] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
+    read("supabase/migrations/20260831210000_kolaybi_manual_mappings.sql"),
     read("src/pages/api/kolaybi/office-sync.ts"),
+    read("src/pages/api/kolaybi/mappings.ts"),
     read("src/services/kolaybiOfficeService.ts"),
     read("src/components/modules/KolayBiOfficeModule.tsx"),
     read("src/components/modules/AccountingModule.tsx"),
@@ -943,6 +945,11 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.kolaybi_sync_events/);
   assert.match(sql, /rex_kolaybi_events_append_only/);
   assert.match(sql, /REVOKE INSERT,UPDATE,DELETE ON public\.kolaybi_sync_events FROM authenticated/);
+  assert.match(mappingSql, /manual_match/);
+  assert.match(mappingSql, /manual_ignore/);
+  assert.match(mappingSql, /rex_resolve_kolaybi_mapping/);
+  assert.match(mappingSql, /SECURITY DEFINER/);
+  assert.match(mappingSql, /invoice_product_mappings/);
   assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(api, /rex_has_permission/);
   assert.match(api, /integrations\.connections/);
@@ -952,9 +959,18 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(api, /type=sale_invoice/);
   assert.match(api, /type=purchase_invoice/);
   assert.match(api, /review_required/);
+  assert.match(api, /updatePartner/);
+  assert.match(api, /integration_partners/);
+  assert.match(mappingApi, /integrations\.connections/);
+  assert.match(mappingApi, /p_local_entity_id/);
+  assert.match(mappingApi, /rex_resolve_kolaybi_mapping/);
   assert.match(service, /kolaybi_master_records/);
   assert.match(service, /kolaybi_sync_runs/);
+  assert.match(service, /resolveMapping/);
   assert.match(office, /KolayBi Entegre Ofis/);
+  assert.match(office, /KolayBi Eşleştirme Kontrolü/);
+  assert.match(office, /TMS carisi seçin/);
+  assert.match(office, /Yok say/);
   assert.match(office, /Cari Borç \/ Alacak Raporu/);
   assert.match(office, /Math\.abs\(row\.balance\) >= 0\.01/);
   assert.match(office, /Tahsil Edilecek/);

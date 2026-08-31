@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ArrowRight, BarChart3, Boxes, Building2, CheckCircle2, CircleDollarSign,
+  ArrowRight, Ban, BarChart3, Boxes, Building2, CheckCircle2, CircleDollarSign,
   FileSpreadsheet, FolderKanban, Landmark, Loader2, PackageCheck, Receipt,
-  RefreshCw, ShoppingCart, TriangleAlert,
+  RefreshCw, ShoppingCart, TriangleAlert, Link2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PurchaseInvoiceInbox } from "@/components/PurchaseInvoiceInbox";
 import { InvoiceConfigurationPanel } from "@/components/InvoiceConfigurationPanel";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +66,8 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [connection, setConnection] = useState<{ success: boolean; environment?: string; companies?: any[] } | null>(null);
+  const [mappingSelections, setMappingSelections] = useState<Record<string, string>>({});
+  const [mappingBusy, setMappingBusy] = useState<string | null>(null);
   const canManageSync = hasPermission(permissions, "integrations.connections", "manage");
   const canViewMonitoring = hasPermission(permissions, "integrations.monitoring");
   const canViewSales = hasPermission(permissions, "accounting.sales");
@@ -109,6 +112,31 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
       toast({ title: "Senkronizasyon tamamlanamadı", description: error.message, variant: "destructive" });
     } finally { setSyncing(false); }
   };
+
+  const resolveMapping = async (record: any, action: "match" | "ignore") => {
+    const localEntityId = mappingSelections[record.id];
+    if (action === "match" && !localEntityId) {
+      toast({ title: "TMS kaydı seçin", description: "Eşleştirme için ilgili cari veya ürün/hizmet kaydını seçmelisiniz.", variant: "destructive" });
+      return;
+    }
+    setMappingBusy(record.id);
+    try {
+      await kolaybiOfficeService.resolveMapping({ recordId: record.id, action, localEntityId });
+      setMappingSelections((current) => { const next = { ...current }; delete next[record.id]; return next; });
+      await load();
+      toast({
+        title: action === "match" ? "Eşleştirme kaydedildi" : "Kayıt yok sayıldı",
+        description: `${record.display_name || record.external_code || "KolayBi kaydı"} için karar denetim geçmişine işlendi.`,
+      });
+    } catch (error: any) {
+      toast({ title: "Eşleştirme kaydedilemedi", description: error.message, variant: "destructive" });
+    } finally { setMappingBusy(null); }
+  };
+
+  const reviewRecords = useMemo(
+    () => data.providerRecords.filter((row) => ["associate", "product"].includes(row.resource_type) && row.match_status === "review_required"),
+    [data.providerRecords],
+  );
 
   const totals = useMemo(() => {
     const sales = data.salesInvoices.reduce((sum, row) => sum + Number(row.grand_total || row.total || 0), 0);
@@ -238,6 +266,45 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
             </CardContent>
           </Card>
           {reviewCount > 0 && <Card className="border-amber-200 bg-amber-50"><CardContent className="flex items-center gap-3 p-4"><TriangleAlert className="h-5 w-5 text-amber-600" /><div><p className="font-semibold text-amber-900">{reviewCount} kayıt eşleştirme kontrolü bekliyor</p><p className="text-sm text-amber-800">Yanlış cari veya ürün seçilmemesi için bilinmeyen KolayBi kayıtları otomatik oluşturulmadı.</p></div></CardContent></Card>}
+          {reviewRecords.length > 0 && <Card>
+            <CardHeader>
+              <CardTitle>KolayBi Eşleştirme Kontrolü</CardTitle>
+              <CardDescription>KolayBi kaydını doğru TMS cari veya ürün/hizmet kaydıyla bağlayın. Her karar değiştirilemeyen denetim geçmişine eklenir.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto rounded-xl border">
+                <Table>
+                  <TableHeader><TableRow><TableHead>Kaynak</TableHead><TableHead>KolayBi kaydı</TableHead><TableHead>Kod / VKN</TableHead><TableHead>TMS kaydı</TableHead><TableHead className="text-right">İşlem</TableHead></TableRow></TableHeader>
+                  <TableBody>{reviewRecords.map((record) => {
+                    const isAssociate = record.resource_type === "associate";
+                    const options = isAssociate ? data.customers : data.products;
+                    const busy = mappingBusy === record.id;
+                    return <TableRow key={record.id}>
+                      <TableCell><Badge variant="outline">{isAssociate ? "Cari" : "Ürün / Hizmet"}</Badge></TableCell>
+                      <TableCell><p className="font-medium">{record.display_name || "Adsız kayıt"}</p><p className="text-xs text-slate-500">KolayBi #{record.external_id}</p></TableCell>
+                      <TableCell className="font-mono text-xs">{record.external_code || record.tax_identity || "-"}</TableCell>
+                      <TableCell className="min-w-72">
+                        {canManageSync ? <Select value={mappingSelections[record.id] || ""} onValueChange={(value) => setMappingSelections((current) => ({ ...current, [record.id]: value }))} disabled={busy}>
+                          <SelectTrigger><SelectValue placeholder={isAssociate ? "TMS carisi seçin" : "TMS ürün/hizmeti seçin"} /></SelectTrigger>
+                          <SelectContent>{options.filter((item) => item.id).map((item) => <SelectItem key={item.id} value={item.id}>
+                            {isAssociate
+                              ? `${item.company || item.name}${item.vergi_no || item.tc_no ? ` — ${item.vergi_no || item.tc_no}` : ""}`
+                              : `${item.code || "Kodsuz"} — ${item.name}`}
+                          </SelectItem>)}</SelectContent>
+                        </Select> : <span className="text-sm text-slate-500">Yönetme yetkisi gerekli</span>}
+                      </TableCell>
+                      <TableCell><div className="flex justify-end gap-2">
+                        <Button size="sm" disabled={!canManageSync || busy || !mappingSelections[record.id]} onClick={() => void resolveMapping(record, "match")}>
+                          {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2 className="mr-2 h-4 w-4" />}Eşleştir
+                        </Button>
+                        <Button size="sm" variant="outline" disabled={!canManageSync || busy} onClick={() => void resolveMapping(record, "ignore")}><Ban className="mr-2 h-4 w-4" />Yok say</Button>
+                      </div></TableCell>
+                    </TableRow>;
+                  })}</TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>}
         </TabsContent>
 
         <TabsContent value="sales" className="mt-5 space-y-4">

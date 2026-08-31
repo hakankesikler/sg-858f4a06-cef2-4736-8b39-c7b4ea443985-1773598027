@@ -196,10 +196,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const baseUrl = (process.env.KOLAYBI_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, "");
   if (!apiKey || !channel) return res.status(422).json({ error: "KolayBi API anahtarı ve Channel bilgileri tamamlanmalıdır." });
 
+  const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const updatePartner = async (success: boolean, errorMessage?: string | null, synced = false) => {
+    const now = new Date().toISOString();
+    await admin.from("integration_partners").update({
+      environment: baseUrl.includes("sandbox") ? "test" : "live",
+      status: success ? (baseUrl.includes("sandbox") ? "testing" : "active") : "error",
+      ...(synced ? { last_sync_at: now } : {}),
+      ...(success ? { last_success_at: now, last_error: null } : { last_error: text(errorMessage).slice(0, 500) || "KolayBi bağlantısı doğrulanamadı." }),
+      updated_by: userData.user.id,
+      updated_at: now,
+    }).eq("code", "KOLAYBI");
+  };
+
   try {
     const token = await accessToken(baseUrl, apiKey, channel);
     if (req.method === "GET") {
       const companies = await providerRequest(`${baseUrl}/companies`, { method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" } });
+      await updatePartner(true);
       return res.status(200).json({ success: true, environment: baseUrl.includes("sandbox") ? "test" : "live", companies: listFrom(companies) });
     }
 
@@ -207,7 +221,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const resources: Resource[] = requested === "all" ? [...SUPPORTED_RESOURCES] : SUPPORTED_RESOURCES.includes(requested as Resource) ? [requested as Resource] : [];
     if (!resources.length) return res.status(400).json({ error: "Desteklenmeyen senkronizasyon kaynağı." });
 
-    const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const idempotencyKey = text(req.body?.idempotencyKey || `kolaybi-office:${crypto.randomUUID()}`);
     const { data: existing } = await admin.from("kolaybi_sync_runs").select("*").eq("idempotency_key", idempotencyKey).maybeSingle();
     if (existing) return res.status(200).json({ success: existing.status === "completed", alreadyProcessed: true, run: existing });
@@ -259,8 +272,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const status = failed === 0 ? "completed" : received > 0 ? "partial" : "failed";
     const { data: completed } = await admin.from("kolaybi_sync_runs").update({ status, received_count: received, matched_count: matched, review_count: review, failed_count: failed, last_error: errors[0] || null, completed_at: new Date().toISOString(), metadata: { resources } }).eq("id", run.id).select().single();
     await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol`, metadata: { errors: errors.slice(0, 10) }, actor_id: userData.user.id, actor_email: userData.user.email });
+    await updatePartner(status !== "failed", errors[0] || null, true);
     return res.status(status === "failed" ? 502 : 200).json({ success: status !== "failed", run: completed, errors: errors.slice(0, 10) });
   } catch (error: any) {
+    await updatePartner(false, String(error?.message || error), req.method === "POST");
     return res.status(error?.status === 401 ? 401 : 502).json({ error: String(error?.message || "KolayBi bağlantısı tamamlanamadı.").slice(0, 500) });
   }
 }
