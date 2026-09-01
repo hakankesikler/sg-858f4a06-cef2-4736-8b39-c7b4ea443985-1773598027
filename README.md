@@ -47,3 +47,17 @@ CLOUDMERSIVE_API_KEY=
 ```
 
 Anahtar tarayıcıya gönderilmez ve kesinlikle `NEXT_PUBLIC_` ön ekiyle tanımlanmaz. Tarama servisi bağlı değilse yeni belge `pending` durumunda özel karantinada kalır ve müşteriye gösterilmez. `delivery_document_settings.scan_enforcement_enabled` değeri yalnızca tarama anahtarı canlı ortamda doğrulandıktan sonra `true` yapılmalıdır. Zararlı sonucu alan dosyalar bu ayardan bağımsız olarak teslimatta kullanılamaz ve önizlemeye açılmaz.
+
+## Cloudflare R2 özel belge depolama
+
+R2 geçişi geriye uyumludur: mevcut `storage://` kayıtları Supabase Storage üzerinden açılmaya devam eder. Yeni yüklemeleri R2'ye geçirmek için özel `rex-private-documents` bucket'ı, yalnızca bu bucket'a **Object Read & Write** yetkili bir R2 API token'ı ve aşağıdaki Vercel değişkenleri gerekir:
+
+```text
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=rex-private-documents
+NEXT_PUBLIC_PRIVATE_STORAGE_BACKEND=r2
+```
+
+R2 anahtarları yalnızca sunucuda tutulur. Bucket herkese açık yapılmaz. Tarayıcı yüklemeleri beş dakikalık imzalı URL ile yapılır; CORS yalnızca `https://www.rexlojistik.com` ve kontrollü geliştirme adreslerini kabul etmelidir. Önce Preview ortamında yükleme, görüntüleme, silme ve teslim evrakı virüs taraması doğrulanır; ardından Production değişkeni `r2` yapılır.

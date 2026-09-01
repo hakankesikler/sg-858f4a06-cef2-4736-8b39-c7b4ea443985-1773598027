@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { deletePrivateDocument, getPrivateDocumentSignedUrl, uploadPrivateDocument } from "@/lib/private-storage";
 
 export type IncomingPurchaseInvoice = {
   id: string;
@@ -129,10 +130,7 @@ export const purchaseInvoiceService = {
     const hash = await sha256(input.file);
     const extension = input.file.name.toLowerCase().endsWith(".xml") ? "xml" : "pdf";
     const path = `${userData.user.id}/${crypto.randomUUID()}.${extension}`;
-    const { error: uploadError } = await supabase.storage
-      .from("purchase-invoice-documents")
-      .upload(path, input.file, { contentType: input.file.type, upsert: false });
-    if (uploadError) throw uploadError;
+    const reference = await uploadPrivateDocument("purchase-invoice-documents", path, input.file);
     const { data, error } = await (supabase as any).rpc("rex_create_manual_purchase_invoice", {
       p_invoice_no: input.invoiceNo,
       p_invoice_date: input.invoiceDate,
@@ -146,12 +144,12 @@ export const purchaseInvoiceService = {
       p_withholding_total: input.withholdingTotal,
       p_grand_total: input.grandTotal,
       p_description: input.description || null,
-      p_file_path: path,
+      p_file_path: reference,
       p_file_hash: hash,
       p_operational_supplier_id: input.operationalSupplierId || null,
     });
     if (error) {
-      await supabase.storage.from("purchase-invoice-documents").remove([path]);
+      await deletePrivateDocument(reference, "purchase-invoice-documents");
       throw error;
     }
     return data as string;
@@ -180,9 +178,7 @@ export const purchaseInvoiceService = {
   },
 
   async signedDocumentUrl(path: string) {
-    const { data, error } = await supabase.storage.from("purchase-invoice-documents").createSignedUrl(path, 300);
-    if (error) throw error;
-    return data.signedUrl;
+    return getPrivateDocumentSignedUrl(path, "purchase-invoice-documents");
   },
 
   async openKolayBiDocument(invoiceId: string) {

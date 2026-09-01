@@ -19,8 +19,11 @@ Create variables in Vercel with the narrowest applicable target. Never paste val
 | Turnstile keys | Production hostname keys | Separate preview/test keys | Cloudflare test keys |
 | KolayBi, U-ETDS, QuickShipper | Live credentials | Sandbox credentials | Sandbox credentials |
 | Resend/webhook/cron secrets | Production values | Separate preview values | Local values |
+| R2 account/access/secret/bucket | Production bucket token | Separate test bucket token | Local test bucket token |
 
 Supabase Auth must allow production callback URLs and a controlled Vercel Preview URL pattern. Do not use a broad wildcard outside the team-owned Vercel domain. Turnstile production keys must accept only `rexlojistik.com` hostnames.
+
+Keep the R2 bucket private and scope its API token to that bucket only. Enable `NEXT_PUBLIC_PRIVATE_STORAGE_BACKEND=r2` only after the bucket CORS rule, signed upload/download flow, and malware scan have passed in Preview. Existing Supabase Storage references remain readable during the transition.
 
 ## Deployment gate
 

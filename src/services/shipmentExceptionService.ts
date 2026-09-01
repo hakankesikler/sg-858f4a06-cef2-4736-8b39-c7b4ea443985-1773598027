@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { storageReference } from "@/lib/private-storage";
+import { uploadPrivateDocument } from "@/lib/private-storage";
 
 export type ShipmentExceptionType =
   | "gecikme"
@@ -55,11 +55,7 @@ export const shipmentExceptionService = {
     for (const file of files) {
       const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `exceptions/${shipmentId}/${crypto.randomUUID()}.${extension}`;
-      const { error } = await supabase.storage
-        .from("shipment-exception-documents")
-        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
-      if (error) throw error;
-      references.push(storageReference("shipment-exception-documents", path));
+      references.push(await uploadPrivateDocument("shipment-exception-documents", path, file));
     }
     return references;
   },

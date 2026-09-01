@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getPrivateDocumentSignedUrl, storageReference } from "@/lib/private-storage";
+import { deletePrivateDocument, getPrivateDocumentSignedUrl, uploadPrivateDocument } from "@/lib/private-storage";
 
 export type DeliveryDocumentType =
   | "delivery_proof"
@@ -98,12 +98,7 @@ export const deliveryDocumentService = {
 
     const hash = await sha256(input.file);
     const path = `delivery-documents/${userId}/${shipmentId}/${safeFileName(input.file.name)}`;
-    const { error: uploadError } = await supabase.storage
-      .from("shipment-documents")
-      .upload(path, input.file, { contentType: input.file.type, cacheControl: "3600", upsert: false });
-    if (uploadError) throw uploadError;
-
-    const reference = storageReference("shipment-documents", path);
+    const reference = await uploadPrivateDocument("shipment-documents", path, input.file);
     const { data, error } = await supabase.rpc("rex_register_delivery_document" as any, {
       p_shipment_id: shipmentId,
       p_document_type: input.documentType,
@@ -117,7 +112,7 @@ export const deliveryDocumentService = {
     } as any);
 
     if (error || !data) {
-      await supabase.storage.from("shipment-documents").remove([path]);
+      await deletePrivateDocument(reference, "shipment-documents");
       throw error || new Error("Teslim evrakı kaydedilemedi.");
     }
 

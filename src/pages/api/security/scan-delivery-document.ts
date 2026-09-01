@@ -1,17 +1,24 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { downloadR2Object } from "@/lib/r2-server";
 
 function publicScanError(error: unknown) {
   const message = error instanceof Error ? error.message : "Virüs taraması tamamlanamadı.";
   return message.slice(0, 300);
 }
 
-function deliveryObjectPath(reference: string) {
+function deliveryObjectLocation(reference: string) {
+  const r2Prefix = "r2://shipment-documents/";
+  if (reference.startsWith(r2Prefix)) {
+    const path = reference.slice(r2Prefix.length);
+    if (!path.startsWith("delivery-documents/")) throw new Error("Belge karantina alanında bulunmuyor.");
+    return { backend: "r2" as const, path };
+  }
   const prefix = "storage://shipment-documents/";
   if (!reference.startsWith(prefix)) throw new Error("Belge depolama adresi geçersiz.");
   const path = reference.slice(prefix.length);
   if (!path.startsWith("delivery-documents/")) throw new Error("Belge karantina alanında bulunmuyor.");
-  return path;
+  return { backend: "supabase" as const, path };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -54,9 +61,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (document.scan_status === "infected") return res.status(409).json({ error: "Dosya zararlı olarak işaretlenmiş.", status: "infected" });
 
   try {
-    const path = deliveryObjectPath(document.file_reference);
-    const { data: fileBlob, error: downloadError } = await adminDb.storage.from("shipment-documents").download(path);
-    if (downloadError || !fileBlob) throw downloadError || new Error("Belge indirilemedi.");
+    const location = deliveryObjectLocation(document.file_reference);
+    let fileBlob: Blob;
+    if (location.backend === "r2") {
+      const bytes = await downloadR2Object("shipment-documents", location.path);
+      fileBlob = new Blob([bytes], { type: document.mime_type });
+    } else {
+      const { data, error: downloadError } = await adminDb.storage.from("shipment-documents").download(location.path);
+      if (downloadError || !data) throw downloadError || new Error("Belge indirilemedi.");
+      fileBlob = data;
+    }
 
     const form = new FormData();
     form.append("inputFile", fileBlob, document.original_file_name);

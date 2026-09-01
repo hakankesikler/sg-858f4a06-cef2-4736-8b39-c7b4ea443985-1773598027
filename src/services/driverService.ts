@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { storageReference } from "@/lib/private-storage";
+import { uploadPrivateDocument } from "@/lib/private-storage";
 
 export interface Driver {
   id?: string;
@@ -123,16 +123,7 @@ export const driverService = {
     const fileExt = file.name.split('.').pop();
     const fileName = `${driverId}/ehliyet_${Date.now()}.${fileExt}`;
     
-    const { data, error } = await supabase.storage
-      .from('driver-documents')
-      .upload(fileName, file);
-
-    if (error) {
-      console.error("Error uploading file:", error);
-      throw error;
-    }
-
-    return storageReference('driver-documents', data.path);
+    return uploadPrivateDocument("driver-documents", fileName, file);
   },
 
   async saveWithDocument(driver: Driver, file: File | null, existingId?: string) {
