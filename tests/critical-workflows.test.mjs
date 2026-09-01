@@ -1041,9 +1041,9 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(collection, /kolaybi_document_id/);
   assert.match(collection, /kolaybi_vault_id/);
   assert.match(collection, /önce KolayBi faturasına/);
-  assert.match(vercel, /\/api\/kolaybi\/process-queue\?limit=10[\s\S]*\*\/15 \* \* \* \*/);
-  assert.match(vercel, /\/api\/kolaybi\/office-sync\?mode=active[\s\S]*7 \* \* \* \*/);
-  assert.match(vercel, /\/api\/kolaybi\/purchase-invoices\/sync[\s\S]*17 \* \* \* \*/);
+  assert.match(vercel, /\/api\/kolaybi\/process-queue\?limit=10[\s\S]*0 2 \* \* \*/);
+  assert.match(vercel, /\/api\/kolaybi\/office-sync\?mode=active[\s\S]*7 2 \* \* \*/);
+  assert.match(vercel, /\/api\/kolaybi\/purchase-invoices\/sync[\s\S]*17 2 \* \* \*/);
   assert.match(service, /kolaybi_master_records/);
   assert.match(service, /createSandboxAssociate/);
   assert.match(service, /kolaybi_sync_runs/);
