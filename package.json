@@ -2,15 +2,19 @@
   "name": "softgen-starter",
   "version": "2.4.4",
   "private": true,
-  "packageManager": "pnpm@11.19.0",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "node --test --test-isolation=none tests/critical-workflows.test.mjs tests/crm-workflows.test.mjs tests/crm-live.test.mjs && next build",
+    "build": "pnpm run test && next build",
     "start": "next start",
-    "lint": "next lint",
-    "test": "node --test --test-isolation=none tests/critical-workflows.test.mjs tests/crm-workflows.test.mjs tests/crm-live.test.mjs",
+    "lint": "eslint .",
+    "security:scan": "node scripts/check-secrets.mjs",
+    "test": "node tests/critical-workflows.test.mjs && node tests/crm-workflows.test.mjs && node tests/crm-live.test.mjs",
     "test:smoke": "node scripts/smoke-test.mjs",
-    "test:ci": "npm run build && npm run test:smoke"
+    "test:ci": "pnpm run security:scan && pnpm run lint && pnpm run build && pnpm run test:smoke"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

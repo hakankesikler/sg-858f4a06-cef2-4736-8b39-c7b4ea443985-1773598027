@@ -25,14 +25,23 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v6
-      - name: Set up Node.js
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+          run_install: false
+      - name: Set up Node.js and pnpm cache
         uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
       - name: Install locked dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
+      - name: Scan source for committed secrets
+        run: pnpm run security:scan
+      - name: Lint source
+        run: pnpm run lint
       - name: Build with critical contracts
-        run: npm run build
+        run: pnpm run build
       - name: Test critical pages
-        run: npm run test:smoke
+        run: pnpm run test:smoke
