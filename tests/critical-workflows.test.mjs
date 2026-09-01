@@ -931,14 +931,16 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
 });
 
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
-  const [sql, mappingSql, productSyncSql, api, mappingApi, service, office, accounting] = await Promise.all([
+  const [sql, mappingSql, productSyncSql, expenseSql, api, mappingApi, service, office, expenseWorkspace, accounting] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
     read("supabase/migrations/20260831210000_kolaybi_manual_mappings.sql"),
     read("supabase/migrations/20260831223000_kolaybi_product_catalog_sync.sql"),
+    read("supabase/migrations/20260831234500_kolaybi_general_expense_workspace.sql"),
     read("src/pages/api/kolaybi/office-sync.ts"),
     read("src/pages/api/kolaybi/mappings.ts"),
     read("src/services/kolaybiOfficeService.ts"),
     read("src/components/modules/KolayBiOfficeModule.tsx"),
+    read("src/components/GeneralExpenseWorkspace.tsx"),
     read("src/components/modules/AccountingModule.tsx"),
   ]);
   assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.kolaybi_master_records/);
@@ -957,6 +959,12 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(productSyncSql, /rex_review_kolaybi_product/);
   assert.match(productSyncSql, /product_approved/);
   assert.match(productSyncSql, /product_rejected/);
+  assert.match(expenseSql, /CREATE TABLE IF NOT EXISTS public\.expense_categories/);
+  assert.match(expenseSql, /CREATE TABLE IF NOT EXISTS public\.expense_types/);
+  assert.match(expenseSql, /expense_type_provider_mappings/);
+  assert.match(expenseSql, /expenses_kolaybi_identity_uidx/);
+  assert.match(expenseSql, /rex_prevent_expense_catalog_delete/);
+  assert.match(expenseSql, /accounting\.expenses/);
   assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(api, /rex_has_permission/);
   assert.match(api, /integrations\.connections/);
@@ -965,6 +973,10 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(api, /\/products/);
   assert.match(api, /type=sale_invoice/);
   assert.match(api, /type=purchase_invoice/);
+  assert.match(api, /\/financial_action_types/);
+  assert.match(api, /type=general_expense/);
+  assert.match(api, /kolaybi_financial_action_type_id/);
+  assert.match(api, /provider_environment/);
   assert.match(api, /review_required/);
   assert.match(api, /product_imported_pending/);
   assert.match(api, /KB-TEST-/);
@@ -992,7 +1004,14 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(office, /synchronize\("associates"\)/);
   assert.match(office, /Satış Yönetimi/);
   assert.match(office, /Satın Alma Yönetimi/);
-  assert.match(office, /Genel Gider Yönetimi/);
+  assert.match(expenseWorkspace, /Genel Gider Yönetimi/);
+  assert.match(office, /GeneralExpenseWorkspace/);
+  assert.match(expenseWorkspace, /Gider Tiplerini Yenile/);
+  assert.match(expenseWorkspace, /Giderleri Yenile/);
+  assert.match(expenseWorkspace, /Açık Bakiye/);
+  assert.match(expenseWorkspace, /Gider Tipleri ve Kategoriler/);
+  assert.match(expenseWorkspace, /setExpenseCategoryActive/);
+  assert.match(expenseWorkspace, /setExpenseTypeActive/);
   assert.match(office, /Ürünler ve Hizmetler/);
   assert.match(office, /KolayBi'den Yenile/);
   assert.match(office, /Onay bekliyor/);

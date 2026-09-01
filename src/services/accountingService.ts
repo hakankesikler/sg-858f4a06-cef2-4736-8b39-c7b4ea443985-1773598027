@@ -20,8 +20,9 @@ export const accountingService = {
       .from("expense_categories" as any)
       .select(`
         *,
-        expense_types (*)
+        expense_types (*, expense_type_provider_mappings (provider_environment, external_id))
       `)
+      .order("sort_order")
       .order("name");
 
     if (error) throw error;
@@ -31,7 +32,7 @@ export const accountingService = {
   async createExpenseCategory(name: string): Promise<any> {
     const { data, error } = await supabase
       .from("expense_categories" as any)
-      .insert({ name })
+      .insert({ name: name.trim() })
       .select()
       .single();
 
@@ -54,7 +55,7 @@ export const accountingService = {
   async deleteExpenseCategory(id: string): Promise<void> {
     const { error } = await supabase
       .from("expense_categories" as any)
-      .delete()
+      .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq("id", id);
 
     if (error) throw error;
@@ -63,7 +64,7 @@ export const accountingService = {
   async createExpenseType(categoryId: string, name: string): Promise<any> {
     const { data, error } = await supabase
       .from("expense_types" as any)
-      .insert({ category_id: categoryId, name })
+      .insert({ category_id: categoryId, name: name.trim() })
       .select()
       .single();
 
@@ -86,9 +87,25 @@ export const accountingService = {
   async deleteExpenseType(id: string): Promise<void> {
     const { error } = await supabase
       .from("expense_types" as any)
-      .delete()
+      .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq("id", id);
 
+    if (error) throw error;
+  },
+
+  async setExpenseCategoryActive(id: string, isActive: boolean): Promise<void> {
+    const { error } = await supabase
+      .from("expense_categories" as any)
+      .update({ is_active: isActive, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) throw error;
+  },
+
+  async setExpenseTypeActive(id: string, isActive: boolean): Promise<void> {
+    const { error } = await supabase
+      .from("expense_types" as any)
+      .update({ is_active: isActive, updated_at: new Date().toISOString() })
+      .eq("id", id);
     if (error) throw error;
   },
 

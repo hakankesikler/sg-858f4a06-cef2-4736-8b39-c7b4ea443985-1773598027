@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 
 const DEFAULT_BASE_URL = "https://ofis-sandbox-api.kolaybi.com/kolaybi/v1";
-const SUPPORTED_RESOURCES = ["associates", "products", "sales_invoices", "purchase_invoices"] as const;
+const SUPPORTED_RESOURCES = ["associates", "products", "expense_types", "sales_invoices", "purchase_invoices", "general_expenses"] as const;
 type Resource = (typeof SUPPORTED_RESOURCES)[number];
 
 class ProviderError extends Error {
@@ -54,6 +54,11 @@ function number(value: any) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function currency(value: any) {
+  const candidate = text(value).toUpperCase();
+  return ["TRY", "USD", "EUR", "GBP"].includes(candidate) ? candidate : "TRY";
+}
+
 function safePayload(resource: Resource, item: any) {
   if (resource === "associates") {
     return {
@@ -76,6 +81,21 @@ function safePayload(resource: Resource, item: any) {
       tags: Array.isArray(item?.tags) ? item.tags.slice(0, 20) : [],
     };
   }
+  if (resource === "expense_types") {
+    return { id: item?.id, name: item?.name, description: item?.description };
+  }
+  if (resource === "general_expenses") {
+    return {
+      commercial_doc_id: item?.commercial_doc_id, currency: item?.currency,
+      tracking_currency: item?.tracking_currency, commercial_doc_type: item?.commercial_doc_type,
+      commercial_doc_status: item?.commercial_doc_status,
+      financial_action_type_id: item?.financial_action_type_id,
+      e_document_status: item?.e_document_status, header: item?.header,
+      total: item?.total, payment_plan: item?.payment_plan,
+      projects: Array.isArray(item?.projects) ? item.projects.slice(0, 20) : [],
+      tags: Array.isArray(item?.tags) ? item.tags.slice(0, 20) : [],
+    };
+  }
   return {
     id: item?.id, document_id: item?.document_id, uuid: item?.uuid,
     serial_no: item?.serial_no, invoice_no: item?.invoice_no,
@@ -89,7 +109,7 @@ function safePayload(resource: Resource, item: any) {
 
 function normalized(resource: Resource, item: any) {
   const payload = safePayload(resource, item);
-  const externalId = text(item?.id || item?.document_id || item?.uuid || item?.serial_no || item?.invoice_no);
+  const externalId = text(item?.id || item?.commercial_doc_id || item?.document_id || item?.uuid || item?.serial_no || item?.invoice_no);
   if (!externalId) return null;
   if (resource === "associates") {
     const name = [text(item?.name), text(item?.surname)].filter(Boolean).join(" ");
@@ -98,6 +118,19 @@ function normalized(resource: Resource, item: any) {
   }
   if (resource === "products") {
     return { externalId, displayName: text(item?.name), code: text(item?.code), taxIdentity: "", currency: text(item?.sale_currency || item?.purchase_currency).toUpperCase() || null, amount: number(item?.sale_price || item?.purchase_price), payload };
+  }
+  if (resource === "expense_types") {
+    return { externalId, displayName: text(item?.name) || `Gider Tipi ${externalId}`, code: text(item?.id), taxIdentity: "", currency: null, amount: 0, payload };
+  }
+  if (resource === "general_expenses") {
+    const header = item?.header || {};
+    const totals = item?.total || {};
+    return {
+      externalId,
+      displayName: text(header?.serial_no || `Genel Gider ${externalId}`),
+      code: text(header?.serial_no), taxIdentity: "", currency: currency(item?.currency),
+      amount: number(totals?.grand_total ?? totals?.total_amount), payload,
+    };
   }
   return {
     externalId,
@@ -240,6 +273,96 @@ async function findLocal(
     if (createError) throw createError;
     return { type: "product", id: created.id, matchStatus: "review_required", eventType: "product_imported_pending" };
   }
+  if (resource === "expense_types") {
+    const externalId = Number(row.externalId);
+    if (!Number.isSafeInteger(externalId) || externalId <= 0) throw new ProviderError("KolayBi gider tipi kimliği geçerli değil.");
+    const now = new Date().toISOString();
+    const { data: existingMapping } = await admin.from("expense_type_provider_mappings")
+      .select("id,expense_type_id").eq("provider", "kolaybi")
+      .eq("provider_environment", providerEnvironment).eq("external_id", externalId).maybeSingle();
+    if (existingMapping?.expense_type_id) {
+      await admin.from("expense_type_provider_mappings").update({
+        provider_name: row.displayName, provider_description: text(item?.description) || null,
+        last_synced_at: now, updated_at: now,
+      }).eq("id", existingMapping.id);
+      return { type: "expense_type", id: existingMapping.expense_type_id };
+    }
+
+    const { data: namedType } = await admin.from("expense_types").select("id")
+      .ilike("name", row.displayName).limit(1).maybeSingle();
+    let expenseTypeId = namedType?.id;
+    if (!expenseTypeId) {
+      const { data: fallbackCategory } = await admin.from("expense_categories").select("id")
+        .eq("name", "Kategorisiz").single();
+      const { data: createdType, error: typeError } = await admin.from("expense_types").insert({
+        category_id: fallbackCategory.id, name: row.displayName,
+        description: text(item?.description) || null, source: "kolaybi", is_active: true,
+      }).select("id").single();
+      if (typeError) throw typeError;
+      expenseTypeId = createdType.id;
+    }
+    const { error: mappingError } = await admin.from("expense_type_provider_mappings").insert({
+      expense_type_id: expenseTypeId, provider: "kolaybi", provider_environment: providerEnvironment,
+      external_id: externalId, provider_name: row.displayName,
+      provider_description: text(item?.description) || null, last_synced_at: now,
+    });
+    if (mappingError) throw mappingError;
+    return { type: "expense_type", id: expenseTypeId };
+  }
+  if (resource === "general_expenses") {
+    const documentId = Number(row.externalId);
+    if (!Number.isSafeInteger(documentId) || documentId <= 0) throw new ProviderError("KolayBi genel gider kimliği geçerli değil.");
+    const header = item?.header || {};
+    const totals = item?.total || {};
+    const payment = item?.payment_plan || {};
+    const typeExternalId = Number(item?.financial_action_type_id || 0);
+    const { data: typeMapping } = typeExternalId > 0
+      ? await admin.from("expense_type_provider_mappings").select("expense_type_id,expense_types(category_id,name,expense_categories(name))")
+        .eq("provider", "kolaybi").eq("provider_environment", providerEnvironment)
+        .eq("external_id", typeExternalId).maybeSingle()
+      : { data: null };
+    const joinedType = Array.isArray(typeMapping?.expense_types) ? typeMapping.expense_types[0] : typeMapping?.expense_types;
+    const joinedCategory = Array.isArray(joinedType?.expense_categories) ? joinedType.expense_categories[0] : joinedType?.expense_categories;
+    const remaining = number(payment?.total_remaining);
+    const paid = number(payment?.total_paid);
+    const providerStatus = text(item?.commercial_doc_status?.value || item?.commercial_doc_status?.key || item?.commercial_doc_status);
+    const loweredStatus = providerStatus.toLowerCase();
+    const status = loweredStatus.includes("cancel") ? "İptal"
+      : loweredStatus.includes("draft") ? "Taslak"
+        : remaining <= 0 ? "Ödendi" : paid > 0 ? "Kısmi Ödendi" : "Bekliyor";
+    const issueDate = text(header?.issue_date).slice(0, 10) || new Date().toISOString().slice(0, 10);
+    const dueDate = text(header?.due_date).slice(0, 10) || null;
+    const subtotal = number(totals?.subtotal ?? totals?.total_amount ?? totals?.grand_total);
+    const totalVat = number(totals?.total_vat);
+    const expenseData = {
+      expense_no: `KB-${providerEnvironment.toUpperCase()}-${documentId}`,
+      category: text(joinedCategory?.name) || "Kategorisiz",
+      category_id: joinedType?.category_id || null, type_id: typeMapping?.expense_type_id || null,
+      description: text(header?.description) || text(joinedType?.name) || `KolayBi genel gider ${documentId}`,
+      amount: subtotal, tax: totalVat, expense_date: issueDate, due_date: dueDate,
+      vendor: text(header?.associate?.full_name) || null, invoice_no: text(header?.serial_no) || null,
+      status, source: "kolaybi", provider_environment: providerEnvironment,
+      kolaybi_document_id: documentId,
+      kolaybi_financial_action_type_id: typeExternalId || null,
+      provider_document_no: text(header?.serial_no) || null, provider_status: providerStatus || null,
+      e_document_status: text(item?.e_document_status) || null,
+      payment_status: text(payment?.payment_status_value) || null,
+      currency: currency(item?.currency), balance: remaining,
+      provider_total: number(totals?.grand_total ?? totals?.total_amount), last_synced_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const { data: existingExpense } = await admin.from("expenses").select("id")
+      .eq("source", "kolaybi").eq("provider_environment", providerEnvironment)
+      .eq("kolaybi_document_id", documentId).maybeSingle();
+    if (existingExpense?.id) {
+      const { error } = await admin.from("expenses").update(expenseData).eq("id", existingExpense.id);
+      if (error) throw error;
+      return { type: "general_expense", id: existingExpense.id };
+    }
+    const { data: createdExpense, error } = await admin.from("expenses").insert(expenseData).select("id").single();
+    if (error) throw error;
+    return { type: "general_expense", id: createdExpense.id };
+  }
   if (resource === "sales_invoices") {
     const { data } = await admin.from("sales_invoices").select("id").or(`kolaybi_document_id.eq.${row.externalId},invoice_no.eq.${row.code}`).limit(1).maybeSingle();
     if (data?.id) return { type: "sales_invoice", id: data.id };
@@ -265,8 +388,10 @@ async function accessToken(baseUrl: string, apiKey: string, channel: string) {
 function endpoint(resource: Resource) {
   if (resource === "associates") return "/associates";
   if (resource === "products") return "/products";
+  if (resource === "expense_types") return "/financial_action_types";
   if (resource === "sales_invoices") return "/invoices?type=sale_invoice&has_products=true";
-  return "/invoices?type=purchase_invoice&has_products=true";
+  if (resource === "purchase_invoices") return "/invoices?type=purchase_invoice&has_products=true";
+  return "/invoices?type=general_expense";
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -338,7 +463,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (matchStatus === "matched") matched += 1;
           else if (matchStatus === "review_required") review += 1;
           const { error } = await admin.from("kolaybi_master_records").upsert({
-            resource_type: resource === "sales_invoices" ? "sales_invoice" : resource === "purchase_invoices" ? "purchase_invoice" : resource.slice(0, -1),
+            resource_type: resource === "sales_invoices" ? "sales_invoice"
+              : resource === "purchase_invoices" ? "purchase_invoice"
+                : resource === "expense_types" ? "expense_type"
+                  : resource === "general_expenses" ? "general_expense" : resource.slice(0, -1),
             external_id: row.externalId,
             provider_environment: providerEnvironment,
             local_entity_type: local?.type || null,

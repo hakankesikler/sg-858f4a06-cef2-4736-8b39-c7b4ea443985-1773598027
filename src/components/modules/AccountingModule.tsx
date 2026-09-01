@@ -874,7 +874,6 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
           {canViewSales && <TabsTrigger value="sales">Satış</TabsTrigger>}
           {canViewPurchase && <TabsTrigger value="purchase">Alış</TabsTrigger>}
           {canViewAccounts && <TabsTrigger value="cari">Cari Hesaplar</TabsTrigger>}
-          {canViewExpenses && <TabsTrigger value="expenses">Giderler</TabsTrigger>}
           {canViewAccounts && <TabsTrigger value="accounts">Hesaplar</TabsTrigger>}
         </TabsList>
 
@@ -1498,13 +1497,6 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
               </TabsContent>
             </Tabs>
           </div>
-        </TabsContent>
-
-        <TabsContent value="expenses" className="space-y-4">
-          <h2 className="text-2xl font-bold">Giderler</h2>
-          <Card className="p-6">
-            <p className="text-gray-500">Gider yönetimi yakında eklenecek...</p>
-          </Card>
         </TabsContent>
 
         <TabsContent value="accounts" className="space-y-4">

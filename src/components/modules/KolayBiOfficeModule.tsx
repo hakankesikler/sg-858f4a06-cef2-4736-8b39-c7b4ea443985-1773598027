@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PurchaseInvoiceInbox } from "@/components/PurchaseInvoiceInbox";
 import { InvoiceConfigurationPanel } from "@/components/InvoiceConfigurationPanel";
+import { GeneralExpenseWorkspace } from "@/components/GeneralExpenseWorkspace";
 import { useToast } from "@/hooks/use-toast";
 import { downloadExcel } from "@/lib/excel";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
@@ -74,6 +75,7 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
   const canViewPurchase = hasPermission(permissions, "accounting.purchase");
   const canViewAccounts = hasPermission(permissions, "accounting.accounts");
   const canViewExpenses = hasPermission(permissions, "accounting.expenses");
+  const canManageExpenses = hasPermission(permissions, "accounting.expenses", "manage");
   const canManageInvoiceSettings = hasPermission(permissions, "accounting.accounts", "manage");
 
   const load = async () => {
@@ -337,10 +339,13 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
         </TabsContent>
 
         <TabsContent value="expenses" className="mt-5 space-y-4">
-          <div><h3 className="text-xl font-bold">Genel Gider Yönetimi</h3><p className="text-sm text-slate-500">Kira, yakıt, ofis, bakım ve diğer operasyon dışı giderler</p></div>
-          <Card><Table><TableHeader><TableRow><TableHead>Gider No</TableHead><TableHead>Tarih</TableHead><TableHead>Kategori</TableHead><TableHead>Açıklama</TableHead><TableHead>Durum</TableHead><TableHead className="text-right">Tutar</TableHead></TableRow></TableHeader><TableBody>
-            {data.expenses.length === 0 ? <EmptyRow columns={6} /> : data.expenses.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.expense_no}</TableCell><TableCell>{date(row.expense_date)}</TableCell><TableCell>{row.category}</TableCell><TableCell>{row.description}</TableCell><TableCell><Badge variant="outline" className={statusClass(row.status || "Bekliyor")}>{row.status || "Bekliyor"}</Badge></TableCell><TableCell className="text-right font-semibold">{money(row.total || row.amount)}</TableCell></TableRow>)}
-          </TableBody></Table></Card>
+          <GeneralExpenseWorkspace
+            expenses={data.expenses}
+            canManage={canManageExpenses}
+            canSync={canManageSync}
+            syncing={syncing}
+            onSync={async (resource) => { await synchronize(resource); }}
+          />
         </TabsContent>
 
         <TabsContent value="products" className="mt-5 space-y-4">
