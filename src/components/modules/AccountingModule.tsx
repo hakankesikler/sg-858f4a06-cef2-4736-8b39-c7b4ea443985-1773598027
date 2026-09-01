@@ -65,6 +65,8 @@ import { PurchaseInvoiceInbox } from "@/components/PurchaseInvoiceInbox";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 import { downloadExcel } from "@/lib/excel";
 import { KolayBiOfficeModule } from "@/components/modules/KolayBiOfficeModule";
+import { FinanceWorkspace } from "@/components/FinanceWorkspace";
+import { kolaybiOfficeService } from "@/services/kolaybiOfficeService";
 
 const INVOICE_INTEGRATION_LABELS: Record<string, string> = {
   draft: "Fatura Taslağı",
@@ -129,6 +131,8 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
   const canManageSales = hasPermission(permissions, "accounting.sales", "manage");
   const canViewPurchase = hasPermission(permissions, "accounting.purchase");
   const canViewAccounts = hasPermission(permissions, "accounting.accounts");
+  const canManageAccounts = hasPermission(permissions, "accounting.accounts", "manage");
+  const canManageIntegrations = hasPermission(permissions, "integrations.connections", "manage");
   const canViewExpenses = hasPermission(permissions, "accounting.expenses");
   const canViewOffice = canViewSales || canViewPurchase || canViewAccounts || canViewExpenses;
   const defaultAccountingTab = canViewOffice ? "office" : canViewSales ? "sales" : canViewPurchase ? "purchase" : canViewAccounts ? "cari" : "expenses";
@@ -141,6 +145,9 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
   const [purchaseInvoices, setPurchaseInvoices] = useState<any[]>([]);
   const [customerPayments, setCustomerPayments] = useState<any[]>([]);
   const [customerAdjustments, setCustomerAdjustments] = useState<any[]>([]);
+  const [financialAccounts, setFinancialAccounts] = useState<any[]>([]);
+  const [financialTransactions, setFinancialTransactions] = useState<any[]>([]);
+  const [financeSyncing, setFinanceSyncing] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -248,6 +255,15 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
           .not("customer_id", "is", null);
         if (adjustmentsError) throw adjustmentsError;
         setCustomerAdjustments(adjustmentsData || []);
+
+        const [{ data: accountsData, error: accountsError }, { data: transactionsData, error: transactionsError }] = await Promise.all([
+          (supabase as any).from("financial_accounts").select("*").order("account_name", { ascending: true }),
+          (supabase as any).from("transactions").select("*,financial_accounts(account_name)").order("transaction_date", { ascending: false }).limit(1000),
+        ]);
+        if (accountsError) throw accountsError;
+        if (transactionsError) throw transactionsError;
+        setFinancialAccounts(accountsData || []);
+        setFinancialTransactions(transactionsData || []);
       }
     } catch (error) {
       console.error("Error loading accounting data:", error);
@@ -1500,10 +1516,22 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
         </TabsContent>
 
         <TabsContent value="accounts" className="space-y-4">
-          <h2 className="text-2xl font-bold">Hesap Hareketleri</h2>
-          <Card className="p-6">
-            <p className="text-gray-500">Hesap hareketleri yakında eklenecek...</p>
-          </Card>
+          <FinanceWorkspace
+            accounts={financialAccounts}
+            transactions={financialTransactions}
+            canSync={canManageAccounts && canManageIntegrations}
+            syncing={financeSyncing}
+            onSync={async (resource) => {
+              setFinanceSyncing(true);
+              try {
+                await kolaybiOfficeService.synchronize(resource);
+                await loadData();
+                toast({ title: "Finans bilgileri yenilendi", description: resource === "vaults" ? "Banka ve kasa bakiyeleri güncellendi." : "Hesap hareketleri KolayBi'den alındı." });
+              } catch (error: any) {
+                toast({ title: "Finans bilgileri yenilenemedi", description: error?.message || "KolayBi bağlantısı tamamlanamadı.", variant: "destructive" });
+              } finally { setFinanceSyncing(false); }
+            }}
+          />
         </TabsContent>
       </Tabs>
 

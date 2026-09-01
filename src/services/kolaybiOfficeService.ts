@@ -27,6 +27,16 @@ async function optionalRows(table: string, orderColumn = "created_at", limit = 5
   try { return await rows(table, orderColumn, false, limit); } catch { return []; }
 }
 
+async function financeTransactions() {
+  try {
+    const { data, error } = await (supabase as any).from("transactions")
+      .select("*,financial_accounts(account_name)")
+      .order("transaction_date", { ascending: false }).limit(1000);
+    if (error) throw error;
+    return data || [];
+  } catch { return optionalRows("transactions", "transaction_date", 1000); }
+}
+
 async function authenticatedFetch(url: string, init: RequestInit = {}) {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -52,7 +62,7 @@ export const kolaybiOfficeService = {
       rows("products_services", "created_at"),
       rows("customers", "created_at"),
       rows("financial_accounts", "created_at"),
-      rows("transactions", "transaction_date"),
+      financeTransactions(),
       rows("projects", "created_at"),
       rows("shipments", "created_at"),
       optionalRows("kolaybi_master_records", "last_seen_at", 1000),
@@ -73,6 +83,14 @@ export const kolaybiOfficeService = {
         resource,
         idempotencyKey: `kolaybi-office:${resource}:${crypto.randomUUID()}`,
       }),
+    });
+  },
+
+  async synchronizeAssociateTransactions(customerId: string) {
+    return authenticatedFetch("/api/kolaybi/associate-transactions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customerId }),
     });
   },
 

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PurchaseInvoiceInbox } from "@/components/PurchaseInvoiceInbox";
 import { InvoiceConfigurationPanel } from "@/components/InvoiceConfigurationPanel";
 import { GeneralExpenseWorkspace } from "@/components/GeneralExpenseWorkspace";
+import { FinanceWorkspace } from "@/components/FinanceWorkspace";
 import { useToast } from "@/hooks/use-toast";
 import { downloadExcel } from "@/lib/excel";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
@@ -380,12 +381,14 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
         </TabsContent>
 
         <TabsContent value="finance" className="mt-5 space-y-5">
-          <div><h3 className="text-xl font-bold">Finans</h3><p className="text-sm text-slate-500">Banka, kasa, kredi kartı, tahsilat, ödeme ve virman görünümü</p></div>
+          <FinanceWorkspace
+            accounts={data.financialAccounts}
+            transactions={data.transactions}
+            canSync={canManageSync}
+            syncing={syncing}
+            onSync={async (resource) => { await synchronize(resource); }}
+          />
           <InvoiceConfigurationPanel canManage={canManageInvoiceSettings} />
-          <div className="grid gap-4 md:grid-cols-3">{data.financialAccounts.slice(0, 6).map((row) => <Card key={row.id}><CardContent className="p-5"><div className="flex items-center justify-between"><Landmark className="h-5 w-5 text-blue-700" /><Badge variant="outline">{row.currency}</Badge></div><p className="mt-3 font-semibold">{row.account_name}</p><p className="mt-2 text-2xl font-bold">{money(row.balance, row.currency)}</p><p className="mt-1 text-xs text-slate-500">{row.bank_name || row.account_type}</p></CardContent></Card>)}</div>
-          <Card><Table><TableHeader><TableRow><TableHead>Tarih</TableHead><TableHead>İşlem No</TableHead><TableHead>Tür</TableHead><TableHead>Açıklama</TableHead><TableHead className="text-right">Tutar</TableHead></TableRow></TableHeader><TableBody>
-            {data.transactions.length === 0 ? <EmptyRow columns={5} /> : data.transactions.slice(0, 100).map((row) => <TableRow key={row.id}><TableCell>{date(row.transaction_date)}</TableCell><TableCell className="font-mono">{row.transaction_no}</TableCell><TableCell>{row.type}</TableCell><TableCell>{row.description}</TableCell><TableCell className="text-right font-semibold">{money(row.amount)}</TableCell></TableRow>)}
-          </TableBody></Table></Card>
         </TabsContent>
 
         <TabsContent value="projects" className="mt-5 space-y-4">

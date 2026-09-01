@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 
 const DEFAULT_BASE_URL = "https://ofis-sandbox-api.kolaybi.com/kolaybi/v1";
-const SUPPORTED_RESOURCES = ["associates", "products", "expense_types", "sales_invoices", "purchase_invoices", "general_expenses"] as const;
+const SUPPORTED_RESOURCES = ["associates", "products", "expense_types", "sales_invoices", "purchase_invoices", "general_expenses", "vaults", "vault_transactions"] as const;
 type Resource = (typeof SUPPORTED_RESOURCES)[number];
 
 class ProviderError extends Error {
@@ -41,6 +41,10 @@ function listFrom(json: any) {
   return [];
 }
 
+function transactionablesFrom(json: any) {
+  return Array.isArray(json?.data?.transactionables) ? json.data.transactionables : [];
+}
+
 function text(value: any) {
   return value === undefined || value === null ? "" : String(value).trim();
 }
@@ -60,6 +64,24 @@ function currency(value: any) {
 }
 
 function safePayload(resource: Resource, item: any) {
+  if (resource === "vaults") {
+    return { id: item?.id, type: item?.type, name: item?.name, balance: item?.balance, currency: item?.currency };
+  }
+  if (resource === "vault_transactions") {
+    return {
+      id: item?.id, transaction_id: item?.transaction_id,
+      transaction_type: item?.transaction_type, transaction_subtype: item?.transaction_subtype,
+      issue_date: item?.issue_date, cash_flow_direction: item?.cash_flow_direction,
+      amount: item?.amount, currency: item?.currency, exchange_rate: item?.exchange_rate,
+      exchange_amount: item?.exchange_amount, quote_currency: item?.quote_currency,
+      description: item?.description, cumulative: item?.cumulative,
+      associates: Array.isArray(item?.associates) ? item.associates.slice(0, 20) : [],
+      serial_no: item?.serial_no,
+      projects: Array.isArray(item?.projects) ? item.projects.slice(0, 20) : [],
+      vault_destinations: Array.isArray(item?.vault_destinations) ? item.vault_destinations.slice(0, 20) : [],
+      vault_id: item?._vault_id, vault_name: item?._vault_name,
+    };
+  }
   if (resource === "associates") {
     return {
       id: item?.id, code: item?.code, name: item?.name, surname: item?.surname,
@@ -111,6 +133,18 @@ function normalized(resource: Resource, item: any) {
   const payload = safePayload(resource, item);
   const externalId = text(item?.id || item?.commercial_doc_id || item?.document_id || item?.uuid || item?.serial_no || item?.invoice_no);
   if (!externalId) return null;
+  if (resource === "vaults") {
+    return { externalId, displayName: text(item?.name) || `Finans Hesabı ${externalId}`, code: text(item?.type), taxIdentity: "", currency: currency(item?.currency), amount: number(item?.balance), payload };
+  }
+  if (resource === "vault_transactions") {
+    const transactionType = text(item?.transaction_type?.description || item?.transaction_type?.value || item?.transaction_type?.key);
+    return {
+      externalId: `${text(item?._vault_id)}:${externalId}`,
+      displayName: text(item?.description) || transactionType || `Finans Hareketi ${externalId}`,
+      code: text(item?.serial_no || item?.transaction_id || item?.id), taxIdentity: "",
+      currency: currency(item?.currency), amount: Math.abs(number(item?.amount)), payload,
+    };
+  }
   if (resource === "associates") {
     const name = [text(item?.name), text(item?.surname)].filter(Boolean).join(" ");
     const balance = Array.isArray(item?.balances) ? item.balances[0] : null;
@@ -167,6 +201,76 @@ async function findLocal(
   providerEnvironment: "test" | "live",
 ) {
   if (!row) return null;
+  if (resource === "vaults") {
+    const vaultId = Number(item?.id);
+    if (!Number.isSafeInteger(vaultId) || vaultId <= 0) throw new ProviderError("KolayBi finans hesabı kimliği geçerli değil.");
+    const providerType = text(item?.type).toLowerCase();
+    const accountType = providerType.includes("safe") || providerType.includes("cash") ? "Kasa"
+      : providerType.includes("credit") ? "Kredi Kartı" : "Banka";
+    const now = new Date().toISOString();
+    const accountData = {
+      account_name: row.displayName, account_type: accountType,
+      currency: row.currency || "TRY", balance: row.amount, provider_balance: row.amount,
+      source: "kolaybi", provider: "kolaybi", provider_environment: providerEnvironment,
+      kolaybi_vault_id: vaultId, provider_type: text(item?.type) || null,
+      is_active: true, last_synced_at: now, updated_at: now,
+    };
+    const { data: existing } = await admin.from("financial_accounts").select("id")
+      .eq("source", "kolaybi").eq("provider_environment", providerEnvironment)
+      .eq("kolaybi_vault_id", vaultId).maybeSingle();
+    if (existing?.id) {
+      const { error } = await admin.from("financial_accounts").update(accountData).eq("id", existing.id);
+      if (error) throw error;
+      return { type: "financial_account", id: existing.id };
+    }
+    const { data: created, error } = await admin.from("financial_accounts").insert(accountData).select("id").single();
+    if (error) throw error;
+    return { type: "financial_account", id: created.id };
+  }
+  if (resource === "vault_transactions") {
+    const vaultId = Number(item?._vault_id);
+    const transactionableId = Number(item?.id);
+    if (!Number.isSafeInteger(vaultId) || !Number.isSafeInteger(transactionableId)) throw new ProviderError("KolayBi finans hareketi kimliği geçerli değil.");
+    const direction = number(item?.cash_flow_direction);
+    const type = direction < 0 ? "Giden" : direction > 0 ? "Gelen"
+      : Array.isArray(item?.vault_destinations) && item.vault_destinations.length ? "Virman" : "Gelen";
+    const typeLabel = text(item?.transaction_type?.description || item?.transaction_type?.value || item?.transaction_type?.key);
+    const subtypeLabel = text(item?.transaction_subtype?.description || item?.transaction_subtype?.value || item?.transaction_subtype?.key);
+    const associates = Array.isArray(item?.associates) ? item.associates : [];
+    const projects = Array.isArray(item?.projects) ? item.projects : [];
+    const now = new Date().toISOString();
+    const transactionData = {
+      transaction_no: `KB-${providerEnvironment === "test" ? "TEST" : "LIVE"}-V${vaultId}-T${transactionableId}`,
+      account_id: item?._vault_account_id || null, type,
+      category: typeLabel || subtypeLabel || "KolayBi Finans",
+      amount: Math.abs(number(item?.amount)), description: text(item?.description) || typeLabel || subtypeLabel || "KolayBi finans hareketi",
+      reference_no: text(item?.serial_no || item?.transaction_id) || null,
+      transaction_date: text(item?.issue_date).slice(0, 10) || new Date().toISOString().slice(0, 10),
+      source: "kolaybi", provider: "kolaybi", provider_environment: providerEnvironment,
+      provider_vault_id: vaultId, provider_transactionable_id: transactionableId,
+      provider_transaction_id: Number(item?.transaction_id) || null,
+      provider_transaction_type: typeLabel || null, provider_transaction_subtype: subtypeLabel || null,
+      provider_payment_method: text(item?.payment_method?.description || item?.payment_method?.value || item?.payment_method) || null,
+      cash_flow_direction: direction || 0, currency: currency(item?.currency),
+      exchange_rate: number(item?.exchange_rate) || null, exchange_amount: number(item?.exchange_amount) || null,
+      quote_currency: text(item?.quote_currency).toUpperCase() || null,
+      cumulative_balance: number(item?.cumulative),
+      associate_name: associates.map((value: any) => text(value?.name || value?.full_name)).filter(Boolean).join(", ") || null,
+      project_names: projects.map((value: any) => text(value?.name || value?.title)).filter(Boolean).join(", ") || null,
+      raw_payload: safePayload(resource, item), last_synced_at: now,
+    };
+    const { data: existing } = await admin.from("transactions").select("id")
+      .eq("source", "kolaybi").eq("provider_environment", providerEnvironment)
+      .eq("provider_vault_id", vaultId).eq("provider_transactionable_id", transactionableId).maybeSingle();
+    if (existing?.id) {
+      const { error } = await admin.from("transactions").update(transactionData).eq("id", existing.id);
+      if (error) throw error;
+      return { type: "financial_transaction", id: existing.id };
+    }
+    const { data: created, error } = await admin.from("transactions").insert(transactionData).select("id").single();
+    if (error) throw error;
+    return { type: "financial_transaction", id: created.id };
+  }
   if (resource === "associates") {
     let result: any = null;
     const { data: byProvider } = await admin.from("customers").select("id").eq("kolaybi_contact_id", Number(row.externalId)).maybeSingle();
@@ -391,6 +495,7 @@ function endpoint(resource: Resource) {
   if (resource === "expense_types") return "/financial_action_types";
   if (resource === "sales_invoices") return "/invoices?type=sale_invoice&has_products=true";
   if (resource === "purchase_invoices") return "/invoices?type=purchase_invoice&has_products=true";
+  if (resource === "vaults") return "/vaults";
   return "/invoices?type=general_expense";
 }
 
@@ -452,8 +557,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const errors: string[] = [];
     for (const resource of resources) {
       try {
-        const json = await providerRequest(`${baseUrl}${endpoint(resource)}`, { method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" } });
-        const records = listFrom(json).slice(0, 1000);
+        let records: any[] = [];
+        if (resource === "vault_transactions") {
+          const { data: vaults, error: vaultError } = await admin.from("financial_accounts")
+            .select("id,account_name,kolaybi_vault_id").eq("source", "kolaybi")
+            .eq("provider_environment", providerEnvironment).not("kolaybi_vault_id", "is", null).limit(100);
+          if (vaultError) throw vaultError;
+          const headers = { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" };
+          for (let index = 0; index < (vaults || []).length; index += 5) {
+            const batch = (vaults || []).slice(index, index + 5);
+            const results = await Promise.allSettled(batch.map((vault: any) => providerRequest(`${baseUrl}/vaults/${vault.kolaybi_vault_id}/transactions`, { method: "GET", headers })));
+            results.forEach((result, resultIndex) => {
+              if (result.status === "rejected") {
+                errors.push(`vault ${batch[resultIndex].kolaybi_vault_id}: ${String(result.reason?.message || result.reason).slice(0, 200)}`);
+                failed += 1;
+                return;
+              }
+              records.push(...transactionablesFrom(result.value).map((item: any) => ({ ...item, _vault_id: batch[resultIndex].kolaybi_vault_id, _vault_name: batch[resultIndex].account_name, _vault_account_id: batch[resultIndex].id })));
+            });
+          }
+          records = records.slice(0, 3000);
+        } else {
+          const json = await providerRequest(`${baseUrl}${endpoint(resource)}`, { method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" } });
+          records = listFrom(json).slice(0, 1000);
+        }
         received += records.length;
         for (const item of records) {
           const row = normalized(resource, item);
@@ -466,7 +593,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             resource_type: resource === "sales_invoices" ? "sales_invoice"
               : resource === "purchase_invoices" ? "purchase_invoice"
                 : resource === "expense_types" ? "expense_type"
-                  : resource === "general_expenses" ? "general_expense" : resource.slice(0, -1),
+                  : resource === "general_expenses" ? "general_expense"
+                    : resource === "vaults" ? "vault"
+                      : resource === "vault_transactions" ? "vault_transaction" : resource.slice(0, -1),
             external_id: row.externalId,
             provider_environment: providerEnvironment,
             local_entity_type: local?.type || null,

@@ -22,7 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Filter, Upload, Download, AlertCircle, ChevronDown } from "lucide-react";
+import { Search, Filter, Upload, Download, AlertCircle, ChevronDown, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { PurchaseInvoiceForm } from "@/components/PurchaseInvoiceForm";
@@ -30,6 +30,7 @@ import { PaymentDialog } from "@/components/PaymentDialog";
 import { CollectionDialog } from "@/components/CollectionDialog";
 import { downloadExcel } from "@/lib/excel";
 import { workflowService } from "@/services/workflowService";
+import { kolaybiOfficeService } from "@/services/kolaybiOfficeService";
 
 interface CustomerTransactionsDialogProps {
   isOpen: boolean;
@@ -58,6 +59,7 @@ export function CustomerTransactionsDialog({
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isProviderSyncing, setIsProviderSyncing] = useState(false);
   
   // Borç/Alacak Dialog States
   const [showDebtDialog, setShowDebtDialog] = useState(false);
@@ -213,21 +215,24 @@ export function CustomerTransactionsDialog({
 
       const { data: adjustments, error: adjustmentsError } = await (supabase as any)
         .from("account_transactions")
-        .select("id, transaction_type, amount, description, reference_no, transaction_date, currency")
+        .select("id, transaction_type, amount, description, reference_no, transaction_date, currency, exchange_rate, exchange_amount, provider_transaction_type, provider_transaction_subtype, source")
         .eq("customer_id", customer.id);
       if (adjustmentsError) throw adjustmentsError;
+      const existingReferences = new Set(allTransactions.map((row) => row.documentNo).filter((value) => value && value !== "-"));
       allTransactions = [
         ...allTransactions,
-        ...(adjustments || []).map((adjustment: any) => ({
+        ...(adjustments || []).filter((adjustment: any) => adjustment.source !== "kolaybi" || !existingReferences.has(adjustment.reference_no)).map((adjustment: any) => ({
           id: adjustment.id,
           date: adjustment.transaction_date,
-          type: `Cari ${adjustment.transaction_type}`,
+          type: adjustment.source === "kolaybi"
+            ? `KolayBi · ${adjustment.provider_transaction_subtype || adjustment.provider_transaction_type || adjustment.transaction_type}`
+            : `Cari ${adjustment.transaction_type}`,
           documentNo: adjustment.reference_no || "-",
           debit: adjustment.transaction_type === "Borç" ? Number(adjustment.amount) : 0,
           credit: adjustment.transaction_type === "Alacak" ? Number(adjustment.amount) : 0,
           currency: adjustment.currency || "TRY",
-          exchangeRate: 1,
-          localAmount: Number(adjustment.amount),
+          exchangeRate: Number(adjustment.exchange_rate || 1),
+          localAmount: Number(adjustment.exchange_amount || adjustment.amount),
           balance: 0,
         })),
       ];
@@ -316,6 +321,18 @@ export function CustomerTransactionsDialog({
     })), "Cari Hareketleri");
   };
 
+  const synchronizeProvider = async () => {
+    if (!customer?.id) return;
+    setIsProviderSyncing(true);
+    try {
+      const result = await kolaybiOfficeService.synchronizeAssociateTransactions(customer.id);
+      await loadTransactions();
+      alert(`KolayBi cari hareketleri yenilendi: ${result.inserted || 0} yeni, ${result.updated || 0} güncel kayıt.`);
+    } catch (error: any) {
+      alert(error?.message || "KolayBi cari hareketleri yenilenemedi.");
+    } finally { setIsProviderSyncing(false); }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -340,6 +357,9 @@ export function CustomerTransactionsDialog({
 
             {/* Action Menus */}
             <div className="flex gap-2">
+              {customer?.kolaybi_contact_id && <Button variant="outline" disabled={isProviderSyncing} onClick={() => void synchronizeProvider()}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${isProviderSyncing ? "animate-spin" : ""}`} />KolayBi'den Yenile
+              </Button>}
               {/* Borç / Alacak Ekle Menüsü */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
