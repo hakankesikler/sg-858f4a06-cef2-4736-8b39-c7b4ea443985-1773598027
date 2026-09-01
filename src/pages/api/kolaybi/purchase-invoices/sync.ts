@@ -33,6 +33,7 @@ function dateValue(value: any) {
 function normalize(item: any) {
   const contact = item?.contact || item?.supplier || item?.sender || item?.account || {};
   const totals = item?.totals || item?.amounts || {};
+  const payment = item?.payment_plan || item?.payment || {};
   const documentId = firstValue(item?.document_id, item?.id, item?.invoice_id);
   const invoiceNo = firstValue(item?.no, item?.invoice_no, item?.serial_no, item?.document_no);
   const issuerName = firstValue(contact?.title, contact?.company_name, contact?.name, item?.sender_title, item?.supplier_name);
@@ -55,25 +56,46 @@ function normalize(item: any) {
     withholding_total: numberValue(totals?.withholding_total, item?.withholding_total),
     grand_total: grandTotal,
     description: firstValue(item?.description, item?.notes, item?.note) || null,
+    provider_status: firstValue(item?.status, item?.commercial_doc_status, item?.document_status) || null,
+    e_document_status: firstValue(item?.e_document_status, item?.gib_status) || null,
+    payment_status: firstValue(payment?.payment_status_value, payment?.status, item?.payment_status) || null,
+    provider_balance: numberValue(payment?.remaining_amount, payment?.balance, item?.balance),
   };
 }
 
+function listFrom(json: any) {
+  if (Array.isArray(json?.data?.data)) return json.data.data;
+  if (Array.isArray(json?.data?.items)) return json.data.items;
+  if (Array.isArray(json?.data)) return json.data;
+  if (Array.isArray(json?.items)) return json.items;
+  return [];
+}
+
+function lastPageFrom(json: any) {
+  const value = Number(json?.data?.last_page || json?.data?.meta?.last_page || json?.meta?.last_page || 1);
+  return Number.isFinite(value) && value > 0 ? Math.min(Math.trunc(value), 20) : 1;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST desteklenir." });
+  if (!["GET", "POST"].includes(req.method || "")) return res.status(405).json({ error: "Yalnızca GET ve POST desteklenir." });
   const bearer = req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : "";
+  const cronSecret = process.env.CRON_SECRET || "";
+  const cronMode = Boolean(cronSecret && bearer === cronSecret && req.method === "GET");
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!bearer) return res.status(401).json({ error: "Oturum doğrulanamadı." });
-  if (!supabaseUrl || !anonKey) return res.status(500).json({ error: "Sunucu veritabanı ayarları eksik." });
+  if (!supabaseUrl || !anonKey || !serviceKey) return res.status(500).json({ error: "Sunucu veritabanı ayarları eksik." });
 
-  const db = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: `Bearer ${bearer}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const { data: userData, error: userError } = await db.auth.getUser(bearer);
-  if (userError || !userData.user) return res.status(401).json({ error: "Oturum süresi dolmuş." });
-  const { data: allowed } = await db.rpc("rex_has_role" as any, { required_roles: ["admin", "accounting"] } as any);
-  if (!allowed) return res.status(403).json({ error: "Alış faturalarını görüntüleme yetkiniz yok." });
+  const db = cronMode
+    ? createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
+    : createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${bearer}` } }, auth: { persistSession: false, autoRefreshToken: false } });
+  if (!cronMode) {
+    const { data: userData, error: userError } = await db.auth.getUser(bearer);
+    if (userError || !userData.user) return res.status(401).json({ error: "Oturum süresi dolmuş." });
+    const { data: allowed } = await db.rpc("rex_has_role" as any, { required_roles: ["admin", "accounting"] } as any);
+    if (!allowed) return res.status(403).json({ error: "Alış faturalarını görüntüleme yetkiniz yok." });
+  }
 
   const apiKey = process.env.KOLAYBI_API_KEY;
   const channel = process.env.KOLAYBI_CHANNEL;
@@ -94,7 +116,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 90);
+    const syncDays = Math.min(Math.max(Number(process.env.KOLAYBI_PURCHASE_SYNC_DAYS || 730), 30), 3650);
+    startDate.setDate(startDate.getDate() - syncDays);
     const params = new URLSearchParams({
       company_id: companyId,
       direction: "inbound",
@@ -103,14 +126,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       page: "1",
       per_page: "100",
     });
-    const listJson = await request(`${baseUrl}/e_document/invoices?${params.toString()}`, {
-      method: "GET",
-      headers: { Channel: channel, Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
-    });
-    const list = Array.isArray(listJson?.data?.data) ? listJson.data.data
-      : Array.isArray(listJson?.data?.items) ? listJson.data.items
-      : Array.isArray(listJson?.data) ? listJson.data
-      : Array.isArray(listJson?.items) ? listJson.items : [];
+    const headers = { Channel: channel, Authorization: `Bearer ${accessToken}`, Accept: "application/json" };
+    const list: any[] = [];
+    let page = 1;
+    let lastPage = 1;
+    do {
+      params.set("page", String(page));
+      const listJson = await request(`${baseUrl}/e_document/invoices?${params.toString()}`, { method: "GET", headers });
+      const pageRows = listFrom(listJson);
+      list.push(...pageRows);
+      lastPage = Math.max(lastPage, lastPageFrom(listJson));
+      if (pageRows.length < 100 && lastPage === 1) break;
+      page += 1;
+    } while (page <= lastPage && page <= 20);
     let imported = 0;
     let existing = 0;
     let skipped = 0;

@@ -126,6 +126,9 @@ function safePayload(resource: Resource, item: any) {
     total: item?.total ?? item?.grand_total, balance: item?.balance,
     associate_id: item?.associate_id || item?.contact_id,
     description: item?.description,
+    commercial_doc_status: item?.commercial_doc_status,
+    e_document_status: item?.e_document_status,
+    payment_plan: item?.payment_plan,
   };
 }
 
@@ -468,8 +471,27 @@ async function findLocal(
     return { type: "general_expense", id: createdExpense.id };
   }
   if (resource === "sales_invoices") {
-    const { data } = await admin.from("sales_invoices").select("id").or(`kolaybi_document_id.eq.${row.externalId},invoice_no.eq.${row.code}`).limit(1).maybeSingle();
-    if (data?.id) return { type: "sales_invoice", id: data.id };
+    const { data } = await admin.from("sales_invoices").select("id,grand_total,due_date,payment_status").or(`kolaybi_document_id.eq.${row.externalId},invoice_no.eq.${row.code}`).limit(1).maybeSingle();
+    if (data?.id) {
+      const payment = item?.payment_plan || item?.payment || {};
+      const hasPayment = item?.payment_plan !== undefined || item?.payment !== undefined || item?.balance !== undefined;
+      const remaining = number(payment?.remaining_amount ?? payment?.balance ?? item?.balance);
+      const total = number(item?.total?.grand_total ?? item?.total ?? item?.grand_total ?? data.grand_total);
+      const paymentStatus = !hasPayment ? data.payment_status
+        : remaining <= 0.01 ? "Ödendi"
+          : total > 0 && remaining < total ? "Kısmi Ödendi"
+            : data.due_date && data.due_date < new Date().toISOString().slice(0, 10) ? "Gecikmiş" : "Bekliyor";
+      const { error } = await admin.from("sales_invoices").update({
+        provider_status: text(item?.commercial_doc_status || item?.status) || null,
+        kolaybi_status: text(item?.e_document_status || item?.status) || null,
+        e_invoice_status: text(item?.e_document_status) || null,
+        payment_status: paymentStatus,
+        last_status_check_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq("id", data.id);
+      if (error) throw error;
+      return { type: "sales_invoice", id: data.id };
+    }
   }
   if (resource === "purchase_invoices") {
     const { data } = await admin.from("purchase_invoices").select("id").or(`provider_document_id.eq.${row.externalId},invoice_no.eq.${row.code}`).limit(1).maybeSingle();
@@ -502,18 +524,24 @@ function endpoint(resource: Resource) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!["GET", "POST"].includes(req.method || "")) return res.status(405).json({ error: "Yalnızca GET ve POST desteklenir." });
   const bearer = req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : "";
+  const cronSecret = process.env.CRON_SECRET || "";
+  const cronMode = Boolean(cronSecret && bearer === cronSecret && req.method === "GET" && req.query.mode === "active");
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!bearer) return res.status(401).json({ error: "Oturum doğrulanamadı." });
   if (!supabaseUrl || !anonKey || !serviceKey) return res.status(500).json({ error: "Sunucu veritabanı ayarları eksik." });
 
-  const userDb = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${bearer}` } }, auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: userData, error: userError } = await userDb.auth.getUser(bearer);
-  if (userError || !userData.user) return res.status(401).json({ error: "Oturum süresi dolmuş." });
-  const requiredLevel = req.method === "POST" ? "manage" : "view";
-  const { data: allowed } = await userDb.rpc("rex_has_permission" as any, { p_key: req.method === "POST" ? "integrations.connections" : "integrations.monitoring", p_required: requiredLevel } as any);
-  if (!allowed) return res.status(403).json({ error: "KolayBi entegrasyon işlemi için yetkiniz yok." });
+  let actor: { id: string | null; email: string } = { id: null, email: "system@rex.local" };
+  if (!cronMode) {
+    const userDb = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${bearer}` } }, auth: { persistSession: false, autoRefreshToken: false } });
+    const { data: userData, error: userError } = await userDb.auth.getUser(bearer);
+    if (userError || !userData.user) return res.status(401).json({ error: "Oturum süresi dolmuş." });
+    const requiredLevel = req.method === "POST" ? "manage" : "view";
+    const { data: allowed } = await userDb.rpc("rex_has_permission" as any, { p_key: req.method === "POST" ? "integrations.connections" : "integrations.monitoring", p_required: requiredLevel } as any);
+    if (!allowed) return res.status(403).json({ error: "KolayBi entegrasyon işlemi için yetkiniz yok." });
+    actor = { id: userData.user.id, email: userData.user.email || "" };
+  }
 
   const apiKey = process.env.KOLAYBI_API_KEY;
   const channel = process.env.KOLAYBI_CHANNEL;
@@ -529,29 +557,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: success ? (providerEnvironment === "test" ? "testing" : "active") : "error",
       ...(synced ? { last_sync_at: now } : {}),
       ...(success ? { last_success_at: now, last_error: null } : { last_error: text(errorMessage).slice(0, 500) || "KolayBi bağlantısı doğrulanamadı." }),
-      updated_by: userData.user.id,
+      ...(actor.id ? { updated_by: actor.id } : {}),
       updated_at: now,
     }).eq("code", "KOLAYBI");
   };
 
   try {
     const token = await accessToken(baseUrl, apiKey, channel);
-    if (req.method === "GET") {
+    if (req.method === "GET" && !cronMode) {
       const companies = await providerRequest(`${baseUrl}/companies`, { method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" } });
       await updatePartner(true);
       return res.status(200).json({ success: true, environment: providerEnvironment, companies: listFrom(companies) });
     }
 
-    const requested = text(req.body?.resource || "all");
+    const requested = text(cronMode ? "all" : req.body?.resource || "all");
     const resources: Resource[] = requested === "all" ? [...SUPPORTED_RESOURCES] : SUPPORTED_RESOURCES.includes(requested as Resource) ? [requested as Resource] : [];
     if (!resources.length) return res.status(400).json({ error: "Desteklenmeyen senkronizasyon kaynağı." });
 
-    const idempotencyKey = text(req.body?.idempotencyKey || `kolaybi-office:${crypto.randomUUID()}`);
+    const hourKey = new Date().toISOString().slice(0, 13);
+    const idempotencyKey = text(cronMode ? `kolaybi-office:active:${hourKey}` : req.body?.idempotencyKey || `kolaybi-office:${crypto.randomUUID()}`);
     const { data: existing } = await admin.from("kolaybi_sync_runs").select("*").eq("idempotency_key", idempotencyKey).maybeSingle();
     if (existing) return res.status(200).json({ success: existing.status === "completed", alreadyProcessed: true, run: existing });
-    const { data: run, error: runError } = await admin.from("kolaybi_sync_runs").insert({ resource_type: requested, provider_environment: providerEnvironment, idempotency_key: idempotencyKey, started_by: userData.user.id }).select().single();
+    const { data: run, error: runError } = await admin.from("kolaybi_sync_runs").insert({ resource_type: requested, provider_environment: providerEnvironment, idempotency_key: idempotencyKey, started_by: actor.id }).select().single();
     if (runError) throw runError;
-    await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: "sync_started", status: "info", summary: "KolayBi ofis senkronizasyonu başlatıldı", actor_id: userData.user.id, actor_email: userData.user.email });
+    await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: "sync_started", status: "info", summary: cronMode ? "KolayBi otomatik aktif akış senkronizasyonu başlatıldı" : "KolayBi ofis senkronizasyonu başlatıldı", actor_id: actor.id, actor_email: actor.email });
 
     let received = 0; let matched = 0; let review = 0; let failed = 0;
     const errors: string[] = [];
@@ -620,7 +649,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               : local?.eventType === "product_sync_updated"
                 ? `${row.displayName || row.externalId} ürün kartı güncellendi`
                 : local ? `${row.displayName || row.externalId} TMS kaydıyla eşleştirildi` : `${row.displayName || row.externalId} için kullanıcı kontrolü gerekiyor`,
-            actor_id: userData.user.id, actor_email: userData.user.email,
+            actor_id: actor.id, actor_email: actor.email,
           });
         }
       } catch (error: any) {
@@ -630,11 +659,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     const status = failed === 0 ? "completed" : received > 0 ? "partial" : "failed";
     const { data: completed } = await admin.from("kolaybi_sync_runs").update({ status, received_count: received, matched_count: matched, review_count: review, failed_count: failed, last_error: errors[0] || null, completed_at: new Date().toISOString(), metadata: { resources } }).eq("id", run.id).select().single();
-    await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol`, metadata: { errors: errors.slice(0, 10), provider_environment: providerEnvironment }, actor_id: userData.user.id, actor_email: userData.user.email });
+    await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol`, metadata: { errors: errors.slice(0, 10), provider_environment: providerEnvironment, automatic: cronMode }, actor_id: actor.id, actor_email: actor.email });
     await updatePartner(status !== "failed", errors[0] || null, true);
     return res.status(status === "failed" ? 502 : 200).json({ success: status !== "failed", run: completed, errors: errors.slice(0, 10) });
   } catch (error: any) {
-    await updatePartner(false, String(error?.message || error), req.method === "POST");
+    await updatePartner(false, String(error?.message || error), req.method === "POST" || cronMode);
     return res.status(error?.status === 401 ? 401 : 502).json({ error: String(error?.message || "KolayBi bağlantısı tamamlanamadı.").slice(0, 500) });
   }
 }

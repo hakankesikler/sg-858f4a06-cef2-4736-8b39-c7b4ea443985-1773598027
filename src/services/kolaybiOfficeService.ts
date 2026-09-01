@@ -63,7 +63,7 @@ export const kolaybiOfficeService = {
       rows("customers", "created_at"),
       rows("financial_accounts", "created_at"),
       financeTransactions(),
-      rows("projects", "created_at"),
+      Promise.resolve([]),
       rows("shipments", "created_at"),
       optionalRows("kolaybi_master_records", "last_seen_at", 1000),
       optionalRows("kolaybi_sync_runs", "started_at"),

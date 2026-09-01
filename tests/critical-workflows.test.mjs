@@ -931,13 +931,15 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
 });
 
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
-  const [sql, mappingSql, productSyncSql, expenseSql, financeSql, api, associateTransactionsApi, mappingApi, service, office, expenseWorkspace, financeWorkspace, accounting] = await Promise.all([
+  const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, service, office, expenseWorkspace, financeWorkspace, accounting] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
     read("supabase/migrations/20260831210000_kolaybi_manual_mappings.sql"),
     read("supabase/migrations/20260831223000_kolaybi_product_catalog_sync.sql"),
     read("supabase/migrations/20260831234500_kolaybi_general_expense_workspace.sql"),
     read("supabase/migrations/20260901110000_kolaybi_finance_sync.sql"),
+    read("supabase/migrations/20260901170000_kolaybi_active_workflows.sql"),
     read("src/pages/api/kolaybi/office-sync.ts"),
+    read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
     read("src/pages/api/kolaybi/associate-transactions.ts"),
     read("src/pages/api/kolaybi/mappings.ts"),
     read("src/services/kolaybiOfficeService.ts"),
@@ -972,6 +974,10 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(financeSql, /transactions_kolaybi_identity_uidx/);
   assert.match(financeSql, /account_transactions_kolaybi_identity_uidx/);
   assert.match(financeSql, /rex_prevent_kolaybi_finance_delete/);
+  assert.match(activeSql, /provider_status text/);
+  assert.match(activeSql, /payment_status text/);
+  assert.match(activeSql, /auth\.role\(\)<>'service_role'/);
+  assert.match(activeSql, /last_synced_at/);
   assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(api, /rex_has_permission/);
   assert.match(api, /integrations\.connections/);
@@ -994,6 +1000,14 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(api, /\/vaults/);
   assert.match(api, /vault_transactions/);
   assert.match(api, /provider_transactionable_id/);
+  assert.match(api, /cronMode/);
+  assert.match(api, /kolaybi-office:active:/);
+  assert.match(api, /last_status_check_at/);
+  assert.match(api, /Kısmi Ödendi/);
+  assert.match(purchaseSyncApi, /KOLAYBI_PURCHASE_SYNC_DAYS/);
+  assert.match(purchaseSyncApi, /lastPageFrom/);
+  assert.match(purchaseSyncApi, /provider_balance/);
+  assert.match(purchaseSyncApi, /serviceKey/);
   assert.match(associateTransactionsApi, /accounting\.accounts/);
   assert.match(associateTransactionsApi, /\/associates\/\$\{associateId\}\/transactions/);
   assert.match(associateTransactionsApi, /associate_transactions_synced/);
@@ -1038,8 +1052,10 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(financeWorkspace, /Hesapları Yenile/);
   assert.match(financeWorkspace, /Hareketleri Yenile/);
   assert.match(financeWorkspace, /Kümülatif Bakiye/);
-  assert.match(office, /Projeler/);
-  assert.match(office, /Raporlar/);
+  assert.doesNotMatch(office, /TabsTrigger value="projects"/);
+  assert.match(office, /Raporlar ve Mutabakat/);
+  assert.match(office, /KolayBi ↔ REX TYS Mutabakatı/);
+  assert.match(office, /Sipariş, irsaliye, proforma, stok, çek\/senet ve tarihsel projeler kapsam dışıdır/);
   assert.match(office, /XLSX İndir/);
   assert.match(office, /Satış – Operasyon – Muhasebe Akışı/);
   assert.match(accounting, /Entegre Ofis/);

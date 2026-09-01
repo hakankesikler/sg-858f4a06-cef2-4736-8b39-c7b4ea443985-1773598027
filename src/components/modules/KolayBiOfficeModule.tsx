@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight, Ban, BarChart3, Boxes, Building2, CheckCircle2, CircleDollarSign,
-  FileSpreadsheet, FolderKanban, Landmark, Loader2, PackageCheck, Receipt,
+  FileSpreadsheet, Landmark, Loader2, PackageCheck, Receipt,
   RefreshCw, ShoppingCart, TriangleAlert, Link2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -204,6 +204,24 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
     return summary;
   }, { receivable: 0, payable: 0 }), [accountBalanceRows]);
 
+  const reconciliation = useMemo(() => {
+    const activeResources = new Set(["associate", "product", "expense_type", "sales_invoice", "purchase_invoice", "general_expense", "vault", "vault_transaction"]);
+    const records = data.providerRecords.filter((record) => activeResources.has(record.resource_type));
+    const matched = records.filter((record) => record.match_status === "matched").length;
+    const review = records.filter((record) => record.match_status === "review_required").length;
+    const latestRun = data.syncRuns[0] || null;
+    const latestAt = latestRun?.completed_at || latestRun?.started_at || null;
+    const ageHours = latestAt ? (Date.now() - new Date(latestAt).getTime()) / 3_600_000 : Number.POSITIVE_INFINITY;
+    return {
+      records: records.length,
+      matched,
+      review,
+      failed: Number(latestRun?.failed_count || 0),
+      latestAt,
+      healthy: Boolean(latestAt && ageHours <= 2 && Number(latestRun?.failed_count || 0) === 0),
+    };
+  }, [data.providerRecords, data.syncRuns]);
+
   const balanceExportRows = useMemo(() => accountBalanceRows.map((row) => ({
     "Cari Kodu": row.code,
     "Cari Ünvanı": row.name,
@@ -259,7 +277,6 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
           {(canViewSales || canViewPurchase) && <TabsTrigger value="products">Ürünler ve Hizmetler</TabsTrigger>}
           {canViewAccounts && <TabsTrigger value="associates">Cari Hesaplar</TabsTrigger>}
           {canViewAccounts && <TabsTrigger value="finance">Finans</TabsTrigger>}
-          {canViewAccounts && <TabsTrigger value="projects">Projeler</TabsTrigger>}
           <TabsTrigger value="reports">Raporlar</TabsTrigger>
         </TabsList>
 
@@ -391,15 +408,21 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
           <InvoiceConfigurationPanel canManage={canManageInvoiceSettings} />
         </TabsContent>
 
-        <TabsContent value="projects" className="mt-5 space-y-4">
-          <div><h3 className="text-xl font-bold">Projeler</h3><p className="text-sm text-slate-500">Müşteri veya taşıma projesi bazında bütçe, maliyet ve sonuç</p></div>
-          <Card><Table><TableHeader><TableRow><TableHead>Kod</TableHead><TableHead>Proje</TableHead><TableHead>Durum</TableHead><TableHead>Başlangıç</TableHead><TableHead className="text-right">Bütçe</TableHead><TableHead className="text-right">Maliyet</TableHead><TableHead className="text-right">Fark</TableHead></TableRow></TableHeader><TableBody>
-            {data.projects.length === 0 ? <EmptyRow columns={7} /> : data.projects.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.project_code}</TableCell><TableCell>{row.project_name}</TableCell><TableCell><Badge variant="outline" className={statusClass(row.status || "")}>{row.status}</Badge></TableCell><TableCell>{date(row.start_date)}</TableCell><TableCell className="text-right">{money(row.budget)}</TableCell><TableCell className="text-right">{money(row.actual_cost)}</TableCell><TableCell className="text-right font-semibold">{money(Number(row.budget || 0) - Number(row.actual_cost || 0))}</TableCell></TableRow>)}
-          </TableBody></Table></Card>
-        </TabsContent>
-
         <TabsContent value="reports" className="mt-5 space-y-5">
-          <div><h3 className="text-xl font-bold">Raporlar</h3><p className="text-sm text-slate-500">Satış, alış, gider, finans, proje, cari ve entegrasyon raporlarını XLSX olarak alın.</p></div>
+          <div><h3 className="text-xl font-bold">Raporlar ve Mutabakat</h3><p className="text-sm text-slate-500">Kullanılan satış, alış, gider, cari ve finans akışlarını karşılaştırın; XLSX olarak alın.</p></div>
+          <Card className={reconciliation.healthy ? "border-green-200" : "border-amber-200"}>
+            <CardHeader className="gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div><CardTitle>KolayBi ↔ REX TYS Mutabakatı</CardTitle><CardDescription>Yalnızca fiilen kullanılan sekiz kaynak izlenir. Sipariş, irsaliye, proforma, stok, çek/senet ve tarihsel projeler kapsam dışıdır.</CardDescription></div>
+              <Badge variant="outline" className={reconciliation.healthy ? "border-green-200 bg-green-50 text-green-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{reconciliation.healthy ? "Akış Güncel" : "Kontrol Gerekli"}</Badge>
+            </CardHeader>
+            <CardContent className="grid gap-3 md:grid-cols-4">
+              <div className="rounded-xl border bg-slate-50 p-4"><p className="text-xs text-slate-500">KolayBi kayıtları</p><p className="mt-1 text-2xl font-bold">{reconciliation.records}</p></div>
+              <div className="rounded-xl border border-green-200 bg-green-50 p-4"><p className="text-xs text-green-700">Eşleşen</p><p className="mt-1 text-2xl font-bold text-green-900">{reconciliation.matched}</p></div>
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4"><p className="text-xs text-amber-700">İnsan kontrolü</p><p className="mt-1 text-2xl font-bold text-amber-900">{reconciliation.review}</p></div>
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4"><p className="text-xs text-red-700">Son çalışmadaki hata</p><p className="mt-1 text-2xl font-bold text-red-900">{reconciliation.failed}</p></div>
+              <p className="text-xs text-slate-500 md:col-span-4">Son senkronizasyon: {reconciliation.latestAt ? new Date(reconciliation.latestAt).toLocaleString("tr-TR") : "Henüz çalışmadı"}. İki saati aşan veya hata içeren akışlar kontrol gerektirir.</p>
+            </CardContent>
+          </Card>
           {canViewAccounts && <Card>
             <CardHeader className="gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -435,7 +458,6 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
               { title: "Alış Faturaları", icon: ShoppingCart, rows: data.purchaseInvoices.map((r) => ({ "Fatura No": r.invoice_no, Tedarikçi: r.issuer_name, Tarih: r.invoice_date, Durum: r.match_status, Para: r.currency, Tutar: r.grand_total })) },
               { title: "Genel Giderler", icon: CircleDollarSign, rows: data.expenses.map((r) => ({ "Gider No": r.expense_no, Tarih: r.expense_date, Kategori: r.category, Açıklama: r.description, Durum: r.status, Tutar: r.total || r.amount })) },
               { title: "Ürün ve Hizmetler", icon: Boxes, rows: data.products.map((r) => ({ Kod: r.code, Ad: r.name, Tip: r.type, KDV: r.tax_rate, "Satış Fiyatı": r.sale_price, Stok: r.stock_quantity })) },
-              { title: "Projeler ve Kârlılık", icon: FolderKanban, rows: data.projects.map((r) => ({ Kod: r.project_code, Proje: r.project_name, Durum: r.status, Bütçe: r.budget, Maliyet: r.actual_cost, Fark: Number(r.budget || 0) - Number(r.actual_cost || 0) })) },
               { title: "Finans Hareketleri", icon: Landmark, rows: data.transactions.map((r) => ({ Tarih: r.transaction_date, "İşlem No": r.transaction_no, Tür: r.type, Açıklama: r.description, Tutar: r.amount })) },
               { title: "KolayBi Eşleşmeleri", icon: RefreshCw, rows: data.providerRecords.map((r) => ({ Kaynak: r.resource_type, "KolayBi ID": r.external_id, Ad: r.display_name, Kod: r.external_code, Durum: r.match_status, "Son Görülme": r.last_seen_at })) },
               { title: "Sevkiyat-Fatura Durumu", icon: PackageCheck, rows: data.shipments.map((r) => ({ "Takip No": r.tracking_number, Durum: r.status, "Fatura Durumu": r.invoice_status, "Teslim Tarihi": r.delivery_date, Tutar: r.price })) },
