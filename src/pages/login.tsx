@@ -330,7 +330,7 @@ export default function LoginPage() {
   return (
     <>
       <SEO title="REX TYS Giriş | Taşıma Yönetim Sistemi" description="REX Lojistik yetkili personel taşıma yönetim sistemi girişi." noIndex />
-      <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center px-4 py-8">
+      <main data-testid="staff-login-page" className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center px-4 py-8">
         <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-500/15 blur-3xl" />
         <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
         <div className="relative w-full max-w-md">

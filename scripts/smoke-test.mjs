@@ -10,7 +10,7 @@ let serverOutput = "";
 
 const routes = [
   { path: "/", contains: ["Müşteri Portalı", "Gönderinizi Takip Edin"] },
-  { path: "/login", contains: ["REX Operasyon Portalı", "Yetkili Personel"] },
+  { path: "/login", contains: ['data-testid="staff-login-page"', "Yetkili Personel"] },
   { path: "/musteri-giris", contains: ["Kurumsal Müşteri Portalı", "Sevkiyatlarınızı Takip Edin"] },
   { path: "/musteri-kayit", contains: ["Kurumsal Hesabınızı Oluşturun"] },
   { path: "/takip/REX-0000000000000000", contains: ["Gönderinizi Takip Edin"] },
