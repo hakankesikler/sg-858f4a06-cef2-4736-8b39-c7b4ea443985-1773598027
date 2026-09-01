@@ -534,6 +534,29 @@ test("delivery file antivirus scanning is server-side, quarantined and fail-visi
   assert.match(service, /crypto\.subtle\.digest\("SHA-256"/);
 });
 
+test("private documents can move to bucket-scoped Cloudflare R2 without breaking legacy Supabase references", async () => {
+  const [storage, r2, api, scan, env] = await Promise.all([
+    read("src/lib/private-storage.ts"),
+    read("src/lib/r2-server.ts"),
+    read("src/pages/api/storage/signed-url.ts"),
+    read("src/pages/api/security/scan-delivery-document.ts"),
+    read(".env.example"),
+  ]);
+  assert.match(storage, /NEXT_PUBLIC_PRIVATE_STORAGE_BACKEND === "r2"/);
+  assert.match(storage, /r2:\/\//);
+  assert.match(storage, /storage:\/\//);
+  assert.match(storage, /\/api\/storage\/signed-url/);
+  assert.match(r2, /R2_ACCESS_KEY_ID/);
+  assert.match(r2, /R2_SECRET_ACCESS_KEY/);
+  assert.match(r2, /expiresIn: 300/);
+  assert.match(api, /rex_has_role/);
+  assert.match(api, /rolesByNamespace/);
+  assert.match(api, /mimeTypesByNamespace/);
+  assert.match(scan, /downloadR2Object/);
+  assert.match(env, /NEXT_PUBLIC_PRIVATE_STORAGE_BACKEND=supabase/);
+  assert.doesNotMatch(env, /NEXT_PUBLIC_R2_(?:ACCESS|SECRET)/);
+});
+
 test("web analytics collects server-trusted demographics without leaking URL tokens or IP addresses", async () => {
   const [sql, api, service, dashboard] = await Promise.all([
     read("supabase/migrations/20260821010000_secure_web_analytics_demographics.sql"),

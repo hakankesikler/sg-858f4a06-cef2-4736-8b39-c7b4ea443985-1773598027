@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { driverService, Driver } from "@/services/driverService";
+import { openPrivateDocument } from "@/lib/private-storage";
 
 interface DriverFormProps {
   isOpen: boolean;
@@ -352,14 +353,13 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-blue-700">Mevcut dosya:</span>
-                  <a
-                    href={initialData.ehliyet_dosyasi_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => void openPrivateDocument(String(initialData.ehliyet_dosyasi_url), "driver-documents")}
                     className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
                   >
                     📎 Dosyayı Görüntüle
-                  </a>
+                  </button>
                 </div>
               </div>
             )}
