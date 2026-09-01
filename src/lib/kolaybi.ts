@@ -171,7 +171,17 @@ function validateInvoice(invoice: any, config: KolayBiConfig) {
   }
 }
 
-function invoiceForm(invoice: any, config: KolayBiConfig) {
+function invoiceForm(
+  invoice: any,
+  config: KolayBiConfig,
+  options: {
+    invoiceType?: "sale_invoice" | "sale_return_invoice";
+    documentType?: string;
+    serialNo?: string | null;
+    description?: string;
+    returnReference?: { serialNo: string; issueDate: string };
+  } = {},
+) {
   const form = new URLSearchParams();
   form.set("contact_id", String(invoice.customer.kolaybi_contact_id));
   form.set("address_id", String(invoice.customer.kolaybi_address_id));
@@ -181,12 +191,17 @@ function invoiceForm(invoice: any, config: KolayBiConfig) {
   form.set("tracking_currency", "try");
   form.set("exchange_rate", String(invoice.exchange_rate || 1));
   form.set("cross_currency_rate", String(invoice.exchange_rate || 1));
-  form.set("serial_no", invoice.invoice_no);
-  form.set("description", invoice.notes || `REX ${invoice.invoice_no}`);
+  const serialNo = options.serialNo === undefined ? invoice.invoice_no : options.serialNo;
+  if (serialNo) form.set("serial_no", serialNo);
+  form.set("description", options.description || invoice.notes || `REX ${invoice.invoice_no}`);
   form.set("receiver_email", invoice.customer.invoice_email || invoice.customer.email || "");
-  form.set("type", "sale_invoice");
-  form.set("document_type", invoice.kolaybi_document_type || "SATIS");
+  form.set("type", options.invoiceType || "sale_invoice");
+  form.set("document_type", options.documentType || invoice.kolaybi_document_type || "SATIS");
   form.set("document_scenario", invoice.document_scenario);
+  if (options.returnReference) {
+    form.set("return_invoice_references[serial_no]", options.returnReference.serialNo);
+    form.set("return_invoice_references[issue_date]", options.returnReference.issueDate);
+  }
   if (invoice.shipment_id) form.set("shipment_include", "true");
   if ((invoice.kolaybi_document_type || "SATIS") === "ISTISNA") {
     const exemptionCode = invoice.exemption_code || invoice.items.find((item: any) => item.exemption_code)?.exemption_code;
@@ -384,6 +399,106 @@ export async function fetchKolayBiPdf(db: DatabaseClient, invoiceId: string) {
     throw new KolayBiError("KolayBi PDF çıktısı alınamadı.", true);
   }
   return { base64: String(data.src), invoiceNo: invoice.official_invoice_no || invoice.invoice_no };
+}
+
+export async function proceedKolayBiInvoice(
+  db: DatabaseClient,
+  input: { invoiceId: string; vaultId: number; amount: number; issueDate: string },
+) {
+  const config = getConfig();
+  const invoice = await loadInvoice(db, input.invoiceId);
+  if (!invoice.kolaybi_document_id) {
+    throw new KolayBiError("Fatura henüz KolayBi ile eşleştirilmemiş.", false);
+  }
+  if (!Number.isSafeInteger(input.vaultId) || input.vaultId <= 0) {
+    throw new KolayBiError("KolayBi kasa/banka eşlemesi eksik.", false);
+  }
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    throw new KolayBiError("Tahsilat tutarı geçersiz.", false);
+  }
+  const token = await getAccessToken(config);
+  const form = new URLSearchParams({
+    document_id: String(invoice.kolaybi_document_id),
+    vault_id: String(input.vaultId),
+    amount: input.amount.toFixed(2),
+    issue_date: `${input.issueDate.slice(0, 10)} 12:00:00`,
+  });
+  const json = await fetchKolayBi(`${config.baseUrl}/invoices/proceed`, {
+    method: "POST",
+    headers: {
+      Channel: config.channel,
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json",
+    },
+    body: form.toString(),
+  });
+  return providerData(json);
+}
+
+export async function cancelKolayBiInvoice(
+  db: DatabaseClient,
+  input: { invoiceId: string; cancellationType: "iptal" | "iade"; reason: string },
+) {
+  const config = getConfig();
+  const invoice = await loadInvoice(db, input.invoiceId);
+  const documentId = Number(invoice.kolaybi_document_id || 0);
+  if (!documentId) return { providerApplied: false, reference: null, result: null };
+  const token = await getAccessToken(config);
+  const headers = {
+    Channel: config.channel,
+    Authorization: `Bearer ${token}`,
+    Accept: "application/json",
+  };
+
+  if (input.cancellationType === "iptal") {
+    if (invoice.integration_status === "official" && invoice.document_type === "e_invoice") {
+      throw new KolayBiError(
+        "Resmî e-fatura doğrudan iptal edilemez. İade faturası seçilmelidir.",
+        false,
+      );
+    }
+    const result = invoice.integration_status === "official"
+      ? await fetchKolayBi(`${config.baseUrl}/invoices/e-document/cancel`, {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ document_id: String(documentId) }).toString(),
+        })
+      : await fetchKolayBi(`${config.baseUrl}/invoices/${documentId}`, {
+          method: "DELETE",
+          headers,
+        });
+    return {
+      providerApplied: true,
+      reference: `KolayBi iptal belge #${documentId}`,
+      result: providerData(result),
+    };
+  }
+
+  validateInvoice(invoice, config);
+  const returnForm = invoiceForm(invoice, config, {
+    invoiceType: "sale_return_invoice",
+    documentType: "IADE",
+    serialNo: null,
+    description: `İade: ${invoice.official_invoice_no || invoice.invoice_no} - ${input.reason}`,
+    returnReference: {
+      serialNo: String(invoice.official_invoice_no || invoice.invoice_no),
+      issueDate: String(invoice.invoice_date).slice(0, 10),
+    },
+  });
+  const createJson = await fetchKolayBi(`${config.baseUrl}/invoices`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/x-www-form-urlencoded" },
+    body: returnForm.toString(),
+  });
+  const created = providerData(createJson);
+  const returnDocumentId = Number(created.document_id || created.id || created.document?.id || 0);
+  if (!returnDocumentId) throw new KolayBiError("KolayBi iade faturası kimliği dönmedi.", true);
+  return {
+    providerApplied: true,
+    reference: `KolayBi iade belge #${returnDocumentId}`,
+    result: created,
+  };
 }
 
 export function publicKolayBiError(error: any) {

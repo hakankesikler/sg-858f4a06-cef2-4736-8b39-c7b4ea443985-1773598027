@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { crmService } from "@/services/crmService";
+import { kolaybiOfficeService } from "@/services/kolaybiOfficeService";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { VergiDairesiSelect } from "@/components/VergiDairesiSelect";
@@ -23,6 +24,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
   const { toast } = useToast();
   const [cariTuru, setCariTuru] = useState<"gercek" | "tuzel">("tuzel");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isKolayBiSyncing, setIsKolayBiSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState("bilgi");
   const [customerCode, setCustomerCode] = useState("CST-000001");
   
@@ -427,6 +429,21 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const createKolayBiAssociate = async () => {
+    if (!editMode || !initialData?.id) {
+      toast({ title: "Önce cariyi kaydedin", description: "KolayBi aktarımı mevcut bir cari kartı üzerinden yapılır.", variant: "destructive" });
+      return;
+    }
+    setIsKolayBiSyncing(true);
+    try {
+      const result = await kolaybiOfficeService.createSandboxAssociate(initialData.id);
+      setFormData((current) => ({ ...current, kolaybi_contact_id: String(result.contactId || ""), kolaybi_address_id: String(result.addressId || "") }));
+      toast({ title: result.alreadyLinked ? "Cari zaten eşleşmiş" : "KolayBi sandbox carisi oluşturuldu", description: result.addressId ? `Contact #${result.contactId}, adres #${result.addressId}` : `Contact #${result.contactId}` });
+    } catch (error: any) {
+      toast({ title: "KolayBi aktarımı tamamlanamadı", description: error.message, variant: "destructive" });
+    } finally { setIsKolayBiSyncing(false); }
   };
 
   const handleClose = () => {
@@ -1315,6 +1332,12 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 <div className="space-y-2"><Label>Contact ID</Label><Input type="number" min="1" value={formData.kolaybi_contact_id} onChange={(e) => setFormData({ ...formData, kolaybi_contact_id: e.target.value })} placeholder="KolayBi contact_id" /></div>
                 <div className="space-y-2"><Label>Address ID</Label><Input type="number" min="1" value={formData.kolaybi_address_id} onChange={(e) => setFormData({ ...formData, kolaybi_address_id: e.target.value })} placeholder="KolayBi address_id" /></div>
               </div>
+              {editMode && initialData?.id && <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <p className="text-sm text-blue-900">Bu işlem ünvan, VKN/TCKN, adres, telefon ve e-posta bilgilerini KolayBi sandbox ortamına gönderir. Mevcut Contact ID varsa yeni kayıt oluşturulmaz.</p>
+                <Button type="button" variant="outline" className="mt-3" disabled={isKolayBiSyncing || Boolean(formData.kolaybi_contact_id)} onClick={() => void createKolayBiAssociate()}>
+                  {isKolayBiSyncing ? "KolayBi'ye aktarılıyor..." : formData.kolaybi_contact_id ? "KolayBi ile Eşleşmiş" : "KolayBi Sandbox'a Aktar"}
+                </Button>
+              </div>}
             </div>
             {/* Vade Bilgileri */}
             <div className="space-y-4">

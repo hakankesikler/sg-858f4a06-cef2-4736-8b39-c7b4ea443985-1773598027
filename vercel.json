@@ -3,7 +3,15 @@
   "crons": [
     {
       "path": "/api/kolaybi/process-queue?limit=10",
-      "schedule": "0 2 * * *"
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/kolaybi/office-sync?mode=active",
+      "schedule": "7 * * * *"
+    },
+    {
+      "path": "/api/kolaybi/purchase-invoices/sync",
+      "schedule": "17 * * * *"
     },
     {
       "path": "/api/quotes/process-queue?limit=20",

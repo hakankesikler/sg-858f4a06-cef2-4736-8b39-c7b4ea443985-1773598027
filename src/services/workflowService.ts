@@ -1,5 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 
+async function authenticatedApi(url: string, body: unknown) {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Oturum süresi dolmuş. Lütfen yeniden giriş yapın.");
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "İşlem tamamlanamadı.");
+  return result;
+}
+
 export const workflowService = {
   async recordCustomerPayment(input: {
     customerId: string;
@@ -32,19 +46,27 @@ export const workflowService = {
     return data as unknown as string;
   },
 
+  async recordKolayBiCustomerPayment(input: {
+    customerId: string;
+    amount: number;
+    paymentMethod: string;
+    paymentDate: string;
+    financialAccountId: string;
+    referenceNo?: string;
+    description?: string;
+    currency: string;
+    relatedInvoiceId: string;
+  }) {
+    return authenticatedApi(`/api/kolaybi/invoices/${input.relatedInvoiceId}/proceed`, input);
+  },
+
   async cancelSalesInvoice(input: {
     invoiceId: string;
     reason: string;
     cancellationType: "iptal" | "iade";
     externalReference?: string;
   }) {
-    const { error } = await supabase.rpc("rex_cancel_sales_invoice" as any, {
-      p_invoice_id: input.invoiceId,
-      p_reason: input.reason,
-      p_cancellation_type: input.cancellationType,
-      p_external_reference: input.externalReference || null,
-    } as any);
-    if (error) throw error;
+    return authenticatedApi(`/api/kolaybi/invoices/${input.invoiceId}/cancel`, input);
   },
 
   async recordCustomerAdjustment(input: {

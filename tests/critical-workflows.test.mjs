@@ -236,9 +236,10 @@ test("completed shipment revisions require a formal owner approval workflow", as
 });
 
 test("invoice cancellation is soft, reasoned and external-reference gated", async () => {
-  const [sql, service, accounting, accountingService] = await Promise.all([
+  const [sql, service, cancelApi, accounting, accountingService] = await Promise.all([
     read("supabase/migrations/20260818234500_shipment_cancellation_and_revision_workflow.sql"),
     read("src/services/workflowService.ts"),
+    read("src/pages/api/kolaybi/invoices/[invoiceId]/cancel.ts"),
     read("src/components/modules/AccountingModule.tsx"),
     read("src/services/accountingService.ts"),
   ]);
@@ -247,7 +248,8 @@ test("invoice cancellation is soft, reasoned and external-reference gated", asyn
   assert.match(sql, /SET payment_status='İptal'/);
   assert.match(sql, /Faturalar silinemez; iptal\/iade süreci kullanılmalıdır/);
   assert.match(sql, /rex_sales_invoices_no_direct_delete/);
-  assert.match(service, /rex_cancel_sales_invoice/);
+  assert.match(service, /\/api\/kolaybi\/invoices\/\$\{input\.invoiceId\}\/cancel/);
+  assert.match(cancelApi, /rex_cancel_sales_invoice/);
   assert.match(accounting, /Fatura İptal \/ İade Süreci/);
   assert.doesNotMatch(accountingService, /from\("sales_invoices"\)[\s\S]{0,100}\.delete\(\)/);
 });
@@ -931,7 +933,7 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
 });
 
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
-  const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, service, office, expenseWorkspace, financeWorkspace, accounting] = await Promise.all([
+  const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, associateCreateApi, proceedApi, cancelApi, providerLib, workflow, collection, vercel, service, office, expenseWorkspace, financeWorkspace, accounting] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
     read("supabase/migrations/20260831210000_kolaybi_manual_mappings.sql"),
     read("supabase/migrations/20260831223000_kolaybi_product_catalog_sync.sql"),
@@ -942,6 +944,13 @@ test("KolayBi office connects sales, operations and accounting with durable sync
     read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
     read("src/pages/api/kolaybi/associate-transactions.ts"),
     read("src/pages/api/kolaybi/mappings.ts"),
+    read("src/pages/api/kolaybi/associates/[customerId].ts"),
+    read("src/pages/api/kolaybi/invoices/[invoiceId]/proceed.ts"),
+    read("src/pages/api/kolaybi/invoices/[invoiceId]/cancel.ts"),
+    read("src/lib/kolaybi.ts"),
+    read("src/services/workflowService.ts"),
+    read("src/components/CollectionDialog.tsx"),
+    read("vercel.json"),
     read("src/services/kolaybiOfficeService.ts"),
     read("src/components/modules/KolayBiOfficeModule.tsx"),
     read("src/components/GeneralExpenseWorkspace.tsx"),
@@ -1015,7 +1024,28 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(mappingApi, /p_local_entity_id/);
   assert.match(mappingApi, /rex_resolve_kolaybi_mapping/);
   assert.match(mappingApi, /rex_review_kolaybi_product/);
+  assert.match(associateCreateApi, /baseUrl\.includes\("sandbox"\)/);
+  assert.match(associateCreateApi, /identity_no/);
+  assert.match(associateCreateApi, /KolayBi sandbox cari hesabı olarak oluşturuldu/);
+  assert.match(proceedApi, /accounting\.accounts/);
+  assert.match(proceedApi, /proceedKolayBiInvoice/);
+  assert.match(proceedApi, /rex_record_customer_payment/);
+  assert.match(cancelApi, /accounting\.sales/);
+  assert.match(cancelApi, /cancelKolayBiInvoice/);
+  assert.match(cancelApi, /rex_cancel_sales_invoice/);
+  assert.match(providerLib, /\/invoices\/proceed/);
+  assert.match(providerLib, /\/invoices\/e-document\/cancel/);
+  assert.match(providerLib, /sale_return_invoice/);
+  assert.match(providerLib, /return_invoice_references\[serial_no\]/);
+  assert.match(workflow, /recordKolayBiCustomerPayment/);
+  assert.match(collection, /kolaybi_document_id/);
+  assert.match(collection, /kolaybi_vault_id/);
+  assert.match(collection, /önce KolayBi faturasına/);
+  assert.match(vercel, /\/api\/kolaybi\/process-queue\?limit=10[\s\S]*\*\/15 \* \* \* \*/);
+  assert.match(vercel, /\/api\/kolaybi\/office-sync\?mode=active[\s\S]*7 \* \* \* \*/);
+  assert.match(vercel, /\/api\/kolaybi\/purchase-invoices\/sync[\s\S]*17 \* \* \* \*/);
   assert.match(service, /kolaybi_master_records/);
+  assert.match(service, /createSandboxAssociate/);
   assert.match(service, /kolaybi_sync_runs/);
   assert.match(service, /resolveMapping/);
   assert.match(service, /reviewImportedProduct/);

@@ -58,7 +58,7 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
 
       const { data: invoices, error: invoicesError } = await supabase
         .from("sales_invoices")
-        .select("id, invoice_no, grand_total, currency, payment_status")
+        .select("id, invoice_no, grand_total, currency, payment_status, kolaybi_document_id")
         .eq("customer_id", customer.id)
         .neq("payment_status", "Ödendi")
         .not("invoice_no", "like", "BORC-%")
@@ -90,7 +90,9 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
     setLoading(true);
 
     try {
-      await workflowService.recordCustomerPayment({
+      const selectedInvoice = openInvoices.find((invoice) => invoice.id === formData.relatedInvoiceId);
+      const selectedAccount = bankAccounts.find((account) => account.id === formData.bankAccountId);
+      const paymentInput = {
         customerId: customer.id,
         transactionType: "tahsilat",
         amount: parseFloat(formData.amount),
@@ -101,7 +103,18 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
         referenceNo: formData.referenceNo,
         financialAccountId: formData.bankAccountId,
         relatedInvoiceId: formData.relatedInvoiceId || null,
-      });
+      } as const;
+      if (selectedInvoice?.kolaybi_document_id) {
+        if (!selectedAccount?.kolaybi_vault_id) {
+          throw new Error("KolayBi faturası için KolayBi ile eşleşmiş bir kasa/banka hesabı seçilmelidir.");
+        }
+        await workflowService.recordKolayBiCustomerPayment({
+          ...paymentInput,
+          relatedInvoiceId: formData.relatedInvoiceId,
+        });
+      } else {
+        await workflowService.recordCustomerPayment(paymentInput);
+      }
 
       toast({
         title: "Başarılı",
@@ -248,6 +261,11 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
                     ))}
                   </SelectContent>
                 </Select>
+                {formData.relatedInvoiceId && openInvoices.find((item) => item.id === formData.relatedInvoiceId)?.kolaybi_document_id && (
+                  <p className="text-xs text-muted-foreground">
+                    Bu tahsilat önce KolayBi faturasına, ardından REX TYS cari hareketine işlenecektir.
+                  </p>
+                )}
               </div>
             )}
 

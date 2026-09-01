@@ -94,6 +94,14 @@ export const kolaybiOfficeService = {
     });
   },
 
+  async createSandboxAssociate(customerId: string) {
+    return authenticatedFetch(`/api/kolaybi/associates/${customerId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirmed: true }),
+    });
+  },
+
   async resolveMapping(input: { recordId: string; action: "match" | "ignore"; localEntityId?: string }) {
     return authenticatedFetch("/api/kolaybi/mappings", {
       method: "POST",
