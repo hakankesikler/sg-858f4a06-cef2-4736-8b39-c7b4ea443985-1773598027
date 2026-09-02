@@ -23,6 +23,7 @@ interface CariFormProps {
 export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initialData }: CariFormProps) {
   const { toast } = useToast();
   const populatedCustomerRef = useRef<string | null>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
   const [cariTuru, setCariTuru] = useState<"gercek" | "tuzel">("tuzel");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isKolayBiSyncing, setIsKolayBiSyncing] = useState(false);
@@ -340,7 +341,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       const submitData = {
         customer_code: customerCode,
         name: finalName,
-        email: formData.email,
+        email: emailInputRef.current?.value.trim() || formData.email,
         phone: formData.phone,
         account_type: formData.account_type,
         supplier_category: formData.account_type === "tedarikci" ? (formData.supplier_category || null) : null,
@@ -779,7 +780,9 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     inputMode="email"
                     autoComplete="email"
                     pattern="^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
-                    value={formData.email}
+                    key={`customer-email-${initialData?.id || "new"}`}
+                    ref={emailInputRef}
+                    defaultValue={initialData?.email || formData.email}
                     onInput={(event) => {
                       const email = event.currentTarget.value;
                       setFormData((current) => ({ ...current, email }));
