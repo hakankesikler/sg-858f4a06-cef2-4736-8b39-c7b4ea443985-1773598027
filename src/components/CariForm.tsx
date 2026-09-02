@@ -783,10 +783,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     key={`customer-email-${initialData?.id || "new"}`}
                     ref={emailInputRef}
                     defaultValue={initialData?.email || formData.email}
-                    onInput={(event) => {
-                      const email = event.currentTarget.value;
-                      setFormData((current) => ({ ...current, email }));
-                    }}
                     placeholder=""
                     required
                   />
