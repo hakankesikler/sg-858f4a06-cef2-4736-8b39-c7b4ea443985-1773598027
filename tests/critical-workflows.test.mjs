@@ -1086,6 +1086,8 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(office, /Yok say/);
   assert.match(office, /Cari Borç \/ Alacak Raporu/);
   assert.match(office, /Math\.abs\(row\.balance\) >= 0\.01/);
+  assert.match(office, /currencyCode\(balance\?\.currency \|\| record\.currency\)/);
+  assert.match(api, /currency: currency\(balance\?\.currency\)/);
   assert.match(office, /Tahsil Edilecek/);
   assert.match(office, /Ödenecek/);
   assert.match(office, /rex-cari-borc-alacak-raporu/);

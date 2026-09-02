@@ -88,7 +88,10 @@ function safePayload(resource: Resource, item: any) {
       identity_no: item?.identity_no, associate_type: item?.associate_type,
       email: item?.email, phone: item?.phone, country: item?.country,
       address: Array.isArray(item?.address) ? item.address.slice(0, 10) : [],
-      balances: Array.isArray(item?.balances) ? item.balances.slice(0, 10) : [],
+      balances: Array.isArray(item?.balances) ? item.balances.slice(0, 10).map((balance: any) => ({
+        ...balance,
+        currency: currency(balance?.currency),
+      })) : [],
       tags: Array.isArray(item?.tags) ? item.tags.slice(0, 20) : [],
     };
   }

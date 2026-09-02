@@ -27,6 +27,17 @@ const EMPTY_DATA: KolayBiOfficeData = {
 const money = (value: unknown, currency = "TRY") =>
   `${Number(value || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${String(currency || "TRY").toUpperCase()}`;
 
+const currencyCode = (value: unknown) => {
+  const raw = typeof value === "string" || typeof value === "number"
+    ? String(value)
+    : value && typeof value === "object"
+      ? String((value as any).code || (value as any).key || (value as any).iso_code || (value as any).currency || (value as any).value || "")
+      : "";
+  const candidate = raw.trim().toUpperCase();
+  const direct = candidate.match(/\b(TRY|TL|USD|EUR|GBP)\b/)?.[1];
+  return direct === "TL" ? "TRY" : direct || "TRY";
+};
+
 const date = (value: unknown) => {
   if (!value) return "-";
   const parsed = new Date(String(value));
@@ -177,7 +188,7 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
       const balances = Array.isArray(payload?.balances) ? payload.balances : [];
       return balances.map((balance: any) => {
         const amount = Number(balance?.balance || 0);
-        const currency = String(balance?.currency || record.currency || "TRY").toUpperCase();
+        const currency = currencyCode(balance?.currency || record.currency);
         const parsedTantamount = balance?.tantamount === null || balance?.tantamount === undefined ? Number.NaN : Number(balance.tantamount);
         const companyAmount = Number.isFinite(parsedTantamount)
           ? parsedTantamount
