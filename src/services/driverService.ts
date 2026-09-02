@@ -15,6 +15,10 @@ export interface Driver {
   ehliyet_sinifi?: string;
   ehliyet_gecerlilik_tarihi?: string;
   ehliyet_dosyasi_url?: string;
+  ehliyet_veri_kaynagi?: string;
+  ehliyet_ocr_guven_orani?: number;
+  ehliyet_bilgileri_onaylandi_at?: string;
+  ehliyet_bilgileri_onaylayan?: string;
   status?: string;
   created_at?: string;
   updated_at?: string;

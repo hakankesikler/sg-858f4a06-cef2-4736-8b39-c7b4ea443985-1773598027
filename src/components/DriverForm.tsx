@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { driverService, Driver } from "@/services/driverService";
 import { openPrivateDocument } from "@/lib/private-storage";
+import { TransportDocumentReview } from "@/components/TransportDocumentReview";
+import { extractTransportDocumentLocally } from "@/services/localTransportDocumentOcr";
 
 interface DriverFormProps {
   isOpen: boolean;
@@ -24,6 +26,13 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
   const [srcGecerlilikTarihi, setSrcGecerlilikTarihi] = useState("");
   const [psikoteknikGecerlilikTarihi, setPsikoteknikGecerlilikTarihi] = useState("");
   const [ehliyetFile, setEhliyetFile] = useState<File | null>(null);
+  const [ocrStatus, setOcrStatus] = useState<"idle" | "reading" | "success" | "error">("idle");
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [ocrConfidence, setOcrConfidence] = useState<number | null>(null);
+  const [ocrFieldCount, setOcrFieldCount] = useState(0);
+  const [ocrWarning, setOcrWarning] = useState("");
+  const [documentConfirmed, setDocumentConfirmed] = useState(false);
+  const ocrRequestRef = useRef(0);
   
   const [formData, setFormData] = useState({
     full_name: "",
@@ -94,7 +103,11 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const invalidateDocumentConfirmation = () => {
+    if (ehliyetFile) setDocumentConfirmed(false);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type) || file.size > 5 * 1024 * 1024) {
@@ -103,6 +116,33 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         return;
       }
       setEhliyetFile(file);
+      setDocumentConfirmed(false);
+      setOcrStatus("reading");
+      setOcrProgress(0);
+      setOcrWarning("");
+      setOcrConfidence(null);
+      setOcrFieldCount(0);
+      const requestId = ++ocrRequestRef.current;
+      try {
+        const result = await extractTransportDocumentLocally(file, "driver_license", setOcrProgress);
+        if (ocrRequestRef.current !== requestId) return;
+        setFormData((current) => ({
+          ...current,
+          full_name: result.fields.full_name || current.full_name,
+          tc_no: result.fields.tc_no || current.tc_no,
+          ehliyet_sinifi: result.fields.license_classes?.length ? result.fields.license_classes : current.ehliyet_sinifi,
+        }));
+        if (result.fields.expiry_date) setEhliyetGecerlilikTarihi(result.fields.expiry_date);
+        setOcrConfidence(result.confidence);
+        setOcrFieldCount(result.extractedFieldCount);
+        setOcrWarning(result.warnings.join(" "));
+        setOcrStatus("success");
+        toast({ title: "Ehliyet okundu", description: "Bulunan bilgiler forma aktarıldı. Lütfen belgeyle karşılaştırın." });
+      } catch (error) {
+        if (ocrRequestRef.current !== requestId) return;
+        setOcrWarning(error instanceof Error ? error.message : "Bilgileri elle girip belgeyle karşılaştırabilirsiniz.");
+        setOcrStatus("error");
+      }
     }
   };
 
@@ -117,6 +157,10 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         description: "Lütfen zorunlu alanları doldurun",
         variant: "destructive",
       });
+      return;
+    }
+    if (ehliyetFile && !documentConfirmed) {
+      toast({ title: "Belge kontrolü gerekli", description: "Ehliyet bilgilerini belgeyle karşılaştırıp doğruluğunu onaylayın.", variant: "destructive" });
       return;
     }
 
@@ -139,7 +183,12 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         ehliyet_sinifi: ehliyetSinifiString || null,
         ehliyet_gecerlilik_tarihi: ehliyetGecerlilikTarihi || null,
         status: formData.status,
-        ehliyet_dosyasi_url: initialData?.ehliyet_dosyasi_url || undefined
+        ehliyet_dosyasi_url: initialData?.ehliyet_dosyasi_url || undefined,
+        ...(ehliyetFile ? {
+          ehliyet_veri_kaynagi: ocrStatus === "success" ? "tesseract-local" : "manual-after-review",
+          ehliyet_ocr_guven_orani: ocrConfidence ?? undefined,
+          ehliyet_bilgileri_onaylandi_at: new Date().toISOString(),
+        } : {})
       };
 
       await driverService.saveWithDocument(submitData, ehliyetFile, editMode ? initialData?.id : undefined);
@@ -178,6 +227,13 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     setSrcGecerlilikTarihi("");
     setPsikoteknikGecerlilikTarihi("");
     setEhliyetFile(null);
+    setOcrStatus("idle");
+    setOcrProgress(0);
+    setOcrConfidence(null);
+    setOcrFieldCount(0);
+    setOcrWarning("");
+    setDocumentConfirmed(false);
+    ocrRequestRef.current += 1;
     setDriverCode("DRV-000001");
   };
 
@@ -201,7 +257,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               <Label>Ad Soyad *</Label>
               <Input
                 value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, full_name: e.target.value }); }}
                 placeholder="Ahmet Yılmaz"
                 required
               />
@@ -210,7 +266,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               <Label>T.C. Kimlik No *</Label>
               <Input
                 value={formData.tc_no}
-                onChange={(e) => setFormData({ ...formData, tc_no: e.target.value })}
+                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, tc_no: e.target.value }); }}
                 placeholder="12345678901"
                 maxLength={11}
                 required
@@ -308,6 +364,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
                       id={`license-${license.value}`}
                       checked={formData.ehliyet_sinifi.includes(license.value)}
                       onChange={(e) => {
+                        invalidateDocumentConfirmation();
                         if (e.target.checked) {
                           setFormData({
                             ...formData,
@@ -338,7 +395,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               <Input
                 type="date"
                 value={ehliyetGecerlilikTarihi}
-                onChange={(e) => setEhliyetGecerlilikTarihi(e.target.value)}
+                onChange={(e) => { invalidateDocumentConfirmation(); setEhliyetGecerlilikTarihi(e.target.value); }}
                 className="w-full"
               />
             </div>
@@ -376,6 +433,16 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               )}
             </div>
             <p className="text-xs text-gray-500">PDF, JPG veya PNG formatında yükleyebilirsiniz</p>
+            <TransportDocumentReview
+              id="driver-license-review"
+              status={ocrStatus}
+              progress={ocrProgress}
+              confidence={ocrConfidence}
+              extractedFieldCount={ocrFieldCount}
+              warning={ocrWarning}
+              confirmed={documentConfirmed}
+              onConfirmedChange={setDocumentConfirmed}
+            />
           </div>
 
           {/* Durum */}
@@ -396,7 +463,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
             <Button type="button" variant="outline" onClick={onClose}>
               İptal
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || ocrStatus === "reading"}>
               {isSubmitting ? "Kaydediliyor..." : editMode ? "Güncelle" : "Kaydet"}
             </Button>
           </DialogFooter>

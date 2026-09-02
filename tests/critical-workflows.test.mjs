@@ -106,6 +106,37 @@ test("shipment assignment still requires driver licence and vehicle registration
   assert.match(sql, /PERFORM public\.rex_validate_assignment\(v_driver,v_vehicle\)/);
 });
 
+test("driver licence and vehicle registration OCR stays on-device and requires user confirmation", async () => {
+  const [ocr, parser, review, driverForm, vehicleForm, migration, packageJson, assetScript] = await Promise.all([
+    read("src/services/localTransportDocumentOcr.ts"),
+    read("src/lib/transport-document-ocr.ts"),
+    read("src/components/TransportDocumentReview.tsx"),
+    read("src/components/DriverForm.tsx"),
+    read("src/components/VehicleForm.tsx"),
+    read("supabase/migrations/20260902220000_transport_document_ocr_confirmation.sql"),
+    read("package.json"),
+    read("scripts/prepare-local-ocr-assets.mjs"),
+  ]);
+  assert.match(ocr, /createWorker\("tur"/);
+  assert.match(ocr, /workerPath: "\/ocr\/worker\.min\.js"/);
+  assert.match(ocr, /pdfjs-dist\/legacy\/build\/pdf\.mjs/);
+  assert.doesNotMatch(ocr, /cloudmersive|api\.cloud|fetch\(/i);
+  assert.match(parser, /isValidTurkishId/);
+  assert.match(parser, /vehicle_registration/);
+  assert.match(review, /Belgedeki bilgileri kontrol ettim ve doğruluğunu onaylıyorum/);
+  assert.match(driverForm, /extractTransportDocumentLocally\(file, "driver_license"/);
+  assert.match(driverForm, /ehliyet_bilgileri_onaylandi_at/);
+  assert.match(driverForm, /ehliyetFile && !documentConfirmed/);
+  assert.match(vehicleForm, /extractTransportDocumentLocally\(file, "vehicle_registration"/);
+  assert.match(vehicleForm, /ruhsat_bilgileri_onaylandi_at/);
+  assert.match(vehicleForm, /ruhsatFile && !documentConfirmed/);
+  assert.match(migration, /ehliyet_bilgileri_onaylayan := auth\.uid\(\)/);
+  assert.match(migration, /ruhsat_bilgileri_onaylayan := auth\.uid\(\)/);
+  assert.match(packageJson, /"tesseract\.js"/);
+  assert.match(packageJson, /"pdfjs-dist"/);
+  assert.match(assetScript, /tur\.traineddata\.gz/);
+});
+
 test("sales invoice lines use the active KolayBi product catalog", async () => {
   const dialog = await read("src/components/InvoiceDialog.tsx");
   assert.match(dialog, /from\("products_services"\)[\s\S]*\.eq\("is_active", true\)/);

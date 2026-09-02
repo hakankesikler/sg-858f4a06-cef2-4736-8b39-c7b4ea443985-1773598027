@@ -16,6 +16,10 @@ export interface Vehicle {
   ruhsat_sahibi_adi_soyadi?: string;
   ruhsat_no?: string;
   ruhsat_dosyasi_url?: string;
+  ruhsat_veri_kaynagi?: string;
+  ruhsat_ocr_guven_orani?: number;
+  ruhsat_bilgileri_onaylandi_at?: string;
+  ruhsat_bilgileri_onaylayan?: string;
   status?: string;
   created_at?: string;
   updated_at?: string;

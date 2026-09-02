@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { openPrivateDocument } from "@/lib/private-storage";
+import { TransportDocumentReview } from "@/components/TransportDocumentReview";
+import { extractTransportDocumentLocally } from "@/services/localTransportDocumentOcr";
 
 interface VehicleFormProps {
   isOpen: boolean;
@@ -24,6 +26,13 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
   const [trafikSigortasiBitisTarihi, setTrafikSigortasiBitisTarihi] = useState("");
   const [yetkiBelgesiGecerlilikTarihi, setYetkiBelgesiGecerlilikTarihi] = useState("");
   const [ruhsatFile, setRuhsatFile] = useState<File | null>(null);
+  const [ocrStatus, setOcrStatus] = useState<"idle" | "reading" | "success" | "error">("idle");
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [ocrConfidence, setOcrConfidence] = useState<number | null>(null);
+  const [ocrFieldCount, setOcrFieldCount] = useState(0);
+  const [ocrWarning, setOcrWarning] = useState("");
+  const [documentConfirmed, setDocumentConfirmed] = useState(false);
+  const ocrRequestRef = useRef(0);
 
   const [formData, setFormData] = useState({
     arac_tipi: "",
@@ -81,7 +90,11 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const invalidateDocumentConfirmation = () => {
+    if (ruhsatFile) setDocumentConfirmed(false);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type) || file.size > 5 * 1024 * 1024) {
@@ -90,6 +103,35 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         return;
       }
       setRuhsatFile(file);
+      setDocumentConfirmed(false);
+      setOcrStatus("reading");
+      setOcrProgress(0);
+      setOcrWarning("");
+      setOcrConfidence(null);
+      setOcrFieldCount(0);
+      const requestId = ++ocrRequestRef.current;
+      try {
+        const result = await extractTransportDocumentLocally(file, "vehicle_registration", setOcrProgress);
+        if (ocrRequestRef.current !== requestId) return;
+        setFormData((current) => ({
+          ...current,
+          cekici_plakasi: result.fields.plate || current.cekici_plakasi,
+          ruhsat_sahibi_adi_soyadi: result.fields.owner_name || current.ruhsat_sahibi_adi_soyadi,
+          ruhsat_no: result.fields.registration_no || current.ruhsat_no,
+          arac_tipi: result.fields.vehicle_type || current.arac_tipi,
+          kasa_tipi: result.fields.body_type || current.kasa_tipi,
+          tasima_kapasitesi_kg: result.fields.capacity_kg ? String(result.fields.capacity_kg) : current.tasima_kapasitesi_kg,
+        }));
+        setOcrConfidence(result.confidence);
+        setOcrFieldCount(result.extractedFieldCount);
+        setOcrWarning(result.warnings.join(" "));
+        setOcrStatus("success");
+        toast({ title: "Ruhsat okundu", description: "Bulunan bilgiler forma aktarıldı. Lütfen belgeyle karşılaştırın." });
+      } catch (error) {
+        if (ocrRequestRef.current !== requestId) return;
+        setOcrWarning(error instanceof Error ? error.message : "Bilgileri elle girip belgeyle karşılaştırabilirsiniz.");
+        setOcrStatus("error");
+      }
     }
   };
 
@@ -104,6 +146,10 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         description: "Lütfen zorunlu alanları doldurun",
         variant: "destructive",
       });
+      return;
+    }
+    if (ruhsatFile && !documentConfirmed) {
+      toast({ title: "Belge kontrolü gerekli", description: "Ruhsat bilgilerini belgeyle karşılaştırıp doğruluğunu onaylayın.", variant: "destructive" });
       return;
     }
 
@@ -124,7 +170,12 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         ruhsat_sahibi_adi_soyadi: formData.ruhsat_sahibi_adi_soyadi || null,
         ruhsat_no: formData.ruhsat_no || null,
         status: formData.status,
-        ruhsat_dosyasi_url: initialData?.ruhsat_dosyasi_url || undefined
+        ruhsat_dosyasi_url: initialData?.ruhsat_dosyasi_url || undefined,
+        ...(ruhsatFile ? {
+          ruhsat_veri_kaynagi: ocrStatus === "success" ? "tesseract-local" : "manual-after-review",
+          ruhsat_ocr_guven_orani: ocrConfidence ?? undefined,
+          ruhsat_bilgileri_onaylandi_at: new Date().toISOString(),
+        } : {})
       };
 
       await vehicleService.saveWithDocument(submitData, ruhsatFile, editMode ? initialData?.id : undefined);
@@ -164,6 +215,13 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
     setTrafikSigortasiBitisTarihi("");
     setYetkiBelgesiGecerlilikTarihi("");
     setRuhsatFile(null);
+    setOcrStatus("idle");
+    setOcrProgress(0);
+    setOcrConfidence(null);
+    setOcrFieldCount(0);
+    setOcrWarning("");
+    setDocumentConfirmed(false);
+    ocrRequestRef.current += 1;
     setVehicleCode("VHC-000001");
   };
 
@@ -184,7 +242,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
           {/* Araç Tipi */}
           <div className="space-y-2">
             <Label>Araç Tipi *</Label>
-            <Select value={formData.arac_tipi} onValueChange={(value) => setFormData({ ...formData, arac_tipi: value })}>
+            <Select value={formData.arac_tipi} onValueChange={(value) => { invalidateDocumentConfirmation(); setFormData({ ...formData, arac_tipi: value }); }}>
               <SelectTrigger>
                 <SelectValue placeholder="Araç tipi seçin" />
               </SelectTrigger>
@@ -203,7 +261,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               <Label>Çekici Plakası *</Label>
               <Input
                 value={formData.cekici_plakasi}
-                onChange={(e) => setFormData({ ...formData, cekici_plakasi: e.target.value })}
+                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, cekici_plakasi: e.target.value }); }}
                 placeholder="34 ABC 123"
                 required
               />
@@ -222,7 +280,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Kasa Tipi *</Label>
-              <Select value={formData.kasa_tipi} onValueChange={(value) => setFormData({ ...formData, kasa_tipi: value })}>
+              <Select value={formData.kasa_tipi} onValueChange={(value) => { invalidateDocumentConfirmation(); setFormData({ ...formData, kasa_tipi: value }); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Kasa tipi seçin" />
                 </SelectTrigger>
@@ -239,7 +297,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               <Input
                 type="number"
                 value={formData.tasima_kapasitesi_kg}
-                onChange={(e) => setFormData({ ...formData, tasima_kapasitesi_kg: e.target.value })}
+                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, tasima_kapasitesi_kg: e.target.value }); }}
                 placeholder="24000"
               />
             </div>
@@ -293,7 +351,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               <Label>Ruhsat Sahibi Adı Soyadı</Label>
               <Input
                 value={formData.ruhsat_sahibi_adi_soyadi}
-                onChange={(e) => setFormData({ ...formData, ruhsat_sahibi_adi_soyadi: e.target.value })}
+                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, ruhsat_sahibi_adi_soyadi: e.target.value }); }}
                 placeholder="Ahmet Yılmaz"
               />
             </div>
@@ -301,7 +359,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               <Label>Ruhsat No</Label>
               <Input
                 value={formData.ruhsat_no}
-                onChange={(e) => setFormData({ ...formData, ruhsat_no: e.target.value })}
+                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, ruhsat_no: e.target.value }); }}
                 placeholder="ABC123456"
               />
             </div>
@@ -339,6 +397,16 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               )}
             </div>
             <p className="text-xs text-gray-500">PDF, JPG veya PNG formatında yükleyebilirsiniz</p>
+            <TransportDocumentReview
+              id="vehicle-registration-review"
+              status={ocrStatus}
+              progress={ocrProgress}
+              confidence={ocrConfidence}
+              extractedFieldCount={ocrFieldCount}
+              warning={ocrWarning}
+              confirmed={documentConfirmed}
+              onConfirmedChange={setDocumentConfirmed}
+            />
           </div>
 
           {/* Durum */}
@@ -359,7 +427,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
             <Button type="button" variant="outline" onClick={onClose}>
               İptal
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || ocrStatus === "reading"}>
               {isSubmitting ? "Kaydediliyor..." : editMode ? "Güncelle" : "Kaydet"}
             </Button>
           </DialogFooter>
