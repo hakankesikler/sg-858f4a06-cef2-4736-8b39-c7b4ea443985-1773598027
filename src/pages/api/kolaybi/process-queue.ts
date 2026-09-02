@@ -34,6 +34,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const requestedLimit = Number(req.method === "POST" ? req.body?.limit : req.query.limit);
   const limit = Math.max(1, Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 5, 10));
+  let queuedStatusChecks = 0;
+  if (isCron) {
+    const { data, error } = await db.rpc("rex_queue_stale_invoice_status_checks" as any, {
+      p_limit: limit,
+    } as any);
+    if (error) {
+      console.error("KolayBi otomatik durum sorguları kuyruğa alınamadı", error);
+    } else {
+      queuedStatusChecks = Number(data || 0);
+    }
+  }
+
   const results: any[] = [];
   for (let index = 0; index < limit; index += 1) {
     try {
@@ -44,6 +56,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       results.push({ success: false, ...publicKolayBiError(error) });
     }
   }
-  return res.status(200).json({ success: true, processed: results.length, results });
+  return res.status(200).json({
+    success: true,
+    queuedStatusChecks,
+    processed: results.length,
+    results,
+  });
 }
-

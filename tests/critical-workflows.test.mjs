@@ -237,7 +237,8 @@ test("delivery proof and KolayBi synchronization keep distinct audit events", as
   assert.match(api, /rex_claim_invoice_sync_job/);
   assert.match(api, /rex_record_invoice_provider_document/);
   assert.match(api, /rex_record_invoice_sync_result/);
-  assert.match(api, /status: "official"/);
+  assert.match(api, /classifyKolayBiEDocument/);
+  assert.match(api, /identity\.uuid && identity\.invoiceNo/);
   assert.match(history, /kolaybi_sync_succeeded/);
 });
 
@@ -303,8 +304,9 @@ test("invoice cancellation is soft, reasoned and external-reference gated", asyn
 });
 
 test("KolayBi invoices use a retryable idempotent state machine and only official documents invoice shipments", async () => {
-  const [sql, integration, invoiceDialog, accounting, queueApi, statusApi, pdfApi] = await Promise.all([
+  const [sql, reconciliation, integration, invoiceDialog, accounting, queueApi, statusApi, pdfApi] = await Promise.all([
     read("supabase/migrations/20260819003000_secure_kolaybi_invoice_pipeline.sql"),
+    read("supabase/migrations/20260902233000_kolaybi_e_document_reconciliation.sql"),
     read("src/lib/kolaybi.ts"),
     read("src/components/InvoiceDialog.tsx"),
     read("src/components/modules/AccountingModule.tsx"),
@@ -326,13 +328,31 @@ test("KolayBi invoices use a retryable idempotent state machine and only officia
   assert.match(integration, /serial_no/);
   assert.match(integration, /invoices\/e-document\/create/);
   assert.match(integration, /invoices\/e-document\/view/);
+  assert.match(integration, /e_document\/invoices\?/);
+  assert.match(integration, /KOLAYBI_COMPANY_ID/);
+  assert.match(integration, /direction: "outbound"/);
+  assert.match(integration, /document_id: String\(invoice\.kolaybi_document_id\)/);
   assert.match(integration, /kolaybi_product_id \|\| config\.defaultProductId/);
+  assert.match(integration, /providerInvoiceIdentity/);
+  assert.match(integration, /data\?\.ettn/);
+  assert.match(integration, /data\?\.serial_no/);
+  assert.match(integration, /identity\.uuid && identity\.invoiceNo/);
+  assert.doesNotMatch(integration, /status: detail\.uuid \? "official"/);
+  assert.match(reconciliation, /CREATE OR REPLACE FUNCTION public\.rex_queue_stale_invoice_status_checks/);
+  assert.match(reconciliation, /i\.integration_status='submitted'/);
+  assert.match(reconciliation, /j\.status IN \('pending','processing'\)/);
+  assert.match(reconciliation, /'cancelled','rejected'/);
+  assert.match(reconciliation, /WHEN p_status='rejected' THEN 'failed'/);
   assert.match(invoiceDialog, /rex_create_sales_invoice_secure|invoiceIntegrationService\.createDraft/);
   assert.match(accounting, /KolayBi Gönderimi Bekliyor/);
   assert.match(accounting, /handleRefreshInvoiceStatus/);
   assert.match(accounting, /handleOpenInvoicePdf/);
+  assert.match(accounting, /invoice\.official_invoice_no/);
+  assert.match(accounting, /invoice\.official_uuid/);
+  assert.match(accounting, /invoice\.provider_status/);
   assert.match(queueApi, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(queueApi, /CRON_SECRET/);
+  assert.match(queueApi, /rex_queue_stale_invoice_status_checks/);
   assert.match(statusApi, /rex_queue_invoice_status_check/);
   assert.match(pdfApi, /Content-Type", "application\/pdf/);
 });

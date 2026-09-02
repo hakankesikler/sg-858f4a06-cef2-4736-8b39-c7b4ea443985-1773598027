@@ -898,8 +898,14 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
   const handleRefreshInvoiceStatus = async (invoice: any) => {
     try {
       setIsLoading(true);
-      await invoiceIntegrationService.refreshStatus(invoice.id);
-      toast({ title: "KolayBi durumu güncellendi", description: invoice.invoice_no });
+      const result = await invoiceIntegrationService.refreshStatus(invoice.id);
+      const statusDetail = result.providerStatus || result.status;
+      toast({
+        title: result.status === "official" ? "E-belge bilgileri alındı" : "KolayBi durumu güncellendi",
+        description: [result.invoiceNo || invoice.invoice_no, statusDetail]
+          .filter(Boolean)
+          .join(" • "),
+      });
       await loadData();
     } catch (error: any) {
       toast({ title: "Durum sorgulanamadı", description: error.message, variant: "destructive" });
@@ -1132,6 +1138,11 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                             {invoice.kolaybi_error}
                           </p>
                         )}
+                        {invoice.provider_status && (
+                          <p className="mt-1 max-w-52 text-xs text-slate-600" title={invoice.provider_status}>
+                            KolayBi: {invoice.provider_status}
+                          </p>
+                        )}
                       </TableCell>
                       <TableCell>{invoice.document_type === "e_invoice" ? "E-Fatura" : "E-Arşiv"}</TableCell>
                       <TableCell className="font-medium">
@@ -1139,7 +1150,22 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                       </TableCell>
                       <TableCell>-</TableCell>
                       <TableCell>-</TableCell>
-                      <TableCell className="font-mono">{invoice.invoice_no}</TableCell>
+                      <TableCell className="font-mono">
+                        <div>{invoice.invoice_no}</div>
+                        {invoice.official_invoice_no && (
+                          <div className="mt-1 text-xs font-semibold text-green-700">
+                            Resmî: {invoice.official_invoice_no}
+                          </div>
+                        )}
+                        {invoice.official_uuid && (
+                          <div
+                            className="mt-1 max-w-44 truncate text-xs text-slate-500"
+                            title={`ETTN: ${invoice.official_uuid}`}
+                          >
+                            ETTN: {invoice.official_uuid}
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge className={invoice.payment_status === 'Bekliyor' ? 'bg-orange-100 text-orange-700' : invoice.payment_status === 'Ödendi' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
                           {invoice.payment_status}

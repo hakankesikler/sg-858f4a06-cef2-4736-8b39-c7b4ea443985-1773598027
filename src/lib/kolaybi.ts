@@ -6,6 +6,7 @@ type KolayBiConfig = {
   apiKey: string;
   channel: string;
   baseUrl: string;
+  companyId?: number;
   defaultProductId?: number;
   autoSendEDocument: boolean;
   prefix?: string;
@@ -34,10 +35,12 @@ function getConfig(): KolayBiConfig {
   }
 
   const product = Number(process.env.KOLAYBI_PRODUCT_ID || "");
+  const company = Number(process.env.KOLAYBI_COMPANY_ID || "");
   return {
     apiKey,
     channel,
     baseUrl: (process.env.KOLAYBI_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, ""),
+    companyId: Number.isFinite(company) && company > 0 ? company : undefined,
     defaultProductId: Number.isFinite(product) && product > 0 ? product : undefined,
     autoSendEDocument: process.env.KOLAYBI_AUTO_SEND_E_DOCUMENT === "true",
     prefix: process.env.KOLAYBI_E_DOCUMENT_PREFIX || undefined,
@@ -101,7 +104,14 @@ async function recordResult(
   db: DatabaseClient,
   input: {
     jobId: string;
-    status: "submitted" | "official" | "failed" | "mapping_required" | "status_checked";
+    status:
+      | "submitted"
+      | "official"
+      | "failed"
+      | "mapping_required"
+      | "status_checked"
+      | "cancelled"
+      | "rejected";
     retryable?: boolean;
     error?: string | null;
     documentId?: number | null;
@@ -236,6 +246,90 @@ function providerData(json: any) {
   return json?.data || json || {};
 }
 
+function providerText(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  }
+  return null;
+}
+
+function normalizedProviderStatus(value: unknown) {
+  return String(value || "")
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+export function providerInvoiceIdentity(data: any) {
+  const document = data?.document || data?.invoice || data?.e_document || {};
+  const providerStatus = providerText(
+    data?.e_document_status,
+    data?.gib_status,
+    data?.invoice_status,
+    data?.commercial_doc_status,
+    data?.status,
+    document?.e_document_status,
+    document?.gib_status,
+    document?.status,
+  );
+
+  return {
+    documentId: Number(
+      data?.document_id || data?.invoice_id || data?.id || document?.document_id || document?.id || 0,
+    ),
+    uuid: providerText(
+      data?.uuid,
+      data?.ettn,
+      data?.official_uuid,
+      data?.invoice_uuid,
+      document?.uuid,
+      document?.ettn,
+    ),
+    invoiceNo: providerText(
+      data?.no,
+      data?.serial_no,
+      data?.invoice_no,
+      data?.document_no,
+      document?.no,
+      document?.serial_no,
+      document?.invoice_no,
+    ),
+    providerStatus,
+    pdfUrl: providerText(
+      data?.pdf_url,
+      data?.document_url,
+      data?.view_url,
+      document?.pdf_url,
+      document?.document_url,
+    ),
+  };
+}
+
+export function classifyKolayBiEDocument(data: any) {
+  const identity = providerInvoiceIdentity(data);
+  const status = normalizedProviderStatus(identity.providerStatus);
+
+  if (
+    data?.cancelled_at ||
+    data?.canceled_at ||
+    /\b(iptal|cancel|cancelled|canceled|cancellation|cancellation requested)\b/.test(status)
+  ) {
+    return "cancelled" as const;
+  }
+  if (/\b(red|reddedildi|rejected|reject|hata|hatali|basarisiz|failed|failure)\b/.test(status)) {
+    return "rejected" as const;
+  }
+
+  // KolayBi taslak kaydında da UUID bulunabilir. Bir belgeyi ancak hem resmî
+  // seri numarası hem ETTN döndüğünde resmileşmiş kabul ediyoruz.
+  if (identity.uuid && identity.invoiceNo) return "official" as const;
+  return "status_checked" as const;
+}
+
 async function loadInvoice(db: DatabaseClient, invoiceId: string) {
   const { data, error } = await db
     .from("sales_invoices")
@@ -282,17 +376,47 @@ export async function processKolayBiJob(db: DatabaseClient, invoiceId?: string |
         `${config.baseUrl}/invoices/${invoice.kolaybi_document_id}`,
         { headers: commonHeaders },
       );
-      const detail = providerData(detailJson);
+      let detail = providerData(detailJson);
+      if (config.companyId) {
+        const query = new URLSearchParams({
+          company_id: String(config.companyId),
+          direction: "outbound",
+          document_id: String(invoice.kolaybi_document_id),
+        });
+        const eDocumentJson = await fetchKolayBi(
+          `${config.baseUrl}/e_document/invoices?${query.toString()}`,
+          { headers: commonHeaders },
+        );
+        const eDocumentRows = Array.isArray(eDocumentJson?.data)
+          ? eDocumentJson.data
+          : Array.isArray(eDocumentJson)
+            ? eDocumentJson
+            : [];
+        const eDocument = eDocumentRows.find(
+          (row: any) => Number(row?.document_id || row?.id) === Number(invoice.kolaybi_document_id),
+        );
+        if (eDocument) detail = { ...detail, ...eDocument };
+      }
+      const identity = providerInvoiceIdentity(detail);
+      const reconciliationStatus = classifyKolayBiEDocument(detail);
       await recordResult(db, {
         jobId: job.job_id,
-        status: detail.uuid ? "official" : "status_checked",
-        documentId: Number(invoice.kolaybi_document_id),
-        uuid: detail.uuid,
-        invoiceNo: detail.no,
-        providerStatus: detail.status,
+        status: reconciliationStatus,
+        documentId: identity.documentId || Number(invoice.kolaybi_document_id),
+        uuid: identity.uuid,
+        invoiceNo: identity.invoiceNo,
+        providerStatus: identity.providerStatus,
+        pdfUrl: identity.pdfUrl,
         result: detail,
       });
-      return { processed: true, invoiceId: job.invoice_id, status: detail.status || "checked" };
+      return {
+        processed: true,
+        invoiceId: job.invoice_id,
+        status: reconciliationStatus,
+        providerStatus: identity.providerStatus,
+        uuid: identity.uuid,
+        invoiceNo: identity.invoiceNo,
+      };
     }
 
     validateInvoice(invoice, config);
@@ -341,22 +465,26 @@ export async function processKolayBiJob(db: DatabaseClient, invoiceId?: string |
       body: sendForm.toString(),
     });
     const official = providerData(sendJson);
+    const identity = providerInvoiceIdentity(official);
+    const reconciliationStatus = classifyKolayBiEDocument(official);
     await recordResult(db, {
       jobId: job.job_id,
-      status: "official",
-      documentId,
-      uuid: official.uuid,
-      invoiceNo: official.no,
-      providerStatus: official.status,
+      status: reconciliationStatus,
+      documentId: identity.documentId || documentId,
+      uuid: identity.uuid,
+      invoiceNo: identity.invoiceNo,
+      providerStatus: identity.providerStatus,
+      pdfUrl: identity.pdfUrl,
       result: official,
     });
     return {
       processed: true,
       invoiceId: job.invoice_id,
-      status: "official",
+      status: reconciliationStatus,
+      providerStatus: identity.providerStatus,
       documentId,
-      uuid: official.uuid,
-      invoiceNo: official.no,
+      uuid: identity.uuid,
+      invoiceNo: identity.invoiceNo,
     };
   } catch (error: any) {
     const retryable = error instanceof KolayBiError ? error.retryable : true;
