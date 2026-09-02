@@ -279,15 +279,24 @@ async function findLocal(
   }
   if (resource === "associates") {
     let result: any = null;
-    const { data: byProvider } = await admin.from("customers").select("id").eq("kolaybi_contact_id", Number(row.externalId)).maybeSingle();
+    const { data: byProvider } = await admin.from("customers").select("id")
+      .eq("kolaybi_contact_id", Number(row.externalId)).is("archived_at", null).maybeSingle();
     result = byProvider;
     if (!result && [10, 11].includes(row.taxIdentity.length)) {
-      const { data } = await admin.from("customers").select("id").or(`vergi_no.eq.${row.taxIdentity},tc_no.eq.${row.taxIdentity}`).limit(1).maybeSingle();
-      result = data;
+      const { data } = await admin.from("customers").select("id")
+        .or(`vergi_no.eq.${row.taxIdentity},tc_no.eq.${row.taxIdentity}`)
+        .is("archived_at", null).limit(2);
+      if (data?.length === 1) result = data[0];
+    }
+    if (!result && row.code) {
+      const { data } = await admin.from("customers").select("id")
+        .eq("customer_code", row.code).is("archived_at", null).limit(2);
+      if (data?.length === 1) result = data[0];
     }
     if (!result && text(item?.email)) {
-      const { data } = await admin.from("customers").select("id").ilike("email", text(item.email)).limit(1).maybeSingle();
-      result = data;
+      const { data } = await admin.from("customers").select("id")
+        .ilike("email", text(item.email)).is("archived_at", null).limit(2);
+      if (data?.length === 1) result = data[0];
     }
     if (result?.id) {
       const invoiceAddress = (Array.isArray(item?.address) ? item.address : []).find((address: any) => address?.address_type === "invoice") || item?.address?.[0];
@@ -611,7 +620,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           records = records.slice(0, 3000);
         } else {
           const json = await providerRequest(`${baseUrl}${endpoint(resource)}`, { method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" } });
-          records = listFrom(json).slice(0, 1000);
+          records = listFrom(json);
         }
         received += records.length;
         for (const item of records) {

@@ -94,11 +94,11 @@ export const kolaybiOfficeService = {
     });
   },
 
-  async createSandboxAssociate(customerId: string) {
+  async synchronizeAssociate(customerId: string) {
     return authenticatedFetch(`/api/kolaybi/associates/${customerId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ confirmed: true }),
+      body: JSON.stringify({ automatic: true }),
     });
   },
 

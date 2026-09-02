@@ -147,3 +147,10 @@ test("customer directory has no 1000-row blind spot and prioritizes financial ac
   assert.match(accountingScreen, /Son Mali Hareket/);
   assert.match(accountingScreen, /customer\.vergi_no\?\.includes/);
 });
+
+test("CRM customer conversion triggers automatic KolayBi matching", async () => {
+  const source = await read("src/components/modules/SalesCRMModule.tsx");
+  assert.match(source, /const customerId = await salesCrmService\.convertToCustomer/);
+  assert.match(source, /kolaybiOfficeService\.synchronizeAssociate\(customerId\)/);
+  assert.match(source, /KolayBi'deki mevcut cari VKN\/TCKN ile otomatik eşleştirildi/);
+});

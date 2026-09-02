@@ -19,6 +19,7 @@ import {
   type CrmContact, type CrmNotification, type CrmOffer, type CrmOfferItem, type CrmOpportunity, type CrmStage, type CrmTask, type Customer360, type QuoteDetail,
   type CrmSettings, type CrmSupplier, type SalesPerformance, type SalesRepresentative,
 } from "@/services/salesCrmService";
+import { kolaybiOfficeService } from "@/services/kolaybiOfficeService";
 
 const stageConfig: Record<CrmStage, { label: string; short: string; color: string; dot: string }> = {
   introduction: { label: "Tanıtım Yapılanlar", short: "Tanıtım", color: "border-sky-200 bg-sky-50 text-sky-800", dot: "bg-sky-500" },
@@ -276,7 +277,20 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const convertCustomer = async () => {
     if (!selected) return;
     setSubmitting(true);
-    try { await salesCrmService.convertToCustomer(selected.id); toast({ title: "Müşteri cari kartı oluşturuldu" }); await refreshDetail(); }
+    try {
+      const customerId = await salesCrmService.convertToCustomer(selected.id);
+      let description = "KolayBi eşleştirmesi otomatik olarak kontrol edildi.";
+      try {
+        const integration = await kolaybiOfficeService.synchronizeAssociate(customerId);
+        description = integration.created
+          ? "Cari KolayBi sandbox'ta otomatik oluşturuldu."
+          : "KolayBi'deki mevcut cari VKN/TCKN ile otomatik eşleştirildi.";
+      } catch (integrationError: any) {
+        description = `Cari oluşturuldu. KolayBi kontrolü bekliyor: ${integrationError.message}`;
+      }
+      toast({ title: "Müşteri cari kartı oluşturuldu", description });
+      await refreshDetail();
+    }
     catch (error: any) { toast({ title: "Cari oluşturulamadı", description: error?.message, variant: "destructive" }); }
     finally { setSubmitting(false); }
   };

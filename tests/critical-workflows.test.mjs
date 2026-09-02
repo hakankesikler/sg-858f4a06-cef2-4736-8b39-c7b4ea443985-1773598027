@@ -978,7 +978,7 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
 });
 
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
-  const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, associateCreateApi, proceedApi, cancelApi, providerLib, workflow, collection, vercel, service, office, expenseWorkspace, financeWorkspace, accounting] = await Promise.all([
+  const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, associateCreateApi, proceedApi, cancelApi, providerLib, workflow, collection, vercel, service, office, expenseWorkspace, financeWorkspace, accounting, cariForm] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
     read("supabase/migrations/20260831210000_kolaybi_manual_mappings.sql"),
     read("supabase/migrations/20260831223000_kolaybi_product_catalog_sync.sql"),
@@ -1001,6 +1001,7 @@ test("KolayBi office connects sales, operations and accounting with durable sync
     read("src/components/GeneralExpenseWorkspace.tsx"),
     read("src/components/FinanceWorkspace.tsx"),
     read("src/components/modules/AccountingModule.tsx"),
+    read("src/components/CariForm.tsx"),
   ]);
   assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.kolaybi_master_records/);
   assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.kolaybi_sync_runs/);
@@ -1070,8 +1071,11 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(mappingApi, /rex_resolve_kolaybi_mapping/);
   assert.match(mappingApi, /rex_review_kolaybi_product/);
   assert.match(associateCreateApi, /baseUrl\.includes\("sandbox"\)/);
-  assert.match(associateCreateApi, /identity_no/);
-  assert.match(associateCreateApi, /KolayBi sandbox cari hesabı olarak oluşturuldu/);
+  assert.match(associateCreateApi, /associates\?identity_no=/);
+  assert.match(associateCreateApi, /exactMatches\.length > 1/);
+  assert.match(associateCreateApi, /match_method: matchMethod/);
+  assert.match(associateCreateApi, /created_from_tms/);
+  assert.match(associateCreateApi, /staleMappingError/);
   assert.match(proceedApi, /accounting\.accounts/);
   assert.match(proceedApi, /proceedKolayBiInvoice/);
   assert.match(proceedApi, /rex_record_customer_payment/);
@@ -1092,11 +1096,16 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(vercel, /\/api\/kolaybi\/purchase-invoices\/sync[\s\S]*17 \* \* \* \*/);
   assert.deepEqual(vercelConfig.regions, ["fra1"]);
   assert.match(service, /kolaybi_master_records/);
-  assert.match(service, /createSandboxAssociate/);
+  assert.match(service, /synchronizeAssociate/);
   assert.match(service, /kolaybi_sync_runs/);
   assert.match(service, /resolveMapping/);
   assert.match(service, /reviewImportedProduct/);
   assert.match(service, /synchronizeAssociateTransactions/);
+  assert.doesNotMatch(cariForm, /<Label>Contact ID<\/Label>/);
+  assert.doesNotMatch(cariForm, /<Label>Address ID<\/Label>/);
+  assert.match(cariForm, /KolayBi Otomatik Eşleştirme/);
+  assert.match(cariForm, /synchronizeAssociate\(savedCustomer\.id\)/);
+  assert.match(office, /VKN\/TCKN, cari kodu ve tekil e-posta eşleşmeleri otomatik yapılır/);
   assert.match(office, /KolayBi Entegre Ofis/);
   assert.match(office, /KolayBi Eşleştirme Kontrolü/);
   assert.match(office, /TMS carisi seçin/);

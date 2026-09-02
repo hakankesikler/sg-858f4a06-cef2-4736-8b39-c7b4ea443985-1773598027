@@ -313,11 +313,11 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
               ))}
             </CardContent>
           </Card>
-          {reviewCount > 0 && <Card className="border-amber-200 bg-amber-50"><CardContent className="flex items-center gap-3 p-4"><TriangleAlert className="h-5 w-5 text-amber-600" /><div><p className="font-semibold text-amber-900">{reviewCount} kayıt kontrol bekliyor</p><p className="text-sm text-amber-800">Yeni KolayBi ürünleri pasif kart olarak aktarılır; cari eşleştirmeleri ve ürün kullanım onayları yetkili kullanıcı tarafından tamamlanır.</p></div></CardContent></Card>}
+          {reviewCount > 0 && <Card className="border-amber-200 bg-amber-50"><CardContent className="flex items-center gap-3 p-4"><TriangleAlert className="h-5 w-5 text-amber-600" /><div><p className="font-semibold text-amber-900">{reviewCount} kayıt kontrol bekliyor</p><p className="text-sm text-amber-800">VKN/TCKN, cari kodu ve tekil e-posta eşleşmeleri otomatik yapılır. Burada yalnızca çelişkili/mükerrer cariler ile yeni ürünlerin kullanım onayı kalır.</p></div></CardContent></Card>}
           {reviewRecords.length > 0 && <Card>
             <CardHeader>
               <CardTitle>KolayBi Eşleştirme Kontrolü</CardTitle>
-              <CardDescription>KolayBi kaydını doğru TMS cari veya ürün/hizmet kaydıyla bağlayın. Her karar değiştirilemeyen denetim geçmişine eklenir.</CardDescription>
+              <CardDescription>Otomatik ve kesin eşleştirilemeyen istisnaları inceleyin. Her karar değiştirilemeyen denetim geçmişine eklenir.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto rounded-xl border">
