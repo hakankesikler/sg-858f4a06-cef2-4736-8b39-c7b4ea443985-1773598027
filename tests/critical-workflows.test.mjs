@@ -662,6 +662,8 @@ test("staff security requires MFA for privileged roles and records immutable sec
   assert.match(session, /STAFF_MAX_SESSION_MS/);
   assert.match(api, /tokenAssuranceLevel\(token\) !== "aal2"/);
   assert.match(config, /Content-Security-Policy/);
+  assert.match(config, /\.r2\.cloudflarestorage\.com/);
+  assert.match(config, /url\.origin/);
   assert.match(config, /Strict-Transport-Security/);
   assert.match(config, /X-Frame-Options/);
 });
