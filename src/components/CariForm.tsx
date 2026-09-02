@@ -775,7 +775,10 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 <div className="space-y-2">
                   <Label>E-Posta *</Label>
                   <Input 
-                    type="email"
+                    type="text"
+                    inputMode="email"
+                    autoComplete="email"
+                    pattern="^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
                     value={formData.email}
                     onInput={(event) => {
                       const email = event.currentTarget.value;
