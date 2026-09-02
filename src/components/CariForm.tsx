@@ -771,7 +771,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                   <Input 
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) => setFormData((current) => ({ ...current, email: e.target.value }))}
                     placeholder=""
                     required
                   />
@@ -823,7 +823,10 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
               <div className="flex gap-4 items-start">
                 <div className="space-y-2 w-40">
                   <Label>Adres Tipi</Label>
-                  <Select>
+                  <Select
+                    value={formData.address_type}
+                    onValueChange={(value) => setFormData((current) => ({ ...current, address_type: value }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Seçiniz" />
                     </SelectTrigger>
@@ -839,6 +842,8 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                   <textarea 
                     className="w-full min-h-[120px] px-3 py-2 border rounded-md resize-none"
                     placeholder=""
+                    value={formData.address}
+                    onChange={(e) => setFormData((current) => ({ ...current, address: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
