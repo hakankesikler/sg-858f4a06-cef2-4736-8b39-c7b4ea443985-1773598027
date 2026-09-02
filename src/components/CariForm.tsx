@@ -777,7 +777,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                   <Input 
                     type="email"
                     value={formData.email}
-                    onChange={(event) => {
+                    onInput={(event) => {
                       const email = event.currentTarget.value;
                       setFormData((current) => ({ ...current, email }));
                     }}
