@@ -24,8 +24,12 @@ import {
 
 interface InvoiceItem {
   id: string;
+  catalogProductId?: string;
+  productCode?: string;
+  kolaybiProductId?: number | null;
   description: string;
   quantity: number;
+  unit?: string;
   unitPrice: number;
   vatRate: number;
   subtotal: number;
@@ -35,6 +39,19 @@ interface InvoiceItem {
   withholdingValue?: number;
   exemptionCode?: string;
 }
+
+type InvoiceCatalogProduct = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  unit: string | null;
+  sale_price: number | null;
+  tax_rate: number | null;
+  kolaybi_product_id: number | null;
+  approval_status: string;
+  is_active: boolean | null;
+};
 
 interface InvoiceDialogProps {
   isOpen: boolean;
@@ -97,14 +114,17 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
   const [noteTemplates, setNoteTemplates] = useState<InvoiceNoteTemplate[]>([]);
   const [noteTemplateId, setNoteTemplateId] = useState("");
   const [bankAccounts, setBankAccounts] = useState<InvoiceBankAccount[]>([]);
+  const [catalogProducts, setCatalogProducts] = useState<InvoiceCatalogProduct[]>([]);
   const [selectedBankAccountIds, setSelectedBankAccountIds] = useState<string[]>([]);
   const [includeBankDetails, setIncludeBankDetails] = useState(true);
   
   const [items, setItems] = useState<InvoiceItem[]>([
     {
       id: "1",
+      productCode: "HIZMET",
       description: "Taşıma Hizmeti",
       quantity: 1,
+      unit: "Adet",
       unitPrice: 0,
       vatRate: 20,
       subtotal: 0,
@@ -127,12 +147,19 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
 
   const loadPresentationOptions = async () => {
     try {
-      const [templates, accounts] = await Promise.all([
+      const [templates, accounts, catalogResult] = await Promise.all([
         invoicePresentationService.getTemplates(),
         invoicePresentationService.getBankAccounts(),
+        supabase
+          .from("products_services")
+          .select("id,code,name,description,unit,sale_price,tax_rate,kolaybi_product_id,approval_status,is_active")
+          .eq("is_active", true)
+          .order("name"),
       ]);
+      if (catalogResult.error) throw catalogResult.error;
       setNoteTemplates(templates);
       setBankAccounts(accounts);
+      setCatalogProducts((catalogResult.data || []) as InvoiceCatalogProduct[]);
       setSelectedBankAccountIds(accounts.filter((account) => account.is_default).map((account) => account.id));
       setIncludeBankDetails(accounts.length > 0);
       const initialCategory = inferCategory(shipment);
@@ -163,8 +190,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       setCurrency(shipment.currency || "TRY");
       setItems([{
         id: "1",
+        productCode: "HIZMET",
         description: `${shipment.shipment_code || ""} taşıma hizmeti (${shipment.origin || ""} → ${shipment.destination || ""})`.trim(),
         quantity: 1,
+        unit: "Adet",
         unitPrice,
         vatRate,
         subtotal: unitPrice,
@@ -210,8 +239,12 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     return {
       ...item,
       id: item.id || Date.now().toString(),
+      catalogProductId: item.catalogProductId || "",
+      productCode: item.productCode || "HIZMET",
+      kolaybiProductId: item.kolaybiProductId || null,
       description: item.description || "",
       quantity,
+      unit: item.unit || "Adet",
       unitPrice,
       vatRate,
       subtotal,
@@ -221,6 +254,26 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       withholdingValue: item.withholdingValue || 0,
       exemptionCode: item.exemptionCode || "",
     };
+  };
+
+  const handleCatalogProductChange = (index: number, productId: string) => {
+    const product = catalogProducts.find((row) => row.id === productId);
+    if (!product) return;
+    const current = items[index];
+    const next = [...items];
+    const taxRate = Number(product.tax_rate ?? current.vatRate ?? 0);
+    next[index] = calculateItemTotals({
+      ...current,
+      catalogProductId: product.id,
+      productCode: product.code,
+      kolaybiProductId: product.kolaybi_product_id,
+      description: product.description || product.name,
+      unit: product.unit || "Adet",
+      unitPrice: Number(product.sale_price ?? current.unitPrice ?? 0),
+      vatRate: taxRate,
+      exemptionCode: taxRate === 0 ? current.exemptionCode || "" : "",
+    });
+    setItems(next);
   };
 
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
@@ -237,8 +290,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       ...items,
       {
         id: Date.now().toString(),
+        productCode: "HIZMET",
         description: "",
         quantity: 1,
+        unit: "Adet",
         unitPrice: 0,
         vatRate: 20,
         subtotal: 0,
@@ -296,12 +351,13 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         bankAccountIds: includeBankDetails ? selectedBankAccountIds : [],
         includeBankDetails: includeBankDetails && selectedBankAccountIds.length > 0,
         items: items.map((item) => ({
-          productCode: "HIZMET",
+          productCode: item.productCode || "HIZMET",
           description: item.description,
           quantity: item.quantity,
-          unit: "Adet",
+          unit: item.unit || "Adet",
           unitPrice: item.unitPrice,
           vatRate: item.vatRate,
+          kolaybiProductId: item.kolaybiProductId || null,
           withholdingCode: item.withholdingCode || null,
           withholdingValue: item.withholdingValue || null,
           withholdingType: item.withholdingCode ? "PERCENTAGE" : null,
@@ -555,6 +611,24 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
             <div className="space-y-2">
               {items.map((item, index) => (
                 <div key={item.id} className="space-y-2 rounded-lg border bg-white p-3">
+                  <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                    <div>
+                      <Label className="text-xs">Katalog Ürünü / Hizmeti</Label>
+                      <Select value={item.catalogProductId || ""} onValueChange={(value) => handleCatalogProductChange(index, value)}>
+                        <SelectTrigger><SelectValue placeholder="KolayBi ile eşleşmiş ürün/hizmeti seçin" /></SelectTrigger>
+                        <SelectContent>
+                          {catalogProducts.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.code} · {product.name}{product.kolaybi_product_id ? ` · KolayBi #${product.kolaybi_product_id}` : " · eşleme bekliyor"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="text-xs text-slate-500 md:pb-2">
+                      Kod: <span className="font-mono">{item.productCode || "HIZMET"}</span>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-12 gap-2 items-end">
                   <div className="col-span-4">
                     <Label className="text-xs">Ürün/Hizmet Adı</Label>

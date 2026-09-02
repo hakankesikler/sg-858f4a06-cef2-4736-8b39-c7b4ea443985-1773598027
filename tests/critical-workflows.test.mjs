@@ -106,6 +106,15 @@ test("shipment assignment still requires driver licence and vehicle registration
   assert.match(sql, /PERFORM public\.rex_validate_assignment\(v_driver,v_vehicle\)/);
 });
 
+test("sales invoice lines use the active KolayBi product catalog", async () => {
+  const dialog = await read("src/components/InvoiceDialog.tsx");
+  assert.match(dialog, /from\("products_services"\)[\s\S]*\.eq\("is_active", true\)/);
+  assert.match(dialog, /Katalog Ürünü \/ Hizmeti/);
+  assert.match(dialog, /productCode: item\.productCode \|\| "HIZMET"/);
+  assert.match(dialog, /kolaybiProductId: item\.kolaybiProductId \|\| null/);
+  assert.match(dialog, /handleCatalogProductChange/);
+});
+
 test("delivery still requires a proof document and creates invoice-ready state", async () => {
   const sql = await read("supabase/migrations/20260818143000_transport_workflow_and_kolaybi.sql");
   const start = sql.indexOf("CREATE OR REPLACE FUNCTION public.rex_mark_shipment_delivered");
