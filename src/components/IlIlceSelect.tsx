@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -34,16 +34,6 @@ export function IlIlceSelect({ ilValue, ilceValue, onIlChange, onIlceChange }: I
       ilce.toLowerCase().includes(ilceSearch.toLowerCase())
     );
   }, [ilceler, ilceSearch]);
-
-  // Reset ilçe when il changes
-  useEffect(() => {
-    if (ilValue) {
-      const selectedIl = ilIlceData.find(item => item.il === ilValue);
-      if (selectedIl && !selectedIl.ilceler.includes(ilceValue)) {
-        onIlceChange("");
-      }
-    }
-  }, [ilValue, ilceValue, onIlceChange]);
 
   const handleIlSelect = (il: string) => {
     onIlChange(il);

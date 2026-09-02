@@ -862,8 +862,15 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 <IlIlceSelect
                   ilValue={formData.city || ""}
                   ilceValue={formData.district || ""}
-                  onIlChange={(value) => setFormData({ ...formData, city: value })}
-                  onIlceChange={(value) => setFormData({ ...formData, district: value })}
+                  onIlChange={(value) => setFormData((current) => ({
+                    ...current,
+                    city: value,
+                    district: "",
+                  }))}
+                  onIlceChange={(value) => setFormData((current) => ({
+                    ...current,
+                    district: value,
+                  }))}
                 />
               </div>
 
