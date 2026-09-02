@@ -50,24 +50,66 @@ export interface Customer {
   service_types?: string[] | null;
   service_regions?: string[] | null;
   equipment_types?: string[] | null;
+  local_balance?: number;
+  last_financial_activity_at?: string | null;
+  financial_activity_segment?: "open_balance" | "recent_zero" | "dormant_zero";
+}
+
+type FinancialDirectoryRow = {
+  customer_id: string;
+  balance: number | string | null;
+  last_financial_activity_at: string | null;
+  financial_activity_segment: "open_balance" | "recent_zero" | "dormant_zero";
+};
+
+const DATABASE_PAGE_SIZE = 1000;
+
+async function loadAllRows<T>(
+  queryPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += DATABASE_PAGE_SIZE) {
+    const { data, error } = await queryPage(from, from + DATABASE_PAGE_SIZE - 1);
+    if (error) throw error;
+    const page = data || [];
+    rows.push(...page);
+    if (page.length < DATABASE_PAGE_SIZE) break;
+  }
+  return rows;
 }
 
 export const crmService = {
   // Get all customers
   async getCustomers() {
-    const { data, error } = await supabase
+    const customers = await loadAllRows<any>((from, to) => supabase
       .from("customers")
       .select("*")
       .is("archived_at", null)
-      .range(0, 999)
-      .order("created_at", { ascending: false });
-    
-    if (error) {
-      console.error("Error fetching customers:", error);
-      throw error;
-    }
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, to));
 
-    return data || [];
+    try {
+      const directory = await loadAllRows<FinancialDirectoryRow>((from, to) => (supabase as any)
+        .from("rex_customer_financial_directory")
+        .select("customer_id,balance,last_financial_activity_at,financial_activity_segment")
+        .order("customer_id", { ascending: true })
+        .range(from, to));
+      const financialByCustomer = new Map(directory.map((row) => [row.customer_id, row]));
+      return customers.map((customer) => {
+        const financial = financialByCustomer.get(customer.id);
+        return {
+          ...customer,
+          local_balance: Number(financial?.balance || 0),
+          last_financial_activity_at: financial?.last_financial_activity_at || null,
+          financial_activity_segment: financial?.financial_activity_segment || "dormant_zero",
+        };
+      });
+    } catch (error) {
+      // Keep the customer list usable while a new database migration is deploying.
+      console.warn("Customer financial directory is not available yet:", error);
+      return customers;
+    }
   },
 
   // Get customer by ID with related data

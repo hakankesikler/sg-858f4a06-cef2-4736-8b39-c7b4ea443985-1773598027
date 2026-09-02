@@ -127,3 +127,23 @@ test("new CRM prospects use an authorized security-definer RPC and self assignme
   assert.match(service, /supabase\.rpc\("rex_crm_create_opportunity"/);
   assert.doesNotMatch(service, /table\("crm_opportunities"\)\.insert\(payload\)/);
 });
+
+test("customer directory has no 1000-row blind spot and prioritizes financial activity", async () => {
+  const [sql, service, crmScreen, accountingScreen] = await Promise.all([
+    read("supabase/migrations/20260902194500_customer_financial_directory.sql"),
+    read("src/services/crmService.ts"),
+    read("src/components/modules/CRMModule.tsx"),
+    read("src/components/modules/AccountingModule.tsx"),
+  ]);
+  assert.match(sql, /rex_customer_financial_directory/);
+  assert.match(sql, /open_balance/);
+  assert.match(sql, /recent_zero/);
+  assert.match(sql, /dormant_zero/);
+  assert.match(service, /DATABASE_PAGE_SIZE = 1000/);
+  assert.match(service, /for \(let from = 0; ; from \+= DATABASE_PAGE_SIZE\)/);
+  assert.doesNotMatch(service, /\.range\(0, 999\)/);
+  assert.match(crmScreen, /VKN\/TCKN, telefon ara/);
+  assert.match(crmScreen, /Bakiye ve hareket filtresi/);
+  assert.match(accountingScreen, /Son Mali Hareket/);
+  assert.match(accountingScreen, /customer\.vergi_no\?\.includes/);
+});

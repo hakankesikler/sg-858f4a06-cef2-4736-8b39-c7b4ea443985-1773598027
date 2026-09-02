@@ -54,6 +54,7 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("musteri");
   const [supplierSubCategory, setSupplierSubCategory] = useState("all");
+  const [financialFilter, setFinancialFilter] = useState("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   
   // View/Edit/Delete states
@@ -229,6 +230,10 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
       filtered = filtered.filter(c => c.supplier_category === supplierSubCategory);
     }
 
+    if (financialFilter !== "all") {
+      filtered = filtered.filter(c => c.financial_activity_segment === financialFilter);
+    }
+
     // Filter by search term with Turkish character normalization
     if (searchTerm) {
       const search = normalizeTurkish(searchTerm);
@@ -237,16 +242,32 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
         const emailNorm = normalizeTurkish(c.email || '');
         const phoneNorm = normalizeTurkish(c.phone || '');
         const codeNorm = normalizeTurkish(c.customer_code || '');
+        const companyNorm = normalizeTurkish(c.company || '');
+        const taxOfficeNorm = normalizeTurkish(c.tax_office || '');
+        const digits = searchTerm.replace(/\D/g, '');
         
-        return nameNorm.includes(search) || emailNorm.includes(search) || phoneNorm.includes(search) || codeNorm.includes(search);
+        return nameNorm.includes(search) || companyNorm.includes(search) || emailNorm.includes(search) ||
+          phoneNorm.includes(search) || codeNorm.includes(search) || taxOfficeNorm.includes(search) ||
+          (digits.length > 0 && (String(c.vergi_no || '').includes(digits) || String(c.tc_no || '').includes(digits)));
       });
     }
-    return filtered;
-  }, [customers, filterType, supplierSubCategory, searchTerm]);
+    return [...filtered].sort((a, b) => {
+      const segmentOrder: Record<string, number> = { open_balance: 0, recent_zero: 1, dormant_zero: 2 };
+      const segmentCompare = (segmentOrder[a.financial_activity_segment] ?? 2) - (segmentOrder[b.financial_activity_segment] ?? 2);
+      if (segmentCompare !== 0) return segmentCompare;
+      if (a.financial_activity_segment === "open_balance") {
+        const balanceCompare = Math.abs(Number(b.local_balance || 0)) - Math.abs(Number(a.local_balance || 0));
+        if (balanceCompare !== 0) return balanceCompare;
+      }
+      const activityA = a.last_financial_activity_at ? new Date(a.last_financial_activity_at).getTime() : 0;
+      const activityB = b.last_financial_activity_at ? new Date(b.last_financial_activity_at).getTime() : 0;
+      return activityB - activityA;
+    });
+  }, [customers, filterType, supplierSubCategory, financialFilter, searchTerm]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterType, supplierSubCategory, searchTerm]);
+  }, [filterType, supplierSubCategory, financialFilter, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / PAGE_SIZE));
   const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -554,11 +575,22 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
+        <select
+          value={financialFilter}
+          onChange={(event) => setFinancialFilter(event.target.value)}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          aria-label="Bakiye ve hareket filtresi"
+        >
+          <option value="all">Tüm cariler</option>
+          <option value="open_balance">Açık bakiyeliler</option>
+          <option value="recent_zero">Bakiyesi sıfır, son 24 ay hareketli</option>
+          <option value="dormant_zero">Bakiyesi sıfır, 24+ ay hareketsiz</option>
+        </select>
         <div className="ml-auto flex items-center gap-2">
           <Search className="h-4 w-4 text-gray-400" />
           <Input
             type="text"
-            placeholder="Ara"
+            placeholder="Ünvan, kod, VKN/TCKN, telefon ara"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64"
@@ -568,7 +600,7 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
 
       {/* Table */}
       <div className="border rounded-lg overflow-x-auto">
-        <table className="w-full min-w-[900px]">
+        <table className="w-full min-w-[1300px]">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="w-12 px-6 py-3">
@@ -591,6 +623,12 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 VKN/TCKN
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                Bakiye
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Son Mali Hareket
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 İşlemler
@@ -633,6 +671,12 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                     {vknValue}
+                  </td>
+                  <td className={`px-6 py-4 text-right text-sm font-semibold ${Number(customer.local_balance || 0) > 0 ? "text-green-700" : Number(customer.local_balance || 0) < 0 ? "text-red-700" : "text-gray-500"}`}>
+                    {Number(customer.local_balance || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TRY
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                    {customer.last_financial_activity_at ? new Date(customer.last_financial_activity_at).toLocaleDateString("tr-TR") : "Hareket yok"}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">

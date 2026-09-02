@@ -114,7 +114,11 @@ type Customer = {
   status: string;
   notes?: string;
   account_type?: string;
+  customer_code?: string | null;
   created_at: string;
+  local_balance?: number;
+  last_financial_activity_at?: string | null;
+  financial_activity_segment?: "open_balance" | "recent_zero" | "dormant_zero";
 };
 
 interface ExpenseCategory {
@@ -152,6 +156,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [customerPage, setCustomerPage] = useState(1);
+  const [financialFilter, setFinancialFilter] = useState("all");
 
   const [editCategoryModal, setEditCategoryModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<ExpenseCategory | null>(null);
@@ -345,7 +350,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
         "E-posta": c.email || "",
         "Telefon": c.phone || "",
         "Şehir": c.city || "",
-        "VKN/TCKN": c.tax_number || "",
+        "VKN/TCKN": c.vergi_no || c.tc_no || c.tax_number || "",
         "Durum": c.status,
       })), "Cari Listesi");
       toast({ title: "Başarılı", description: "Excel dosyası indirildi!" });
@@ -400,6 +405,8 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
   };
 
   const calculateCustomerBalance = (customerId: string, accountType: string) => {
+    const directoryCustomer = customers.find((customer) => customer.id === customerId);
+    if (typeof directoryCustomer?.local_balance === "number") return directoryCustomer.local_balance;
     let balance = 0;
     const adjustmentBalance = customerAdjustments
       .filter(adjustment => adjustment.customer_id === customerId)
@@ -443,13 +450,19 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
     }
 
     const searchLower = searchTerm.toLowerCase();
+    const searchDigits = searchTerm.replace(/\D/g, "");
     const matchesSearch = 
       customer.name?.toLowerCase().includes(searchLower) ||
       customer.company?.toLowerCase().includes(searchLower) ||
       customer.email?.toLowerCase().includes(searchLower) ||
       customer.phone?.includes(searchTerm) ||
       customer.city?.toLowerCase().includes(searchLower) ||
-      customer.tax_number?.includes(searchTerm);
+      customer.customer_code?.toLowerCase().includes(searchLower) ||
+      customer.tax_number?.includes(searchTerm) ||
+      (searchDigits.length > 0 && (
+        customer.vergi_no?.includes(searchDigits) ||
+        customer.tc_no?.includes(searchDigits)
+      ));
 
     return matchesSearch;
   });
@@ -474,6 +487,10 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
     );
   }
 
+  if (financialFilter !== "all") {
+    filteredCustomers = filteredCustomers.filter(customer => customer.financial_activity_segment === financialFilter);
+  }
+
   // Apply sorting
   if (sortBy) {
     filteredCustomers.sort((a, b) => {
@@ -488,18 +505,35 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
         const typeB = getAccountTypeLabel(b.account_type || "musteri");
         compareValue = typeA.localeCompare(typeB, 'tr');
       } else if (sortBy === "balance") {
-        const balanceA = calculateCustomerBalance(a.id, a.account_type || "musteri");
-        const balanceB = calculateCustomerBalance(b.id, b.account_type || "musteri");
+        const balanceA = typeof a.local_balance === "number" ? a.local_balance : calculateCustomerBalance(a.id, a.account_type || "musteri");
+        const balanceB = typeof b.local_balance === "number" ? b.local_balance : calculateCustomerBalance(b.id, b.account_type || "musteri");
         compareValue = balanceA - balanceB;
+      } else if (sortBy === "activity") {
+        const activityA = a.last_financial_activity_at ? new Date(a.last_financial_activity_at).getTime() : 0;
+        const activityB = b.last_financial_activity_at ? new Date(b.last_financial_activity_at).getTime() : 0;
+        compareValue = activityA - activityB;
       }
       
       return sortOrder === "asc" ? compareValue : -compareValue;
+    });
+  } else {
+    const segmentOrder: Record<string, number> = { open_balance: 0, recent_zero: 1, dormant_zero: 2 };
+    filteredCustomers.sort((a, b) => {
+      const segmentCompare = (segmentOrder[a.financial_activity_segment || "dormant_zero"] ?? 2) - (segmentOrder[b.financial_activity_segment || "dormant_zero"] ?? 2);
+      if (segmentCompare !== 0) return segmentCompare;
+      if (a.financial_activity_segment === "open_balance") {
+        const balanceCompare = Math.abs(Number(b.local_balance || 0)) - Math.abs(Number(a.local_balance || 0));
+        if (balanceCompare !== 0) return balanceCompare;
+      }
+      const activityA = a.last_financial_activity_at ? new Date(a.last_financial_activity_at).getTime() : 0;
+      const activityB = b.last_financial_activity_at ? new Date(b.last_financial_activity_at).getTime() : 0;
+      return activityB - activityA;
     });
   }
 
   useEffect(() => {
     setCustomerPage(1);
-  }, [activeTab, searchTerm, filters.status, filters.city, filters.dateFrom, filters.dateTo]);
+  }, [activeTab, searchTerm, financialFilter, filters.status, filters.city, filters.dateFrom, filters.dateTo]);
 
   const customerPageCount = Math.max(1, Math.ceil(filteredCustomers.length / CUSTOMER_PAGE_SIZE));
   const paginatedCustomers = filteredCustomers.slice((customerPage - 1) * CUSTOMER_PAGE_SIZE, customerPage * CUSTOMER_PAGE_SIZE);
@@ -1357,12 +1391,23 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                 <div className="relative flex-1 max-w-md ml-auto">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
-                    placeholder="Ara"
+                    placeholder="Ünvan, VKN/TCKN, kod veya telefon ara"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
+                <select
+                  value={financialFilter}
+                  onChange={(event) => setFinancialFilter(event.target.value)}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  aria-label="Bakiye ve hareket filtresi"
+                >
+                  <option value="all">Tüm cariler</option>
+                  <option value="open_balance">Açık bakiyeliler</option>
+                  <option value="recent_zero">Bakiyesi sıfır, son 24 ay hareketli</option>
+                  <option value="dormant_zero">Bakiyesi sıfır, 24+ ay hareketsiz</option>
+                </select>
               </div>
 
               <TabsContent value={activeTab} className="mt-0">
@@ -1406,13 +1451,24 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                             )}
                           </button>
                         </TableHead>
+                        <TableHead>
+                          <button
+                            onClick={() => handleSort("activity")}
+                            className="flex items-center gap-1 hover:text-blue-600 font-semibold"
+                          >
+                            Son Mali Hareket
+                            {sortBy === "activity" && (
+                              sortOrder === "asc" ? <ChevronDown className="w-4 h-4 rotate-180" /> : <ChevronDown className="w-4 h-4" />
+                            )}
+                          </button>
+                        </TableHead>
                         <TableHead>İşlemler</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredCustomers.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-12 text-gray-500">
+                          <TableCell colSpan={8} className="text-center py-12 text-gray-500">
                             <div className="flex flex-col items-center gap-2">
                               <Search className="w-12 h-12 opacity-50" />
                               <p>Kayıt bulunamadı</p>
@@ -1463,6 +1519,9 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                                     </span>
                                   );
                                 })()}
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap text-sm text-gray-600">
+                                {customer.last_financial_activity_at ? new Date(customer.last_financial_activity_at).toLocaleDateString("tr-TR") : "Hareket yok"}
                               </TableCell>
                               <TableCell className="text-right">
                                 <div className="flex items-center justify-end gap-1">
