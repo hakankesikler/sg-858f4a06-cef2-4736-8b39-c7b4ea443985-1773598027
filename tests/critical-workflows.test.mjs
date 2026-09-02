@@ -88,6 +88,8 @@ test("supplier classification separates hauliers from corporate carriers and pro
   assert.match(cariForm, /value=\{formData\.email\}[\s\S]*setFormData\(\(current\) => \(\{ \.\.\.current, email: e\.target\.value \}\)\)/);
   assert.match(cariForm, /value=\{formData\.address\}[\s\S]*setFormData\(\(current\) => \(\{ \.\.\.current, address: e\.target\.value \}\)\)/);
   assert.match(cariForm, /value=\{formData\.address_type\}[\s\S]*address_type: value/);
+  assert.match(cariForm, /populatedCustomerRef\.current === customerKey/);
+  assert.match(cariForm, /populatedCustomerRef\.current = customerKey/);
   assert.match(shipmentService, /rex_can_assign_transport_carrier/);
   assert.match(crmService, /supplierCategory === "tasiyici"[\s\S]*prefix = "TSY"/);
 });

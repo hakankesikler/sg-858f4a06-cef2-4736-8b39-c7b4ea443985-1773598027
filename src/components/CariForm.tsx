@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ interface CariFormProps {
 
 export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initialData }: CariFormProps) {
   const { toast } = useToast();
+  const populatedCustomerRef = useRef<string | null>(null);
   const [cariTuru, setCariTuru] = useState<"gercek" | "tuzel">("tuzel");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isKolayBiSyncing, setIsKolayBiSyncing] = useState(false);
@@ -86,6 +87,9 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
   // Populate form when editing
   useEffect(() => {
     if (editMode && initialData && isOpen) {
+      const customerKey = String(initialData.id || initialData.customer_code || "editing");
+      if (populatedCustomerRef.current === customerKey) return;
+      populatedCustomerRef.current = customerKey;
       console.log("=== POPULATING FORM FOR EDIT ===", initialData);
       
       // Set customer code from existing data
@@ -152,9 +156,11 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
       setSabitIskontoVar(!!initialData.sabit_iskonto);
       setSabitIskontoYuzde(initialData.sabit_iskonto?.toString() || "");
     } else if (isOpen && !editMode) {
+      populatedCustomerRef.current = null;
       // Create mode - fetch next customer code
       loadNextCustomerCode();
     } else if (!isOpen) {
+      populatedCustomerRef.current = null;
       // Reset form when closing
       resetForm();
     }
