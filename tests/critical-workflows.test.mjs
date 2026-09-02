@@ -85,8 +85,8 @@ test("supplier classification separates hauliers from corporate carriers and pro
   assert.match(form, /Kurumsal taşıyıcı atandı/);
   assert.match(form, /Nakliyeci atamasında sürücü ve araç zorunludur/);
   assert.match(cariForm, /value="tasiyici">Taşıyıcı Firma/);
-  assert.match(cariForm, /value=\{formData\.email\}[\s\S]*setFormData\(\(current\) => \(\{ \.\.\.current, email: e\.target\.value \}\)\)/);
-  assert.match(cariForm, /value=\{formData\.address\}[\s\S]*setFormData\(\(current\) => \(\{ \.\.\.current, address: e\.target\.value \}\)\)/);
+  assert.match(cariForm, /value=\{formData\.email\}[\s\S]*const email = event\.currentTarget\.value;[\s\S]*setFormData\(\(current\) => \(\{ \.\.\.current, email \}\)\)/);
+  assert.match(cariForm, /value=\{formData\.address\}[\s\S]*const address = event\.currentTarget\.value;[\s\S]*setFormData\(\(current\) => \(\{ \.\.\.current, address \}\)\)/);
   assert.match(cariForm, /value=\{formData\.address_type\}[\s\S]*address_type: value/);
   assert.match(cariForm, /populatedCustomerRef\.current === customerKey/);
   assert.match(cariForm, /populatedCustomerRef\.current = customerKey/);

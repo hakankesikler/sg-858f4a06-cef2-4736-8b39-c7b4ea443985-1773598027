@@ -777,7 +777,10 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                   <Input 
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData((current) => ({ ...current, email: e.target.value }))}
+                    onChange={(event) => {
+                      const email = event.currentTarget.value;
+                      setFormData((current) => ({ ...current, email }));
+                    }}
                     placeholder=""
                     required
                   />
@@ -849,7 +852,10 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     className="w-full min-h-[120px] px-3 py-2 border rounded-md resize-none"
                     placeholder=""
                     value={formData.address}
-                    onChange={(e) => setFormData((current) => ({ ...current, address: e.target.value }))}
+                    onChange={(event) => {
+                      const address = event.currentTarget.value;
+                      setFormData((current) => ({ ...current, address }));
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
