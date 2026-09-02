@@ -535,12 +535,13 @@ test("delivery file antivirus scanning is server-side, quarantined and fail-visi
 });
 
 test("private documents can move to bucket-scoped Cloudflare R2 without breaking legacy Supabase references", async () => {
-  const [storage, r2, api, scan, env] = await Promise.all([
+  const [storage, r2, api, scan, env, nextConfig] = await Promise.all([
     read("src/lib/private-storage.ts"),
     read("src/lib/r2-server.ts"),
     read("src/pages/api/storage/signed-url.ts"),
     read("src/pages/api/security/scan-delivery-document.ts"),
     read(".env.example"),
+    read("next.config.mjs"),
   ]);
   assert.match(storage, /NEXT_PUBLIC_PRIVATE_STORAGE_BACKEND === "r2"/);
   assert.match(storage, /r2:\/\//);
@@ -555,6 +556,8 @@ test("private documents can move to bucket-scoped Cloudflare R2 without breaking
   assert.match(scan, /downloadR2Object/);
   assert.match(env, /NEXT_PUBLIC_PRIVATE_STORAGE_BACKEND=supabase/);
   assert.doesNotMatch(env, /NEXT_PUBLIC_R2_(?:ACCESS|SECRET)/);
+  assert.match(nextConfig, /process\.env\.R2_BUCKET_NAME/);
+  assert.match(nextConfig, /\$\{bucket\}\.\$\{url\.host\}/);
 });
 
 test("web analytics collects server-trusted demographics without leaking URL tokens or IP addresses", async () => {

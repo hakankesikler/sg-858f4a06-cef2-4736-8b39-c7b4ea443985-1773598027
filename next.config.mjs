@@ -27,18 +27,23 @@ function getTurboRules() {
   };
 }
 
-function getR2ConnectSource() {
+function getR2ConnectSources() {
   const endpoint = process.env.R2_ENDPOINT?.trim();
-  if (!endpoint) return "";
+  const bucket = process.env.R2_BUCKET_NAME?.trim();
+  if (!endpoint) return [];
 
   try {
     const url = new URL(endpoint);
     if (url.protocol !== "https:" || !url.hostname.endsWith(".r2.cloudflarestorage.com")) {
-      return "";
+      return [];
     }
-    return url.origin;
+    const sources = [url.origin];
+    if (bucket && /^[a-z0-9][a-z0-9.-]*[a-z0-9]$/.test(bucket)) {
+      sources.push(`${url.protocol}//${bucket}.${url.host}`);
+    }
+    return sources;
   } catch {
-    return "";
+    return [];
   }
 }
 
@@ -56,7 +61,7 @@ const nextConfig = {
   },
   allowedDevOrigins: ["*.daytona.work", "*.softgen.dev"],
   async headers() {
-    const r2ConnectSource = getR2ConnectSource();
+    const r2ConnectSources = getR2ConnectSources();
     const contentSecurityPolicy = [
       "default-src 'self'",
       "base-uri 'self'",
@@ -69,7 +74,7 @@ const nextConfig = {
       "font-src 'self' data: https://fonts.gstatic.com",
       [
         "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com",
-        r2ConnectSource,
+        ...r2ConnectSources,
       ].filter(Boolean).join(" "),
       "frame-src https://challenges.cloudflare.com",
       "media-src 'self' blob: https:",
