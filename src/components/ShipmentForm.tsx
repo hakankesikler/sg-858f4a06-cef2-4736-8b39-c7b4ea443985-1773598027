@@ -775,7 +775,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               <div className="rounded-lg bg-white p-3 text-sm text-slate-600">
                 {formData.service_mode === "international_express"
                   ? "QuickShipper veya doğrudan FedEx, UPS, DHL, Aramex gibi taşıyıcılarla yapılan dosya ve paket gönderileri."
-                  : "Sürücü, araç ve gerektiğinde U-ETDS akışıyla yürütülen karayolu sevkiyatları."}
+                  : "Sürücü, araç ve taşıyıcı atamasıyla yürütülen karayolu sevkiyatları."}
               </div>
             </div>
 
@@ -1194,27 +1194,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     </Button>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">U-ETDS Yük Türü Kodu</Label>
-                    <Input
-                      value={item.uetds_load_type_code || ""}
-                      onChange={(e) => updateCargoItem(index, 'uetds_load_type_code', e.target.value)}
-                      placeholder="Bakanlık kodu"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">U-ETDS Birimi</Label>
-                    <select
-                      value={item.uetds_unit_code || "KG"}
-                      onChange={(e) => updateCargoItem(index, 'uetds_unit_code', e.target.value)}
-                      className="h-10 w-full rounded-md border bg-white px-3 text-sm"
-                    >
-                      <option value="KG">Kilogram</option>
-                      <option value="LT">Litre</option>
-                      <option value="AD">Adet</option>
-                      <option value="M3">Metreküp</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
                     <Label className="text-xs">Tehlikeli Madde</Label>
                     <select
                       value={item.dangerous_goods ? "yes" : "no"}
@@ -1242,14 +1221,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                       onChange={(e) => updateCargoItem(index, 'dangerous_transport_code', e.target.value)}
                       placeholder="Bakanlık kodu"
                       disabled={!item.dangerous_goods}
-                    />
-                  </div>
-                  <div className="col-span-2 space-y-1">
-                    <Label className="text-xs">U-ETDS Yük Açıklaması</Label>
-                    <Input
-                      value={item.uetds_description || ""}
-                      onChange={(e) => updateCargoItem(index, 'uetds_description', e.target.value)}
-                      placeholder="Gerekirse ayrıntılı yük açıklaması"
                     />
                   </div>
                 </div>
@@ -1318,62 +1289,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               />
             </div>
           </div>
-
-          {formData.service_mode === "road" && (
-          <div className="border-t pt-4">
-            <div className="mb-4">
-              <h3 className="font-semibold">U-ETDS Bildirim Bilgileri</h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Bu alanlar sevkiyatı kaydetmeye engel olmaz. Tamamlandığında U-ETDS sekmesinde kayıt “Hazır” görünür.
-              </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label>Bildirimi Kim Yapacak?</Label>
-                <Select value={uetdsData.reporter_mode} onValueChange={(value) => setUetdsData({ ...uetdsData, reporter_mode: value })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="carrier">Taşıyıcı firma</SelectItem><SelectItem value="rex">REX Lojistik</SelectItem></SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Gönderici VKN/TCKN</Label>
-                <Input value={uetdsData.sender_tax_id} onChange={(e) => setUetdsData({ ...uetdsData, sender_tax_id: e.target.value.replace(/\D/g, '').slice(0, 11) })} placeholder="10 veya 11 hane" />
-              </div>
-              <div className="space-y-2">
-                <Label>Alıcı VKN/TCKN</Label>
-                <Input value={uetdsData.receiver_tax_id} onChange={(e) => setUetdsData({ ...uetdsData, receiver_tax_id: e.target.value.replace(/\D/g, '').slice(0, 11) })} placeholder="10 veya 11 hane" />
-              </div>
-
-              {uetdsData.reporter_mode === "carrier" && <>
-                <div className="space-y-2">
-                  <Label>Taşıyıcı Yetki Belgesi Türü</Label>
-                  <Input value={uetdsData.carrier_authorization_type} onChange={(e) => setUetdsData({ ...uetdsData, carrier_authorization_type: e.target.value.toUpperCase() })} placeholder="K1, L1, C2..." />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Taşıyıcı Yetki Belgesi Numarası</Label>
-                  <Input value={uetdsData.carrier_authorization_number} onChange={(e) => setUetdsData({ ...uetdsData, carrier_authorization_number: e.target.value })} />
-                </div>
-              </>}
-
-              <div className="space-y-2"><Label>Yükleme Ülke Kodu</Label><Input value={uetdsData.loading_country_code} onChange={(e) => setUetdsData({ ...uetdsData, loading_country_code: e.target.value.toUpperCase().slice(0, 2) })} /></div>
-              <div className="space-y-2"><Label>Yükleme İl Kodu</Label><Input type="number" value={uetdsData.loading_city_code} onChange={(e) => setUetdsData({ ...uetdsData, loading_city_code: e.target.value })} placeholder="Bakanlık/MERNİS kodu" /></div>
-              <div className="space-y-2"><Label>Yükleme İlçe Kodu</Label><Input type="number" value={uetdsData.loading_district_code} onChange={(e) => setUetdsData({ ...uetdsData, loading_district_code: e.target.value })} placeholder="Bakanlık/MERNİS kodu" /></div>
-              <div className="space-y-2"><Label>Boşaltma Ülke Kodu</Label><Input value={uetdsData.unloading_country_code} onChange={(e) => setUetdsData({ ...uetdsData, unloading_country_code: e.target.value.toUpperCase().slice(0, 2) })} /></div>
-              <div className="space-y-2"><Label>Boşaltma İl Kodu</Label><Input type="number" value={uetdsData.unloading_city_code} onChange={(e) => setUetdsData({ ...uetdsData, unloading_city_code: e.target.value })} placeholder="Bakanlık/MERNİS kodu" /></div>
-              <div className="space-y-2"><Label>Boşaltma İlçe Kodu</Label><Input type="number" value={uetdsData.unloading_district_code} onChange={(e) => setUetdsData({ ...uetdsData, unloading_district_code: e.target.value })} placeholder="Bakanlık/MERNİS kodu" /></div>
-              <div className="space-y-2"><Label>Planlanan Hareket</Label><Input type="datetime-local" value={uetdsData.planned_departure_at} onChange={(e) => setUetdsData({ ...uetdsData, planned_departure_at: e.target.value })} /></div>
-              <div className="space-y-2"><Label>Planlanan Varış</Label><Input type="datetime-local" value={uetdsData.planned_arrival_at} onChange={(e) => setUetdsData({ ...uetdsData, planned_arrival_at: e.target.value })} /></div>
-              <div className="space-y-2">
-                <Label>Taşıma Türü</Label>
-                <Select value={uetdsData.transport_type} onValueChange={(value) => setUetdsData({ ...uetdsData, transport_type: value })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="2">Yurt içi</SelectItem><SelectItem value="1">Uluslararası</SelectItem></SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          )}
 
           {/* TESLIMAT BİLGİLERİ - Sadece teslim edilmiş sevkiyatlar için */}
           {editMode && initialData && initialData.status === "teslim_edildi" && (

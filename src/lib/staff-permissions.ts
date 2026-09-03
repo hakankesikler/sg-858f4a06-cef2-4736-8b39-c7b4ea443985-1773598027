@@ -31,6 +31,11 @@ export const permissionCatalog = [
   { key: "integrations.monitoring", group: "Entegrasyon", label: "İşlem takibi", description: "Entegrasyon durumlarını, hataları ve aktarım geçmişini izleme" },
 ] as const;
 
+// U-ETDS altyapısı ve yetki anahtarı ileride yeniden kullanılmak üzere korunur.
+// Personelin kullanmadığı özelliği ayarlar ekranında göstermemek için yalnızca
+// görünür katalogdan çıkarıyoruz.
+export const visiblePermissionCatalog = permissionCatalog.filter((item) => item.key !== "operations.uetds");
+
 export type PermissionKey = (typeof permissionCatalog)[number]["key"];
 export type PermissionMap = Record<PermissionKey, PermissionLevel>;
 export type PermissionOverrides = Partial<Record<PermissionKey, PermissionLevel>>;

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck, AlertTriangle, RadioTower, ExternalLink } from "lucide-react";
+import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck, AlertTriangle, ExternalLink } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService, type ShipmentRevisionRequest } from "@/services/shipmentService";
@@ -20,7 +20,6 @@ import { generateWaybill } from "@/components/WaybillGenerator";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
 import { ShipmentHistoryDialog } from "@/components/ShipmentHistoryDialog";
 import { TransportJobHistoryDialog } from "@/components/TransportJobHistoryDialog";
-import { UetdsPanel } from "@/components/UetdsPanel";
 import { ShipmentExceptionDialog } from "@/components/ShipmentExceptionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -449,7 +448,7 @@ export function LogisticsModule() {
       )}
 
       <Tabs defaultValue="jobs" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5">
           <TabsTrigger value="jobs" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             İş Emirleri
@@ -474,10 +473,6 @@ export function LogisticsModule() {
           <TabsTrigger value="vehicles" className="flex items-center gap-2">
             <Truck className="h-4 w-4" />
             Araçlar
-          </TabsTrigger>
-          <TabsTrigger value="uetds" className="flex items-center gap-2">
-            <RadioTower className="h-4 w-4" />
-            U-ETDS
           </TabsTrigger>
         </TabsList>
 
@@ -895,10 +890,6 @@ export function LogisticsModule() {
               </table>
             </div>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="uetds" className="space-y-4">
-          <UetdsPanel onChanged={loadData} />
         </TabsContent>
 
         <TabsContent value="drivers" className="space-y-4">

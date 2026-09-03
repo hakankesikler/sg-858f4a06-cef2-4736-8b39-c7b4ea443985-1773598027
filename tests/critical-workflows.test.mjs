@@ -468,18 +468,22 @@ test("managers receive 30-day warnings only for assignment-blocking documents", 
   assert.match(logistics, /Süre Yaklaşıyor/);
 });
 
-test("U-ETDS readiness keeps legacy shipments working until enforcement is explicitly enabled", async () => {
-  const [sql, form, service, panel] = await Promise.all([
+test("U-ETDS stays hidden from staff screens while its dormant data infrastructure is preserved", async () => {
+  const [sql, form, service, panel, logistics, permissions] = await Promise.all([
     read("supabase/migrations/20260819033000_uetds_readiness.sql"),
     read("src/components/ShipmentForm.tsx"),
     read("src/services/uetdsService.ts"),
     read("src/components/UetdsPanel.tsx"),
+    read("src/components/modules/LogisticsModule.tsx"),
+    read("src/lib/staff-permissions.ts"),
   ]);
   assert.match(sql, /environment text NOT NULL DEFAULT 'disabled'/);
   assert.match(sql, /enforcement_enabled boolean NOT NULL DEFAULT false/);
   assert.match(sql, /IF coalesce\(v_enforce,false\) THEN/);
   assert.match(sql, /'accepted','carrier_reported'/);
-  assert.match(form, /U-ETDS Bildirim Bilgileri/);
+  assert.doesNotMatch(form, /U-ETDS Bildirim Bilgileri/);
+  assert.doesNotMatch(logistics, /value="uetds"/);
+  assert.match(permissions, /visiblePermissionCatalog = permissionCatalog\.filter\(\(item\) => item\.key !== "operations\.uetds"\)/);
   assert.match(form, /planned_departure_at/);
   assert.match(form, /uetds_load_type_code/);
   assert.match(service, /rex_uetds_dashboard/);

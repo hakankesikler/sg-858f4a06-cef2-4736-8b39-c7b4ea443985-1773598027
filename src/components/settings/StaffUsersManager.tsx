@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   basePermissionLevel,
   permissionCatalog,
+  visiblePermissionCatalog,
   type PermissionKey,
   type PermissionLevel,
   type PermissionOverrideLevel,
@@ -223,11 +224,11 @@ export function StaffUsersManager() {
                         <Badge variant="outline" className="self-start bg-white">Değişiklikler denetim kaydına yazılır</Badge>
                       </div>
                       <div className="space-y-5">
-                        {Array.from(new Set(permissionCatalog.map((item) => item.group))).map((group) => (
+                        {Array.from(new Set(visiblePermissionCatalog.map((item) => item.group))).map((group) => (
                           <div key={group}>
                             <h5 className="text-sm font-semibold text-slate-800 mb-2">{group}</h5>
                             <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
-                              {permissionCatalog.filter((item) => item.group === group).map((item) => {
+                              {visiblePermissionCatalog.filter((item) => item.group === group).map((item) => {
                                 const baseLevel = basePermissionLevel(user.role as AppRole, item.key);
                                 return (
                                   <div key={item.key} className="grid grid-cols-1 sm:grid-cols-[1fr_210px] gap-3 items-center rounded-lg border bg-white p-3">
