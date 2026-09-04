@@ -129,8 +129,10 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         toast({ title: "Ruhsat okundu", description: "Bulunan bilgiler forma aktarıldı. Lütfen belgeyle karşılaştırın." });
       } catch (error) {
         if (ocrRequestRef.current !== requestId) return;
-        setOcrWarning(error instanceof Error ? error.message : "Bilgileri elle girip belgeyle karşılaştırabilirsiniz.");
+        const message = error instanceof Error ? error.message : "Bilgileri elle girip belgeyle karşılaştırabilirsiniz.";
+        setOcrWarning(message);
         setOcrStatus("error");
+        toast({ title: "Ruhsat otomatik okunamadı", description: message, variant: "destructive" });
       }
     }
   };

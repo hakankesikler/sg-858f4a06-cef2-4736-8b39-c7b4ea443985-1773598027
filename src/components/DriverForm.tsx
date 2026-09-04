@@ -140,8 +140,10 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         toast({ title: "Ehliyet okundu", description: "Bulunan bilgiler forma aktarıldı. Lütfen belgeyle karşılaştırın." });
       } catch (error) {
         if (ocrRequestRef.current !== requestId) return;
-        setOcrWarning(error instanceof Error ? error.message : "Bilgileri elle girip belgeyle karşılaştırabilirsiniz.");
+        const message = error instanceof Error ? error.message : "Bilgileri elle girip belgeyle karşılaştırabilirsiniz.";
+        setOcrWarning(message);
         setOcrStatus("error");
+        toast({ title: "Ehliyet otomatik okunamadı", description: message, variant: "destructive" });
       }
     }
   };

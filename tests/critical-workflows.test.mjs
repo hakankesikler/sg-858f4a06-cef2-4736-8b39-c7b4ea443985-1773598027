@@ -107,7 +107,7 @@ test("shipment assignment still requires driver licence and vehicle registration
 });
 
 test("driver licence and vehicle registration OCR stays on-device and requires user confirmation", async () => {
-  const [ocr, parser, review, driverForm, vehicleForm, migration, packageJson, assetScript] = await Promise.all([
+  const [ocr, parser, review, driverForm, vehicleForm, migration, packageJson, assetScript, nextConfig] = await Promise.all([
     read("src/services/localTransportDocumentOcr.ts"),
     read("src/lib/transport-document-ocr.ts"),
     read("src/components/TransportDocumentReview.tsx"),
@@ -116,9 +116,13 @@ test("driver licence and vehicle registration OCR stays on-device and requires u
     read("supabase/migrations/20260902220000_transport_document_ocr_confirmation.sql"),
     read("package.json"),
     read("scripts/prepare-local-ocr-assets.mjs"),
+    read("next.config.mjs"),
   ]);
   assert.match(ocr, /createWorker\("tur"/);
   assert.match(ocr, /workerPath: "\/ocr\/worker\.min\.js"/);
+  assert.match(ocr, /corePath: "\/ocr"/);
+  assert.match(ocr, /OCR_TIMEOUT_MS = 90_000/);
+  assert.match(ocr, /progressFromTesseract/);
   assert.match(ocr, /pdfjs-dist\/legacy\/build\/pdf\.mjs/);
   assert.doesNotMatch(ocr, /cloudmersive|api\.cloud|fetch\(/i);
   assert.match(parser, /isValidTurkishId/);
@@ -135,6 +139,8 @@ test("driver licence and vehicle registration OCR stays on-device and requires u
   assert.match(packageJson, /"tesseract\.js"/);
   assert.match(packageJson, /"pdfjs-dist"/);
   assert.match(assetScript, /tur\.traineddata\.gz/);
+  assert.match(assetScript, /tesseract-core-relaxedsimd-lstm\.wasm\.js/);
+  assert.match(nextConfig, /'wasm-unsafe-eval'/);
 });
 
 test("sales invoice lines use the active KolayBi product catalog", async () => {

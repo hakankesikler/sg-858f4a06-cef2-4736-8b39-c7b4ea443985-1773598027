@@ -21,7 +21,7 @@ export function TransportDocumentReview({ id, status, confidence, extractedField
       {status === "reading" && (
         <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
           <Loader2 className="h-4 w-4 animate-spin text-orange-600" />
-          Belge bu cihazda okunuyor{progress ? ` · %${Math.round(progress * 100)}` : ""}…
+          Belge bu cihazda okunuyor{progress ? ` · %${Math.round(progress * 100)}` : ""}… İlk okumada motorun hazırlanması kısa bir süre alabilir.
         </div>
       )}
       {status === "success" && (
