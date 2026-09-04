@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { openPrivateDocument } from "@/lib/private-storage";
-import { TransportDocumentReview } from "@/components/TransportDocumentReview";
 
 interface VehicleFormProps {
   isOpen: boolean;
@@ -25,7 +24,6 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
   const [trafikSigortasiBitisTarihi, setTrafikSigortasiBitisTarihi] = useState("");
   const [yetkiBelgesiGecerlilikTarihi, setYetkiBelgesiGecerlilikTarihi] = useState("");
   const [ruhsatFile, setRuhsatFile] = useState<File | null>(null);
-  const [documentConfirmed, setDocumentConfirmed] = useState(false);
 
   const [formData, setFormData] = useState({
     arac_tipi: "",
@@ -83,10 +81,6 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
     }
   };
 
-  const invalidateDocumentConfirmation = () => {
-    if (ruhsatFile) setDocumentConfirmed(false);
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -96,7 +90,6 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         return;
       }
       setRuhsatFile(file);
-      setDocumentConfirmed(false);
     }
   };
 
@@ -113,11 +106,6 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
       });
       return;
     }
-    if (ruhsatFile && !documentConfirmed) {
-      toast({ title: "Belge kontrolü gerekli", description: "Ruhsat bilgilerini belgeyle karşılaştırıp doğruluğunu onaylayın.", variant: "destructive" });
-      return;
-    }
-
     try {
       setIsSubmitting(true);
 
@@ -136,10 +124,6 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         ruhsat_no: formData.ruhsat_no || null,
         status: formData.status,
         ruhsat_dosyasi_url: initialData?.ruhsat_dosyasi_url || undefined,
-        ...(ruhsatFile ? {
-          ruhsat_veri_kaynagi: "manual-after-review",
-          ruhsat_bilgileri_onaylandi_at: new Date().toISOString(),
-        } : {})
       };
 
       await vehicleService.saveWithDocument(submitData, ruhsatFile, editMode ? initialData?.id : undefined);
@@ -179,7 +163,6 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
     setTrafikSigortasiBitisTarihi("");
     setYetkiBelgesiGecerlilikTarihi("");
     setRuhsatFile(null);
-    setDocumentConfirmed(false);
     setVehicleCode("VHC-000001");
   };
 
@@ -200,7 +183,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
           {/* Araç Tipi */}
           <div className="space-y-2">
             <Label>Araç Tipi *</Label>
-            <Select value={formData.arac_tipi} onValueChange={(value) => { invalidateDocumentConfirmation(); setFormData({ ...formData, arac_tipi: value }); }}>
+            <Select value={formData.arac_tipi} onValueChange={(value) => setFormData({ ...formData, arac_tipi: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Araç tipi seçin" />
               </SelectTrigger>
@@ -219,7 +202,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               <Label>Çekici Plakası *</Label>
               <Input
                 value={formData.cekici_plakasi}
-                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, cekici_plakasi: e.target.value }); }}
+                onChange={(e) => setFormData({ ...formData, cekici_plakasi: e.target.value })}
                 placeholder="34 ABC 123"
                 required
               />
@@ -238,7 +221,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Kasa Tipi *</Label>
-              <Select value={formData.kasa_tipi} onValueChange={(value) => { invalidateDocumentConfirmation(); setFormData({ ...formData, kasa_tipi: value }); }}>
+              <Select value={formData.kasa_tipi} onValueChange={(value) => setFormData({ ...formData, kasa_tipi: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Kasa tipi seçin" />
                 </SelectTrigger>
@@ -255,7 +238,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               <Input
                 type="number"
                 value={formData.tasima_kapasitesi_kg}
-                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, tasima_kapasitesi_kg: e.target.value }); }}
+                onChange={(e) => setFormData({ ...formData, tasima_kapasitesi_kg: e.target.value })}
                 placeholder="24000"
               />
             </div>
@@ -309,7 +292,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               <Label>Ruhsat Sahibi Adı Soyadı</Label>
               <Input
                 value={formData.ruhsat_sahibi_adi_soyadi}
-                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, ruhsat_sahibi_adi_soyadi: e.target.value }); }}
+                onChange={(e) => setFormData({ ...formData, ruhsat_sahibi_adi_soyadi: e.target.value })}
                 placeholder="Ahmet Yılmaz"
               />
             </div>
@@ -317,7 +300,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               <Label>Ruhsat No</Label>
               <Input
                 value={formData.ruhsat_no}
-                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, ruhsat_no: e.target.value }); }}
+                onChange={(e) => setFormData({ ...formData, ruhsat_no: e.target.value })}
                 placeholder="ABC123456"
               />
             </div>
@@ -355,13 +338,6 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               )}
             </div>
             <p className="text-xs text-gray-500">PDF, JPG veya PNG formatında yükleyebilirsiniz</p>
-            {ruhsatFile && (
-              <TransportDocumentReview
-                id="vehicle-registration-review"
-                confirmed={documentConfirmed}
-                onConfirmedChange={setDocumentConfirmed}
-              />
-            )}
           </div>
 
           {/* Durum */}

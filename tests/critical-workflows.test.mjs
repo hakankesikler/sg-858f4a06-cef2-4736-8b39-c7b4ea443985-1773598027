@@ -106,27 +106,19 @@ test("shipment assignment still requires driver licence and vehicle registration
   assert.match(sql, /PERFORM public\.rex_validate_assignment\(v_driver,v_vehicle\)/);
 });
 
-test("driver licence and vehicle registration use manual document review without OCR", async () => {
-  const [review, driverForm, vehicleForm, migration, packageJson, nextConfig] = await Promise.all([
-    read("src/components/TransportDocumentReview.tsx"),
+test("driver licence and vehicle registration upload without OCR or confirmation checkbox", async () => {
+  const [driverForm, vehicleForm, cleanupMigration, packageJson, nextConfig] = await Promise.all([
     read("src/components/DriverForm.tsx"),
     read("src/components/VehicleForm.tsx"),
-    read("supabase/migrations/20260902220000_transport_document_ocr_confirmation.sql"),
+    read("supabase/migrations/20260905090000_remove_transport_document_confirmation.sql"),
     read("package.json"),
     read("next.config.mjs"),
   ]);
-  assert.match(review, /Belgedeki bilgileri kontrol ettim ve doğruluğunu onaylıyorum/);
-  assert.match(review, /Bilgileri belgeye bakarak girin/);
-  assert.doesNotMatch(driverForm, /extractTransportDocumentLocally|ocrStatus|ocrProgress|tesseract/i);
-  assert.match(driverForm, /ehliyet_veri_kaynagi: "manual-after-review"/);
-  assert.match(driverForm, /ehliyet_bilgileri_onaylandi_at/);
-  assert.match(driverForm, /ehliyetFile && !documentConfirmed/);
-  assert.doesNotMatch(vehicleForm, /extractTransportDocumentLocally|ocrStatus|ocrProgress|tesseract/i);
-  assert.match(vehicleForm, /ruhsat_veri_kaynagi: "manual-after-review"/);
-  assert.match(vehicleForm, /ruhsat_bilgileri_onaylandi_at/);
-  assert.match(vehicleForm, /ruhsatFile && !documentConfirmed/);
-  assert.match(migration, /ehliyet_bilgileri_onaylayan := auth\.uid\(\)/);
-  assert.match(migration, /ruhsat_bilgileri_onaylayan := auth\.uid\(\)/);
+  assert.doesNotMatch(driverForm, /extractTransportDocumentLocally|ocrStatus|ocrProgress|tesseract|TransportDocumentReview|documentConfirmed|bilgileri_onaylandi_at/i);
+  assert.doesNotMatch(vehicleForm, /extractTransportDocumentLocally|ocrStatus|ocrProgress|tesseract|TransportDocumentReview|documentConfirmed|bilgileri_onaylandi_at/i);
+  assert.match(cleanupMigration, /DROP TRIGGER IF EXISTS rex_driver_document_confirmation_stamp/);
+  assert.match(cleanupMigration, /DROP TRIGGER IF EXISTS rex_vehicle_document_confirmation_stamp/);
+  assert.match(cleanupMigration, /DROP FUNCTION IF EXISTS public\.rex_stamp_transport_document_confirmation/);
   assert.doesNotMatch(packageJson, /tesseract|pdfjs|prepare-local-ocr/i);
   assert.doesNotMatch(nextConfig, /wasm-unsafe-eval/);
 });

@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { driverService, Driver } from "@/services/driverService";
 import { openPrivateDocument } from "@/lib/private-storage";
-import { TransportDocumentReview } from "@/components/TransportDocumentReview";
 
 interface DriverFormProps {
   isOpen: boolean;
@@ -25,7 +24,6 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
   const [srcGecerlilikTarihi, setSrcGecerlilikTarihi] = useState("");
   const [psikoteknikGecerlilikTarihi, setPsikoteknikGecerlilikTarihi] = useState("");
   const [ehliyetFile, setEhliyetFile] = useState<File | null>(null);
-  const [documentConfirmed, setDocumentConfirmed] = useState(false);
   
   const [formData, setFormData] = useState({
     full_name: "",
@@ -96,10 +94,6 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     }
   };
 
-  const invalidateDocumentConfirmation = () => {
-    if (ehliyetFile) setDocumentConfirmed(false);
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -109,7 +103,6 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         return;
       }
       setEhliyetFile(file);
-      setDocumentConfirmed(false);
     }
   };
 
@@ -126,11 +119,6 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
       });
       return;
     }
-    if (ehliyetFile && !documentConfirmed) {
-      toast({ title: "Belge kontrolü gerekli", description: "Ehliyet bilgilerini belgeyle karşılaştırıp doğruluğunu onaylayın.", variant: "destructive" });
-      return;
-    }
-
     try {
       setIsSubmitting(true);
       
@@ -151,10 +139,6 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         ehliyet_gecerlilik_tarihi: ehliyetGecerlilikTarihi || null,
         status: formData.status,
         ehliyet_dosyasi_url: initialData?.ehliyet_dosyasi_url || undefined,
-        ...(ehliyetFile ? {
-          ehliyet_veri_kaynagi: "manual-after-review",
-          ehliyet_bilgileri_onaylandi_at: new Date().toISOString(),
-        } : {})
       };
 
       await driverService.saveWithDocument(submitData, ehliyetFile, editMode ? initialData?.id : undefined);
@@ -193,7 +177,6 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     setSrcGecerlilikTarihi("");
     setPsikoteknikGecerlilikTarihi("");
     setEhliyetFile(null);
-    setDocumentConfirmed(false);
     setDriverCode("DRV-000001");
   };
 
@@ -217,7 +200,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               <Label>Ad Soyad *</Label>
               <Input
                 value={formData.full_name}
-                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, full_name: e.target.value }); }}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                 placeholder="Ahmet Yılmaz"
                 required
               />
@@ -226,7 +209,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               <Label>T.C. Kimlik No *</Label>
               <Input
                 value={formData.tc_no}
-                onChange={(e) => { invalidateDocumentConfirmation(); setFormData({ ...formData, tc_no: e.target.value }); }}
+                onChange={(e) => setFormData({ ...formData, tc_no: e.target.value })}
                 placeholder="12345678901"
                 maxLength={11}
                 required
@@ -324,7 +307,6 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
                       id={`license-${license.value}`}
                       checked={formData.ehliyet_sinifi.includes(license.value)}
                       onChange={(e) => {
-                        invalidateDocumentConfirmation();
                         if (e.target.checked) {
                           setFormData({
                             ...formData,
@@ -355,7 +337,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               <Input
                 type="date"
                 value={ehliyetGecerlilikTarihi}
-                onChange={(e) => { invalidateDocumentConfirmation(); setEhliyetGecerlilikTarihi(e.target.value); }}
+                onChange={(e) => setEhliyetGecerlilikTarihi(e.target.value)}
                 className="w-full"
               />
             </div>
@@ -393,13 +375,6 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               )}
             </div>
             <p className="text-xs text-gray-500">PDF, JPG veya PNG formatında yükleyebilirsiniz</p>
-            {ehliyetFile && (
-              <TransportDocumentReview
-                id="driver-license-review"
-                confirmed={documentConfirmed}
-                onConfirmedChange={setDocumentConfirmed}
-              />
-            )}
           </div>
 
           {/* Durum */}
