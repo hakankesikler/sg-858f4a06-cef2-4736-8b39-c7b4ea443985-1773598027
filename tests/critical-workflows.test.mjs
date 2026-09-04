@@ -1294,3 +1294,29 @@ test("shipment save lets PostgreSQL calculate the generated cargo subtotal", asy
   assert.doesNotMatch(cargoInsert, /alt_toplam\s*[,)\n]/);
   assert.doesNotMatch(cargoInsert, /adet'\)::numeric\*\(item->>'kg_ds/);
 });
+
+test("purchase invoices separate the operational carrier from the legal payable supplier", async () => {
+  const [sql, service, inbox, shipmentForm] = await Promise.all([
+    read("supabase/migrations/20260905130000_separate_operational_and_billing_suppliers.sql"),
+    read("src/services/purchaseInvoiceService.ts"),
+    read("src/components/PurchaseInvoiceInbox.tsx"),
+    read("src/components/ShipmentForm.tsx"),
+  ]);
+
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS billing_supplier_id/);
+  assert.match(sql, /rex_purchase_invoice_billing_supplier_resolver/);
+  assert.match(sql, /regexp_replace\(coalesce\(NEW\.issuer_tax_id/);
+  assert.match(sql, /v_invoice\.invoice_no,v_invoice\.billing_supplier_id/);
+  assert.doesNotMatch(sql, /VALUES\(v_invoice\.invoice_no,v_invoice\.operational_supplier_id/);
+  assert.match(sql, /billing_supplier_linked/);
+  assert.match(sql, /Fatura carisinin VKN\/TCKN bilgisi faturayla eşleşmiyor/);
+  assert.match(service, /incoming_purchase_invoices_billing_supplier_id_fkey/);
+  assert.match(service, /rex_set_purchase_invoice_billing_supplier/);
+  assert.match(service, /\.is\("archived_at", null\)/);
+  assert.match(inbox, /Fatura Carisi/);
+  assert.match(inbox, /Operasyon Taşıyıcısı/);
+  assert.match(inbox, /Cari kart açıldığında fatura otomatik bağlanır/);
+  assert.match(inbox, /Tahmini maliyet/);
+  assert.match(inbox, /Gerçekleşen maliyet/);
+  assert.match(shipmentForm, /Operasyon Taşıyıcısı \(Opsiyonel\)/);
+});

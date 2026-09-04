@@ -18,12 +18,14 @@ export type IncomingPurchaseInvoice = {
   description?: string | null;
   status: string;
   operational_supplier_id?: string | null;
+  billing_supplier_id?: string | null;
   file_path?: string | null;
   official_uuid?: string | null;
   matched_at?: string | null;
   approved_at?: string | null;
   created_at: string;
-  supplier?: { id: string; name?: string | null; company?: string | null } | null;
+  operational_supplier?: { id: string; name?: string | null; company?: string | null } | null;
+  billing_supplier?: { id: string; name?: string | null; company?: string | null } | null;
   allocations?: PurchaseInvoiceAllocation[];
 };
 
@@ -98,7 +100,7 @@ export const purchaseInvoiceService = {
   async list(): Promise<IncomingPurchaseInvoice[]> {
     const { data, error } = await (supabase as any)
       .from("incoming_purchase_invoices")
-      .select("*, supplier:customers!incoming_purchase_invoices_operational_supplier_id_fkey(id,name,company), allocations:purchase_invoice_allocations(*,shipment:shipments(id,shipment_code,origin,destination,cost,cost_currency))")
+      .select("*, operational_supplier:customers!incoming_purchase_invoices_operational_supplier_id_fkey(id,name,company), billing_supplier:customers!incoming_purchase_invoices_billing_supplier_id_fkey(id,name,company), allocations:purchase_invoice_allocations(*,shipment:shipments(id,shipment_code,origin,destination,cost,cost_currency))")
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data || [];
@@ -109,6 +111,7 @@ export const purchaseInvoiceService = {
       .from("customers")
       .select("id,name,company,customer_code,vergi_no,tc_no,account_type")
       .in("account_type", ["tedarikci", "her_ikisi"])
+      .is("archived_at", null)
       .order("name");
     if (error) throw error;
     return data || [];
@@ -169,6 +172,14 @@ export const purchaseInvoiceService = {
 
   async approveIssuer(invoiceId: string, reason: string) {
     const { error } = await (supabase as any).rpc("rex_approve_supplier_invoice_issuer", { p_invoice_id: invoiceId, p_reason: reason });
+    if (error) throw error;
+  },
+
+  async setBillingSupplier(invoiceId: string, supplierId: string) {
+    const { error } = await (supabase as any).rpc("rex_set_purchase_invoice_billing_supplier", {
+      p_invoice_id: invoiceId,
+      p_supplier_id: supplierId,
+    });
     if (error) throw error;
   },
 

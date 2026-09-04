@@ -849,9 +849,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
           <div className={`grid gap-4 ${formData.service_mode === "road" ? "grid-cols-3" : "grid-cols-1"}`}>
             <div className="space-y-2">
-              <Label>Tedarikçi</Label>
+              <Label>Operasyon Taşıyıcısı (Opsiyonel)</Label>
               <Input
-                placeholder="Tedarikçi ara..."
+                placeholder="Nakliyeci veya taşıyıcı ara..."
                 value={searchSupplier}
                 onChange={(e) => setSearchSupplier(e.target.value)}
                 onKeyDown={(e) => {
@@ -862,11 +862,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               />
               <Select value={formData.supplier_id} onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Tedarikçi seçin" />
+                  <SelectValue placeholder="Sonradan seçilebilir" />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredSuppliers.length === 0 ? (
-                    <div className="p-2 text-sm text-gray-500">Tedarikçi bulunamadı</div>
+                    <div className="p-2 text-sm text-gray-500">Nakliyeci veya taşıyıcı bulunamadı</div>
                   ) : (
                     filteredSuppliers.map((supplier) => (
                       <SelectItem
