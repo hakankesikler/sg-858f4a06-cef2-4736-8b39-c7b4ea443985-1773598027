@@ -1862,7 +1862,6 @@ export type Database = {
         }
         Insert: {
           adet: number
-          alt_toplam?: number | null
           alt_toplam_fiyat?: number | null
           birim_fiyat?: number | null
           cinsi: string
@@ -1875,7 +1874,6 @@ export type Database = {
         }
         Update: {
           adet?: number
-          alt_toplam?: number | null
           alt_toplam_fiyat?: number | null
           birim_fiyat?: number | null
           cinsi?: string

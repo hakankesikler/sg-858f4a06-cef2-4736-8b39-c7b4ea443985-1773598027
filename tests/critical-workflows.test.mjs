@@ -1285,3 +1285,12 @@ test("KolayBi official history determines each customer's e-invoice or e-archive
   assert.match(office, /E-Belge Türlerini Karşılaştır/);
   assert.match(office, /row\.kolaybi_e_document_type === "e_invoice"/);
 });
+
+test("shipment save lets PostgreSQL calculate the generated cargo subtotal", async () => {
+  const sql = await read("supabase/migrations/20260905103000_fix_shipment_generated_subtotal.sql");
+  const cargoInsert = sql.match(/INSERT INTO public\.shipment_cargo_items\([\s\S]*?FROM jsonb_array_elements\(p_cargo_items\) item;/)?.[0] || "";
+
+  assert.match(cargoInsert, /shipment_id,adet,cinsi,kg_ds,sira_no,birim_fiyat,alt_toplam_fiyat/);
+  assert.doesNotMatch(cargoInsert, /alt_toplam\s*[,)\n]/);
+  assert.doesNotMatch(cargoInsert, /adet'\)::numeric\*\(item->>'kg_ds/);
+});
