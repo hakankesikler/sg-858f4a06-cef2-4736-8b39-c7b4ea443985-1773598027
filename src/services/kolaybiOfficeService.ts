@@ -12,6 +12,8 @@ export type KolayBiOfficeData = {
   shipments: any[];
   providerRecords: any[];
   syncRuns: any[];
+  integrationPartners: any[];
+  outboundQueue: { pending: number; review: number };
 };
 
 async function rows(table: string, orderColumn = "created_at", ascending = false, limit = 500) {
@@ -25,6 +27,15 @@ async function rows(table: string, orderColumn = "created_at", ascending = false
 
 async function optionalRows(table: string, orderColumn = "created_at", limit = 500) {
   try { return await rows(table, orderColumn, false, limit); } catch { return []; }
+}
+
+async function optionalCount(table: string, statuses: string[]) {
+  try {
+    const { count, error } = await (supabase.from(table as any) as any)
+      .select("id", { count: "exact", head: true }).in("status", statuses);
+    if (error) throw error;
+    return Number(count || 0);
+  } catch { return 0; }
 }
 
 async function financeTransactions() {
@@ -55,6 +66,7 @@ export const kolaybiOfficeService = {
     const [
       salesInvoices, purchaseInvoices, expenses, products, customers,
       financialAccounts, transactions, projects, shipments, providerRecords, syncRuns,
+      integrationPartners, outboundPending, outboundReview,
     ] = await Promise.all([
       rows("sales_invoices", "created_at"),
       optionalRows("purchase_invoices", "created_at"),
@@ -67,8 +79,11 @@ export const kolaybiOfficeService = {
       rows("shipments", "created_at"),
       optionalRows("kolaybi_master_records", "last_seen_at", 1000),
       optionalRows("kolaybi_sync_runs", "started_at"),
+      optionalRows("integration_partners", "updated_at", 20),
+      optionalCount("kolaybi_outbound_jobs", ["pending", "processing"]),
+      optionalCount("kolaybi_outbound_jobs", ["review_required", "dead"]),
     ]);
-    return { salesInvoices, purchaseInvoices, expenses, products, customers, financialAccounts, transactions, projects, shipments, providerRecords, syncRuns };
+    return { salesInvoices, purchaseInvoices, expenses, products, customers, financialAccounts, transactions, projects, shipments, providerRecords, syncRuns, integrationPartners, outboundQueue: { pending: outboundPending, review: outboundReview } };
   },
 
   async health() {
@@ -83,6 +98,14 @@ export const kolaybiOfficeService = {
         resource,
         idempotencyKey: `kolaybi-office:${resource}:${crypto.randomUUID()}`,
       }),
+    });
+  },
+
+  async synchronizeOutbound(limit = 20) {
+    return authenticatedFetch("/api/kolaybi/outbound-sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ limit }),
     });
   },
 

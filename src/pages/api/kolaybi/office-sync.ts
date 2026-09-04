@@ -673,7 +673,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const token = await accessToken(baseUrl, apiKey, channel);
     if (req.method === "GET" && !cronMode) {
       const companies = await providerRequest(`${baseUrl}/companies`, { method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" } });
-      await updatePartner(true);
       return res.status(200).json({ success: true, environment: providerEnvironment, companies: listFrom(companies) });
     }
 
@@ -788,9 +787,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
     const status = failed === 0 ? "completed" : received > 0 ? "partial" : "failed";
-    const { data: completed } = await admin.from("kolaybi_sync_runs").update({ status, received_count: received, matched_count: matched, review_count: review, failed_count: failed, last_error: errors[0] || null, completed_at: new Date().toISOString(), metadata: { resources } }).eq("id", run.id).select().single();
+    const { data: completed } = await admin.from("kolaybi_sync_runs").update({ status, received_count: received, matched_count: matched, review_count: review, failed_count: failed, last_error: errors[0] || null, completed_at: new Date().toISOString(), metadata: { resources, automatic: cronMode, direction: "inbound" } }).eq("id", run.id).select().single();
     await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol`, metadata: { errors: errors.slice(0, 10), provider_environment: providerEnvironment, automatic: cronMode }, actor_id: actor.id, actor_email: actor.email });
-    await updatePartner(status !== "failed", errors[0] || null, true);
+    await updatePartner(status === "completed", errors[0] || null, true);
     return res.status(status === "failed" ? 502 : 200).json({ success: status !== "failed", run: completed, errors: errors.slice(0, 10) });
   } catch (error: any) {
     await updatePartner(false, String(error?.message || error), req.method === "POST" || cronMode);

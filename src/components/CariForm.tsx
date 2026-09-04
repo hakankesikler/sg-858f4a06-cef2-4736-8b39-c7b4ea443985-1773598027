@@ -393,10 +393,10 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         setIsKolayBiSyncing(true);
         const integration = await kolaybiOfficeService.synchronizeAssociate(savedCustomer.id);
         integrationDescription = integration.created
-          ? "Cari kaydedildi ve KolayBi sandbox'ta otomatik oluşturuldu."
+          ? `Cari kaydedildi ve KolayBi ${integration.environment === "live" ? "canlı" : "sandbox"} ortamında otomatik oluşturuldu.`
           : "Cari kaydedildi ve KolayBi'deki mevcut kart VKN/TCKN ile otomatik eşleştirildi.";
       } catch (integrationError: any) {
-        integrationDescription = `Cari kaydedildi. KolayBi kontrolü daha sonra yeniden denenecek: ${integrationError.message}`;
+        integrationDescription = `Cari kaydedildi ve otomatik yeniden deneme kuyruğuna alındı: ${integrationError.message}`;
       } finally {
         setIsKolayBiSyncing(false);
       }
@@ -1364,7 +1364,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                   {formData.kolaybi_contact_id ? "KolayBi bağlantısı hazır" : "Kullanıcıdan KolayBi kimliği istenmez"}
                 </p>
                 <p className={`mt-1 text-sm ${formData.kolaybi_contact_id ? "text-emerald-800" : "text-blue-800"}`}>
-                  Cari kaydedildiğinde VKN/TCKN ile KolayBi otomatik aranır. Kesin eşleşme varsa bağlanır; kayıt yoksa sandbox ortamında otomatik oluşturulur. Yalnızca mükerrer veya çelişkili kayıtlar yetkili kontrolüne düşer.
+                  Cari kaydedildiğinde VKN/TCKN ile KolayBi otomatik aranır. Kesin eşleşme varsa bağlanır; kayıt yoksa etkin KolayBi ortamında otomatik oluşturulur. Geçici hatalar sistem tarafından yeniden denenir; yalnızca mükerrer veya çelişkili kayıtlar yetkili kontrolüne düşer.
                 </p>
                 {editMode && initialData?.id && <Button type="button" variant="outline" className="mt-3" disabled={isKolayBiSyncing} onClick={() => void createKolayBiAssociate()}>
                   {isKolayBiSyncing ? "KolayBi kontrol ediliyor..." : "Eşleşmeyi Yeniden Doğrula"}

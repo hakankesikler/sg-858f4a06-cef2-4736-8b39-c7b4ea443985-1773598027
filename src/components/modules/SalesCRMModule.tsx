@@ -283,10 +283,10 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
       try {
         const integration = await kolaybiOfficeService.synchronizeAssociate(customerId);
         description = integration.created
-          ? "Cari KolayBi sandbox'ta otomatik oluşturuldu."
+          ? `Cari KolayBi ${integration.environment === "live" ? "canlı" : "sandbox"} ortamında otomatik oluşturuldu.`
           : "KolayBi'deki mevcut cari VKN/TCKN ile otomatik eşleştirildi.";
       } catch (integrationError: any) {
-        description = `Cari oluşturuldu. KolayBi kontrolü bekliyor: ${integrationError.message}`;
+        description = `Cari oluşturuldu ve otomatik yeniden deneme kuyruğuna alındı: ${integrationError.message}`;
       }
       toast({ title: "Müşteri cari kartı oluşturuldu", description });
       await refreshDetail();

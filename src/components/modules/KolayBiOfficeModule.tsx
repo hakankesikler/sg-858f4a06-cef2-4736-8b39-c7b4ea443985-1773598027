@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight, Ban, BarChart3, Boxes, Building2, CheckCircle2, CircleDollarSign,
-  FileSpreadsheet, Landmark, Loader2, PackageCheck, Receipt,
+  Clock3, FileSpreadsheet, Landmark, Loader2, PackageCheck, Receipt,
   RefreshCw, ShoppingCart, TriangleAlert, Link2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import { kolaybiOfficeService, type KolayBiOfficeData } from "@/services/kolaybi
 const EMPTY_DATA: KolayBiOfficeData = {
   salesInvoices: [], purchaseInvoices: [], expenses: [], products: [], customers: [],
   financialAccounts: [], transactions: [], projects: [], shipments: [], providerRecords: [], syncRuns: [],
+  integrationPartners: [], outboundQueue: { pending: 0, review: 0 },
 };
 
 const money = (value: unknown, currency = "TRY") =>
@@ -42,6 +43,12 @@ const date = (value: unknown) => {
   if (!value) return "-";
   const parsed = new Date(String(value));
   return Number.isNaN(parsed.getTime()) ? "-" : parsed.toLocaleDateString("tr-TR");
+};
+
+const dateTime = (value: unknown) => {
+  if (!value) return "Henüz yok";
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? "Henüz yok" : parsed.toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" });
 };
 
 const statusClass = (status: string) => {
@@ -100,27 +107,30 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { void load(); }, []);
-
-  const checkConnection = async () => {
+  const checkConnection = async (showToast = true) => {
     try {
       const result = await kolaybiOfficeService.health();
       setConnection(result);
-      toast({ title: "KolayBi bağlantısı hazır", description: `${result.companies?.length || 0} şirket erişilebilir.` });
+      if (showToast) toast({ title: "KolayBi bağlantısı hazır", description: `${result.companies?.length || 0} şirket erişilebilir.` });
     } catch (error: any) {
       setConnection({ success: false });
-      toast({ title: "KolayBi bağlantısı doğrulanamadı", description: error.message, variant: "destructive" });
+      if (showToast) toast({ title: "KolayBi bağlantısı doğrulanamadı", description: error.message, variant: "destructive" });
     }
   };
+
+  useEffect(() => {
+    void load();
+  }, []);
 
   const synchronize = async (resource = "all") => {
     setSyncing(true);
     try {
       const result = await kolaybiOfficeService.synchronize(resource);
+      const outbound = resource === "all" ? await kolaybiOfficeService.synchronizeOutbound(20) : null;
       await load();
       toast({
         title: result.success ? "Senkronizasyon tamamlandı" : "Senkronizasyon kısmen tamamlandı",
-        description: `${result.run?.received_count || 0} kayıt alındı, ${result.run?.matched_count || 0} kayıt otomatik eşleşti.`,
+        description: `${result.run?.received_count || 0} kayıt alındı, ${result.run?.matched_count || 0} kayıt eşleşti${outbound ? `; ${outbound.succeeded || 0} cari KolayBi'ye aktarıldı` : ""}.`,
       });
     } catch (error: any) {
       toast({ title: "Senkronizasyon tamamlanamadı", description: error.message, variant: "destructive" });
@@ -233,6 +243,13 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
     };
   }, [data.providerRecords, data.syncRuns]);
 
+  const kolaybiPartner = data.integrationPartners.find((row) => row.code === "KOLAYBI") || null;
+  const providerEnvironment = connection?.environment || kolaybiPartner?.environment || data.syncRuns[0]?.provider_environment || null;
+  const latestSyncAt = reconciliation.latestAt || kolaybiPartner?.last_sync_at || null;
+  const nextSyncAt = latestSyncAt ? new Date(new Date(latestSyncAt).getTime() + 60 * 60 * 1000).toISOString() : null;
+  const outboundPending = data.outboundQueue.pending;
+  const outboundReview = data.outboundQueue.review;
+
   const balanceExportRows = useMemo(() => accountBalanceRows.map((row) => ({
     "Cari Kodu": row.code,
     "Cari Ünvanı": row.name,
@@ -267,16 +284,24 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
             <p className="mt-2 max-w-3xl text-sm text-blue-50">Satıştan sevkiyata, alış faturası eşleştirmesinden tahsilat ve kârlılığa kadar tek iş akışı. Operasyon kaydı REX TYS’de, resmî muhasebe belgesi KolayBi’de yönetilir.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {canViewMonitoring && <Button variant="secondary" onClick={() => void checkConnection()}><CheckCircle2 className="mr-2 h-4 w-4" />Bağlantıyı Kontrol Et</Button>}
-            {canManageSync && <Button className="bg-white text-[#173f73] hover:bg-blue-50" disabled={syncing} onClick={() => void synchronize("all")}>{syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Tümünü Senkronize Et</Button>}
+            {canViewMonitoring && <Button variant="secondary" onClick={() => void checkConnection(true)}><CheckCircle2 className="mr-2 h-4 w-4" />Bağlantı Testi</Button>}
+            {canManageSync && <Button className="bg-white text-[#173f73] hover:bg-blue-50" disabled={syncing} onClick={() => void synchronize("all")}>{syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Şimdi Senkronize Et</Button>}
           </div>
         </div>
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs text-blue-50">
+          <Clock3 className="h-4 w-4 shrink-0" />
+          <span><strong>Otomatik senkronizasyon aktif.</strong> KolayBi verileri saatlik alınır; yeni cariler en geç 15 dakika içinde aktarılır. Düğmeler yalnızca bağlantı testi ve acil yenileme içindir. Eşleşmiş cari kartın ünvan/adres değişikliği KolayBi API kısıtı nedeniyle KolayBi'de yapılır; ilişki ve muhasebe hareketleri otomatik alınmaya devam eder.</span>
+        </div>
         <div className="mt-4 flex flex-wrap gap-3 text-xs">
-          <span className="rounded-full bg-white/15 px-3 py-1">Ortam: {connection?.environment === "live" ? "Canlı" : connection?.environment === "test" ? "Test" : "Kontrol bekliyor"}</span>
+          <span className="rounded-full bg-white/15 px-3 py-1">Ortam: {providerEnvironment === "live" ? "Canlı" : providerEnvironment === "test" ? "Sandbox" : "Yapılandırılmadı"}</span>
+          <span className="rounded-full bg-white/15 px-3 py-1">Durum: {reconciliation.healthy ? "Güncel" : latestSyncAt ? "Kontrol gerekli" : "İlk çalışma bekleniyor"}</span>
           <span className="rounded-full bg-white/15 px-3 py-1">Eşleşen: {mappingCount}</span>
           <span className="rounded-full bg-white/15 px-3 py-1">Kontrol gereken: {reviewCount}</span>
-          <span className="rounded-full bg-white/15 px-3 py-1">Son çalışma: {data.syncRuns[0] ? date(data.syncRuns[0].started_at) : "Henüz yok"}</span>
+          <span className="rounded-full bg-white/15 px-3 py-1">Cari kuyruğu: {outboundPending} bekleyen{outboundReview ? `, ${outboundReview} kontrol` : ""}</span>
+          <span className="rounded-full bg-white/15 px-3 py-1">Son çalışma: {dateTime(latestSyncAt)}</span>
+          <span className="rounded-full bg-white/15 px-3 py-1">Sonraki kontrol: {dateTime(nextSyncAt)}</span>
         </div>
+        {(data.syncRuns[0]?.last_error || kolaybiPartner?.last_error) && <p className="mt-3 rounded-lg bg-red-950/25 px-3 py-2 text-xs text-red-50">Son uyarı: {data.syncRuns[0]?.last_error || kolaybiPartner?.last_error}</p>}
       </div>
 
       <Tabs defaultValue="home" className="w-full">

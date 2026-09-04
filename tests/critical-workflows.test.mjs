@@ -1033,7 +1033,7 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
 });
 
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
-  const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, reconciliationSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, associateCreateApi, proceedApi, cancelApi, providerLib, workflow, collection, vercel, service, office, expenseWorkspace, financeWorkspace, accounting, cariForm] = await Promise.all([
+  const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, reconciliationSql, automaticSyncSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, associateCreateApi, associateHelper, outboundSyncApi, proceedApi, cancelApi, providerLib, workflow, collection, vercel, service, office, expenseWorkspace, financeWorkspace, accounting, cariForm] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
     read("supabase/migrations/20260831210000_kolaybi_manual_mappings.sql"),
     read("supabase/migrations/20260831223000_kolaybi_product_catalog_sync.sql"),
@@ -1041,11 +1041,14 @@ test("KolayBi office connects sales, operations and accounting with durable sync
     read("supabase/migrations/20260901110000_kolaybi_finance_sync.sql"),
     read("supabase/migrations/20260901170000_kolaybi_active_workflows.sql"),
     read("supabase/migrations/20260904123000_secure_customer_e_document_reconciliation.sql"),
+    read("supabase/migrations/20260904143000_kolaybi_automatic_bidirectional_sync.sql"),
     read("src/pages/api/kolaybi/office-sync.ts"),
     read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
     read("src/pages/api/kolaybi/associate-transactions.ts"),
     read("src/pages/api/kolaybi/mappings.ts"),
     read("src/pages/api/kolaybi/associates/[customerId].ts"),
+    read("src/lib/kolaybi-associates.ts"),
+    read("src/pages/api/kolaybi/outbound-sync.ts"),
     read("src/pages/api/kolaybi/invoices/[invoiceId]/proceed.ts"),
     read("src/pages/api/kolaybi/invoices/[invoiceId]/cancel.ts"),
     read("src/lib/kolaybi.ts"),
@@ -1093,6 +1096,11 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(reconciliationSql, /auth\.role\(\) <> 'service_role'/);
   assert.match(reconciliationSql, /set_config\('rex\.invoice_sync','on',true\)/);
   assert.match(reconciliationSql, /last_status_check_at/);
+  assert.match(automaticSyncSql, /CREATE TABLE IF NOT EXISTS public\.kolaybi_outbound_jobs/);
+  assert.match(automaticSyncSql, /rex_queue_kolaybi_customer_sync/);
+  assert.match(automaticSyncSql, /rex_claim_kolaybi_outbound_job/);
+  assert.match(automaticSyncSql, /rex_finish_kolaybi_outbound_job/);
+  assert.match(automaticSyncSql, /FOR UPDATE SKIP LOCKED/);
   assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(api, /rex_has_permission/);
   assert.match(api, /integrations\.connections/);
@@ -1130,12 +1138,18 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(mappingApi, /p_local_entity_id/);
   assert.match(mappingApi, /rex_resolve_kolaybi_mapping/);
   assert.match(mappingApi, /rex_review_kolaybi_product/);
-  assert.match(associateCreateApi, /baseUrl\.includes\("sandbox"\)/);
-  assert.match(associateCreateApi, /associates\?identity_no=/);
-  assert.match(associateCreateApi, /exactMatches\.length > 1/);
-  assert.match(associateCreateApi, /match_method: matchMethod/);
-  assert.match(associateCreateApi, /created_from_tms/);
-  assert.match(associateCreateApi, /staleMappingError/);
+  assert.match(associateCreateApi, /synchronizeKolayBiAssociate/);
+  assert.match(associateHelper, /baseUrl\.includes\("sandbox"\) \? "test" : "live"/);
+  assert.doesNotMatch(associateHelper, /yalnızca KolayBi sandbox ortamında/);
+  assert.match(associateHelper, /associates\?identity_no=/);
+  assert.match(associateHelper, /exactMatches\.length > 1/);
+  assert.match(associateHelper, /match_method: matchMethod/);
+  assert.match(associateHelper, /created_from_tms/);
+  assert.match(associateHelper, /staleMappingError/);
+  assert.match(outboundSyncApi, /rex_claim_kolaybi_outbound_job/);
+  assert.match(outboundSyncApi, /rex_finish_kolaybi_outbound_job/);
+  assert.match(outboundSyncApi, /synchronizeKolayBiAssociate/);
+  assert.match(outboundSyncApi, /CRON_SECRET/);
   assert.match(proceedApi, /accounting\.accounts/);
   assert.match(proceedApi, /proceedKolayBiInvoice/);
   assert.match(proceedApi, /rex_record_customer_payment/);
@@ -1153,10 +1167,12 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   const vercelConfig = JSON.parse(vercel);
   assert.match(vercel, /\/api\/kolaybi\/process-queue\?limit=10[\s\S]*\*\/15 \* \* \* \*/);
   assert.match(vercel, /\/api\/kolaybi\/office-sync\?mode=active[\s\S]*7 \* \* \* \*/);
+  assert.match(vercel, /\/api\/kolaybi\/outbound-sync\?limit=20[\s\S]*12,27,42,57 \* \* \* \*/);
   assert.match(vercel, /\/api\/kolaybi\/purchase-invoices\/sync[\s\S]*17 \* \* \* \*/);
   assert.deepEqual(vercelConfig.regions, ["fra1"]);
   assert.match(service, /kolaybi_master_records/);
   assert.match(service, /synchronizeAssociate/);
+  assert.match(service, /synchronizeOutbound/);
   assert.match(service, /kolaybi_sync_runs/);
   assert.match(service, /resolveMapping/);
   assert.match(service, /reviewImportedProduct/);
@@ -1167,6 +1183,10 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(cariForm, /synchronizeAssociate\(savedCustomer\.id\)/);
   assert.match(office, /VKN\/TCKN, cari kodu ve tekil e-posta eşleşmeleri otomatik yapılır/);
   assert.match(office, /KolayBi Entegre Ofis/);
+  assert.match(office, /Otomatik senkronizasyon aktif/);
+  assert.match(office, /Bağlantı Testi/);
+  assert.match(office, /Şimdi Senkronize Et/);
+  assert.doesNotMatch(office, /Ortam:[\s\S]{0,160}Kontrol bekliyor/);
   assert.match(office, /KolayBi Eşleştirme Kontrolü/);
   assert.match(office, /TMS carisi seçin/);
   assert.match(office, /Yok say/);
