@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { openPrivateDocument } from "@/lib/private-storage";
 import { TransportDocumentReview } from "@/components/TransportDocumentReview";
-import { extractTransportDocumentLocally } from "@/services/localTransportDocumentOcr";
 
 interface VehicleFormProps {
   isOpen: boolean;
@@ -26,13 +25,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
   const [trafikSigortasiBitisTarihi, setTrafikSigortasiBitisTarihi] = useState("");
   const [yetkiBelgesiGecerlilikTarihi, setYetkiBelgesiGecerlilikTarihi] = useState("");
   const [ruhsatFile, setRuhsatFile] = useState<File | null>(null);
-  const [ocrStatus, setOcrStatus] = useState<"idle" | "reading" | "success" | "error">("idle");
-  const [ocrProgress, setOcrProgress] = useState(0);
-  const [ocrConfidence, setOcrConfidence] = useState<number | null>(null);
-  const [ocrFieldCount, setOcrFieldCount] = useState(0);
-  const [ocrWarning, setOcrWarning] = useState("");
   const [documentConfirmed, setDocumentConfirmed] = useState(false);
-  const ocrRequestRef = useRef(0);
 
   const [formData, setFormData] = useState({
     arac_tipi: "",
@@ -94,7 +87,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
     if (ruhsatFile) setDocumentConfirmed(false);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type) || file.size > 5 * 1024 * 1024) {
@@ -104,36 +97,6 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
       }
       setRuhsatFile(file);
       setDocumentConfirmed(false);
-      setOcrStatus("reading");
-      setOcrProgress(0);
-      setOcrWarning("");
-      setOcrConfidence(null);
-      setOcrFieldCount(0);
-      const requestId = ++ocrRequestRef.current;
-      try {
-        const result = await extractTransportDocumentLocally(file, "vehicle_registration", setOcrProgress);
-        if (ocrRequestRef.current !== requestId) return;
-        setFormData((current) => ({
-          ...current,
-          cekici_plakasi: result.fields.plate || current.cekici_plakasi,
-          ruhsat_sahibi_adi_soyadi: result.fields.owner_name || current.ruhsat_sahibi_adi_soyadi,
-          ruhsat_no: result.fields.registration_no || current.ruhsat_no,
-          arac_tipi: result.fields.vehicle_type || current.arac_tipi,
-          kasa_tipi: result.fields.body_type || current.kasa_tipi,
-          tasima_kapasitesi_kg: result.fields.capacity_kg ? String(result.fields.capacity_kg) : current.tasima_kapasitesi_kg,
-        }));
-        setOcrConfidence(result.confidence);
-        setOcrFieldCount(result.extractedFieldCount);
-        setOcrWarning(result.warnings.join(" "));
-        setOcrStatus("success");
-        toast({ title: "Ruhsat okundu", description: "Bulunan bilgiler forma aktarıldı. Lütfen belgeyle karşılaştırın." });
-      } catch (error) {
-        if (ocrRequestRef.current !== requestId) return;
-        const message = error instanceof Error ? error.message : "Bilgileri elle girip belgeyle karşılaştırabilirsiniz.";
-        setOcrWarning(message);
-        setOcrStatus("error");
-        toast({ title: "Ruhsat otomatik okunamadı", description: message, variant: "destructive" });
-      }
     }
   };
 
@@ -174,8 +137,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         status: formData.status,
         ruhsat_dosyasi_url: initialData?.ruhsat_dosyasi_url || undefined,
         ...(ruhsatFile ? {
-          ruhsat_veri_kaynagi: ocrStatus === "success" ? "tesseract-local" : "manual-after-review",
-          ruhsat_ocr_guven_orani: ocrConfidence ?? undefined,
+          ruhsat_veri_kaynagi: "manual-after-review",
           ruhsat_bilgileri_onaylandi_at: new Date().toISOString(),
         } : {})
       };
@@ -217,13 +179,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
     setTrafikSigortasiBitisTarihi("");
     setYetkiBelgesiGecerlilikTarihi("");
     setRuhsatFile(null);
-    setOcrStatus("idle");
-    setOcrProgress(0);
-    setOcrConfidence(null);
-    setOcrFieldCount(0);
-    setOcrWarning("");
     setDocumentConfirmed(false);
-    ocrRequestRef.current += 1;
     setVehicleCode("VHC-000001");
   };
 
@@ -399,16 +355,13 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
               )}
             </div>
             <p className="text-xs text-gray-500">PDF, JPG veya PNG formatında yükleyebilirsiniz</p>
-            <TransportDocumentReview
-              id="vehicle-registration-review"
-              status={ocrStatus}
-              progress={ocrProgress}
-              confidence={ocrConfidence}
-              extractedFieldCount={ocrFieldCount}
-              warning={ocrWarning}
-              confirmed={documentConfirmed}
-              onConfirmedChange={setDocumentConfirmed}
-            />
+            {ruhsatFile && (
+              <TransportDocumentReview
+                id="vehicle-registration-review"
+                confirmed={documentConfirmed}
+                onConfirmedChange={setDocumentConfirmed}
+              />
+            )}
           </div>
 
           {/* Durum */}
@@ -429,7 +382,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
             <Button type="button" variant="outline" onClick={onClose}>
               İptal
             </Button>
-            <Button type="submit" disabled={isSubmitting || ocrStatus === "reading"}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Kaydediliyor..." : editMode ? "Güncelle" : "Kaydet"}
             </Button>
           </DialogFooter>

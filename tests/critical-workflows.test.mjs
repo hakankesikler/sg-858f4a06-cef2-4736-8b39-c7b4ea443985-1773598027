@@ -106,44 +106,29 @@ test("shipment assignment still requires driver licence and vehicle registration
   assert.match(sql, /PERFORM public\.rex_validate_assignment\(v_driver,v_vehicle\)/);
 });
 
-test("driver licence and vehicle registration OCR stays on-device and requires user confirmation", async () => {
-  const [ocr, parser, review, driverForm, vehicleForm, migration, packageJson, assetScript, nextConfig] = await Promise.all([
-    read("src/services/localTransportDocumentOcr.ts"),
-    read("src/lib/transport-document-ocr.ts"),
+test("driver licence and vehicle registration use manual document review without OCR", async () => {
+  const [review, driverForm, vehicleForm, migration, packageJson, nextConfig] = await Promise.all([
     read("src/components/TransportDocumentReview.tsx"),
     read("src/components/DriverForm.tsx"),
     read("src/components/VehicleForm.tsx"),
     read("supabase/migrations/20260902220000_transport_document_ocr_confirmation.sql"),
     read("package.json"),
-    read("scripts/prepare-local-ocr-assets.mjs"),
     read("next.config.mjs"),
   ]);
-  assert.match(ocr, /createWorker\("tur"/);
-  assert.match(ocr, /workerPath: "\/ocr\/worker\.min\.js"/);
-  assert.match(ocr, /corePath: "\/ocr\/tesseract-core-lstm\.wasm\.js"/);
-  assert.match(ocr, /OCR_TIMEOUT_MS = 90_000/);
-  assert.match(ocr, /progressFromTesseract/);
-  assert.match(ocr, /rotateImage\(file, -90\)/);
-  assert.match(ocr, /rotateImage\(file, 90\)/);
-  assert.match(ocr, /browser-specific relaxed-SIMD initialization stalls/);
-  assert.match(ocr, /pdfjs-dist\/legacy\/build\/pdf\.mjs/);
-  assert.doesNotMatch(ocr, /cloudmersive|api\.cloud|fetch\(/i);
-  assert.match(parser, /isValidTurkishId/);
-  assert.match(parser, /vehicle_registration/);
   assert.match(review, /Belgedeki bilgileri kontrol ettim ve doğruluğunu onaylıyorum/);
-  assert.match(driverForm, /extractTransportDocumentLocally\(file, "driver_license"/);
+  assert.match(review, /Bilgileri belgeye bakarak girin/);
+  assert.doesNotMatch(driverForm, /extractTransportDocumentLocally|ocrStatus|ocrProgress|tesseract/i);
+  assert.match(driverForm, /ehliyet_veri_kaynagi: "manual-after-review"/);
   assert.match(driverForm, /ehliyet_bilgileri_onaylandi_at/);
   assert.match(driverForm, /ehliyetFile && !documentConfirmed/);
-  assert.match(vehicleForm, /extractTransportDocumentLocally\(file, "vehicle_registration"/);
+  assert.doesNotMatch(vehicleForm, /extractTransportDocumentLocally|ocrStatus|ocrProgress|tesseract/i);
+  assert.match(vehicleForm, /ruhsat_veri_kaynagi: "manual-after-review"/);
   assert.match(vehicleForm, /ruhsat_bilgileri_onaylandi_at/);
   assert.match(vehicleForm, /ruhsatFile && !documentConfirmed/);
   assert.match(migration, /ehliyet_bilgileri_onaylayan := auth\.uid\(\)/);
   assert.match(migration, /ruhsat_bilgileri_onaylayan := auth\.uid\(\)/);
-  assert.match(packageJson, /"tesseract\.js"/);
-  assert.match(packageJson, /"pdfjs-dist"/);
-  assert.match(assetScript, /tur\.traineddata\.gz/);
-  assert.match(assetScript, /tesseract-core-relaxedsimd-lstm\.wasm\.js/);
-  assert.match(nextConfig, /'wasm-unsafe-eval'/);
+  assert.doesNotMatch(packageJson, /tesseract|pdfjs|prepare-local-ocr/i);
+  assert.doesNotMatch(nextConfig, /wasm-unsafe-eval/);
 });
 
 test("sales invoice lines use the active KolayBi product catalog", async () => {

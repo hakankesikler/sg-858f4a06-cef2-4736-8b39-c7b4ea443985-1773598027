@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { driverService, Driver } from "@/services/driverService";
 import { openPrivateDocument } from "@/lib/private-storage";
 import { TransportDocumentReview } from "@/components/TransportDocumentReview";
-import { extractTransportDocumentLocally } from "@/services/localTransportDocumentOcr";
 
 interface DriverFormProps {
   isOpen: boolean;
@@ -26,13 +25,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
   const [srcGecerlilikTarihi, setSrcGecerlilikTarihi] = useState("");
   const [psikoteknikGecerlilikTarihi, setPsikoteknikGecerlilikTarihi] = useState("");
   const [ehliyetFile, setEhliyetFile] = useState<File | null>(null);
-  const [ocrStatus, setOcrStatus] = useState<"idle" | "reading" | "success" | "error">("idle");
-  const [ocrProgress, setOcrProgress] = useState(0);
-  const [ocrConfidence, setOcrConfidence] = useState<number | null>(null);
-  const [ocrFieldCount, setOcrFieldCount] = useState(0);
-  const [ocrWarning, setOcrWarning] = useState("");
   const [documentConfirmed, setDocumentConfirmed] = useState(false);
-  const ocrRequestRef = useRef(0);
   
   const [formData, setFormData] = useState({
     full_name: "",
@@ -107,7 +100,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     if (ehliyetFile) setDocumentConfirmed(false);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type) || file.size > 5 * 1024 * 1024) {
@@ -117,34 +110,6 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
       }
       setEhliyetFile(file);
       setDocumentConfirmed(false);
-      setOcrStatus("reading");
-      setOcrProgress(0);
-      setOcrWarning("");
-      setOcrConfidence(null);
-      setOcrFieldCount(0);
-      const requestId = ++ocrRequestRef.current;
-      try {
-        const result = await extractTransportDocumentLocally(file, "driver_license", setOcrProgress);
-        if (ocrRequestRef.current !== requestId) return;
-        setFormData((current) => ({
-          ...current,
-          full_name: result.fields.full_name || current.full_name,
-          tc_no: result.fields.tc_no || current.tc_no,
-          ehliyet_sinifi: result.fields.license_classes?.length ? result.fields.license_classes : current.ehliyet_sinifi,
-        }));
-        if (result.fields.expiry_date) setEhliyetGecerlilikTarihi(result.fields.expiry_date);
-        setOcrConfidence(result.confidence);
-        setOcrFieldCount(result.extractedFieldCount);
-        setOcrWarning(result.warnings.join(" "));
-        setOcrStatus("success");
-        toast({ title: "Ehliyet okundu", description: "Bulunan bilgiler forma aktarıldı. Lütfen belgeyle karşılaştırın." });
-      } catch (error) {
-        if (ocrRequestRef.current !== requestId) return;
-        const message = error instanceof Error ? error.message : "Bilgileri elle girip belgeyle karşılaştırabilirsiniz.";
-        setOcrWarning(message);
-        setOcrStatus("error");
-        toast({ title: "Ehliyet otomatik okunamadı", description: message, variant: "destructive" });
-      }
     }
   };
 
@@ -187,8 +152,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         status: formData.status,
         ehliyet_dosyasi_url: initialData?.ehliyet_dosyasi_url || undefined,
         ...(ehliyetFile ? {
-          ehliyet_veri_kaynagi: ocrStatus === "success" ? "tesseract-local" : "manual-after-review",
-          ehliyet_ocr_guven_orani: ocrConfidence ?? undefined,
+          ehliyet_veri_kaynagi: "manual-after-review",
           ehliyet_bilgileri_onaylandi_at: new Date().toISOString(),
         } : {})
       };
@@ -229,13 +193,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
     setSrcGecerlilikTarihi("");
     setPsikoteknikGecerlilikTarihi("");
     setEhliyetFile(null);
-    setOcrStatus("idle");
-    setOcrProgress(0);
-    setOcrConfidence(null);
-    setOcrFieldCount(0);
-    setOcrWarning("");
     setDocumentConfirmed(false);
-    ocrRequestRef.current += 1;
     setDriverCode("DRV-000001");
   };
 
@@ -435,16 +393,13 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
               )}
             </div>
             <p className="text-xs text-gray-500">PDF, JPG veya PNG formatında yükleyebilirsiniz</p>
-            <TransportDocumentReview
-              id="driver-license-review"
-              status={ocrStatus}
-              progress={ocrProgress}
-              confidence={ocrConfidence}
-              extractedFieldCount={ocrFieldCount}
-              warning={ocrWarning}
-              confirmed={documentConfirmed}
-              onConfirmedChange={setDocumentConfirmed}
-            />
+            {ehliyetFile && (
+              <TransportDocumentReview
+                id="driver-license-review"
+                confirmed={documentConfirmed}
+                onConfirmedChange={setDocumentConfirmed}
+              />
+            )}
           </div>
 
           {/* Durum */}
@@ -465,7 +420,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
             <Button type="button" variant="outline" onClick={onClose}>
               İptal
             </Button>
-            <Button type="submit" disabled={isSubmitting || ocrStatus === "reading"}>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Kaydediliyor..." : editMode ? "Güncelle" : "Kaydet"}
             </Button>
           </DialogFooter>
