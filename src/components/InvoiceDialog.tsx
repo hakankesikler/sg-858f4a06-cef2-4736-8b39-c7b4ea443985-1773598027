@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,6 +52,17 @@ type InvoiceCatalogProduct = {
   kolaybi_product_id: number | null;
   approval_status: string;
   is_active: boolean | null;
+};
+
+type InvoiceCustomer = {
+  id: string;
+  name: string;
+  company: string | null;
+  kolaybi_e_document_type: InvoiceDocumentType | null;
+  kolaybi_e_document_scenario: "EARSIVFATURA" | "TEMELFATURA" | "TICARIFATURA" | "KAMU" | null;
+  kolaybi_e_document_source: string | null;
+  kolaybi_e_document_environment: "test" | "live" | null;
+  kolaybi_e_document_evidence_at: string | null;
 };
 
 interface InvoiceDialogProps {
@@ -102,12 +114,14 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string>(preSelectedCustomer?.id || "");
+  const [selectedCustomerProfile, setSelectedCustomerProfile] = useState<InvoiceCustomer | null>(null);
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
   const [currency, setCurrency] = useState("TRY");
   const [paymentStatus, setPaymentStatus] = useState("Bekliyor");
   const [documentType, setDocumentType] = useState<InvoiceDocumentType>("e_archive");
   const [documentScenario, setDocumentScenario] = useState<"EARSIVFATURA" | "TEMELFATURA" | "TICARIFATURA" | "KAMU">("EARSIVFATURA");
+  const [manualEDocumentConfirmed, setManualEDocumentConfirmed] = useState(false);
   const [exchangeRate, setExchangeRate] = useState("1");
   const [notes, setNotes] = useState(defaultNotes);
   const [invoiceCategory, setInvoiceCategory] = useState<InvoiceCategory>("domestic_transport");
@@ -132,6 +146,37 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       total: 0,
     },
   ]);
+
+  const applyCustomerEDocumentProfile = (customer?: Partial<InvoiceCustomer> | null) => {
+    const type = customer?.kolaybi_e_document_type;
+    const scenario = customer?.kolaybi_e_document_scenario;
+    if (
+      (type === "e_archive" || type === "e_invoice") &&
+      scenario && ["EARSIVFATURA", "TEMELFATURA", "TICARIFATURA", "KAMU"].includes(scenario)
+    ) {
+      setSelectedCustomerProfile(customer as InvoiceCustomer);
+      setManualEDocumentConfirmed(true);
+      setDocumentType(type);
+      setDocumentScenario(type === "e_archive" ? "EARSIVFATURA" : scenario === "EARSIVFATURA" ? "TEMELFATURA" : scenario);
+      return;
+    }
+    setSelectedCustomerProfile(null);
+    setManualEDocumentConfirmed(false);
+    setDocumentType("e_archive");
+    setDocumentScenario("EARSIVFATURA");
+  };
+
+  const loadCustomerEDocumentProfile = async (customerId: string) => {
+    if (!customerId) return applyCustomerEDocumentProfile(null);
+    const { data, error } = await supabase.from("customers")
+      .select("id,name,company,kolaybi_e_document_type,kolaybi_e_document_scenario,kolaybi_e_document_source,kolaybi_e_document_environment,kolaybi_e_document_evidence_at")
+      .eq("id", customerId).single();
+    if (error) {
+      console.error("Cari e-belge profili yüklenemedi:", error);
+      return applyCustomerEDocumentProfile(null);
+    }
+    applyCustomerEDocumentProfile(data as InvoiceCustomer);
+  };
 
   const applyNoteTemplate = (template: InvoiceNoteTemplate) => {
     setInvoiceCategory(template.category);
@@ -185,6 +230,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     // If shipment exists, set customer automatically
     if (shipment?.customer_id) {
       setSelectedCustomer(shipment.customer_id);
+      void loadCustomerEDocumentProfile(shipment.customer_id);
       const unitPrice = Number(shipment.satis_tutar || 0);
       const vatRate = shipment.service_mode === "international_express" ? 0 : 20;
       setCurrency(shipment.currency || "TRY");
@@ -205,18 +251,27 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
   }, [isOpen, shipment]);
 
   useEffect(() => {
-    if (isOpen) void loadPresentationOptions();
+    if (isOpen) {
+      void loadPresentationOptions();
+      if (preSelectedCustomer?.id && !shipment?.customer_id) {
+        void loadCustomerEDocumentProfile(preSelectedCustomer.id);
+      }
+    }
   }, [isOpen]);
 
   const loadCustomers = async () => {
     try {
       const { data, error } = await supabase
         .from("customers")
-        .select("id, name, company")
+        .select("id,name,company,kolaybi_e_document_type,kolaybi_e_document_scenario,kolaybi_e_document_source,kolaybi_e_document_environment,kolaybi_e_document_evidence_at")
         .order("company");
 
       if (error) throw error;
       setCustomers(data || []);
+      const initialCustomerId = preSelectedCustomer?.id || selectedCustomer;
+      if (initialCustomerId) {
+        applyCustomerEDocumentProfile((data || []).find((customer) => customer.id === initialCustomerId) as InvoiceCustomer | undefined);
+      }
     } catch (error) {
       console.error("Error loading customers:", error);
       toast({
@@ -330,6 +385,14 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       });
       return;
     }
+    if (!selectedCustomerProfile && !manualEDocumentConfirmed) {
+      toast({
+        title: "E-belge türünü doğrulayın",
+        description: "KolayBi resmî geçmişi bulunamadığı için E-Fatura/E-Arşiv seçimini kontrol edip onaylamalısınız.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setLoading(true);
 
@@ -419,7 +482,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                   </Label>
                   <Select
                     value={selectedCustomer}
-                    onValueChange={setSelectedCustomer}
+                    onValueChange={(customerId) => {
+                      setSelectedCustomer(customerId);
+                      applyCustomerEDocumentProfile(customers.find((customer) => customer.id === customerId));
+                    }}
                     disabled={!!preSelectedCustomer}
                   >
                     <SelectTrigger>
@@ -497,9 +563,15 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
               )}
 
               <div className="space-y-2">
-                <Label className="text-sm font-semibold">E-Belge Türü</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-sm font-semibold">E-Belge Türü</Label>
+                  {selectedCustomerProfile && (
+                    <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">KolayBi doğrulandı</Badge>
+                  )}
+                </div>
                 <Select
                   value={documentType}
+                  disabled={!!selectedCustomerProfile}
                   onValueChange={(value: InvoiceDocumentType) => {
                     setDocumentType(value);
                     setDocumentScenario(value === "e_archive" ? "EARSIVFATURA" : "TEMELFATURA");
@@ -515,7 +587,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
 
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Belge Senaryosu</Label>
-                <Select value={documentScenario} onValueChange={(value: typeof documentScenario) => setDocumentScenario(value)}>
+                <Select disabled={!!selectedCustomerProfile} value={documentScenario} onValueChange={(value: typeof documentScenario) => setDocumentScenario(value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {documentType === "e_archive" ? (
@@ -529,6 +601,20 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                     )}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-slate-500">
+                  {selectedCustomerProfile
+                    ? `Resmî KolayBi e-belge geçmişine göre otomatik seçildi${selectedCustomerProfile.kolaybi_e_document_environment === "test" ? " (test ortamı)" : ""}.`
+                    : "KolayBi'de resmî e-belge geçmişi bulunmayan carilerde kullanıcı kontrolü gerekir."}
+                </p>
+                {!selectedCustomerProfile && (selectedCustomer || shipment?.customer_id) && (
+                  <label className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+                    <Checkbox
+                      checked={manualEDocumentConfirmed}
+                      onCheckedChange={(checked) => setManualEDocumentConfirmed(checked === true)}
+                    />
+                    <span>E-belge türünü KolayBi cari/fatura bilgileriyle kontrol ettim ve seçimin doğruluğunu onaylıyorum.</span>
+                  </label>
+                )}
               </div>
 
               {/* PAYMENT STATUS */}

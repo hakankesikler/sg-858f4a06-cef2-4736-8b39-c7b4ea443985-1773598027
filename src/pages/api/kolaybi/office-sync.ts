@@ -63,6 +63,58 @@ function currency(value: any) {
   return ["TRY", "USD", "EUR", "GBP"].includes(candidate) ? candidate : "TRY";
 }
 
+function invoiceHeader(item: any) {
+  return item?.header || item?.document?.header || {};
+}
+
+function invoiceEDocument(item: any) {
+  return item?._e_document || item?.e_document || item?.document || {};
+}
+
+function eDocumentProfile(item: any) {
+  const official = invoiceEDocument(item);
+  const scenario = text(official?.scenario || official?.document_scenario).toUpperCase();
+  const officialIdentity = text(official?.uuid || official?.ettn || official?.no || official?.invoice_no);
+  if (!officialIdentity || !["EARSIVFATURA", "TEMELFATURA", "TICARIFATURA", "KAMU"].includes(scenario)) return null;
+  const header = invoiceHeader(item);
+  const issueDate = text(official?.issue_date || header?.issue_date || item?.issue_date).slice(0, 10);
+  return {
+    documentType: scenario === "EARSIVFATURA" ? "e_archive" as const : "e_invoice" as const,
+    scenario,
+    evidenceAt: /^\d{4}-\d{2}-\d{2}$/.test(issueDate) ? `${issueDate}T12:00:00.000Z` : new Date().toISOString(),
+    documentId: text(official?.document_id || item?.commercial_doc_id || item?.document_id || item?.id),
+  };
+}
+
+async function updateCustomerEDocumentProfile(
+  admin: any,
+  customerId: string,
+  profile: NonNullable<ReturnType<typeof eDocumentProfile>>,
+  providerEnvironment: "test" | "live",
+) {
+  const { data: current, error: currentError } = await admin.from("customers")
+    .select("kolaybi_e_document_environment,kolaybi_e_document_evidence_at")
+    .eq("id", customerId).single();
+  if (currentError) throw currentError;
+  if (current?.kolaybi_e_document_environment === "live" && providerEnvironment === "test") return false;
+  if (
+    current?.kolaybi_e_document_environment === providerEnvironment &&
+    current?.kolaybi_e_document_evidence_at &&
+    new Date(current.kolaybi_e_document_evidence_at).getTime() > new Date(profile.evidenceAt).getTime()
+  ) return false;
+  const { error } = await admin.from("customers").update({
+    kolaybi_e_document_type: profile.documentType,
+    kolaybi_e_document_scenario: profile.scenario,
+    kolaybi_e_document_source: "kolaybi_official_invoice",
+    kolaybi_e_document_environment: providerEnvironment,
+    kolaybi_e_document_evidence_at: profile.evidenceAt,
+    kolaybi_e_document_checked_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }).eq("id", customerId);
+  if (error) throw error;
+  return true;
+}
+
 function safePayload(resource: Resource, item: any) {
   if (resource === "vaults") {
     return { id: item?.id, type: item?.type, name: item?.name, balance: item?.balance, currency: item?.currency };
@@ -122,16 +174,37 @@ function safePayload(resource: Resource, item: any) {
     };
   }
   return {
-    id: item?.id, document_id: item?.document_id, uuid: item?.uuid,
+    id: item?.id, commercial_doc_id: item?.commercial_doc_id, document_id: item?.document_id, uuid: item?.uuid,
     serial_no: item?.serial_no, invoice_no: item?.invoice_no,
     type: item?.type, status: item?.status, issue_date: item?.issue_date || item?.order_date,
-    due_date: item?.due_date, currency: item?.currency,
+    due_date: item?.due_date, currency: item?.currency, tracking_currency: item?.tracking_currency,
     total: item?.total ?? item?.grand_total, balance: item?.balance,
     associate_id: item?.associate_id || item?.contact_id,
     description: item?.description,
     commercial_doc_status: item?.commercial_doc_status,
     e_document_status: item?.e_document_status,
     payment_plan: item?.payment_plan,
+    header: item?.header ? {
+      serial_no: item.header.serial_no,
+      issue_date: item.header.issue_date,
+      due_date: item.header.due_date,
+      description: item.header.description,
+      associate: item.header.associate ? {
+        id: item.header.associate.id,
+        full_name: item.header.associate.full_name,
+        identity_no: item.header.associate.identity_no,
+      } : null,
+    } : null,
+    e_document: item?._e_document ? {
+      document_id: item._e_document.document_id,
+      uuid: item._e_document.uuid,
+      no: item._e_document.no,
+      status: item._e_document.status,
+      scenario: item._e_document.scenario,
+      type: item._e_document.type,
+      issue_date: item._e_document.issue_date,
+      cancelled_at: item._e_document.cancelled_at,
+    } : null,
   };
 }
 
@@ -172,13 +245,15 @@ function normalized(resource: Resource, item: any) {
       amount: number(totals?.grand_total ?? totals?.total_amount), payload,
     };
   }
+  const header = invoiceHeader(item);
+  const totals = item?.total || {};
   return {
     externalId,
-    displayName: text(item?.serial_no || item?.invoice_no || item?.document_no || `Fatura ${externalId}`),
-    code: text(item?.serial_no || item?.invoice_no || item?.document_no),
-    taxIdentity: "",
+    displayName: text(header?.serial_no || item?.serial_no || item?.invoice_no || item?.document_no || `Fatura ${externalId}`),
+    code: text(header?.serial_no || item?.serial_no || item?.invoice_no || item?.document_no),
+    taxIdentity: digits(header?.associate?.identity_no),
     currency: text(item?.currency).toUpperCase() || "TRY",
-    amount: number(item?.grand_total || item?.total || item?.payable_amount),
+    amount: number(totals?.grand_total ?? totals?.total_amount ?? item?.grand_total ?? item?.payable_amount),
     payload,
   };
 }
@@ -483,7 +558,22 @@ async function findLocal(
     return { type: "general_expense", id: createdExpense.id };
   }
   if (resource === "sales_invoices") {
-    const { data } = await admin.from("sales_invoices").select("id,grand_total,due_date,payment_status").or(`kolaybi_document_id.eq.${row.externalId},invoice_no.eq.${row.code}`).limit(1).maybeSingle();
+    const profile = eDocumentProfile(item);
+    let customerId: string | null = null;
+    if ([10, 11].includes(row.taxIdentity.length)) {
+      const { data: customers } = await admin.from("customers").select("id")
+        .or(`vergi_no.eq.${row.taxIdentity},tc_no.eq.${row.taxIdentity}`)
+        .is("archived_at", null).limit(2);
+      if (customers?.length === 1) customerId = customers[0].id;
+    }
+    const invoiceFilter = row.code
+      ? `kolaybi_document_id.eq.${row.externalId},invoice_no.eq.${row.code},official_invoice_no.eq.${row.code},kolaybi_invoice_no.eq.${row.code}`
+      : `kolaybi_document_id.eq.${row.externalId}`;
+    const { data } = await admin.from("sales_invoices")
+      .select("id,customer_id,grand_total,due_date,payment_status")
+      .or(invoiceFilter).limit(1).maybeSingle();
+    customerId = data?.customer_id || customerId;
+    if (profile && customerId) await updateCustomerEDocumentProfile(admin, customerId, profile, providerEnvironment);
     if (data?.id) {
       const payment = item?.payment_plan || item?.payment || {};
       const hasPayment = item?.payment_plan !== undefined || item?.payment !== undefined || item?.balance !== undefined;
@@ -497,6 +587,12 @@ async function findLocal(
         provider_status: text(item?.commercial_doc_status || item?.status) || null,
         kolaybi_status: text(item?.e_document_status || item?.status) || null,
         e_invoice_status: text(item?.e_document_status) || null,
+        ...(profile ? {
+          document_type: profile.documentType,
+          document_scenario: profile.scenario,
+          official_uuid: text(invoiceEDocument(item)?.uuid) || null,
+          official_invoice_no: text(invoiceEDocument(item)?.no || invoiceEDocument(item)?.invoice_no) || null,
+        } : {}),
         payment_status: paymentStatus,
         last_status_check_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -557,6 +653,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const apiKey = process.env.KOLAYBI_API_KEY;
   const channel = process.env.KOLAYBI_CHANNEL;
+  let companyId = text(process.env.KOLAYBI_COMPANY_ID);
   const baseUrl = (process.env.KOLAYBI_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, "");
   const providerEnvironment: "test" | "live" = baseUrl.includes("sandbox") ? "test" : "live";
   if (!apiKey || !channel) return res.status(422).json({ error: "KolayBi API anahtarı ve Channel bilgileri tamamlanmalıdır." });
@@ -585,6 +682,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const requested = text(cronMode ? "all" : req.body?.resource || "all");
     const resources: Resource[] = requested === "all" ? [...SUPPORTED_RESOURCES] : SUPPORTED_RESOURCES.includes(requested as Resource) ? [requested as Resource] : [];
     if (!resources.length) return res.status(400).json({ error: "Desteklenmeyen senkronizasyon kaynağı." });
+    if (!companyId && resources.includes("sales_invoices")) {
+      const companyJson = await providerRequest(`${baseUrl}/companies`, {
+        method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      const companies = listFrom(companyJson);
+      if (companies.length === 1) companyId = text(companies[0]?.id || companies[0]?.company_id);
+      if (!companyId) throw new ProviderError("E-belge karşılaştırması için KolayBi şirket kimliği belirlenemedi.");
+    }
 
     const hourKey = new Date().toISOString().slice(0, 13);
     const idempotencyKey = text(cronMode ? `kolaybi-office:active:${hourKey}` : req.body?.idempotencyKey || `kolaybi-office:${crypto.randomUUID()}`);
@@ -621,6 +726,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } else {
           const json = await providerRequest(`${baseUrl}${endpoint(resource)}`, { method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" } });
           records = listFrom(json);
+          if (resource === "sales_invoices" && companyId) {
+            const query = new URLSearchParams({ company_id: String(companyId), direction: "outbound" });
+            const officialJson = await providerRequest(`${baseUrl}/e_document/invoices?${query.toString()}`, {
+              method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" },
+            });
+            const officialByDocument = new Map(
+              listFrom(officialJson).map((official: any) => [
+                text(official?.document_id || official?.id), official,
+              ]),
+            );
+            records = records.map((record: any) => ({
+              ...record,
+              _e_document: officialByDocument.get(text(record?.commercial_doc_id || record?.document_id || record?.id)) || null,
+            }));
+          }
         }
         received += records.length;
         for (const item of records) {

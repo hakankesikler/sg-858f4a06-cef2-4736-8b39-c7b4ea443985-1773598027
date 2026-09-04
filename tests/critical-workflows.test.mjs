@@ -1243,3 +1243,30 @@ test("international express cargo supports QuickShipper AWB tracking and mandato
   assert.match(invoice, /EXPRESS_ISTISNA_311/);
   assert.match(invoice, /exempt_transport/);
 });
+
+test("KolayBi official history determines each customer's e-invoice or e-archive profile", async () => {
+  const [sql, syncApi, providerLib, invoiceDialog, office] = await Promise.all([
+    read("supabase/migrations/20260904120000_kolaybi_customer_e_document_profiles.sql"),
+    read("src/pages/api/kolaybi/office-sync.ts"),
+    read("src/lib/kolaybi.ts"),
+    read("src/components/InvoiceDialog.tsx"),
+    read("src/components/modules/KolayBiOfficeModule.tsx"),
+  ]);
+  assert.match(sql, /kolaybi_e_document_type/);
+  assert.match(sql, /rex_apply_customer_e_document_defaults/);
+  assert.match(sql, /TEKNİK İSTİF/);
+  assert.match(sql, /kolaybi_document_id IS NULL/);
+  assert.match(syncApi, /KOLAYBI_COMPANY_ID/);
+  assert.match(syncApi, /\/e_document\/invoices/);
+  assert.match(syncApi, /header\?\.associate\?\.identity_no/);
+  assert.match(syncApi, /kolaybi_official_invoice/);
+  assert.match(syncApi, /current\?\.kolaybi_e_document_environment === "live" && providerEnvironment === "test"/);
+  assert.match(providerLib, /alignInvoiceWithCustomerProfile/);
+  assert.match(providerLib, /recordCustomerEDocumentProfile/);
+  assert.match(invoiceDialog, /KolayBi doğrulandı/);
+  assert.match(invoiceDialog, /disabled=\{!!selectedCustomerProfile\}/);
+  assert.match(invoiceDialog, /manualEDocumentConfirmed/);
+  assert.match(office, /E-Belge/);
+  assert.match(office, /E-Belge Türlerini Karşılaştır/);
+  assert.match(office, /row\.kolaybi_e_document_type === "e_invoice"/);
+});

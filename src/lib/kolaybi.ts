@@ -334,12 +334,102 @@ async function loadInvoice(db: DatabaseClient, invoiceId: string) {
   const { data, error } = await db
     .from("sales_invoices")
     .select(
-      "*, customer:customers!sales_invoices_customer_id_fkey(id,name,email,invoice_email,kolaybi_contact_id,kolaybi_address_id), items:sales_invoice_items(*)",
+      "*, customer:customers!sales_invoices_customer_id_fkey(id,name,email,invoice_email,kolaybi_contact_id,kolaybi_address_id,kolaybi_e_document_type,kolaybi_e_document_scenario,kolaybi_e_document_environment,kolaybi_e_document_evidence_at), items:sales_invoice_items(*)",
     )
     .eq("id", invoiceId)
     .single();
   if (error || !data) throw new KolayBiError("Fatura bulunamadı.", false);
   return data;
+}
+
+type CustomerEDocumentProfile = {
+  documentType: "e_archive" | "e_invoice";
+  scenario: "EARSIVFATURA" | "TEMELFATURA" | "TICARIFATURA" | "KAMU";
+  evidenceAt: string;
+};
+
+function providerEDocumentProfile(data: any): CustomerEDocumentProfile | null {
+  const document = data?.document || data?.invoice || data?.e_document || {};
+  const scenario = providerText(
+    data?.scenario,
+    data?.document_scenario,
+    data?.e_document_scenario,
+    document?.scenario,
+    document?.document_scenario,
+  )?.toUpperCase();
+  if (!scenario || !["EARSIVFATURA", "TEMELFATURA", "TICARIFATURA", "KAMU"].includes(scenario)) return null;
+  const identity = providerInvoiceIdentity(data);
+  if (!identity.uuid && !identity.invoiceNo) return null;
+  const rawEvidence = providerText(
+    data?.issue_date,
+    data?.invoice_date,
+    document?.issue_date,
+    document?.invoice_date,
+  );
+  const parsedEvidence = rawEvidence ? new Date(rawEvidence) : new Date();
+  return {
+    documentType: scenario === "EARSIVFATURA" ? "e_archive" : "e_invoice",
+    scenario: scenario as CustomerEDocumentProfile["scenario"],
+    evidenceAt: Number.isNaN(parsedEvidence.getTime()) ? new Date().toISOString() : parsedEvidence.toISOString(),
+  };
+}
+
+async function alignInvoiceWithCustomerProfile(db: DatabaseClient, invoice: any) {
+  const documentType = invoice.customer?.kolaybi_e_document_type;
+  const scenario = invoice.customer?.kolaybi_e_document_scenario;
+  if (
+    !["e_archive", "e_invoice"].includes(documentType) ||
+    !["EARSIVFATURA", "TEMELFATURA", "TICARIFATURA", "KAMU"].includes(scenario)
+  ) return;
+  const normalizedScenario = documentType === "e_archive"
+    ? "EARSIVFATURA"
+    : scenario === "EARSIVFATURA" ? "TEMELFATURA" : scenario;
+  if (invoice.document_type === documentType && invoice.document_scenario === normalizedScenario) return;
+  const { error } = await db.from("sales_invoices").update({
+    document_type: documentType,
+    document_scenario: normalizedScenario,
+    updated_at: new Date().toISOString(),
+  }).eq("id", invoice.id).is("kolaybi_document_id", null);
+  if (error) throw error;
+  invoice.document_type = documentType;
+  invoice.document_scenario = normalizedScenario;
+}
+
+async function recordCustomerEDocumentProfile(
+  db: DatabaseClient,
+  invoice: any,
+  providerDataValue: any,
+  config: KolayBiConfig,
+) {
+  const profile = providerEDocumentProfile(providerDataValue);
+  if (!profile || !invoice.customer?.id) return;
+  const environment = config.baseUrl.includes("sandbox") ? "test" : "live";
+  const currentEnvironment = invoice.customer.kolaybi_e_document_environment;
+  const currentEvidence = invoice.customer.kolaybi_e_document_evidence_at
+    ? new Date(invoice.customer.kolaybi_e_document_evidence_at).getTime()
+    : 0;
+  const incomingEvidence = new Date(profile.evidenceAt).getTime();
+  const mayUpdateCustomer = !(currentEnvironment === "live" && environment === "test") &&
+    !(currentEnvironment === environment && currentEvidence > incomingEvidence);
+  if (mayUpdateCustomer) {
+    const now = new Date().toISOString();
+    const { error } = await db.from("customers").update({
+      kolaybi_e_document_type: profile.documentType,
+      kolaybi_e_document_scenario: profile.scenario,
+      kolaybi_e_document_source: "kolaybi_official_invoice",
+      kolaybi_e_document_environment: environment,
+      kolaybi_e_document_evidence_at: profile.evidenceAt,
+      kolaybi_e_document_checked_at: now,
+      updated_at: now,
+    }).eq("id", invoice.customer.id);
+    if (error) throw error;
+  }
+  const { error: invoiceError } = await db.from("sales_invoices").update({
+    document_type: profile.documentType,
+    document_scenario: profile.scenario,
+    updated_at: new Date().toISOString(),
+  }).eq("id", invoice.id);
+  if (invoiceError) throw invoiceError;
 }
 
 export async function processKolayBiJob(db: DatabaseClient, invoiceId?: string | null) {
@@ -361,6 +451,9 @@ export async function processKolayBiJob(db: DatabaseClient, invoiceId?: string |
   try {
     const config = getConfig();
     const invoice = await loadInvoice(db, job.invoice_id);
+    if (job.job_type === "send" && !invoice.kolaybi_document_id) {
+      await alignInvoiceWithCustomerProfile(db, invoice);
+    }
     const token = await getAccessToken(config);
     const commonHeaders = {
       Channel: config.channel,
@@ -399,6 +492,7 @@ export async function processKolayBiJob(db: DatabaseClient, invoiceId?: string |
       }
       const identity = providerInvoiceIdentity(detail);
       const reconciliationStatus = classifyKolayBiEDocument(detail);
+      await recordCustomerEDocumentProfile(db, invoice, detail, config);
       await recordResult(db, {
         jobId: job.job_id,
         status: reconciliationStatus,
@@ -467,6 +561,7 @@ export async function processKolayBiJob(db: DatabaseClient, invoiceId?: string |
     const official = providerData(sendJson);
     const identity = providerInvoiceIdentity(official);
     const reconciliationStatus = classifyKolayBiEDocument(official);
+    await recordCustomerEDocumentProfile(db, invoice, official, config);
     await recordResult(db, {
       jobId: job.job_id,
       status: reconciliationStatus,

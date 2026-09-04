@@ -473,6 +473,14 @@ export type Database = {
           imo_ism_number: string | null
           insurance_type: string | null
           invoice_email: string | null
+          kolaybi_address_id: number | null
+          kolaybi_contact_id: number | null
+          kolaybi_e_document_checked_at: string | null
+          kolaybi_e_document_environment: string | null
+          kolaybi_e_document_evidence_at: string | null
+          kolaybi_e_document_scenario: string | null
+          kolaybi_e_document_source: string | null
+          kolaybi_e_document_type: string | null
           last_contact: string | null
           mersis: string | null
           name: string
@@ -525,6 +533,14 @@ export type Database = {
           imo_ism_number?: string | null
           insurance_type?: string | null
           invoice_email?: string | null
+          kolaybi_address_id?: number | null
+          kolaybi_contact_id?: number | null
+          kolaybi_e_document_checked_at?: string | null
+          kolaybi_e_document_environment?: string | null
+          kolaybi_e_document_evidence_at?: string | null
+          kolaybi_e_document_scenario?: string | null
+          kolaybi_e_document_source?: string | null
+          kolaybi_e_document_type?: string | null
           last_contact?: string | null
           mersis?: string | null
           name: string
@@ -577,6 +593,14 @@ export type Database = {
           imo_ism_number?: string | null
           insurance_type?: string | null
           invoice_email?: string | null
+          kolaybi_address_id?: number | null
+          kolaybi_contact_id?: number | null
+          kolaybi_e_document_checked_at?: string | null
+          kolaybi_e_document_environment?: string | null
+          kolaybi_e_document_evidence_at?: string | null
+          kolaybi_e_document_scenario?: string | null
+          kolaybi_e_document_source?: string | null
+          kolaybi_e_document_type?: string | null
           last_contact?: string | null
           mersis?: string | null
           name?: string
