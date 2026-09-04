@@ -120,9 +120,12 @@ test("driver licence and vehicle registration OCR stays on-device and requires u
   ]);
   assert.match(ocr, /createWorker\("tur"/);
   assert.match(ocr, /workerPath: "\/ocr\/worker\.min\.js"/);
-  assert.match(ocr, /corePath: "\/ocr"/);
+  assert.match(ocr, /corePath: "\/ocr\/tesseract-core-lstm\.wasm\.js"/);
   assert.match(ocr, /OCR_TIMEOUT_MS = 90_000/);
   assert.match(ocr, /progressFromTesseract/);
+  assert.match(ocr, /rotateImage\(file, -90\)/);
+  assert.match(ocr, /rotateImage\(file, 90\)/);
+  assert.match(ocr, /browser-specific relaxed-SIMD initialization stalls/);
   assert.match(ocr, /pdfjs-dist\/legacy\/build\/pdf\.mjs/);
   assert.doesNotMatch(ocr, /cloudmersive|api\.cloud|fetch\(/i);
   assert.match(parser, /isValidTurkishId/);
