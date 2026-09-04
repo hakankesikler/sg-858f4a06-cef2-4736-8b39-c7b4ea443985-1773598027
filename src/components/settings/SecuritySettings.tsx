@@ -121,7 +121,7 @@ export function SecuritySettings() {
 
         <Card className="p-6">
           <div className="flex gap-3"><span className="rounded-xl bg-violet-100 p-3 text-violet-700"><Laptop className="w-6 h-6" /></span><div><h3 className="font-semibold text-lg">Oturum Güvenliği</h3><p className="text-sm text-slate-600 mt-1">Unutulan veya açık kalan oturumları sınırlar.</p></div></div>
-          <div className="grid grid-cols-2 gap-3 mt-5"><div className="rounded-xl bg-slate-50 border p-4"><p className="text-xs text-slate-500">Hareketsizlik</p><p className="font-semibold mt-1">30 dakika</p></div><div className="rounded-xl bg-slate-50 border p-4"><p className="text-xs text-slate-500">Azami oturum</p><p className="font-semibold mt-1">8 saat</p></div></div>
+          <div className="grid grid-cols-2 gap-3 mt-5"><div className="rounded-xl bg-slate-50 border p-4"><p className="text-xs text-slate-500">Hareketsizlik</p><p className="font-semibold mt-1">2 saat 30 dakika</p></div><div className="rounded-xl bg-slate-50 border p-4"><p className="text-xs text-slate-500">Azami oturum</p><p className="font-semibold mt-1">8 saat</p></div></div>
           <Button variant="outline" className="mt-5" onClick={() => void revokeOtherSessions()} disabled={working}>Diğer Tüm Cihazlardan Çıkış Yap</Button>
         </Card>
 

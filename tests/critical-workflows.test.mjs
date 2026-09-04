@@ -706,12 +706,13 @@ test("staff permissions support audited per-person cross-department view and man
 });
 
 test("staff security requires MFA for privileged roles and records immutable security events", async () => {
-  const [sql, login, mfa, settings, session, api, config] = await Promise.all([
+  const [sql, login, mfa, settings, session, securityLib, api, config] = await Promise.all([
     read("supabase/migrations/20260825090000_staff_security_controls.sql"),
     read("src/pages/login.tsx"),
     read("src/pages/personel/mfa.tsx"),
     read("src/components/settings/SecuritySettings.tsx"),
     read("src/hooks/use-staff-session-security.ts"),
+    read("src/lib/security.ts"),
     read("src/pages/api/admin/staff-users.ts"),
     read("next.config.mjs"),
   ]);
@@ -727,8 +728,11 @@ test("staff security requires MFA for privileged roles and records immutable sec
   assert.match(mfa, /mfa\.verify/);
   assert.match(settings, /Diğer Tüm Cihazlardan Çıkış Yap/);
   assert.match(settings, /Güvenlik Hareketleri/);
+  assert.match(settings, /2 saat 30 dakika/);
   assert.match(session, /STAFF_IDLE_TIMEOUT_MS/);
   assert.match(session, /STAFF_MAX_SESSION_MS/);
+  assert.match(securityLib, /STAFF_IDLE_TIMEOUT_MS = 150 \* 60 \* 1000/);
+  assert.match(securityLib, /STAFF_MAX_SESSION_MS = 8 \* 60 \* 60 \* 1000/);
   assert.match(api, /tokenAssuranceLevel\(token\) !== "aal2"/);
   assert.match(config, /Content-Security-Policy/);
   assert.match(config, /\.r2\.cloudflarestorage\.com/);
