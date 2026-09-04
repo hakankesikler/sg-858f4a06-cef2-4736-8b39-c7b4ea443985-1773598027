@@ -583,20 +583,18 @@ async function findLocal(
         : remaining <= 0.01 ? "Ödendi"
           : total > 0 && remaining < total ? "Kısmi Ödendi"
             : data.due_date && data.due_date < new Date().toISOString().slice(0, 10) ? "Gecikmiş" : "Bekliyor";
-      const { error } = await admin.from("sales_invoices").update({
-        provider_status: text(item?.commercial_doc_status || item?.status) || null,
-        kolaybi_status: text(item?.e_document_status || item?.status) || null,
-        e_invoice_status: text(item?.e_document_status) || null,
-        ...(profile ? {
-          document_type: profile.documentType,
-          document_scenario: profile.scenario,
-          official_uuid: text(invoiceEDocument(item)?.uuid) || null,
-          official_invoice_no: text(invoiceEDocument(item)?.no || invoiceEDocument(item)?.invoice_no) || null,
-        } : {}),
-        payment_status: paymentStatus,
-        last_status_check_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq("id", data.id);
+      const { error } = await admin.rpc("rex_reconcile_sales_invoice_from_provider", {
+        p_invoice_id: data.id,
+        p_provider_status: text(item?.commercial_doc_status || item?.status) || null,
+        p_kolaybi_status: text(item?.e_document_status || item?.status) || null,
+        p_e_invoice_status: text(item?.e_document_status) || null,
+        p_has_profile: Boolean(profile),
+        p_document_type: profile?.documentType || null,
+        p_document_scenario: profile?.scenario || null,
+        p_official_uuid: profile ? text(invoiceEDocument(item)?.uuid) || null : null,
+        p_official_invoice_no: profile ? text(invoiceEDocument(item)?.no || invoiceEDocument(item)?.invoice_no) || null : null,
+        p_payment_status: paymentStatus || null,
+      });
       if (error) throw error;
       return { type: "sales_invoice", id: data.id };
     }

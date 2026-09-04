@@ -1033,13 +1033,14 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
 });
 
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
-  const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, associateCreateApi, proceedApi, cancelApi, providerLib, workflow, collection, vercel, service, office, expenseWorkspace, financeWorkspace, accounting, cariForm] = await Promise.all([
+  const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, reconciliationSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, associateCreateApi, proceedApi, cancelApi, providerLib, workflow, collection, vercel, service, office, expenseWorkspace, financeWorkspace, accounting, cariForm] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
     read("supabase/migrations/20260831210000_kolaybi_manual_mappings.sql"),
     read("supabase/migrations/20260831223000_kolaybi_product_catalog_sync.sql"),
     read("supabase/migrations/20260831234500_kolaybi_general_expense_workspace.sql"),
     read("supabase/migrations/20260901110000_kolaybi_finance_sync.sql"),
     read("supabase/migrations/20260901170000_kolaybi_active_workflows.sql"),
+    read("supabase/migrations/20260904123000_secure_customer_e_document_reconciliation.sql"),
     read("src/pages/api/kolaybi/office-sync.ts"),
     read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
     read("src/pages/api/kolaybi/associate-transactions.ts"),
@@ -1088,6 +1089,10 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(activeSql, /payment_status text/);
   assert.match(activeSql, /auth\.role\(\)<>'service_role'/);
   assert.match(activeSql, /last_synced_at/);
+  assert.match(reconciliationSql, /rex_reconcile_sales_invoice_from_provider/);
+  assert.match(reconciliationSql, /auth\.role\(\) <> 'service_role'/);
+  assert.match(reconciliationSql, /set_config\('rex\.invoice_sync','on',true\)/);
+  assert.match(reconciliationSql, /last_status_check_at/);
   assert.match(api, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(api, /rex_has_permission/);
   assert.match(api, /integrations\.connections/);
@@ -1112,7 +1117,7 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(api, /provider_transactionable_id/);
   assert.match(api, /cronMode/);
   assert.match(api, /kolaybi-office:active:/);
-  assert.match(api, /last_status_check_at/);
+  assert.match(api, /rex_reconcile_sales_invoice_from_provider/);
   assert.match(api, /Kısmi Ödendi/);
   assert.match(purchaseSyncApi, /KOLAYBI_PURCHASE_SYNC_DAYS/);
   assert.match(purchaseSyncApi, /lastPageFrom/);
