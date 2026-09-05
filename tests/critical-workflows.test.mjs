@@ -1325,11 +1325,25 @@ test("KolayBi official history determines each customer's e-invoice or e-archive
   assert.match(providerLib, /alignInvoiceWithCustomerProfile/);
   assert.match(providerLib, /recordCustomerEDocumentProfile/);
   assert.match(invoiceDialog, /KolayBi doğrulandı/);
-  assert.match(invoiceDialog, /disabled=\{!!selectedCustomerProfile\}/);
-  assert.match(invoiceDialog, /manualEDocumentConfirmed/);
+  assert.match(invoiceDialog, /Otomatik doğrulama bekleniyor/);
+  assert.doesNotMatch(invoiceDialog, /manualEDocumentConfirmed/);
   assert.match(office, /E-Belge/);
   assert.match(office, /E-Belge Türlerini Karşılaştır/);
   assert.match(office, /row\.kolaybi_e_document_type === "e_invoice"/);
+});
+
+test("sales invoice e-document choice is automatic and TUSAN is confirmed as e-invoice", async () => {
+  const [migration, invoiceDialog] = await Promise.all([
+    read("supabase/migrations/20260905190000_automatic_customer_e_document_decision.sql"),
+    read("src/components/InvoiceDialog.tsx"),
+  ]);
+  assert.match(migration, /TUSAN MOTOR/);
+  assert.match(migration, /kolaybi_e_document_type = 'e_invoice'/);
+  assert.match(migration, /BEFORE INSERT ON public\.sales_invoices/);
+  assert.match(migration, /NEW\.document_type := v_type/);
+  assert.match(migration, /Cari e-belge türü henüz otomatik doğrulanmadı/);
+  assert.match(invoiceDialog, /E-Fatura\/E-Arşiv seçimi çalışana bırakılmaz/);
+  assert.doesNotMatch(invoiceDialog, /E-belge türünü KolayBi cari\/fatura bilgileriyle kontrol ettim/);
 });
 
 test("shipment save lets PostgreSQL calculate the generated cargo subtotal", async () => {

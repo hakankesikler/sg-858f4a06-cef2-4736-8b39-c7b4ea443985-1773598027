@@ -121,7 +121,6 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
   const [paymentStatus, setPaymentStatus] = useState("Bekliyor");
   const [documentType, setDocumentType] = useState<InvoiceDocumentType>("e_archive");
   const [documentScenario, setDocumentScenario] = useState<"EARSIVFATURA" | "TEMELFATURA" | "TICARIFATURA" | "KAMU">("EARSIVFATURA");
-  const [manualEDocumentConfirmed, setManualEDocumentConfirmed] = useState(false);
   const [exchangeRate, setExchangeRate] = useState("1");
   const [notes, setNotes] = useState(defaultNotes);
   const [invoiceCategory, setInvoiceCategory] = useState<InvoiceCategory>("domestic_transport");
@@ -155,13 +154,11 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       scenario && ["EARSIVFATURA", "TEMELFATURA", "TICARIFATURA", "KAMU"].includes(scenario)
     ) {
       setSelectedCustomerProfile(customer as InvoiceCustomer);
-      setManualEDocumentConfirmed(true);
       setDocumentType(type);
       setDocumentScenario(type === "e_archive" ? "EARSIVFATURA" : scenario === "EARSIVFATURA" ? "TEMELFATURA" : scenario);
       return;
     }
     setSelectedCustomerProfile(null);
-    setManualEDocumentConfirmed(false);
     setDocumentType("e_archive");
     setDocumentScenario("EARSIVFATURA");
   };
@@ -387,10 +384,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       });
       return;
     }
-    if (!selectedCustomerProfile && !manualEDocumentConfirmed) {
+    if (!selectedCustomerProfile) {
       toast({
-        title: "E-belge türünü doğrulayın",
-        description: "KolayBi resmî geçmişi bulunamadığı için E-Fatura/E-Arşiv seçimini kontrol edip onaylamalısınız.",
+        title: "E-belge türü henüz doğrulanmadı",
+        description: "Çalışan seçimiyle fatura oluşturulamaz. Cari e-belge türü KolayBi senkronizasyonuyla otomatik doğrulanmalıdır.",
         variant: "destructive",
       });
       return;
@@ -571,52 +568,35 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                     <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">KolayBi doğrulandı</Badge>
                   )}
                 </div>
-                <Select
-                  value={documentType}
-                  disabled={!!selectedCustomerProfile}
-                  onValueChange={(value: InvoiceDocumentType) => {
-                    setDocumentType(value);
-                    setDocumentScenario(value === "e_archive" ? "EARSIVFATURA" : "TEMELFATURA");
-                  }}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="e_archive">E-Arşiv</SelectItem>
-                    <SelectItem value="e_invoice">E-Fatura</SelectItem>
-                  </SelectContent>
-                </Select>
+                {selectedCustomerProfile ? (
+                  <div className="flex h-10 items-center rounded-md border border-green-200 bg-green-50 px-3 font-medium text-green-800">
+                    {documentType === "e_invoice" ? "E-Fatura" : "E-Arşiv"}
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+                    Otomatik doğrulama bekleniyor
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Belge Senaryosu</Label>
-                <Select disabled={!!selectedCustomerProfile} value={documentScenario} onValueChange={(value: typeof documentScenario) => setDocumentScenario(value)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {documentType === "e_archive" ? (
-                      <SelectItem value="EARSIVFATURA">E-Arşiv Fatura</SelectItem>
-                    ) : (
-                      <>
-                        <SelectItem value="TEMELFATURA">Temel Fatura</SelectItem>
-                        <SelectItem value="TICARIFATURA">Ticari Fatura</SelectItem>
-                        <SelectItem value="KAMU">Kamu</SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
+                {selectedCustomerProfile ? (
+                  <div className="flex h-10 items-center rounded-md border border-green-200 bg-green-50 px-3 font-medium text-green-800">
+                    {documentScenario === "TICARIFATURA" ? "Ticari Fatura"
+                      : documentScenario === "KAMU" ? "Kamu"
+                        : documentScenario === "TEMELFATURA" ? "Temel Fatura" : "E-Arşiv Fatura"}
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                    Cari profili doğrulanmadan fatura oluşturulamaz.
+                  </div>
+                )}
                 <p className="text-xs text-slate-500">
                   {selectedCustomerProfile
                     ? `Resmî KolayBi e-belge geçmişine göre otomatik seçildi${selectedCustomerProfile.kolaybi_e_document_environment === "test" ? " (test ortamı)" : ""}.`
-                    : "KolayBi'de resmî e-belge geçmişi bulunmayan carilerde kullanıcı kontrolü gerekir."}
+                    : "E-Fatura/E-Arşiv seçimi çalışana bırakılmaz; KolayBi verisiyle sistem tarafından belirlenir."}
                 </p>
-                {!selectedCustomerProfile && (selectedCustomer || shipment?.customer_id) && (
-                  <label className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
-                    <Checkbox
-                      checked={manualEDocumentConfirmed}
-                      onCheckedChange={(checked) => setManualEDocumentConfirmed(checked === true)}
-                    />
-                    <span>E-belge türünü KolayBi cari/fatura bilgileriyle kontrol ettim ve seçimin doğruluğunu onaylıyorum.</span>
-                  </label>
-                )}
               </div>
 
               {/* PAYMENT STATUS */}
