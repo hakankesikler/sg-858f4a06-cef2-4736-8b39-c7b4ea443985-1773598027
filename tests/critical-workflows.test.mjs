@@ -1380,3 +1380,29 @@ test("purchase invoices separate the operational carrier from the legal payable 
   assert.match(inbox, /Gerçekleşen maliyet/);
   assert.match(shipmentForm, /Operasyon Taşıyıcısı \(Opsiyonel\)/);
 });
+
+test("invoice preview follows official e-invoice and e-archive presentation data", async () => {
+  const [dialog, template] = await Promise.all([
+    read("src/components/InvoicePreviewDialog.tsx"),
+    read("src/components/InvoiceTemplate.tsx"),
+  ]);
+
+  assert.match(dialog, /customer:customers!sales_invoices_customer_id_fkey/);
+  assert.match(dialog, /items:sales_invoice_items/);
+  assert.match(dialog, /official_invoice_no/);
+  assert.match(dialog, /official_uuid/);
+  assert.match(dialog, /invoice\.total_tax/);
+  assert.match(dialog, /rawItem\.tax_amount/);
+  assert.match(dialog, /invoice\.document_type === "e_invoice"/);
+  assert.match(dialog, /textValue\(invoice\.kolaybi_document_type\) \|\| "SATIS"/);
+  assert.doesNotMatch(dialog, /"Bilinmeyen Cari"/);
+  assert.doesNotMatch(dialog, /\? "SATIŞ" : "ALIŞ"/);
+
+  assert.match(template, /"e-Arşiv Fatura" : "e-Fatura"/);
+  assert.match(template, /GİB KAREKOD/);
+  assert.match(template, /Resmîleştirme sonrasında KolayBi belgesinde oluşur/);
+  assert.match(template, /Resmî PDF’yi Aç/);
+  assert.match(template, /Teslim şekli: Elektronik/);
+  assert.match(template, /@page \{ size: A4; margin: 0; \}/);
+  assert.match(template, /break-inside: avoid/);
+});
