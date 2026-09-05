@@ -197,8 +197,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         invoicePresentationService.getBankAccounts(),
         supabase
           .from("products_services")
-          .select("id,code,name,description,unit,sale_price,tax_rate,kolaybi_product_id,approval_status,is_active")
+          .select("id,code,name,description,unit,sale_price,tax_rate,kolaybi_product_id,approval_status,is_active,invoice_sort_order")
+          .eq("invoice_enabled", true)
           .eq("is_active", true)
+          .order("invoice_sort_order", { ascending: true })
           .order("name"),
       ]);
       if (catalogResult.error) throw catalogResult.error;

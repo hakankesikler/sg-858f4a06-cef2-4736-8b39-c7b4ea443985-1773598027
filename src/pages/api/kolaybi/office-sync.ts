@@ -387,6 +387,61 @@ async function findLocal(
     if (!Number.isSafeInteger(externalId) || externalId <= 0) {
       throw new ProviderError("KolayBi ürün kimliği geçerli değil.");
     }
+    const canonicalCode = row.code.trim().toUpperCase();
+    const providerActive = item?.is_active ?? item?.active;
+    const { data: invoiceProduct } = canonicalCode
+      ? await admin.from("products_services")
+        .select("id,code,name")
+        .eq("code", canonicalCode)
+        .eq("invoice_enabled", true)
+        .maybeSingle()
+      : { data: null };
+    if (invoiceProduct?.id) {
+      const now = new Date().toISOString();
+      const { error: productError } = await admin.from("products_services").update({
+        type: productType(item?.product_type),
+        unit: productUnit(item?.unit || item?.unit_name),
+        purchase_price: number(item?.purchase_price),
+        sale_price: number(item?.sale_price),
+        tax_rate: number(item?.vat_value),
+        stock_quantity: Math.round(number(item?.total_stock_quantity)),
+        provider_environment: providerEnvironment,
+        kolaybi_product_id: externalId,
+        provider_code: canonicalCode,
+        provider_barcode: text(item?.barcode) || null,
+        purchase_currency: text(item?.purchase_currency).toUpperCase() || null,
+        sale_currency: text(item?.sale_currency).toUpperCase() || null,
+        provider_active: typeof providerActive === "boolean" ? providerActive : null,
+        approval_status: "approved",
+        is_active: providerActive !== false,
+        last_synced_at: now,
+        updated_at: now,
+      }).eq("id", invoiceProduct.id);
+      if (productError) throw productError;
+      const { error: mappingError } = await admin.from("invoice_product_mappings").upsert({
+        product_code: canonicalCode,
+        kolaybi_product_id: externalId,
+        description: invoiceProduct.name || canonicalCode,
+        vat_rate: number(item?.vat_value),
+        active: providerActive !== false,
+        updated_at: now,
+      }, { onConflict: "product_code" });
+      if (mappingError) throw mappingError;
+      await admin.from("products_services").update({
+        invoice_enabled: false,
+        is_active: false,
+        approval_status: "rejected",
+        updated_at: now,
+      })
+        .eq("external_source", "kolaybi")
+        .eq("provider_environment", providerEnvironment)
+        .eq("kolaybi_product_id", externalId)
+        .neq("id", invoiceProduct.id);
+      return {
+        type: "product", id: invoiceProduct.id, matchStatus: "matched",
+        eventType: "product_sync_updated",
+      };
+    }
     const { data: providerProduct } = await admin.from("products_services")
       .select("id,code,approval_status")
       .eq("external_source", "kolaybi")
@@ -394,7 +449,6 @@ async function findLocal(
       .eq("kolaybi_product_id", externalId)
       .maybeSingle();
     if (providerProduct?.id) {
-      const providerActive = item?.is_active ?? item?.active;
       const approved = providerProduct.approval_status === "approved";
       await admin.from("products_services").update({
         name: row.displayName || row.code || `KolayBi Ürün ${row.externalId}`,
@@ -439,7 +493,6 @@ async function findLocal(
     let code = providerProductCode(row, providerEnvironment);
     const { data: codeCollision } = await admin.from("products_services").select("id").eq("code", code).maybeSingle();
     if (codeCollision?.id) code = `${code}-${row.externalId}`;
-    const providerActive = item?.is_active ?? item?.active;
     const { data: created, error: createError } = await admin.from("products_services").insert({
       code,
       name: row.displayName || row.code || `KolayBi Ürün ${row.externalId}`,

@@ -1342,6 +1342,8 @@ export type Database = {
           description: string | null
           external_source: string
           id: string
+          invoice_enabled: boolean
+          invoice_sort_order: number | null
           is_active: boolean | null
           kolaybi_product_id: number | null
           last_synced_at: string | null
@@ -1370,6 +1372,8 @@ export type Database = {
           description?: string | null
           external_source?: string
           id?: string
+          invoice_enabled?: boolean
+          invoice_sort_order?: number | null
           is_active?: boolean | null
           kolaybi_product_id?: number | null
           last_synced_at?: string | null
@@ -1398,6 +1402,8 @@ export type Database = {
           description?: string | null
           external_source?: string
           id?: string
+          invoice_enabled?: boolean
+          invoice_sort_order?: number | null
           is_active?: boolean | null
           kolaybi_product_id?: number | null
           last_synced_at?: string | null

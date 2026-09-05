@@ -125,11 +125,35 @@ test("driver licence and vehicle registration upload without OCR or confirmation
 
 test("sales invoice lines use the active KolayBi product catalog", async () => {
   const dialog = await read("src/components/InvoiceDialog.tsx");
-  assert.match(dialog, /from\("products_services"\)[\s\S]*\.eq\("is_active", true\)/);
+  assert.match(dialog, /from\("products_services"\)[\s\S]*\.eq\("invoice_enabled", true\)[\s\S]*\.eq\("is_active", true\)/);
   assert.match(dialog, /Katalog Ürünü \/ Hizmeti/);
   assert.match(dialog, /productCode: item\.productCode \|\| "HIZMET"/);
   assert.match(dialog, /kolaybiProductId: item\.kolaybiProductId \|\| null/);
   assert.match(dialog, /handleCatalogProductChange/);
+});
+
+test("invoice catalog is limited to the approved KolayBi code list and auto-matches by code", async () => {
+  const [migration, syncApi] = await Promise.all([
+    read("supabase/migrations/20260905170000_replace_invoice_product_catalog.sql"),
+    read("src/pages/api/kolaybi/office-sync.ts"),
+  ]);
+  const expectedCodes = [
+    "HZM000002", "HZM000021", "HZM000003", "HZM000025", "HZM000022",
+    "URN000006", "HZM000019", "HZM000013", "HZM000012", "URN000011",
+    "HZM000024", "HZM000023", "HZM000026", "HZM000011", "URN000009",
+    "HZM000006", "HZM000027", "HZM000008", "URN000004", "HZM000018",
+  ];
+  for (const code of expectedCodes) assert.match(migration, new RegExp(`'${code}'`));
+  assert.match(migration, /ADD COLUMN IF NOT EXISTS invoice_enabled boolean NOT NULL DEFAULT false/);
+  assert.match(migration, /ADD COLUMN IF NOT EXISTS invoice_sort_order integer/);
+  assert.match(migration, /SET invoice_enabled=false,[\s\S]*is_active=false/);
+  assert.match(migration, /WHERE product\.invoice_enabled=true AND product\.kolaybi_product_id IS NOT NULL/);
+  assert.match(migration, /match_status='matched'/);
+  assert.match(syncApi, /\.eq\("code", canonicalCode\)[\s\S]*\.eq\("invoice_enabled", true\)/);
+  assert.match(syncApi, /product_code: canonicalCode/);
+  assert.match(syncApi, /kolaybi_product_id: externalId/);
+  assert.match(syncApi, /description: invoiceProduct\.name \|\| canonicalCode/);
+  assert.match(syncApi, /matchStatus: "matched"/);
 });
 
 test("delivery still requires a proof document and creates invoice-ready state", async () => {
