@@ -167,6 +167,28 @@ test("public tracking keeps random REX numbers and exposes only its safe RPC", a
   assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.rex_public_track_shipment\(text\) TO anon,authenticated/);
 });
 
+test("public tracking shows only server-masked sender and receiver hints", async () => {
+  const [sql, service, tracking] = await Promise.all([
+    read("supabase/migrations/20260905150000_mask_public_tracking_parties.sql"),
+    read("src/services/publicTrackingService.ts"),
+    read("src/components/TrackingSection.tsx"),
+  ]);
+  const publicFunction = sql.slice(sql.indexOf("CREATE OR REPLACE FUNCTION public.rex_public_track_shipment"));
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_mask_public_party_name/);
+  assert.match(sql, /v_visible:=CASE WHEN char_length\(v_word\)<=3 THEN char_length\(v_word\) ELSE 2 END/);
+  assert.match(publicFunction, /'sender_masked',public\.rex_mask_public_party_name\(s\.sender_name\)/);
+  assert.match(publicFunction, /'receiver_masked',public\.rex_mask_public_party_name\(s\.receiver\)/);
+  assert.doesNotMatch(publicFunction, /'sender_name',s\.sender_name/);
+  assert.doesNotMatch(publicFunction, /'receiver',s\.receiver/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.rex_mask_public_party_name\(text\) FROM PUBLIC,anon,authenticated/);
+  assert.match(service, /sender_masked\?: string \| null/);
+  assert.match(service, /receiver_masked\?: string \| null/);
+  assert.match(tracking, />Gönderici</);
+  assert.match(tracking, /result\.sender_masked/);
+  assert.match(tracking, />Alıcı</);
+  assert.match(tracking, /result\.receiver_masked/);
+});
+
 test("customer portal remains company-scoped and does not expose internal costs", async () => {
   const sql = await read("supabase/migrations/20260818224500_customer_portal.sql");
   const start = sql.indexOf("CREATE OR REPLACE FUNCTION public.rex_customer_portal_shipments");

@@ -223,6 +223,8 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
                   </div>
 
                   <div className="grid gap-4 rounded-xl bg-slate-900 p-5 text-white sm:grid-cols-2">
+                    <div><p className="text-xs text-slate-400">Gönderici</p><p className="mt-1 font-semibold">{result.sender_masked || "—"}</p></div>
+                    <div><p className="text-xs text-slate-400">Alıcı</p><p className="mt-1 font-semibold">{result.receiver_masked || "—"}</p></div>
                     <div><p className="text-xs text-slate-400">Çıkış</p><p className="mt-1 font-semibold">{result.origin || "—"}</p></div>
                     <div><p className="text-xs text-slate-400">Varış</p><p className="mt-1 font-semibold">{result.destination || "—"}</p></div>
                     <div><p className="text-xs text-slate-400">Yükleme Tarihi</p><p className="mt-1 font-semibold">{formatDate(result.pickup_date)}</p></div>

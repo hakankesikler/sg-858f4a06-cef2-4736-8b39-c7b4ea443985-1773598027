@@ -11,6 +11,8 @@ export interface PublicTrackingResult {
   tracking_number: string;
   shipment_code: string;
   status: string;
+  sender_masked?: string | null;
+  receiver_masked?: string | null;
   origin?: string | null;
   destination?: string | null;
   pickup_date?: string | null;
