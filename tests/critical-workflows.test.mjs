@@ -1469,13 +1469,13 @@ test("sales invoice drafts stay editable until accounting approval", async () =>
   assert.match(editDialog, /0 TL tutarlı veya miktarı sıfır olan bir fatura taslağı kaydedilemez/);
   assert.match(editDialog, /placeholder="İstisna kodu \(ör\. 311\)"/);
   assert.match(dialog, /catalogPrice > 0 \? catalogPrice : Number\(current\.unitPrice \|\| 0\)/);
-  assert.match(dialog, /getShipmentInvoiceBaseAmount\(shipment\)/);
+  assert.match(dialog, /getShipmentInvoiceLines\(shipment\)/);
   assert.match(dialog, /0 TL tutarlı veya miktarı sıfır olan bir fatura taslağı oluşturulamaz/);
   assert.doesNotMatch(pending, /invoiceIntegrationService\.send\(invoiceData\.id\)/);
   assert.doesNotMatch(pending, /totalAmount \/ 1\.2/);
   assert.match(pending, /satis_tutar,/);
   assert.match(pending, /currency,/);
-  assert.match(pending, /unitPrice: getShipmentInvoiceBaseAmount\(shipment\)/);
+  assert.match(pending, /shipments\.flatMap\(\(shipment\) => getShipmentInvoiceLines\(shipment\)\)/);
   assert.match(pending, /Farklı para birimindeki sevkiyatlar aynı faturada birleştirilemez/);
   assert.match(amountHelper, /recordedSalesAmount > 0/);
   assert.match(amountHelper, /shipment_cargo_items/);
@@ -1486,4 +1486,47 @@ test("sales invoice drafts stay editable until accounting approval", async () =>
   assert.match(preview, /Taslağı Düzenle/);
   assert.match(preview, /Onayla ve KolayBi’ye Gönder/);
   assert.match(service, /rex_approve_sales_invoice_draft/);
+});
+
+test("shipments support multiple pickup and delivery stops with separately priced invoice lines", async () => {
+  const [sql, form, shipmentService, routeService, pending, invoiceDialog, invoiceLines, logistics] = await Promise.all([
+    read("supabase/migrations/20260906153000_multi_stop_shipments.sql"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/services/shipmentService.ts"),
+    read("src/services/shipmentRouteService.ts"),
+    read("src/components/PendingInvoicesDialog.tsx"),
+    read("src/components/InvoiceDialog.tsx"),
+    read("src/lib/shipment-invoice-lines.ts"),
+    read("src/components/modules/LogisticsModule.tsx"),
+  ]);
+
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.shipment_route_stops/);
+  assert.match(sql, /stop_type IN \('pickup','delivery'\)/);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS pickup_stop_id/);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS delivery_stop_id/);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS route_description/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_save_shipment_multistop/);
+  assert.match(sql, /Her yük kalemi geçerli bir alım ve teslim noktasına bağlanmalıdır/);
+  assert.match(sql, /legacy-pickup-1/);
+  assert.match(sql, /legacy-delivery-1/);
+  assert.match(form, /Alım Noktaları/);
+  assert.match(form, /Teslim Noktaları/);
+  assert.match(form, /pickup_stop_key/);
+  assert.match(form, /delivery_stop_key/);
+  assert.match(form, /Yük \/ Hat Açıklaması/);
+  assert.match(form, /Birim Fiyat/);
+  assert.match(shipmentService, /rex_save_shipment_multistop/);
+  assert.match(shipmentService, /p_route_stops: routeStops/);
+  assert.match(shipmentService, /shipment_cargo_items_pickup_stop_id_fkey/);
+  assert.match(shipmentService, /shipment_cargo_items_delivery_stop_id_fkey/);
+  assert.match(shipmentService, /route_stops:shipment_route_stops/);
+  assert.match(routeService, /shipment_route_stops/);
+  assert.match(pending, /shipment_cargo_items_pickup_stop_id_fkey/);
+  assert.match(pending, /shipment_cargo_items_delivery_stop_id_fkey/);
+  assert.match(invoiceDialog, /getShipmentInvoiceLines/);
+  assert.match(invoiceLines, /pricedItems\.map/);
+  assert.match(invoiceLines, /item\.route_description/);
+  assert.match(invoiceLines, /unitPrice/);
+  assert.match(logistics, /alım noktası/);
+  assert.match(logistics, /teslim noktası/);
 });

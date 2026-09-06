@@ -22,7 +22,7 @@ import {
   type InvoiceCategory,
   type InvoiceNoteTemplate,
 } from "@/services/invoicePresentationService";
-import { getShipmentInvoiceBaseAmount } from "@/lib/shipment-invoice-amount";
+import { getShipmentInvoiceLines } from "@/lib/shipment-invoice-lines";
 
 interface InvoiceItem {
   id: string;
@@ -182,7 +182,9 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     setNotes(renderTemplate(template.notes, shipment));
     setItems((current) => current.map((item, index) => index === 0 ? calculateItemTotals({
       ...item,
-      description: renderTemplate(template.line_description_template, shipment),
+      description: shipment?.shipment_cargo_items?.length
+        ? item.description
+        : renderTemplate(template.line_description_template, shipment),
       vatRate: Number(template.default_vat_rate),
       exemptionCode: template.default_exemption_code || item.exemptionCode || "",
     }) : item));
@@ -231,22 +233,12 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     if (shipment?.customer_id) {
       setSelectedCustomer(shipment.customer_id);
       void loadCustomerEDocumentProfile(shipment.customer_id);
-      const unitPrice = getShipmentInvoiceBaseAmount(shipment);
-      const vatRate = shipment.service_mode === "international_express" ? 0 : 20;
       setCurrency(shipment.currency || "TRY");
-      setItems([{
-        id: "1",
-        productCode: "HIZMET",
-        description: `${shipment.shipment_code || ""} taşıma hizmeti (${shipment.origin || ""} → ${shipment.destination || ""})`.trim(),
-        quantity: 1,
-        unit: "Adet",
-        unitPrice,
-        vatRate,
-        subtotal: unitPrice,
-        vatAmount: unitPrice * vatRate / 100,
-        total: unitPrice * (1 + vatRate / 100),
-        exemptionCode: shipment.service_mode === "international_express" ? "311" : "",
-      }]);
+      setItems(getShipmentInvoiceLines(shipment).map((line, index) => calculateItemTotals({
+        ...line,
+        id: `${index + 1}`,
+        exemptionCode: line.exemptionCode || "",
+      })));
     }
   }, [isOpen, shipment]);
 

@@ -16,6 +16,11 @@ export interface CargoItemInput {
   un_number?: string;
   dangerous_transport_code?: number;
   uetds_description?: string;
+  pickup_stop_id?: string | null;
+  delivery_stop_id?: string | null;
+  pickup_stop_key?: string;
+  delivery_stop_key?: string;
+  route_description?: string;
 }
 
 export const shipmentCargoService = {

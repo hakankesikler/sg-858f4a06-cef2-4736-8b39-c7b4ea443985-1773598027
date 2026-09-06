@@ -388,11 +388,15 @@ export function LogisticsModule() {
 
   // Filter shipments based on search inputs
   const filteredShipments = shipments.filter((shipment) => {
-    const matchesSender = normalize(shipment.sender_name || "").includes(normalize(filters.sender_name));
-    const matchesOrigin = normalize(shipment.origin || "").includes(normalize(filters.origin));
-    const matchesReceiver = normalize(shipment.receiver || "").includes(normalize(filters.receiver));
-    const matchesDistrict = normalize(shipment.receiver_district || "").includes(normalize(filters.receiver_district));
-    const matchesDestination = normalize(shipment.destination || "").includes(normalize(filters.destination));
+    const pickupStops = (shipment.route_stops || []).filter((stop: any) => stop.stop_type === "pickup");
+    const deliveryStops = (shipment.route_stops || []).filter((stop: any) => stop.stop_type === "delivery");
+    const pickupSearch = pickupStops.map((stop: any) => `${stop.company_name || ""} ${stop.district || ""} ${stop.city || ""}`).join(" ");
+    const deliverySearch = deliveryStops.map((stop: any) => `${stop.company_name || ""} ${stop.district || ""} ${stop.city || ""}`).join(" ");
+    const matchesSender = normalize(`${shipment.sender_name || ""} ${pickupSearch}`).includes(normalize(filters.sender_name));
+    const matchesOrigin = normalize(`${shipment.origin || ""} ${pickupSearch}`).includes(normalize(filters.origin));
+    const matchesReceiver = normalize(`${shipment.receiver || ""} ${deliverySearch}`).includes(normalize(filters.receiver));
+    const matchesDistrict = normalize(`${shipment.receiver_district || ""} ${deliverySearch}`).includes(normalize(filters.receiver_district));
+    const matchesDestination = normalize(`${shipment.destination || ""} ${deliverySearch}`).includes(normalize(filters.destination));
     const matchesDriver = normalize(shipment.service_mode === "international_express" ? shipment.express_carrier || "" : shipment.driver?.full_name || "").includes(normalize(filters.driver));
     const matchesVehicle = normalize(shipment.service_mode === "international_express" ? `${shipment.booking_provider || ""} ${shipment.provider_reference || ""} ${shipment.awb_number || ""}` : shipment.vehicle?.cekici_plakasi || "").includes(normalize(filters.vehicle));
     const matchesStatus = normalize(getStatusLabel(shipment.status)).includes(normalize(filters.status));
@@ -415,11 +419,8 @@ export function LogisticsModule() {
       const rows = filteredShipments.map((shipment) => ({
         "Sevkiyat Kodu": shipment.shipment_code || "-",
         "Yükleme Tarihi": shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd.MM.yyyy", { locale: tr }) : "-",
-        "Gönderici": shipment.sender_name || "-",
-        "Gönderici İl": shipment.origin || "-",
-        "Alıcı": shipment.receiver || "-",
-        "Alıcı İlçe": shipment.receiver_district || "-",
-        "Alıcı İl": shipment.destination || "-",
+        "Alım Noktaları": (shipment.route_stops || []).filter((stop: any) => stop.stop_type === "pickup").map((stop: any) => `${stop.company_name} - ${[stop.district, stop.city].filter(Boolean).join(" / ")}`).join(" | ") || shipment.sender_name || "-",
+        "Teslim Noktaları": (shipment.route_stops || []).filter((stop: any) => stop.stop_type === "delivery").map((stop: any) => `${stop.company_name} - ${[stop.district, stop.city].filter(Boolean).join(" / ")}`).join(" | ") || shipment.receiver || "-",
         "Sürücü / Taşıyıcı": shipment.service_mode === "international_express" ? shipment.express_carrier || "-" : shipment.driver?.full_name || "-",
         "Araç / AWB": shipment.service_mode === "international_express" ? shipment.awb_number || "-" : shipment.vehicle?.cekici_plakasi || "-",
         "Teslim Tarihi": shipment.delivery_date ? format(new Date(shipment.delivery_date), "dd.MM.yyyy", { locale: tr }) : "-",
@@ -675,8 +676,18 @@ export function LogisticsModule() {
                         {shipment.tracking_number && <div className="mt-1 font-mono text-[11px] text-blue-700">{shipment.tracking_number}</div>}
                         {shipment.service_mode === "international_express" && <div className="mt-1 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-800">ULUSLARARASI EXPRESS</div>}
                       </td>
-                      <td className="p-4">{shipment.sender_name || "-"}</td>
-                      <td className="p-4">{shipment.receiver || "-"}</td>
+                      <td className="p-4">
+                        <div>{shipment.sender_name || "-"}</div>
+                        {(shipment.route_stops || []).filter((stop: any) => stop.stop_type === "pickup").length > 1 && (
+                          <div className="mt-1 text-xs font-medium text-blue-700">{shipment.route_stops.filter((stop: any) => stop.stop_type === "pickup").length} alım noktası</div>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <div>{shipment.receiver || "-"}</div>
+                        {(shipment.route_stops || []).filter((stop: any) => stop.stop_type === "delivery").length > 1 && (
+                          <div className="mt-1 text-xs font-medium text-emerald-700">{shipment.route_stops.filter((stop: any) => stop.stop_type === "delivery").length} teslim noktası</div>
+                        )}
+                      </td>
                       <td className="p-4">{shipment.origin || "-"}</td>
                       <td className="p-4">{shipment.receiver_district || "-"}</td>
                       <td className="p-4">{shipment.destination || "-"}</td>

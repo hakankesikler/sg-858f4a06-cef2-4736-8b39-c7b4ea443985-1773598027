@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { invoiceIntegrationService } from "@/services/invoiceIntegrationService";
 import { getShipmentInvoiceBaseAmount } from "@/lib/shipment-invoice-amount";
+import { getShipmentInvoiceLines } from "@/lib/shipment-invoice-lines";
 
 interface PendingInvoicesDialogProps {
   isOpen: boolean;
@@ -97,8 +98,20 @@ export function PendingInvoicesDialog({
           shipment_cargo_items (
             id,
             adet,
+            cinsi,
             birim_fiyat,
-            alt_toplam_fiyat
+            alt_toplam_fiyat,
+            route_description,
+            pickup_stop:shipment_route_stops!shipment_cargo_items_pickup_stop_id_fkey (
+              company_name,
+              district,
+              city
+            ),
+            delivery_stop:shipment_route_stops!shipment_cargo_items_delivery_stop_id_fkey (
+              company_name,
+              district,
+              city
+            )
           )
         `)
         .eq("status", "teslim_edildi")
@@ -460,15 +473,7 @@ function BulkInvoiceDialog({ isOpen, onClose, onSuccess, shipments }: {
         documentScenario,
         exchangeRate: 1,
         idempotencyKey: crypto.randomUUID(),
-        items: shipments.map(shipment => ({
-          productCode: shipment.service_mode === "international_express" ? "HZM000021" : "HZM000002",
-          description: `Taşıma Hizmeti - ${shipment.shipment_code}`,
-          quantity: 1,
-          unit: "Adet",
-          unitPrice: getShipmentInvoiceBaseAmount(shipment),
-          vatRate: shipment.service_mode === "international_express" ? 0 : 20,
-          exemptionCode: shipment.service_mode === "international_express" ? "311" : null,
-        })),
+        items: shipments.flatMap((shipment) => getShipmentInvoiceLines(shipment)),
       });
       toast({
         title: "Fatura taslağı oluşturuldu",

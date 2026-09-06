@@ -1860,8 +1860,11 @@ export type Database = {
           birim_fiyat: number | null
           cinsi: string
           created_at: string | null
+          delivery_stop_id: string | null
           id: string
           kg_ds: number
+          pickup_stop_id: string | null
+          route_description: string | null
           shipment_id: string
           sira_no: number
           updated_at: string | null
@@ -1872,8 +1875,11 @@ export type Database = {
           birim_fiyat?: number | null
           cinsi: string
           created_at?: string | null
+          delivery_stop_id?: string | null
           id?: string
           kg_ds: number
+          pickup_stop_id?: string | null
+          route_description?: string | null
           shipment_id: string
           sira_no?: number
           updated_at?: string | null
@@ -1884,15 +1890,94 @@ export type Database = {
           birim_fiyat?: number | null
           cinsi?: string
           created_at?: string | null
+          delivery_stop_id?: string | null
           id?: string
           kg_ds?: number
+          pickup_stop_id?: string | null
+          route_description?: string | null
           shipment_id?: string
           sira_no?: number
           updated_at?: string | null
         }
         Relationships: [
           {
+            foreignKeyName: "shipment_cargo_items_delivery_stop_id_fkey"
+            columns: ["delivery_stop_id"]
+            isOneToOne: false
+            referencedRelation: "shipment_route_stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipment_cargo_items_pickup_stop_id_fkey"
+            columns: ["pickup_stop_id"]
+            isOneToOne: false
+            referencedRelation: "shipment_route_stops"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "shipment_cargo_items_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipment_route_stops: {
+        Row: {
+          address_line: string | null
+          city: string
+          company_name: string
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          district: string | null
+          id: string
+          instructions: string | null
+          planned_at: string | null
+          sequence_no: number
+          shipment_id: string
+          stop_key: string
+          stop_type: string
+          updated_at: string
+        }
+        Insert: {
+          address_line?: string | null
+          city: string
+          company_name: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          instructions?: string | null
+          planned_at?: string | null
+          sequence_no: number
+          shipment_id: string
+          stop_key: string
+          stop_type: string
+          updated_at?: string
+        }
+        Update: {
+          address_line?: string | null
+          city?: string
+          company_name?: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          instructions?: string | null
+          planned_at?: string | null
+          sequence_no?: number
+          shipment_id?: string
+          stop_key?: string
+          stop_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_route_stops_shipment_id_fkey"
             columns: ["shipment_id"]
             isOneToOne: false
             referencedRelation: "shipments"

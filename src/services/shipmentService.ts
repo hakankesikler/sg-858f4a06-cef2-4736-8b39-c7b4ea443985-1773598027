@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { ShipmentRouteStopInput } from "@/services/shipmentRouteService";
 
 export interface Shipment {
   id?: string;
@@ -114,14 +115,16 @@ export const shipmentService = {
     }>,
     completedEditConfirmation?: string,
     uetdsDetails: Record<string, unknown> = {},
+    routeStops: ShipmentRouteStopInput[] = [],
   ): Promise<string> {
-    const { data, error } = await supabase.rpc("rex_save_shipment_with_uetds" as any, {
+    const { data, error } = await supabase.rpc("rex_save_shipment_multistop" as any, {
       p_shipment_id: shipmentId,
       p_shipment: {
         ...shipment,
         _owner_confirmation_code: completedEditConfirmation || null,
       },
       p_cargo_items: cargoItems,
+      p_route_stops: routeStops,
       p_uetds_details: uetdsDetails,
     } as any);
 
@@ -150,11 +153,12 @@ export const shipmentService = {
     reason: string,
     proposedShipment: Partial<Shipment>,
     proposedCargoItems: unknown[],
+    proposedRouteStops: ShipmentRouteStopInput[],
   ) {
     const { data, error } = await supabase.rpc("rex_request_shipment_revision" as any, {
       p_shipment_id: shipmentId,
       p_reason: reason,
-      p_proposed_shipment: proposedShipment,
+      p_proposed_shipment: { ...proposedShipment, _route_stops: proposedRouteStops },
       p_proposed_cargo_items: proposedCargoItems,
     } as any);
     if (error) throw error;
@@ -213,6 +217,17 @@ export const shipmentService = {
         ,uetds_details:shipment_uetds_details(*)
         ,exceptions:shipment_exceptions(id, exception_type, status, occurred_at)
         ,delivery_documents(id, document_type, scan_status, is_active, version_number)
+        ,route_stops:shipment_route_stops(id,stop_key,stop_type,sequence_no,company_name,address_line,district,city,contact_name,contact_phone,instructions,planned_at)
+        ,shipment_cargo_items(
+          id,
+          adet,
+          cinsi,
+          birim_fiyat,
+          alt_toplam_fiyat,
+          route_description,
+          pickup_stop:shipment_route_stops!shipment_cargo_items_pickup_stop_id_fkey(company_name,district,city),
+          delivery_stop:shipment_route_stops!shipment_cargo_items_delivery_stop_id_fkey(company_name,district,city)
+        )
       `)
       .order("created_at", { ascending: false });
 

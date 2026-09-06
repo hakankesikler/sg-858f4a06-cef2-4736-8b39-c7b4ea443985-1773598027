@@ -13,6 +13,7 @@ import { tr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { shipmentService, Shipment } from "@/services/shipmentService";
 import { shipmentCargoService, type CargoItemInput } from "@/services/shipmentCargoService";
+import { shipmentRouteService, type ShipmentRouteStopInput, type ShipmentRouteStopType } from "@/services/shipmentRouteService";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { crmService, Customer } from "@/services/crmService";
@@ -65,6 +66,24 @@ interface ShipmentFormProps {
   initialData?: any;
 }
 
+const createRouteStop = (
+  stopType: ShipmentRouteStopType,
+  sequenceNo: number,
+  values: Partial<ShipmentRouteStopInput> = {},
+): ShipmentRouteStopInput => ({
+  stop_key: values.stop_key || `${stopType}-${crypto.randomUUID()}`,
+  stop_type: stopType,
+  sequence_no: sequenceNo,
+  company_name: values.company_name || "",
+  address_line: values.address_line || "",
+  district: values.district || "",
+  city: values.city || "",
+  contact_name: values.contact_name || "",
+  contact_phone: values.contact_phone || "",
+  instructions: values.instructions || "",
+  planned_at: values.planned_at || "",
+});
+
 export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, initialData }: ShipmentFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -115,6 +134,13 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     customer_email?: string;
   } | null>(null);
   
+  const [pickupStops, setPickupStops] = useState<ShipmentRouteStopInput[]>([
+    createRouteStop("pickup", 1),
+  ]);
+  const [deliveryStops, setDeliveryStops] = useState<ShipmentRouteStopInput[]>([
+    createRouteStop("delivery", 1),
+  ]);
+
   // Cargo items state
   const [cargoItems, setCargoItems] = useState<CargoItemInput[]>([
     { adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false }
@@ -171,6 +197,25 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     toplam_kg_ds: ""
   });
 
+  useEffect(() => {
+    const defaultPickupKey = pickupStops[0]?.stop_key;
+    const defaultDeliveryKey = deliveryStops[0]?.stop_key;
+    if (!defaultPickupKey || !defaultDeliveryKey) return;
+    setCargoItems((current) => {
+      let changed = false;
+      const next = current.map((item) => {
+        if (item.pickup_stop_key && item.delivery_stop_key) return item;
+        changed = true;
+        return {
+          ...item,
+          pickup_stop_key: item.pickup_stop_key || defaultPickupKey,
+          delivery_stop_key: item.delivery_stop_key || defaultDeliveryKey,
+        };
+      });
+      return changed ? next : current;
+    });
+  }, [pickupStops, deliveryStops]);
+
   // Filtered lists based on search (with Turkish character normalization)
   const filteredSuppliers = useMemo(() => {
     if (!searchSupplier) return suppliers;
@@ -226,8 +271,42 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       alt_toplam_fiyat: 0,
       uetds_unit_code: "KG",
       dangerous_goods: false,
+      pickup_stop_key: pickupStops[0]?.stop_key,
+      delivery_stop_key: deliveryStops[0]?.stop_key,
+      route_description: "",
       sira_no: cargoItems.length + 1 
     }]);
+  };
+
+  const updateRouteStop = (
+    stopType: ShipmentRouteStopType,
+    index: number,
+    field: keyof ShipmentRouteStopInput,
+    value: string,
+  ) => {
+    const setter = stopType === "pickup" ? setPickupStops : setDeliveryStops;
+    setter((current) => current.map((stop, stopIndex) => stopIndex === index ? { ...stop, [field]: value } : stop));
+  };
+
+  const addRouteStop = (stopType: ShipmentRouteStopType) => {
+    const setter = stopType === "pickup" ? setPickupStops : setDeliveryStops;
+    setter((current) => [...current, createRouteStop(stopType, current.length + 1)]);
+  };
+
+  const removeRouteStop = (stopType: ShipmentRouteStopType, index: number) => {
+    const currentStops = stopType === "pickup" ? pickupStops : deliveryStops;
+    if (currentStops.length <= 1) return;
+    const removedKey = currentStops[index].stop_key;
+    const nextStops = currentStops
+      .filter((_, stopIndex) => stopIndex !== index)
+      .map((stop, stopIndex) => ({ ...stop, sequence_no: stopIndex + 1 }));
+    (stopType === "pickup" ? setPickupStops : setDeliveryStops)(nextStops);
+    const fallbackKey = nextStops[0].stop_key;
+    setCargoItems((current) => current.map((item) => ({
+      ...item,
+      ...(stopType === "pickup" && item.pickup_stop_key === removedKey ? { pickup_stop_key: fallbackKey } : {}),
+      ...(stopType === "delivery" && item.delivery_stop_key === removedKey ? { delivery_stop_key: fallbackKey } : {}),
+    })));
   };
 
   const removeCargoItem = (index: number) => {
@@ -375,7 +454,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         toplam_kg_ds: initialData.toplam_kg_ds?.toString() || ""
       });
       
-      loadCargoItems(initialData.id);
+      loadShipmentRoute(initialData.id);
       
       if (initialData.pickup_date) {
         const dateValue = initialData.pickup_date;
@@ -392,9 +471,26 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     }
   }, [editMode, initialData, isOpen, drivers, vehicles, customers]);
 
-  const loadCargoItems = async (shipmentId: string) => {
+  const loadShipmentRoute = async (shipmentId: string) => {
     try {
-      const items = await shipmentCargoService.getCargoItems(shipmentId);
+      const [items, savedStops] = await Promise.all([
+        shipmentCargoService.getCargoItems(shipmentId),
+        shipmentRouteService.getStops(shipmentId),
+      ]);
+      const loadedPickupStops = savedStops.filter((stop) => stop.stop_type === "pickup");
+      const loadedDeliveryStops = savedStops.filter((stop) => stop.stop_type === "delivery");
+      const nextPickupStops = loadedPickupStops.length > 0 ? loadedPickupStops : [createRouteStop("pickup", 1, {
+        company_name: initialData?.sender_name || "",
+        city: initialData?.origin || initialData?.sender_ii || "",
+      })];
+      const nextDeliveryStops = loadedDeliveryStops.length > 0 ? loadedDeliveryStops : [createRouteStop("delivery", 1, {
+        company_name: initialData?.receiver || "",
+        district: initialData?.receiver_district || "",
+        city: initialData?.destination || initialData?.receiver_ii || "",
+      })];
+      setPickupStops(nextPickupStops);
+      setDeliveryStops(nextDeliveryStops);
+      const stopKeysById = new Map(savedStops.map((stop) => [stop.id, stop.stop_key]));
       if (items.length > 0) {
         setCargoItems(items.map(item => ({
           adet: item.adet,
@@ -409,13 +505,22 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           ,un_number: (item as any).un_number || ""
           ,dangerous_transport_code: (item as any).dangerous_transport_code || undefined
           ,uetds_description: (item as any).uetds_description || ""
+          ,pickup_stop_id: (item as any).pickup_stop_id || null
+          ,delivery_stop_id: (item as any).delivery_stop_id || null
+          ,pickup_stop_key: stopKeysById.get((item as any).pickup_stop_id) || nextPickupStops[0].stop_key
+          ,delivery_stop_key: stopKeysById.get((item as any).delivery_stop_id) || nextDeliveryStops[0].stop_key
+          ,route_description: (item as any).route_description || ""
         })));
       } else {
-        setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false }]);
+        setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false, pickup_stop_key: nextPickupStops[0].stop_key, delivery_stop_key: nextDeliveryStops[0].stop_key, route_description: "" }]);
       }
     } catch (error) {
-      console.error("Error loading cargo items:", error);
-      setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false }]);
+      console.error("Error loading shipment route:", error);
+      const pickup = createRouteStop("pickup", 1, { company_name: initialData?.sender_name || "", city: initialData?.origin || "" });
+      const delivery = createRouteStop("delivery", 1, { company_name: initialData?.receiver || "", district: initialData?.receiver_district || "", city: initialData?.destination || "" });
+      setPickupStops([pickup]);
+      setDeliveryStops([delivery]);
+      setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false, pickup_stop_key: pickup.stop_key, delivery_stop_key: delivery.stop_key, route_description: "" }]);
     }
   };
 
@@ -529,6 +634,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           sender_name: customerName
         }));
       }
+      setPickupStops((current) => current.map((stop, index) => index === 0 && !stop.company_name
+        ? { ...stop, company_name: customerName }
+        : stop));
     }
   };
 
@@ -545,6 +653,12 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     }
 
     const invalidCargo = cargoItems.some(item => item.adet <= 0 || item.kg_ds <= 0 || !item.cinsi.trim());
+    const routeStops = [...pickupStops, ...deliveryStops];
+    const invalidRouteStops = routeStops.some((stop) => !stop.company_name.trim() || !stop.city.trim());
+    const invalidCargoRoute = cargoItems.some((item) =>
+      !pickupStops.some((stop) => stop.stop_key === item.pickup_stop_key) ||
+      !deliveryStops.some((stop) => stop.stop_key === item.delivery_stop_key)
+    );
     const isExpress = formData.service_mode === "international_express";
     const incompleteAssignment = !isExpress && Boolean(formData.driver_id) !== Boolean(formData.vehicle_id);
     const missingHaulierAssignment = !isExpress && selectedSupplierIsHaulier && (!formData.driver_id || !formData.vehicle_id);
@@ -556,7 +670,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       !/^[A-Z]{2}$/.test(formData.destination_country_code)
     );
     if (!formData.customer_id || incompleteAssignment || missingHaulierAssignment || unauthorizedCarrierAssignment || invalidExpress ||
-        !formData.origin.trim() || !formData.destination.trim() || !pickupDate || invalidCargo) {
+        !pickupDate || invalidCargo || invalidRouteStops || invalidCargoRoute) {
       toast({
         title: "Eksik Bilgi",
         description: incompleteAssignment
@@ -567,7 +681,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             ? "Kurumsal taşıyıcı ataması için personel hesabınıza ayrıca yetki verilmelidir."
           : invalidExpress
             ? "Express gönderide sağlayıcı, dosya/paket türü ile çıkış ve varış ülke kodları zorunludur."
-          : "Müşteri, çıkış/varış, yükleme tarihi ve geçerli yük kalemleri zorunludur.",
+          : invalidRouteStops
+            ? "Her alım ve teslim noktası için firma/ad ile il bilgisi zorunludur."
+          : invalidCargoRoute
+            ? "Her yük kalemi için alım ve teslim noktası seçilmelidir."
+          : "Müşteri, yükleme tarihi ve geçerli yük kalemleri zorunludur.",
         variant: "destructive",
       });
       return;
@@ -575,6 +693,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
     try {
       setIsSubmitting(true);
+      const primaryPickup = pickupStops[0];
+      const primaryDelivery = deliveryStops[0];
       
       const submitData = {
         shipment_code: shipmentCode,
@@ -592,19 +712,19 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         driver_id: isExpress ? null : formData.driver_id || (editMode && initialData ? initialData.driver_id : null),
         vehicle_id: isExpress ? null : formData.vehicle_id || (editMode && initialData ? initialData.vehicle_id : null),
         customer_id: formData.customer_id || (editMode && initialData ? initialData.customer_id : null),
-        origin: formData.origin || (editMode && initialData ? initialData.origin : null),
-        destination: formData.destination || (editMode && initialData ? initialData.destination : null),
+        origin: primaryPickup.city,
+        destination: primaryDelivery.city,
         pickup_date: pickupDate || (editMode && initialData ? initialData.pickup_date : null),
         estimated_delivery_date: estimatedDeliveryDate || (editMode && initialData ? initialData.estimated_delivery_date : null),
         cost: formData.cost ? parseFloat(formData.cost) : (editMode && initialData && initialData.cost ? initialData.cost : null),
         cost_currency: formData.cost_currency,
         currency: formData.currency,
         status: editMode && initialData?.status ? initialData.status : "beklemede",
-        sender_name: formData.sender_name || (editMode && initialData ? initialData.sender_name : null),
-        sender_ii: formData.sender_ii || (editMode && initialData ? initialData.sender_ii : null),
-        receiver: formData.receiver || (editMode && initialData ? initialData.receiver : null),
-        receiver_district: formData.receiver_district || (editMode && initialData ? initialData.receiver_district : null),
-        receiver_ii: formData.receiver_ii || (editMode && initialData ? initialData.receiver_ii : null),
+        sender_name: primaryPickup.company_name,
+        sender_ii: primaryPickup.city,
+        receiver: primaryDelivery.company_name,
+        receiver_district: primaryDelivery.district || null,
+        receiver_ii: primaryDelivery.city,
         adet: formData.adet ? parseInt(formData.adet) : (editMode && initialData && initialData.adet ? initialData.adet : null),
         cinsi: formData.cinsi || (editMode && initialData ? initialData.cinsi : null),
         kg_ds: formData.kg_ds ? parseFloat(formData.kg_ds) : (editMode && initialData && initialData.kg_ds ? initialData.kg_ds : null),
@@ -613,7 +733,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       };
 
       if (isCompletedEdit) {
-        await shipmentService.requestRevision(initialData.id, revisionReason.trim(), submitData, cargoItems);
+        await shipmentService.requestRevision(initialData.id, revisionReason.trim(), submitData, cargoItems, routeStops);
         toast({
           title: "Revizyon talebi oluşturuldu",
           description: "Değişiklikler şirket sahibi onayından sonra uygulanacak.",
@@ -630,6 +750,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         cargoItems,
         undefined,
         uetdsData,
+        routeStops,
       );
 
       if (editMode && initialData) {
@@ -657,8 +778,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             driver_phone: selectedDriver.phone || "",
             vehicle_plate: selectedVehicle.cekici_plakasi || "",
             trailer_plate: selectedVehicle.dorse_plakasi || "",
-            origin: formData.origin || "",
-            destination: formData.destination || "",
+            origin: primaryPickup.city,
+            destination: primaryDelivery.city,
             customer_phone: selectedCustomer.phone || "",
             customer_email: selectedCustomer.email || ""
           });
@@ -734,7 +855,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     });
     setRevisionReason("");
     setShipmentCode("SHP-000001");
-    setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false }]);
+    const pickup = createRouteStop("pickup", 1);
+    const delivery = createRouteStop("delivery", 1);
+    setPickupStops([pickup]);
+    setDeliveryStops([delivery]);
+    setCargoItems([{ adet: 0, cinsi: "", kg_ds: 0, birim_fiyat: 0, alt_toplam_fiyat: 0, sira_no: 1, uetds_unit_code: "KG", dangerous_goods: false, pickup_stop_key: pickup.stop_key, delivery_stop_key: delivery.stop_key, route_description: "" }]);
     setManualTotalPrice("");
     setSearchSupplier("");
     setSearchDriver("");
@@ -956,9 +1081,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           <GpslineDeliveryEstimator
             supplierName={selectedSupplier?.company || selectedSupplier?.name}
             collectionDate={pickupDate}
-            initialOrigin={formData.origin}
-            initialDestination={formData.destination}
-            initialDistrict={formData.receiver_district}
+            initialOrigin={pickupStops[0]?.city || formData.origin}
+            initialDestination={deliveryStops[0]?.city || formData.destination}
+            initialDistrict={deliveryStops[0]?.district || formData.receiver_district}
             initialTotalDesiKg={totalKgDs}
             initialPalletCount={totalPalletCount}
             onApply={(value, price) => {
@@ -1000,7 +1125,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           </div>
 
           <div className="border-t pt-4">
-            <h3 className="font-semibold mb-4">Gönderici ve Alıcı Detayları</h3>
+            <h3 className="font-semibold mb-4">Müşteri ve Çok Duraklı Güzergâh</h3>
             
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div className="space-y-2">
@@ -1036,83 +1161,60 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               </div>
             </div>
             
-            <div className="grid grid-cols-5 gap-4">
-              <div className="space-y-2">
-                <Label>Gönderici Adı/Firma</Label>
-                <Input
-                  list="sender-suggestions"
-                  value={formData.sender_name}
-                  onChange={(e) => setFormData({ ...formData, sender_name: e.target.value })}
-                  placeholder="Örn: Medbar A.Ş"
-                />
-                <datalist id="sender-suggestions">
-                  {senderSuggestions.map((suggestion, idx) => (
-                    <option key={idx} value={suggestion} />
+            <div className="grid gap-4 lg:grid-cols-2">
+              {([
+                { type: "pickup" as const, title: "Alım Noktaları", stops: pickupStops, addLabel: "Alım Noktası Ekle" },
+                { type: "delivery" as const, title: "Teslim Noktaları", stops: deliveryStops, addLabel: "Teslim Noktası Ekle" },
+              ]).map((group) => (
+                <div key={group.type} className="space-y-3 rounded-xl border bg-slate-50 p-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">{group.title}</h4>
+                    <Button type="button" variant="outline" size="sm" onClick={() => addRouteStop(group.type)}>
+                      <Plus className="mr-1 h-4 w-4" /> {group.addLabel}
+                    </Button>
+                  </div>
+                  {group.stops.map((stop, index) => (
+                    <div key={stop.stop_key} className="space-y-3 rounded-lg border bg-white p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold">{index + 1}. {group.type === "pickup" ? "Alım" : "Teslim"} Noktası</span>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => removeRouteStop(group.type, index)} disabled={group.stops.length === 1}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label className="text-xs">Firma / Ad *</Label>
+                          <Input value={stop.company_name} onChange={(event) => updateRouteStop(group.type, index, "company_name", event.target.value)} placeholder={group.type === "pickup" ? "Teknik İstif Merkez" : "Migros Kocayatak"} />
+                        </div>
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label className="text-xs">Açık Adres</Label>
+                          <Input value={stop.address_line || ""} onChange={(event) => updateRouteStop(group.type, index, "address_line", event.target.value)} placeholder="Mahalle, cadde, bina / tesis" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">İlçe</Label>
+                          <Input value={stop.district || ""} onChange={(event) => updateRouteStop(group.type, index, "district", event.target.value)} placeholder="Sancaktepe" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">İl *</Label>
+                          <Input value={stop.city} onChange={(event) => updateRouteStop(group.type, index, "city", event.target.value)} placeholder="İstanbul" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Yetkili Kişi</Label>
+                          <Input value={stop.contact_name || ""} onChange={(event) => updateRouteStop(group.type, index, "contact_name", event.target.value)} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Telefon</Label>
+                          <Input value={stop.contact_phone || ""} onChange={(event) => updateRouteStop(group.type, index, "contact_phone", event.target.value)} />
+                        </div>
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label className="text-xs">Durak Notu</Label>
+                          <Textarea value={stop.instructions || ""} onChange={(event) => updateRouteStop(group.type, index, "instructions", event.target.value)} placeholder="Giriş kapısı, randevu, yükleme/boşaltma talimatı..." rows={2} />
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.name || ""} />
-                  ))}
-                </datalist>
-              </div>
-              <div className="space-y-2">
-                <Label>Gönderici İl</Label>
-                <Input
-                  list="origin-suggestions"
-                  value={formData.origin}
-                  onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                  placeholder="Örn: İzmir, Ankara"
-                />
-                <datalist id="origin-suggestions">
-                  {originSuggestions.map((suggestion, idx) => (
-                    <option key={idx} value={suggestion} />
-                  ))}
-                </datalist>
-              </div>
-              <div className="space-y-2">
-                <Label>Alıcı Adı/Firma</Label>
-                <Input
-                  list="receiver-suggestions"
-                  value={formData.receiver}
-                  onChange={(e) => setFormData({ ...formData, receiver: e.target.value })}
-                  placeholder="Örn: ASG Havaleli Depo"
-                />
-                <datalist id="receiver-suggestions">
-                  {receiverSuggestions.map((suggestion, idx) => (
-                    <option key={idx} value={suggestion} />
-                  ))}
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.name || ""} />
-                  ))}
-                </datalist>
-              </div>
-              <div className="space-y-2">
-                <Label>Alıcı İlçe</Label>
-                <Input
-                  list="district-suggestions"
-                  value={formData.receiver_district}
-                  onChange={(e) => setFormData({ ...formData, receiver_district: e.target.value })}
-                  placeholder="Örn: SANCAKTEPE, KARTAL"
-                />
-                <datalist id="district-suggestions">
-                  {districtSuggestions.map((suggestion, idx) => (
-                    <option key={idx} value={suggestion} />
-                  ))}
-                </datalist>
-              </div>
-              <div className="space-y-2">
-                <Label>Alıcı İl</Label>
-                <Input
-                  list="destination-suggestions"
-                  value={formData.destination}
-                  onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                  placeholder="Örn: İstanbul, Ankara"
-                />
-                <datalist id="destination-suggestions">
-                  {destinationSuggestions.map((suggestion, idx) => (
-                    <option key={idx} value={suggestion} />
-                  ))}
-                </datalist>
-              </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -1127,7 +1229,39 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
             <div className="space-y-3">
               {cargoItems.map((item, index) => (
-                <div key={index} className="grid grid-cols-7 gap-3 items-end p-3 border rounded-lg bg-gray-50">
+                <div key={index} className="grid grid-cols-1 gap-3 items-end p-3 border rounded-lg bg-gray-50 md:grid-cols-2 xl:grid-cols-7">
+                  <div className="space-y-1 md:col-span-1 xl:col-span-3">
+                    <Label className="text-xs">Alım Noktası *</Label>
+                    <Select value={item.pickup_stop_key || ""} onValueChange={(value) => updateCargoItem(index, "pickup_stop_key", value)}>
+                      <SelectTrigger><SelectValue placeholder="Alım noktası seçin" /></SelectTrigger>
+                      <SelectContent>
+                        {pickupStops.map((stop, stopIndex) => (
+                          <SelectItem key={stop.stop_key} value={stop.stop_key}>
+                            {stopIndex + 1}. {stop.company_name || "İsimsiz alım"} · {stop.district ? `${stop.district} / ` : ""}{stop.city || "İl girilmedi"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1 md:col-span-1 xl:col-span-3">
+                    <Label className="text-xs">Teslim Noktası *</Label>
+                    <Select value={item.delivery_stop_key || ""} onValueChange={(value) => updateCargoItem(index, "delivery_stop_key", value)}>
+                      <SelectTrigger><SelectValue placeholder="Teslim noktası seçin" /></SelectTrigger>
+                      <SelectContent>
+                        {deliveryStops.map((stop, stopIndex) => (
+                          <SelectItem key={stop.stop_key} value={stop.stop_key}>
+                            {stopIndex + 1}. {stop.company_name || "İsimsiz teslim"} · {stop.district ? `${stop.district} / ` : ""}{stop.city || "İl girilmedi"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1 xl:col-span-1">
+                    <Label className="text-xs opacity-0">Sil</Label>
+                    <Button type="button" variant="destructive" size="sm" onClick={() => removeCargoItem(index)} disabled={cargoItems.length === 1} className="w-full">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Adet</Label>
                     <Input
@@ -1180,18 +1314,14 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                       {(item.alt_toplam_fiyat || 0).toFixed(2)} ₺
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs opacity-0">Sil</Label>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeCargoItem(index)}
-                      disabled={cargoItems.length === 1}
-                      className="w-full"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div className="space-y-1 md:col-span-2 xl:col-span-7">
+                    <Label className="text-xs">Yük / Hat Açıklaması</Label>
+                    <Textarea
+                      value={item.route_description || ""}
+                      onChange={(event) => updateCargoItem(index, "route_description", event.target.value)}
+                      placeholder="Örn: Teknik İstif Merkez'den 3 adet BT elektrikli transpalet alınarak Migros Kocayatak'a teslim edilecek."
+                      rows={2}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Tehlikeli Madde</Label>
