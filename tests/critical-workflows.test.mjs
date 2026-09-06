@@ -391,6 +391,11 @@ test("KolayBi invoices use a retryable idempotent state machine and only officia
   assert.match(invoiceApi, /processKolayBiJob\(db, invoiceId, \{/);
   assert.match(integration, /automatic associate matching started/);
   assert.match(integration, /synchronizeKolayBiAssociate/);
+  assert.match(integration, /synchronizeMissingInvoiceProducts/);
+  assert.match(integration, /\/products\?\$\{query\.toString\(\)\}/);
+  assert.match(integration, /product_type: "service"/);
+  assert.match(integration, /missing product created automatically/);
+  assert.match(integration, /from\("sales_invoice_items"\)\.update/);
   assert.match(statusApi, /rex_queue_invoice_status_check/);
   assert.match(pdfApi, /Content-Type", "application\/pdf/);
 });

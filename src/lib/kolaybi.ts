@@ -248,6 +248,130 @@ function providerData(json: any) {
   return json?.data || json || {};
 }
 
+function providerList(json: any) {
+  if (Array.isArray(json)) return json;
+  if (Array.isArray(json?.data)) return json.data;
+  if (Array.isArray(json?.data?.data)) return json.data.data;
+  if (Array.isArray(json?.products)) return json.products;
+  return [];
+}
+
+function canonicalProductCode(value: unknown) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function providerProductId(value: any) {
+  return Number(
+    value?.id || value?.product_id || value?.product?.id || value?.data?.id || value?.data?.product_id || 0,
+  );
+}
+
+async function synchronizeMissingInvoiceProducts(input: {
+  admin: DatabaseClient;
+  invoice: any;
+  config: KolayBiConfig;
+  commonHeaders: Record<string, string>;
+}) {
+  const { admin, invoice, config, commonHeaders } = input;
+  const missingCodes = Array.from(new Set(
+    (invoice.items || [])
+      .filter((item: any) => !Number(item.kolaybi_product_id || config.defaultProductId || 0))
+      .map((item: any) => canonicalProductCode(item.product_code))
+      .filter(Boolean),
+  )) as string[];
+  if (missingCodes.length === 0) return;
+
+  const environment = config.baseUrl.includes("sandbox") ? "test" : "live";
+  for (const code of missingCodes) {
+    const { data: localProduct, error: localProductError } = await admin
+      .from("products_services")
+      .select("id,code,name,type,unit,tax_rate")
+      .eq("code", code)
+      .eq("invoice_enabled", true)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (localProductError) throw localProductError;
+    if (!localProduct?.id) {
+      throw new KolayBiError(`${code} kodlu aktif REX TYS ürün/hizmet kartı bulunamadı.`, false);
+    }
+
+    const query = new URLSearchParams({ code });
+    const lookupJson = await fetchKolayBi(`${config.baseUrl}/products?${query.toString()}`, {
+      headers: commonHeaders,
+    });
+    const exactMatches = providerList(lookupJson).filter(
+      (product: any) => canonicalProductCode(product?.code) === code,
+    );
+    if (exactMatches.length > 1) {
+      throw new KolayBiError(`${code} koduyla birden fazla KolayBi ürünü bulundu.`, false);
+    }
+
+    let providerProduct = exactMatches[0];
+    let externalId = providerProductId(providerProduct);
+    if (!externalId) {
+      const createForm = new URLSearchParams({
+        name: String(localProduct.name || code),
+        code,
+        product_type: "service",
+        vat_rate: String(Number(localProduct.tax_rate) || 0),
+        price: "0",
+        price_currency: "try",
+      });
+      const createJson = await fetchKolayBi(`${config.baseUrl}/products`, {
+        method: "POST",
+        headers: {
+          ...commonHeaders,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: createForm.toString(),
+      });
+      providerProduct = providerData(createJson);
+      externalId = providerProductId(providerProduct);
+      if (!externalId) {
+        throw new KolayBiError(`${code} için KolayBi ürün kimliği dönmedi.`, true);
+      }
+      console.info("[kolaybi:invoice] missing product created automatically", {
+        invoiceId: invoice.id,
+        productCode: code,
+        environment,
+      });
+    } else {
+      console.info("[kolaybi:invoice] missing product matched automatically", {
+        invoiceId: invoice.id,
+        productCode: code,
+        environment,
+      });
+    }
+
+    const now = new Date().toISOString();
+    const { error: productError } = await admin.from("products_services").update({
+      provider_environment: environment,
+      kolaybi_product_id: externalId,
+      provider_code: code,
+      provider_active: true,
+      approval_status: "approved",
+      last_synced_at: now,
+      updated_at: now,
+    }).eq("id", localProduct.id);
+    if (productError) throw productError;
+
+    const { error: mappingError } = await admin.from("invoice_product_mappings").upsert({
+      product_code: code,
+      kolaybi_product_id: externalId,
+      description: localProduct.name || code,
+      vat_rate: Number(localProduct.tax_rate) || 0,
+      active: true,
+      updated_at: now,
+    }, { onConflict: "product_code" });
+    if (mappingError) throw mappingError;
+
+    const { error: itemError } = await admin.from("sales_invoice_items").update({
+      kolaybi_product_id: externalId,
+    }).eq("invoice_id", invoice.id).eq("product_code", code);
+    if (itemError) throw itemError;
+  }
+}
+
 function providerText(...values: unknown[]) {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) return value.trim();
@@ -491,6 +615,24 @@ export async function processKolayBiJob(
       Authorization: `Bearer ${token}`,
       Accept: "application/json",
     };
+
+    if (job.job_type === "send" && !invoice.kolaybi_document_id) {
+      const hasMissingProduct = (invoice.items || []).some(
+        (item: any) => !Number(item.kolaybi_product_id || config.defaultProductId || 0),
+      );
+      if (hasMissingProduct) {
+        if (!options.admin) {
+          throw new KolayBiError("Fatura ürünlerini otomatik eşleştirmek için güvenli sunucu bağlantısı bulunamadı.", false);
+        }
+        await synchronizeMissingInvoiceProducts({
+          admin: options.admin,
+          invoice,
+          config,
+          commonHeaders,
+        });
+        invoice = await loadInvoice(db, job.invoice_id);
+      }
+    }
 
     if (job.job_type === "status") {
       if (!invoice.kolaybi_document_id) {
