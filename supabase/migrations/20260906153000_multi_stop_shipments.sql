@@ -57,6 +57,13 @@ WHERE NOT EXISTS (
   WHERE rs.shipment_id=s.id AND rs.stop_type='delivery'
 );
 
+-- This is a structural backfill only: it links existing cargo rows to the
+-- legacy pickup/delivery stops without changing any shipment business data.
+-- Completed-shipment guards intentionally block ordinary cargo edits, so the
+-- guard is paused only for this migration-local update and restored at once.
+ALTER TABLE public.shipment_cargo_items
+  DISABLE TRIGGER rex_completed_cargo_revision_guard;
+
 UPDATE public.shipment_cargo_items c
 SET pickup_stop_id=(
       SELECT rs.id FROM public.shipment_route_stops rs
@@ -69,6 +76,9 @@ SET pickup_stop_id=(
       ORDER BY rs.sequence_no LIMIT 1
     )
 WHERE c.pickup_stop_id IS NULL OR c.delivery_stop_id IS NULL;
+
+ALTER TABLE public.shipment_cargo_items
+  ENABLE TRIGGER rex_completed_cargo_revision_guard;
 
 CREATE OR REPLACE FUNCTION public.rex_validate_cargo_route_stops()
 RETURNS trigger LANGUAGE plpgsql SET search_path=public,pg_temp AS $$
