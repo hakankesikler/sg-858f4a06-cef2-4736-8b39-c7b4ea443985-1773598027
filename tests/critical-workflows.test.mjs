@@ -94,7 +94,22 @@ test("supplier classification separates hauliers from corporate carriers and pro
   assert.match(cariForm, /populatedCustomerRef\.current === customerKey/);
   assert.match(cariForm, /populatedCustomerRef\.current = customerKey/);
   assert.match(shipmentService, /rex_can_assign_transport_carrier/);
+  assert.match(shipmentService, /customer:customers!shipments_customer_id_fkey/);
+  assert.match(shipmentService, /supplier:customers!shipments_supplier_id_fkey/);
   assert.match(crmService, /supplierCategory === "tasiyici"[\s\S]*prefix = "TSY"/);
+});
+
+test("shipment queries disambiguate customer and operational supplier relations", async () => {
+  const [shipmentService, logisticsService] = await Promise.all([
+    read("src/services/shipmentService.ts"),
+    read("src/services/logisticsService.ts"),
+  ]);
+  for (const source of [shipmentService, logisticsService]) {
+    assert.match(source, /customers!shipments_customer_id_fkey/);
+    assert.match(source, /customers!shipments_supplier_id_fkey/);
+  }
+  assert.doesNotMatch(shipmentService, /customer:customers\(id, customer_code, name, phone\)/);
+  assert.doesNotMatch(logisticsService, /\.select\("\*, customers\(/);
 });
 
 test("shipment assignment still requires driver licence and vehicle registration", async () => {

@@ -11,7 +11,7 @@ export const logisticsService = {
   async getShipments() {
     const { data, error } = await supabase
       .from("shipments")
-      .select("*, customers(name, company), vehicles(plate_no, driver_name)")
+      .select("*, customers:customers!shipments_customer_id_fkey(name, company), supplier:customers!shipments_supplier_id_fkey(name, company), vehicles(plate_no, driver_name)")
       .order("created_at", { ascending: false });
     
     if (error) {
@@ -24,7 +24,7 @@ export const logisticsService = {
   async getShipmentById(id: string) {
     const { data, error } = await supabase
       .from("shipments")
-      .select("*, customers(*), vehicles(*)")
+      .select("*, customers:customers!shipments_customer_id_fkey(*), supplier:customers!shipments_supplier_id_fkey(*), vehicles(*)")
       .eq("id", id)
       .single();
     

@@ -316,7 +316,8 @@ export const shipmentService = {
         *,
         driver:drivers(id, driver_code, full_name, phone_1),
         vehicle:vehicles(id, vehicle_code, cekici_plakasi, arac_tipi),
-        customer:customers(id, customer_code, name, phone)
+        customer:customers!shipments_customer_id_fkey(id, customer_code, name, phone),
+        supplier:customers!shipments_supplier_id_fkey(id, customer_code, name, phone)
       `)
       .eq("id", id)
       .single();
