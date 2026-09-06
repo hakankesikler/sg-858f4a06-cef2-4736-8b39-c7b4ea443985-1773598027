@@ -22,6 +22,7 @@ import {
   type InvoiceCategory,
   type InvoiceNoteTemplate,
 } from "@/services/invoicePresentationService";
+import { getShipmentInvoiceBaseAmount } from "@/lib/shipment-invoice-amount";
 
 interface InvoiceItem {
   id: string;
@@ -230,7 +231,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     if (shipment?.customer_id) {
       setSelectedCustomer(shipment.customer_id);
       void loadCustomerEDocumentProfile(shipment.customer_id);
-      const unitPrice = Number(shipment.satis_tutar || 0);
+      const unitPrice = getShipmentInvoiceBaseAmount(shipment);
       const vatRate = shipment.service_mode === "international_express" ? 0 : 20;
       setCurrency(shipment.currency || "TRY");
       setItems([{

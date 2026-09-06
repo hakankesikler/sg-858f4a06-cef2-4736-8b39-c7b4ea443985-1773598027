@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { invoiceIntegrationService } from "@/services/invoiceIntegrationService";
+import { getShipmentInvoiceBaseAmount } from "@/lib/shipment-invoice-amount";
 
 interface PendingInvoicesDialogProps {
   isOpen: boolean;
@@ -40,8 +41,11 @@ export function PendingInvoicesDialog({
   const [showBulkInvoiceDialog, setShowBulkInvoiceDialog] = useState(false);
   const [bulkShipments, setBulkShipments] = useState<any[]>([]);
 
-  // Calculate overall total from loaded shipments
-  const totalAmount = shipments.reduce((sum, shipment) => sum + (shipment.totalAmount || 0), 0);
+  const totalsByCurrency = shipments.reduce<Record<string, number>>((totals, shipment) => {
+    const currency = String(shipment.currency || "TRY").toUpperCase();
+    totals[currency] = (totals[currency] || 0) + Number(shipment.totalAmount || 0);
+    return totals;
+  }, {});
 
   useEffect(() => {
     if (isOpen) {
@@ -76,12 +80,19 @@ export function PendingInvoicesDialog({
           id,
           shipment_code,
           customer_id,
+          origin,
+          destination,
+          service_mode,
+          satis_tutar,
+          currency,
           actual_delivery_date,
           customers!shipments_customer_id_fkey (
             id,
             name,
             company,
-            vergi_no
+            vergi_no,
+            kolaybi_e_document_type,
+            kolaybi_e_document_scenario
           ),
           shipment_cargo_items (
             id,
@@ -111,17 +122,12 @@ export function PendingInvoicesDialog({
         throw error;
       }
 
-      // Calculate totalAmount for each shipment
+      // Faturanın matrahı öncelikle sevkiyatta kaydedilen satış tutarıdır.
+      // Eski kayıtlarda bu alan yoksa yük kalemleri güvenli yedek kaynaktır.
       const shipmentsWithTotal = (data || []).map(shipment => {
-        const totalAmount = Array.isArray(shipment.shipment_cargo_items)
-          ? shipment.shipment_cargo_items.reduce((sum: number, cargo: any) => {
-              return sum + Number(cargo.alt_toplam_fiyat ?? ((cargo.adet || 0) * (cargo.birim_fiyat || 0)));
-            }, 0)
-          : 0;
-        
         return {
           ...shipment,
-          totalAmount
+          totalAmount: getShipmentInvoiceBaseAmount(shipment),
         };
       });
 
@@ -184,6 +190,25 @@ export function PendingInvoicesDialog({
       return;
     }
 
+    const currencies = [...new Set(selectedShipmentsData.map((shipment) => String(shipment.currency || "TRY").toUpperCase()))];
+    if (currencies.length > 1) {
+      toast({
+        title: "Para birimleri farklı",
+        description: "Farklı para birimindeki sevkiyatlar aynı faturada birleştirilemez.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedShipmentsData.some((shipment) => getShipmentInvoiceBaseAmount(shipment) <= 0)) {
+      toast({
+        title: "Satış tutarı eksik",
+        description: "Seçili sevkiyatlardan en az birinin faturalandırılabilir satış tutarı bulunmuyor.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setBulkShipments(selectedShipmentsData);
     setShowBulkInvoiceDialog(true);
   };
@@ -200,27 +225,12 @@ export function PendingInvoicesDialog({
     setSelectedShipment(null);
   };
 
-  const calculateShipmentTotal = (shipment: any) => {
-    if (!shipment.shipment_cargo_items || shipment.shipment_cargo_items.length === 0) {
-      return 0;
-    }
-    return shipment.shipment_cargo_items.reduce(
-      (sum: number, cargo: any) => sum + Number(cargo.alt_toplam_fiyat ?? ((cargo.adet || 0) * (cargo.birim_fiyat || 0))),
-      0
-    );
-  };
-
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number, currency = "TRY") => {
     return new Intl.NumberFormat("tr-TR", {
       style: "currency",
-      currency: "TRY",
+      currency,
       minimumFractionDigits: 2,
     }).format(amount);
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "-";
-    return format(new Date(dateString), "dd.MM.yyyy", { locale: tr });
   };
 
   return (
@@ -325,7 +335,7 @@ export function PendingInvoicesDialog({
                     </div>
 
                     <div className="text-sm font-semibold text-gray-900 text-right">
-                      {shipment.totalAmount.toLocaleString("tr-TR")}₺
+                      {formatCurrency(shipment.totalAmount, shipment.currency || "TRY")}
                     </div>
 
                     <div className="text-sm text-gray-600">
@@ -356,7 +366,7 @@ export function PendingInvoicesDialog({
                   Toplam {filteredShipments.length} sevkiyat
                 </span>
                 <span className="text-lg font-bold text-gray-900">
-                  Toplam Tutar: {totalAmount.toLocaleString("tr-TR")}₺
+                  Toplam Tutar: {Object.entries(totalsByCurrency).map(([currency, amount]) => formatCurrency(amount, currency)).join(" · ")}
                 </span>
               </div>
             </>
@@ -421,6 +431,14 @@ function BulkInvoiceDialog({ isOpen, onClose, onSuccess, shipments }: {
 * Sicil Numarası: 240976, İşletme Merkezi: İzmir`;
 
   const [notes, setNotes] = useState(defaultNotes);
+  const currency = String(shipments[0]?.currency || "TRY").toUpperCase();
+  const customerProfile = shipments[0]?.customers;
+  const documentType = customerProfile?.kolaybi_e_document_type === "e_invoice" ? "e_invoice" : "e_archive";
+  const documentScenario = documentType === "e_archive"
+    ? "EARSIVFATURA"
+    : customerProfile?.kolaybi_e_document_scenario === "TICARIFATURA"
+      ? "TICARIFATURA"
+      : "TEMELFATURA";
 
   // Toplam tutarları hesapla
   const totalAmount = shipments.reduce((sum, s) => sum + s.totalAmount, 0);
@@ -435,20 +453,21 @@ function BulkInvoiceDialog({ isOpen, onClose, onSuccess, shipments }: {
         shipmentIds: shipments.map(s => s.id),
         invoiceDate,
         dueDate: invoiceDate,
-        currency: "TRY",
+        currency,
         paymentStatus: "Bekliyor",
         notes,
-        documentType: "e_archive",
-        documentScenario: "EARSIVFATURA",
+        documentType,
+        documentScenario,
         exchangeRate: 1,
         idempotencyKey: crypto.randomUUID(),
         items: shipments.map(shipment => ({
-          productCode: "HIZMET",
+          productCode: shipment.service_mode === "international_express" ? "HZM000021" : "HZM000002",
           description: `Taşıma Hizmeti - ${shipment.shipment_code}`,
           quantity: 1,
           unit: "Adet",
-          unitPrice: shipment.totalAmount / 1.2,
-          vatRate: 20,
+          unitPrice: getShipmentInvoiceBaseAmount(shipment),
+          vatRate: shipment.service_mode === "international_express" ? 0 : 20,
+          exemptionCode: shipment.service_mode === "international_express" ? "311" : null,
         })),
       });
       toast({
@@ -482,12 +501,12 @@ function BulkInvoiceDialog({ isOpen, onClose, onSuccess, shipments }: {
             <ul className="space-y-1 text-sm text-blue-800">
               {shipments.map(s => (
                 <li key={s.id}>
-                  • {s.shipment_code} - {s.totalAmount.toLocaleString("tr-TR")}₺
+                  • {s.shipment_code} - {new Intl.NumberFormat("tr-TR", { style: "currency", currency }).format(s.totalAmount)}
                 </li>
               ))}
             </ul>
             <div className="mt-3 pt-3 border-t border-blue-300 font-bold text-blue-900">
-              Toplam: {totalAmount.toLocaleString("tr-TR")}₺
+              Toplam: {new Intl.NumberFormat("tr-TR", { style: "currency", currency }).format(totalAmount)}
             </div>
           </div>
 

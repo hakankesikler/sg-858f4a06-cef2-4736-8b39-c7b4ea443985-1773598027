@@ -1408,7 +1408,7 @@ test("invoice preview follows official e-invoice and e-archive presentation data
 });
 
 test("sales invoice drafts stay editable until accounting approval", async () => {
-  const [sql, dialog, editDialog, pending, office, logistics, preview, service] = await Promise.all([
+  const [sql, dialog, editDialog, pending, office, logistics, preview, service, amountHelper] = await Promise.all([
     read("supabase/migrations/20260906093118_invoice_draft_accounting_approval.sql"),
     read("src/components/InvoiceDialog.tsx"),
     read("src/components/EditInvoiceDialog.tsx"),
@@ -1417,6 +1417,7 @@ test("sales invoice drafts stay editable until accounting approval", async () =>
     read("src/components/modules/LogisticsModule.tsx"),
     read("src/components/InvoicePreviewDialog.tsx"),
     read("src/services/invoiceIntegrationService.ts"),
+    read("src/lib/shipment-invoice-amount.ts"),
   ]);
 
   assert.match(sql, /accounting_review_status text NOT NULL DEFAULT 'pending'/);
@@ -1435,8 +1436,16 @@ test("sales invoice drafts stay editable until accounting approval", async () =>
   assert.match(editDialog, /0 TL tutarlı veya miktarı sıfır olan bir fatura taslağı kaydedilemez/);
   assert.match(editDialog, /placeholder="İstisna kodu \(ör\. 311\)"/);
   assert.match(dialog, /catalogPrice > 0 \? catalogPrice : Number\(current\.unitPrice \|\| 0\)/);
+  assert.match(dialog, /getShipmentInvoiceBaseAmount\(shipment\)/);
   assert.match(dialog, /0 TL tutarlı veya miktarı sıfır olan bir fatura taslağı oluşturulamaz/);
   assert.doesNotMatch(pending, /invoiceIntegrationService\.send\(invoiceData\.id\)/);
+  assert.doesNotMatch(pending, /totalAmount \/ 1\.2/);
+  assert.match(pending, /satis_tutar,/);
+  assert.match(pending, /currency,/);
+  assert.match(pending, /unitPrice: getShipmentInvoiceBaseAmount\(shipment\)/);
+  assert.match(pending, /Farklı para birimindeki sevkiyatlar aynı faturada birleştirilemez/);
+  assert.match(amountHelper, /recordedSalesAmount > 0/);
+  assert.match(amountHelper, /shipment_cargo_items/);
   assert.match(office, /Muhasebe Onayı Bekliyor/);
   assert.match(logistics, /Bağlı fatura taslağını veya resmî faturayı aç/);
   assert.match(logistics, /Fatura taslağını düzenle/);
