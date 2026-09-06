@@ -49,6 +49,10 @@ function getConfig(): KolayBiConfig {
   };
 }
 
+function kolayBiEnvironment(config: KolayBiConfig): "test" | "live" {
+  return config.baseUrl.toLocaleLowerCase("tr-TR").includes("sandbox") ? "test" : "live";
+}
+
 async function readJson(response: Response) {
   const text = await response.text();
   if (!text) return {};
@@ -500,12 +504,32 @@ function providerEDocumentProfile(data: any): CustomerEDocumentProfile | null {
   };
 }
 
-async function alignInvoiceWithCustomerProfile(db: DatabaseClient, invoice: any) {
+function assertCustomerEDocumentEnvironment(invoice: any, config: KolayBiConfig) {
+  if (invoice.document_type !== "e_invoice") return;
+  const expectedEnvironment = kolayBiEnvironment(config);
+  const customerEnvironment = invoice.customer?.kolaybi_e_document_environment;
+  if (customerEnvironment === expectedEnvironment) return;
+
+  const environmentLabel = expectedEnvironment === "test" ? "sandbox" : "canlı";
+  throw new KolayBiError(
+    `Cari e-Fatura bilgisi KolayBi ${environmentLabel} ortamında doğrulanmadı. ` +
+      "Yanlışlıkla e-Arşiv oluşmaması için gönderim durduruldu. Cari e-Fatura kaydını bu ortamda senkronize edin.",
+    false,
+  );
+}
+
+async function alignInvoiceWithCustomerProfile(
+  db: DatabaseClient,
+  invoice: any,
+  config: KolayBiConfig,
+) {
   const documentType = invoice.customer?.kolaybi_e_document_type;
   const scenario = invoice.customer?.kolaybi_e_document_scenario;
+  const environment = invoice.customer?.kolaybi_e_document_environment;
   if (
     !["e_archive", "e_invoice"].includes(documentType) ||
-    !["EARSIVFATURA", "TEMELFATURA", "TICARIFATURA", "KAMU"].includes(scenario)
+    !["EARSIVFATURA", "TEMELFATURA", "TICARIFATURA", "KAMU"].includes(scenario) ||
+    environment !== kolayBiEnvironment(config)
   ) return;
   const normalizedScenario = documentType === "e_archive"
     ? "EARSIVFATURA"
@@ -607,8 +631,9 @@ export async function processKolayBiJob(
           mapped: Boolean(invoice.customer?.kolaybi_contact_id && invoice.customer?.kolaybi_address_id),
         });
       }
-      await alignInvoiceWithCustomerProfile(db, invoice);
+      await alignInvoiceWithCustomerProfile(db, invoice, config);
     }
+    if (job.job_type === "send") assertCustomerEDocumentEnvironment(invoice, config);
     const token = await getAccessToken(config);
     const commonHeaders = {
       Channel: config.channel,
@@ -757,7 +782,9 @@ export async function processKolayBiJob(
   } catch (error: any) {
     const retryable = error instanceof KolayBiError ? error.retryable : true;
     const message = String(error?.message || error).slice(0, 1000);
-    const status = message.includes("eşlemesi eksik") ? "mapping_required" : "failed";
+    const status = message.includes("eşlemesi eksik") || message.includes("ortamında doğrulanmadı")
+      ? "mapping_required"
+      : "failed";
     try {
       await recordResult(db, {
         jobId: job.job_id,

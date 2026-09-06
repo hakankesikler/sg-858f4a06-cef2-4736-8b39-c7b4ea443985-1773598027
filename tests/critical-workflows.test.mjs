@@ -271,6 +271,9 @@ test("delivery proof and KolayBi synchronization keep distinct audit events", as
   assert.match(api, /rex_record_invoice_sync_result/);
   assert.match(api, /classifyKolayBiEDocument/);
   assert.match(api, /identity\.uuid && identity\.invoiceNo/);
+  assert.match(api, /assertCustomerEDocumentEnvironment/);
+  assert.match(api, /Yanlışlıkla e-Arşiv oluşmaması için gönderim durduruldu/);
+  assert.match(api, /environment !== kolayBiEnvironment\(config\)/);
   assert.match(history, /kolaybi_sync_succeeded/);
 });
 
