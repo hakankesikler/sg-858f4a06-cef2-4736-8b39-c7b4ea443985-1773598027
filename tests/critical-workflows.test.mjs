@@ -336,13 +336,14 @@ test("invoice cancellation is soft, reasoned and external-reference gated", asyn
 });
 
 test("KolayBi invoices use a retryable idempotent state machine and only official documents invoice shipments", async () => {
-  const [sql, reconciliation, integration, invoiceDialog, accounting, queueApi, statusApi, pdfApi] = await Promise.all([
+  const [sql, reconciliation, integration, invoiceDialog, accounting, queueApi, invoiceApi, statusApi, pdfApi] = await Promise.all([
     read("supabase/migrations/20260819003000_secure_kolaybi_invoice_pipeline.sql"),
     read("supabase/migrations/20260902233000_kolaybi_e_document_reconciliation.sql"),
     read("src/lib/kolaybi.ts"),
     read("src/components/InvoiceDialog.tsx"),
     read("src/components/modules/AccountingModule.tsx"),
     read("src/pages/api/kolaybi/process-queue.ts"),
+    read("src/pages/api/kolaybi/invoices.ts"),
     read("src/pages/api/kolaybi/invoices/[invoiceId]/status.ts"),
     read("src/pages/api/kolaybi/invoices/[invoiceId]/pdf.ts"),
   ]);
@@ -385,6 +386,11 @@ test("KolayBi invoices use a retryable idempotent state machine and only officia
   assert.match(queueApi, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(queueApi, /CRON_SECRET/);
   assert.match(queueApi, /rex_queue_stale_invoice_status_checks/);
+  assert.match(queueApi, /processKolayBiJob\(db, null, \{ admin, actorId, actorEmail \}\)/);
+  assert.match(invoiceApi, /SUPABASE_SECRET_KEY \|\| process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(invoiceApi, /processKolayBiJob\(db, invoiceId, \{/);
+  assert.match(integration, /automatic associate matching started/);
+  assert.match(integration, /synchronizeKolayBiAssociate/);
   assert.match(statusApi, /rex_queue_invoice_status_check/);
   assert.match(pdfApi, /Content-Type", "application\/pdf/);
 });
@@ -1179,6 +1185,8 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.doesNotMatch(associateHelper, /yalnızca KolayBi sandbox ortamında/);
   assert.match(associateHelper, /associates\?identity_no=/);
   assert.match(associateHelper, /exactMatches\.length > 1/);
+  assert.match(associateHelper, /hydrateAssociateAddress/);
+  assert.match(associateHelper, /KolayBi cari kartında fatura adresi bulunamadı/);
   assert.match(associateHelper, /match_method: matchMethod/);
   assert.match(associateHelper, /created_from_tms/);
   assert.match(associateHelper, /staleMappingError/);
@@ -1196,6 +1204,8 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(providerLib, /\/invoices\/e-document\/cancel/);
   assert.match(providerLib, /sale_return_invoice/);
   assert.match(providerLib, /return_invoice_references\[serial_no\]/);
+  assert.match(providerLib, /automatic associate matching started/);
+  assert.match(providerLib, /synchronizeKolayBiAssociate/);
   assert.match(workflow, /recordKolayBiCustomerPayment/);
   assert.match(collection, /kolaybi_document_id/);
   assert.match(collection, /kolaybi_vault_id/);

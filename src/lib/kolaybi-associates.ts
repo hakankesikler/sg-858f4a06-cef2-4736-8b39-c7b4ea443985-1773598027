@@ -29,6 +29,29 @@ function preferredAddress(associate: any) {
   return addresses.find((item: any) => item?.address_type === "invoice") || addresses[0] || null;
 }
 
+async function hydrateAssociateAddress(input: {
+  associate: any;
+  baseUrl: string;
+  headers: Record<string, string>;
+  identityNo: string;
+}) {
+  const contactId = Number(input.associate?.id || input.associate?.contact_id || 0);
+  if (preferredAddress(input.associate) || !Number.isSafeInteger(contactId) || contactId <= 0) {
+    return input.associate;
+  }
+  const detailResponse = await fetch(`${input.baseUrl}/associates/${contactId}`, {
+    method: "GET",
+    headers: input.headers,
+    signal: AbortSignal.timeout(25_000),
+  });
+  const detailJson = await readJson(detailResponse);
+  const detail = detailJson?.data || detailJson;
+  if (digits(detail?.identity_no) !== input.identityNo) {
+    throw reviewError("KolayBi cari detayındaki VKN/TCKN, REX TYS cari kartıyla eşleşmiyor.");
+  }
+  return detail;
+}
+
 function splitName(value: string, corporate: boolean) {
   const parts = value.trim().split(/\s+/).filter(Boolean);
   if (corporate) return { name: parts.slice(0, -1).join(" ") || value.trim(), surname: parts.at(-1) || "Firma" };
@@ -152,10 +175,13 @@ export async function synchronizeKolayBiAssociate(input: {
     matchMethod = "created_from_tms";
   }
 
+  associate = await hydrateAssociateAddress({ associate, baseUrl, headers, identityNo });
+
   const contactId = Number(associate?.id || associate?.contact_id || 0);
   const address = preferredAddress(associate);
   const addressId = Number(address?.id || 0) || null;
   if (!Number.isSafeInteger(contactId) || contactId <= 0) throw new Error("KolayBi cari kimliği dönmedi.");
+  if (!addressId) throw reviewError("KolayBi cari kartında fatura adresi bulunamadı. KolayBi'de bir fatura adresi tanımlayın.");
 
   const { data: conflictingMapping } = await admin.from("kolaybi_master_records")
     .select("local_entity_id,display_name")
@@ -172,7 +198,7 @@ export async function synchronizeKolayBiAssociate(input: {
   const now = new Date().toISOString();
   const { error: updateError } = await admin.from("customers").update({
     kolaybi_contact_id: contactId,
-    ...(addressId ? { kolaybi_address_id: addressId } : {}),
+    kolaybi_address_id: addressId,
     updated_at: now,
   }).eq("id", customerId);
   if (updateError) throw updateError;

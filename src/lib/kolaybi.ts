@@ -1,3 +1,5 @@
+import { synchronizeKolayBiAssociate } from "@/lib/kolaybi-associates";
+
 type DatabaseClient = any;
 
 const DEFAULT_BASE_URL = "https://ofis-sandbox-api.kolaybi.com/kolaybi/v1";
@@ -432,7 +434,15 @@ async function recordCustomerEDocumentProfile(
   if (invoiceError) throw invoiceError;
 }
 
-export async function processKolayBiJob(db: DatabaseClient, invoiceId?: string | null) {
+export async function processKolayBiJob(
+  db: DatabaseClient,
+  invoiceId?: string | null,
+  options: {
+    admin?: DatabaseClient;
+    actorId?: string | null;
+    actorEmail?: string | null;
+  } = {},
+) {
   const workerId = `rex-${crypto.randomUUID()}`;
   const { data: claimed, error: claimError } = await db.rpc("rex_claim_invoice_sync_job", {
     p_worker_id: workerId,
@@ -450,8 +460,29 @@ export async function processKolayBiJob(db: DatabaseClient, invoiceId?: string |
 
   try {
     const config = getConfig();
-    const invoice = await loadInvoice(db, job.invoice_id);
+    let invoice = await loadInvoice(db, job.invoice_id);
     if (job.job_type === "send" && !invoice.kolaybi_document_id) {
+      if (!invoice.customer?.kolaybi_contact_id || !invoice.customer?.kolaybi_address_id) {
+        if (!options.admin) {
+          throw new KolayBiError("Cari KolayBi Contact ID ve Address ID eşlemesi eksik.", false);
+        }
+        console.info("[kolaybi:invoice] automatic associate matching started", {
+          invoiceId: invoice.id,
+          customerId: invoice.customer_id,
+        });
+        await synchronizeKolayBiAssociate({
+          admin: options.admin,
+          customerId: invoice.customer_id,
+          actorId: options.actorId || null,
+          actorEmail: options.actorEmail || "system@rex.local",
+        });
+        invoice = await loadInvoice(db, job.invoice_id);
+        console.info("[kolaybi:invoice] automatic associate matching completed", {
+          invoiceId: invoice.id,
+          customerId: invoice.customer_id,
+          mapped: Boolean(invoice.customer?.kolaybi_contact_id && invoice.customer?.kolaybi_address_id),
+        });
+      }
       await alignInvoiceWithCustomerProfile(db, invoice);
     }
     const token = await getAccessToken(config);

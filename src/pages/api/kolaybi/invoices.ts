@@ -10,8 +10,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     : "";
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!token) return res.status(401).json({ error: "Oturum doğrulanamadı." });
-  if (!supabaseUrl || !anonKey) return res.status(500).json({ error: "Sunucu veritabanı ayarları eksik." });
+  if (!supabaseUrl || !anonKey || !serviceKey) return res.status(500).json({ error: "Sunucu veritabanı ayarları eksik." });
 
   const db = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -28,7 +29,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!invoiceId) return res.status(400).json({ error: "Fatura kimliği zorunludur." });
 
   try {
-    const result = await processKolayBiJob(db, invoiceId);
+    const admin = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const result = await processKolayBiJob(db, invoiceId, {
+      admin,
+      actorId: userData.user.id,
+      actorEmail: userData.user.email,
+    });
     return res.status(200).json({ success: true, ...result });
   } catch (error: any) {
     const safe = publicKolayBiError(error);
