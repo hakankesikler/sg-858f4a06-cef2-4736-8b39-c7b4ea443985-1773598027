@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight, Ban, BarChart3, Boxes, Building2, CheckCircle2, CircleDollarSign,
-  Clock3, FileSpreadsheet, Landmark, Loader2, PackageCheck, Receipt,
+  Clock3, Edit3, Eye, FileSpreadsheet, Landmark, Loader2, PackageCheck, Receipt,
   RefreshCw, ShoppingCart, TriangleAlert, Link2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +14,12 @@ import { PurchaseInvoiceInbox } from "@/components/PurchaseInvoiceInbox";
 import { InvoiceConfigurationPanel } from "@/components/InvoiceConfigurationPanel";
 import { GeneralExpenseWorkspace } from "@/components/GeneralExpenseWorkspace";
 import { FinanceWorkspace } from "@/components/FinanceWorkspace";
+import { EditInvoiceDialog } from "@/components/EditInvoiceDialog";
+import { InvoicePreviewDialog } from "@/components/InvoicePreviewDialog";
 import { useToast } from "@/hooks/use-toast";
 import { downloadExcel } from "@/lib/excel";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
+import { invoiceIntegrationService } from "@/services/invoiceIntegrationService";
 import { kolaybiOfficeService, type KolayBiOfficeData } from "@/services/kolaybiOfficeService";
 
 const EMPTY_DATA: KolayBiOfficeData = {
@@ -88,9 +91,13 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
   const [connection, setConnection] = useState<{ success: boolean; environment?: string; companies?: any[] } | null>(null);
   const [mappingSelections, setMappingSelections] = useState<Record<string, string>>({});
   const [mappingBusy, setMappingBusy] = useState<string | null>(null);
+  const [previewInvoice, setPreviewInvoice] = useState<any | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<any | null>(null);
+  const [invoiceActionBusy, setInvoiceActionBusy] = useState(false);
   const canManageSync = hasPermission(permissions, "integrations.connections", "manage");
   const canViewMonitoring = hasPermission(permissions, "integrations.monitoring");
   const canViewSales = hasPermission(permissions, "accounting.sales");
+  const canManageSales = hasPermission(permissions, "accounting.sales", "manage");
   const canViewPurchase = hasPermission(permissions, "accounting.purchase");
   const canViewAccounts = hasPermission(permissions, "accounting.accounts");
   const canViewExpenses = hasPermission(permissions, "accounting.expenses");
@@ -272,6 +279,30 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
     catch (error: any) { toast({ title: "Excel raporu oluşturulamadı", description: error.message, variant: "destructive" }); }
   };
 
+  const isEditableInvoice = (invoice: any) =>
+    ["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft")
+    && !invoice.kolaybi_document_id;
+
+  const approveInvoice = async (invoice: any) => {
+    setInvoiceActionBusy(true);
+    try {
+      const result = await invoiceIntegrationService.approve(invoice.id);
+      toast({
+        title: "Muhasebe onayı kaydedildi",
+        description: result.status === "official"
+          ? `${invoice.invoice_no} için resmî e-belge oluşturuldu.`
+          : `${invoice.invoice_no} KolayBi gönderim sürecine alındı.`,
+      });
+      setPreviewInvoice(null);
+      await load();
+    } catch (error: any) {
+      toast({ title: "Fatura onaylanamadı", description: error.message, variant: "destructive" });
+      await load();
+    } finally {
+      setInvoiceActionBusy(false);
+    }
+  };
+
   if (loading) return <div className="flex min-h-64 items-center justify-center gap-3 text-slate-600"><Loader2 className="h-5 w-5 animate-spin" /> Entegre ofis hazırlanıyor...</div>;
 
   return (
@@ -382,8 +413,37 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
 
         <TabsContent value="sales" className="mt-5 space-y-4">
           <div className="flex items-center justify-between"><div><h3 className="text-xl font-bold">Satış Yönetimi</h3><p className="text-sm text-slate-500">Teslim edilen sevkiyattan KolayBi e-fatura/e-arşiv ve tahsilat takibine</p></div>{canManageSync && <Button variant="outline" disabled={syncing} onClick={() => void synchronize("sales_invoices")}><RefreshCw className="mr-2 h-4 w-4" />Satışları Yenile</Button>}</div>
-          <Card><Table><TableHeader><TableRow><TableHead>Fatura No</TableHead><TableHead>Tarih</TableHead><TableHead>Belge</TableHead><TableHead>KolayBi Durumu</TableHead><TableHead>Ödeme</TableHead><TableHead className="text-right">Tutar</TableHead></TableRow></TableHeader><TableBody>
-            {data.salesInvoices.length === 0 ? <EmptyRow columns={6} /> : data.salesInvoices.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.invoice_no}</TableCell><TableCell>{date(row.invoice_date || row.created_at)}</TableCell><TableCell>{row.document_type === "e_invoice" ? "E-Fatura" : "E-Arşiv"}</TableCell><TableCell><Badge variant="outline" className={statusClass(row.integration_status || "draft")}>{row.integration_status || "Taslak"}</Badge></TableCell><TableCell>{row.payment_status || "Bekliyor"}</TableCell><TableCell className="text-right font-semibold">{money(row.grand_total, row.currency)}</TableCell></TableRow>)}
+          <Card><Table><TableHeader><TableRow><TableHead>Fatura No</TableHead><TableHead>Tarih</TableHead><TableHead>Belge</TableHead><TableHead>Durum</TableHead><TableHead>Ödeme</TableHead><TableHead className="text-right">Tutar</TableHead><TableHead className="text-right">İşlemler</TableHead></TableRow></TableHeader><TableBody>
+            {data.salesInvoices.length === 0 ? <EmptyRow columns={7} /> : data.salesInvoices.map((row) => {
+              const editable = isEditableInvoice(row);
+              const awaitingReview = editable && (row.accounting_review_status || "pending") !== "approved";
+              return (
+                <TableRow key={row.id} className="cursor-pointer hover:bg-slate-50" onClick={() => setPreviewInvoice(row)}>
+                  <TableCell className="font-mono">{row.invoice_no}</TableCell>
+                  <TableCell>{date(row.invoice_date || row.created_at)}</TableCell>
+                  <TableCell>{row.document_type === "e_invoice" ? "E-Fatura" : "E-Arşiv"}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={statusClass(awaitingReview ? "taslak" : row.integration_status || "draft")}>
+                      {awaitingReview ? "Muhasebe Onayı Bekliyor" : row.integration_status || "Taslak"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{row.payment_status || "Bekliyor"}</TableCell>
+                  <TableCell className="text-right font-semibold">{money(row.grand_total, row.currency)}</TableCell>
+                  <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
+                    <div className="flex justify-end gap-1">
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setPreviewInvoice(row)} title="Faturayı önizle">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      {canManageSales && editable ? (
+                        <Button type="button" size="sm" variant="ghost" onClick={() => setEditingInvoice(row)} title="Taslağı düzenle">
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                      ) : null}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody></Table></Card>
         </TabsContent>
 
@@ -501,6 +561,32 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
           </div>
         </TabsContent>
       </Tabs>
+
+      <InvoicePreviewDialog
+        open={Boolean(previewInvoice)}
+        onClose={() => setPreviewInvoice(null)}
+        invoiceData={previewInvoice}
+        canEdit={canManageSales && Boolean(previewInvoice && isEditableInvoice(previewInvoice))}
+        canApprove={canManageSales && Boolean(previewInvoice && isEditableInvoice(previewInvoice) && (previewInvoice.accounting_review_status || "pending") !== "approved")}
+        actionBusy={invoiceActionBusy}
+        onEdit={(invoice) => {
+          setPreviewInvoice(null);
+          setEditingInvoice(invoice);
+        }}
+        onApprove={(invoice) => approveInvoice(invoice)}
+      />
+
+      {editingInvoice ? (
+        <EditInvoiceDialog
+          open={Boolean(editingInvoice)}
+          onOpenChange={(open) => { if (!open) setEditingInvoice(null); }}
+          invoice={editingInvoice}
+          onSaved={() => {
+            setEditingInvoice(null);
+            void load();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

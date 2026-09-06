@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Trash2 } from "lucide-react";
@@ -17,9 +24,15 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type SalesInvoice = Tables<"sales_invoices">;
 type InvoiceItem = Tables<"sales_invoice_items">;
+type ProductService = Tables<"products_services">;
 
 interface InvoiceItemForm extends Partial<InvoiceItem> {
   tempId?: string;
+  kolaybi_product_id?: number | null;
+  withholding_code?: string | null;
+  withholding_value?: number | null;
+  withholding_type?: string | null;
+  exemption_code?: string | null;
 }
 
 interface EditInvoiceDialogProps {
@@ -41,45 +54,62 @@ export function EditInvoiceDialog({
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<InvoiceItemForm[]>([]);
+  const [catalog, setCatalog] = useState<ProductService[]>([]);
 
   useEffect(() => {
     if (invoice && open) {
       setInvoiceDate(invoice.invoice_date || "");
       setDueDate(invoice.due_date || "");
       setNotes(invoice.notes || "");
-      loadInvoiceItems();
+      const loadEditorData = async () => {
+        const [itemsResult, catalogResult] = await Promise.all([
+          supabase
+            .from("sales_invoice_items")
+            .select("*")
+            .eq("invoice_id", invoice.id),
+          supabase
+            .from("products_services")
+            .select("*")
+            .eq("invoice_enabled", true)
+            .eq("is_active", true)
+            .order("invoice_sort_order", { ascending: true })
+            .order("name", { ascending: true }),
+        ]);
+
+        if (itemsResult.error || catalogResult.error) {
+          console.error(
+            "Error loading invoice editor data:",
+            itemsResult.error || catalogResult.error,
+          );
+          return;
+        }
+
+        setItems(itemsResult.data || []);
+        setCatalog(catalogResult.data || []);
+      };
+
+      void loadEditorData();
     }
   }, [invoice, open]);
 
-  const loadInvoiceItems = async () => {
-    if (!invoice?.id) return;
-
-    const { data, error } = await supabase
-      .from("sales_invoice_items")
-      .select("*")
-      .eq("invoice_id", invoice.id);
-
-    if (error) {
-      console.error("Error loading invoice items:", error);
-      return;
-    }
-
-    setItems(data || []);
-  };
-
   const addItem = () => {
+    const defaultProduct = catalog[0];
+    const defaultPrice = Number(defaultProduct?.sale_price) || 0;
+    const defaultTaxRate = Number(defaultProduct?.tax_rate) || 0;
     setItems([
       ...items,
       {
         tempId: `temp-${Date.now()}`,
-        description: "",
+        product_code: defaultProduct?.code || "",
+        description: defaultProduct?.name || "",
         quantity: 1,
-        unit: "Adet",
-        unit_price: 0,
-        tax_rate: 20,
-        subtotal: 0,
-        tax_amount: 0,
-        total: 0,
+        unit: defaultProduct?.unit || "Adet",
+        unit_price: defaultPrice,
+        tax_rate: defaultTaxRate,
+        kolaybi_product_id: defaultProduct?.kolaybi_product_id || null,
+        subtotal: defaultPrice,
+        tax_amount: defaultPrice * (defaultTaxRate / 100),
+        total: defaultPrice * (1 + defaultTaxRate / 100),
       },
     ]);
   };
@@ -105,6 +135,31 @@ export function EditInvoiceDialog({
     setItems(newItems);
   };
 
+  const selectCatalogItem = (index: number, productId: string) => {
+    const product = catalog.find((entry) => entry.id === productId);
+    if (!product) return;
+
+    const newItems = [...items];
+    const quantity = Number(newItems[index].quantity) || 1;
+    const unitPrice = Number(newItems[index].unit_price) || Number(product.sale_price) || 0;
+    const taxRate = Number(product.tax_rate) || 0;
+    const subtotal = quantity * unitPrice;
+
+    newItems[index] = {
+      ...newItems[index],
+      product_code: product.code,
+      description: product.name,
+      unit: product.unit || "Adet",
+      unit_price: unitPrice,
+      tax_rate: taxRate,
+      kolaybi_product_id: product.kolaybi_product_id,
+      subtotal,
+      tax_amount: subtotal * (taxRate / 100),
+      total: subtotal * (1 + taxRate / 100),
+    };
+    setItems(newItems);
+  };
+
   const calculateTotals = () => {
     const subtotal = items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
     const totalTax = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0);
@@ -116,6 +171,15 @@ export function EditInvoiceDialog({
   const handleSave = async () => {
     if (!invoice?.id) return;
 
+    if (items.length === 0 || items.some((item) => !item.product_code || !item.description)) {
+      toast({
+        title: "Eksik bilgi",
+        description: "En az bir geçerli ürün veya hizmet kalemi seçmelisiniz.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -125,17 +189,17 @@ export function EditInvoiceDialog({
         p_due_date: dueDate,
         p_notes: notes,
         p_items: items.map((item) => ({
-          productCode: item.product_code || "HIZMET",
+          productCode: item.product_code,
           description: item.description || "",
           quantity: item.quantity || 0,
           unit: item.unit || "Adet",
           unitPrice: item.unit_price || 0,
           vatRate: item.tax_rate || 0,
-          kolaybiProductId: (item as any).kolaybi_product_id || null,
-          withholdingCode: (item as any).withholding_code || null,
-          withholdingValue: (item as any).withholding_value || null,
-          withholdingType: (item as any).withholding_type || null,
-          exemptionCode: (item as any).exemption_code || null,
+          kolaybiProductId: item.kolaybi_product_id || null,
+          withholdingCode: item.withholding_code || null,
+          withholdingValue: item.withholding_value || null,
+          withholdingType: item.withholding_type || null,
+          exemptionCode: item.exemption_code || null,
         })),
       } as any);
       if (error) throw error;
@@ -201,6 +265,7 @@ export function EditInvoiceDialog({
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-2 py-2 text-left">Ürün / Hizmet</th>
                     <th className="px-2 py-2 text-left">Açıklama</th>
                     <th className="px-2 py-2 text-right w-20">Miktar</th>
                     <th className="px-2 py-2 text-left w-20">Birim</th>
@@ -213,6 +278,26 @@ export function EditInvoiceDialog({
                 <tbody>
                   {items.map((item, index) => (
                     <tr key={item.id || item.tempId} className="border-t">
+                      <td className="px-2 py-2 min-w-56">
+                        <Select
+                          value={
+                            catalog.find((entry) => entry.code === item.product_code)?.id ||
+                            undefined
+                          }
+                          onValueChange={(value) => selectCatalogItem(index, value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={item.product_code || "Kalem seçin"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {catalog.map((entry) => (
+                              <SelectItem key={entry.id} value={entry.id}>
+                                {entry.code} · {entry.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
                       <td className="px-2 py-2">
                         <Input
                           value={item.description || ""}
@@ -221,6 +306,16 @@ export function EditInvoiceDialog({
                           }
                           placeholder="Hizmet/Ürün açıklaması"
                         />
+                        {Number(item.tax_rate) === 0 ? (
+                          <Input
+                            className="mt-2"
+                            value={item.exemption_code || ""}
+                            onChange={(e) =>
+                              updateItem(index, "exemption_code", e.target.value)
+                            }
+                            placeholder="İstisna kodu (ör. 311)"
+                          />
+                        ) : null}
                       </td>
                       <td className="px-2 py-2">
                         <Input

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck, AlertTriangle, ExternalLink } from "lucide-react";
+import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck, AlertTriangle, ExternalLink, Loader2, Receipt } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService, type ShipmentRevisionRequest } from "@/services/shipmentService";
@@ -18,11 +18,14 @@ import { DeliveryModal } from "@/components/DeliveryModal";
 import { DeliveryDocumentsDialog } from "@/components/DeliveryDocumentsDialog";
 import { generateWaybill } from "@/components/WaybillGenerator";
 import { InvoiceDialog } from "@/components/InvoiceDialog";
+import { EditInvoiceDialog } from "@/components/EditInvoiceDialog";
+import { InvoicePreviewDialog } from "@/components/InvoicePreviewDialog";
 import { ShipmentHistoryDialog } from "@/components/ShipmentHistoryDialog";
 import { TransportJobHistoryDialog } from "@/components/TransportJobHistoryDialog";
 import { ShipmentExceptionDialog } from "@/components/ShipmentExceptionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { invoiceIntegrationService } from "@/services/invoiceIntegrationService";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import {
@@ -79,12 +82,27 @@ export function LogisticsModule() {
   // Invoice dialog state
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [invoicingShipment, setInvoicingShipment] = useState<any | null>(null);
+  const [linkedInvoice, setLinkedInvoice] = useState<any | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<any | null>(null);
+  const [loadingInvoiceId, setLoadingInvoiceId] = useState<string | null>(null);
   const [historyShipment, setHistoryShipment] = useState<any | null>(null);
   const [documentsShipment, setDocumentsShipment] = useState<any | null>(null);
   const [exceptionShipment, setExceptionShipment] = useState<any | null>(null);
   const [historyJob, setHistoryJob] = useState<TransportJob | null>(null);
   const [cancellingShipment, setCancellingShipment] = useState<any | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
+
+  const openShipmentInvoice = async (shipment: any) => {
+    if (!shipment.sale_invoice_id) return;
+    setLoadingInvoiceId(shipment.sale_invoice_id);
+    try {
+      setLinkedInvoice(await invoiceIntegrationService.getById(shipment.sale_invoice_id));
+    } catch (error: any) {
+      toast({ title: "Fatura açılamadı", description: error.message, variant: "destructive" });
+    } finally {
+      setLoadingInvoiceId(null);
+    }
+  };
 
   // Column filters
   const [filters, setFilters] = useState({
@@ -785,6 +803,19 @@ export function LogisticsModule() {
                               <FileText className="h-4 w-4 text-green-600" />
                             </Button>
                           )}
+                          {shipment.sale_invoice_id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={loadingInvoiceId === shipment.sale_invoice_id}
+                              onClick={() => void openShipmentInvoice(shipment)}
+                              title="Bağlı fatura taslağını veya resmî faturayı aç"
+                            >
+                              {loadingInvoiceId === shipment.sale_invoice_id
+                                ? <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
+                                : <Receipt className="h-4 w-4 text-violet-600" />}
+                            </Button>
+                          )}
                           {!["teslim_edildi", "Teslim Edildi", "iptal", "İptal"].includes(shipment.status) &&
                             !shipment.sale_invoice_id && (
                               <Button
@@ -1120,6 +1151,32 @@ export function LogisticsModule() {
           shipment={invoicingShipment}
         />
       )}
+
+      <InvoicePreviewDialog
+        open={Boolean(linkedInvoice)}
+        onClose={() => setLinkedInvoice(null)}
+        invoiceData={linkedInvoice}
+        canEdit={Boolean(linkedInvoice
+          && ["draft", "queued", "failed", "mapping_required"].includes(linkedInvoice.integration_status || "draft")
+          && !linkedInvoice.kolaybi_document_id
+          && (linkedInvoice.accounting_review_status || "pending") !== "approved")}
+        onEdit={(invoice) => {
+          setLinkedInvoice(null);
+          setEditingInvoice(invoice);
+        }}
+      />
+
+      {editingInvoice ? (
+        <EditInvoiceDialog
+          open={Boolean(editingInvoice)}
+          onOpenChange={(open) => { if (!open) setEditingInvoice(null); }}
+          invoice={editingInvoice}
+          onSaved={() => {
+            setEditingInvoice(null);
+            void loadData();
+          }}
+        />
+      ) : null}
 
       <ShipmentHistoryDialog
         isOpen={!!historyShipment}

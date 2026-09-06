@@ -451,17 +451,9 @@ function BulkInvoiceDialog({ isOpen, onClose, onSuccess, shipments }: {
           vatRate: 20,
         })),
       });
-      let integrationMessage = "KolayBi gönderim kuyruğuna alındı";
-      try {
-        const sync = await invoiceIntegrationService.send(invoiceData.id);
-        integrationMessage = sync.status === "official" ? "resmî e-belge oluşturuldu" : "KolayBi'ye gönderildi";
-      } catch (syncError: any) {
-        integrationMessage = `taslak korundu; gönderim bekliyor: ${syncError.message}`;
-      }
-
       toast({
         title: "Fatura taslağı oluşturuldu",
-        description: `${shipments.length} sevkiyat için ${invoiceData.invoice_no}; ${integrationMessage}.`,
+        description: `${shipments.length} sevkiyat için ${invoiceData.invoice_no}; muhasebe incelemesi ve onayı bekleniyor.`,
       });
 
       onSuccess();

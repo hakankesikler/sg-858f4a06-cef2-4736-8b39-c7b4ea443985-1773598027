@@ -181,6 +181,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isInvoiceEditDialogOpen, setIsInvoiceEditDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingCustomer, setDeletingCustomer] = useState<any>(null);
@@ -824,14 +825,14 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
     try {
       setIsLoading(true);
       const results = await Promise.allSettled(
-        selectedInvoices.map((invoiceId) => invoiceIntegrationService.retry(invoiceId)),
+        selectedInvoices.map((invoiceId) => invoiceIntegrationService.approve(invoiceId)),
       );
       const succeeded = results.filter((result) => result.status === "fulfilled").length;
       const failed = results.length - succeeded;
 
       toast({
-        title: failed ? "Gönderim kuyruğu işlendi" : "KolayBi gönderimi tamamlandı",
-        description: `${succeeded} fatura işlendi${failed ? `, ${failed} fatura hata/eksik eşleştirme nedeniyle bekliyor` : ""}.`,
+        title: failed ? "Muhasebe onayı kısmen tamamlandı" : "Muhasebe onayı tamamlandı",
+        description: `${succeeded} taslak onaylanıp KolayBi sürecine alındı${failed ? `, ${failed} taslak kontrol için bekliyor` : ""}.`,
         variant: failed && !succeeded ? "destructive" : "default",
       });
 
@@ -851,7 +852,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
 
   const handleEditInvoice = (invoice: any) => {
     setSelectedInvoice(invoice);
-    setIsEditDialogOpen(true);
+    setIsInvoiceEditDialogOpen(true);
   };
 
   const handleCancelInvoice = async () => {
@@ -881,9 +882,14 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
   const handleRetryInvoice = async (invoice: any) => {
     try {
       setIsLoading(true);
-      const result = await invoiceIntegrationService.retry(invoice.id);
+      const needsApproval = (invoice.accounting_review_status || "pending") !== "approved";
+      const result = needsApproval
+        ? await invoiceIntegrationService.approve(invoice.id)
+        : await invoiceIntegrationService.retry(invoice.id);
       toast({
-        title: result.status === "official" ? "E-belge oluşturuldu" : "Fatura yeniden kuyruğa alındı",
+        title: result.status === "official"
+          ? "E-belge oluşturuldu"
+          : needsApproval ? "Taslak onaylandı" : "Fatura yeniden kuyruğa alındı",
         description: result.invoiceNo || invoice.invoice_no,
       });
       await loadData();
@@ -1034,11 +1040,17 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                 <Button
                   variant="outline"
                   size="sm"
+                  disabled={!canManageSales}
                   onClick={() => {
-                    if (selectedInvoices.length === salesInvoices.length && salesInvoices.length > 0) {
+                    const approvableIds = salesInvoices
+                      .filter((invoice) => ["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft")
+                        && !invoice.kolaybi_document_id
+                        && (invoice.accounting_review_status || "pending") !== "approved")
+                      .map((invoice) => invoice.id);
+                    if (selectedInvoices.length === approvableIds.length && approvableIds.length > 0) {
                       setSelectedInvoices([]);
                     } else {
-                      setSelectedInvoices(salesInvoices.map((inv) => inv.id));
+                      setSelectedInvoices(approvableIds);
                     }
                   }}
                 >
@@ -1047,18 +1059,18 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Button onClick={() => setShowPendingInvoicesDialog(true)} className="bg-green-600 hover:bg-green-700">
+                {canManageSales && <Button onClick={() => setShowPendingInvoicesDialog(true)} className="bg-green-600 hover:bg-green-700">
                   <Receipt className="h-4 w-4 mr-2" />
                   Bekleyen Sevkiyatları Faturala
-                </Button>
-                <Button variant="outline" onClick={handleCreateManualInvoice}>
+                </Button>}
+                {canManageSales && <Button variant="outline" onClick={handleCreateManualInvoice}>
                   <Plus className="h-4 w-4 mr-2" />
                   Manuel Fatura
-                </Button>
-                {selectedInvoices.length > 0 && (
+                </Button>}
+                {canManageSales && selectedInvoices.length > 0 && (
                   <Button onClick={handleConfirmDraftInvoices} disabled={isLoading} variant="outline">
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Seçilileri KolayBi'ye Gönder
+                    Seçilileri Onayla ve Gönder
                   </Button>
                 )}
                 <Button variant="outline" size="sm" onClick={() => void invoiceIntegrationService.processQueue(5).then(loadData).catch((error) => toast({ title: "Kuyruk işlenemedi", description: error.message, variant: "destructive" }))}>
@@ -1120,6 +1132,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                           type="checkbox" 
                           className="rounded" 
                           checked={selectedInvoices.includes(invoice.id)}
+                          disabled={!canManageSales || !["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft") || Boolean(invoice.kolaybi_document_id) || (invoice.accounting_review_status || "pending") === "approved"}
                           onChange={() => {
                             if (selectedInvoices.includes(invoice.id)) {
                               setSelectedInvoices(selectedInvoices.filter(id => id !== invoice.id));
@@ -1131,7 +1144,9 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={integrationBadgeClass(invoice.integration_status)}>
-                          {INVOICE_INTEGRATION_LABELS[invoice.integration_status] || "Fatura Taslağı"}
+                          {(invoice.accounting_review_status || "pending") !== "approved" && ["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft")
+                            ? "Muhasebe Onayı Bekliyor"
+                            : INVOICE_INTEGRATION_LABELS[invoice.integration_status] || "Fatura Taslağı"}
                         </Badge>
                         {invoice.kolaybi_error && (
                           <p className="mt-1 max-w-52 text-xs text-red-600" title={invoice.kolaybi_error}>
@@ -1178,7 +1193,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                       <TableCell className="text-right font-semibold">{invoice.grand_total.toLocaleString('tr-TR')} {invoice.currency || "TRY"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft") && !invoice.kolaybi_document_id && (
+                          {canManageSales && ["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft") && !invoice.kolaybi_document_id && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -1196,13 +1211,13 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft") && (
+                          {canManageSales && ["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft") && (
                             <Button
                               size="sm"
                               variant="ghost"
                               disabled={isLoading}
                               onClick={() => void handleRetryInvoice(invoice)}
-                              title="KolayBi gönderimini yeniden dene"
+                              title={(invoice.accounting_review_status || "pending") === "approved" ? "KolayBi gönderimini yeniden dene" : "Muhasebe olarak onayla ve KolayBi'ye gönder"}
                             >
                               <Send className="h-4 w-4 text-blue-600" />
                             </Button>
@@ -1228,7 +1243,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                               <FileDown className="h-4 w-4 text-green-600" />
                             </Button>
                           )}
-                          {invoice.payment_status !== "İptal" && (
+                          {canManageSales && invoice.payment_status !== "İptal" && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -1777,13 +1792,21 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
             setPreviewInvoice(null);
           }}
           invoiceData={previewInvoice}
+          canEdit={canManageSales && Boolean(previewInvoice && ["draft", "queued", "failed", "mapping_required"].includes(previewInvoice.integration_status || "draft") && !previewInvoice.kolaybi_document_id)}
+          canApprove={canManageSales && Boolean(previewInvoice && ["draft", "queued", "failed", "mapping_required"].includes(previewInvoice.integration_status || "draft") && !previewInvoice.kolaybi_document_id && (previewInvoice.accounting_review_status || "pending") !== "approved")}
+          actionBusy={isLoading}
+          onEdit={(invoice) => {
+            setShowPreviewDialog(false);
+            handleEditInvoice(invoice);
+          }}
+          onApprove={(invoice) => handleRetryInvoice(invoice)}
         />
       )}
 
       {selectedInvoice && (
         <EditInvoiceDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
+          open={isInvoiceEditDialogOpen}
+          onOpenChange={setIsInvoiceEditDialogOpen}
           invoice={selectedInvoice}
           onSaved={() => {
             loadData();

@@ -79,8 +79,28 @@ export const invoiceIntegrationService = {
       invoice_no: string;
       grand_total: number;
       integration_status: string;
+      accounting_review_status: "pending" | "approved";
       already_exists: boolean;
     };
+  },
+
+  async getById(invoiceId: string) {
+    const { data, error } = await supabase
+      .from("sales_invoices")
+      .select("*")
+      .eq("id", invoiceId)
+      .single();
+    if (error) throw error;
+    return data as any;
+  },
+
+  async approve(invoiceId: string, note = "") {
+    const { error } = await supabase.rpc("rex_approve_sales_invoice_draft" as any, {
+      p_invoice_id: invoiceId,
+      p_note: note || null,
+    } as any);
+    if (error) throw error;
+    return this.send(invoiceId);
   },
 
   async send(invoiceId: string) {

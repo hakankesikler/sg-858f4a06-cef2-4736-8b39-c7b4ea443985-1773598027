@@ -1406,3 +1406,36 @@ test("invoice preview follows official e-invoice and e-archive presentation data
   assert.match(template, /@page \{ size: A4; margin: 0; \}/);
   assert.match(template, /break-inside: avoid/);
 });
+
+test("sales invoice drafts stay editable until accounting approval", async () => {
+  const [sql, dialog, editDialog, pending, office, logistics, preview, service] = await Promise.all([
+    read("supabase/migrations/20260906093118_invoice_draft_accounting_approval.sql"),
+    read("src/components/InvoiceDialog.tsx"),
+    read("src/components/EditInvoiceDialog.tsx"),
+    read("src/components/PendingInvoicesDialog.tsx"),
+    read("src/components/modules/KolayBiOfficeModule.tsx"),
+    read("src/components/modules/LogisticsModule.tsx"),
+    read("src/components/InvoicePreviewDialog.tsx"),
+    read("src/services/invoiceIntegrationService.ts"),
+  ]);
+
+  assert.match(sql, /accounting_review_status text NOT NULL DEFAULT 'pending'/);
+  assert.match(sql, /'integration_status','draft'/);
+  assert.match(sql, /invoice_status='fatura_taslagi'/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_approve_sales_invoice_draft/);
+  assert.match(sql, /Yalnızca muhasebe yetkilisi taslağı onaylayabilir/);
+  assert.match(sql, /Sıfır tutarlı fatura taslağı onaylanamaz/);
+  assert.match(sql, /Fatura önce muhasebe tarafından incelenip onaylanmalıdır/);
+  assert.match(sql, /accounting_review_status='pending'/);
+  assert.doesNotMatch(dialog, /invoiceIntegrationService\.send\(invoice\.id\)/);
+  assert.match(editDialog, /\.from\("products_services"\)/);
+  assert.match(editDialog, /\.eq\("invoice_enabled", true\)/);
+  assert.match(editDialog, /En az bir geçerli ürün veya hizmet kalemi seçmelisiniz/);
+  assert.match(editDialog, /placeholder="İstisna kodu \(ör\. 311\)"/);
+  assert.doesNotMatch(pending, /invoiceIntegrationService\.send\(invoiceData\.id\)/);
+  assert.match(office, /Muhasebe Onayı Bekliyor/);
+  assert.match(logistics, /Bağlı fatura taslağını veya resmî faturayı aç/);
+  assert.match(preview, /Taslağı Düzenle/);
+  assert.match(preview, /Onayla ve KolayBi’ye Gönder/);
+  assert.match(service, /rex_approve_sales_invoice_draft/);
+});

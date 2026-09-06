@@ -427,17 +427,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
         })),
       });
 
-      let syncMessage = "KolayBi gönderim kuyruğuna alındı.";
-      try {
-        const sync = await invoiceIntegrationService.send(invoice.id);
-        syncMessage = sync.status === "official"
-          ? `Resmî e-belge oluşturuldu${sync.invoiceNo ? `: ${sync.invoiceNo}` : "."}`
-          : "KolayBi'ye gönderildi; resmileştirme bekleniyor.";
-      } catch (syncError: any) {
-        syncMessage = `Taslak korundu; gönderim tamamlanamadı: ${syncError.message}`;
-      }
-
-      toast({ title: "Fatura taslağı oluşturuldu", description: `${invoice.invoice_no}. ${syncMessage}` });
+      toast({
+        title: "Fatura taslağı oluşturuldu",
+        description: `${invoice.invoice_no}. Taslak düzenlenebilir durumda; muhasebe inceleyip onaylamadan KolayBi'ye gönderilmeyecek.`,
+      });
 
       if (onSuccess) {
         onSuccess();

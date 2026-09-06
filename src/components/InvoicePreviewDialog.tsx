@@ -8,12 +8,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { InvoiceTemplate, type InvoiceTemplateData } from "./InvoiceTemplate";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, FileText, Loader2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Edit3, FileText, Loader2, X } from "lucide-react";
 
 interface InvoicePreviewDialogProps {
   open: boolean;
   onClose: () => void;
   invoiceData: UnknownRecord | null;
+  onEdit?: (invoice: UnknownRecord) => void;
+  onApprove?: (invoice: UnknownRecord) => void | Promise<void>;
+  canEdit?: boolean;
+  canApprove?: boolean;
+  actionBusy?: boolean;
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -153,7 +158,16 @@ export function normalizeInvoiceForPreview(invoice: UnknownRecord): InvoiceTempl
   };
 }
 
-export function InvoicePreviewDialog({ open, onClose, invoiceData }: InvoicePreviewDialogProps) {
+export function InvoicePreviewDialog({
+  open,
+  onClose,
+  invoiceData,
+  onEdit,
+  onApprove,
+  canEdit = false,
+  canApprove = false,
+  actionBusy = false,
+}: InvoicePreviewDialogProps) {
   const [loadState, setLoadState] = useState<{
     invoiceId?: string;
     data?: UnknownRecord;
@@ -209,6 +223,10 @@ export function InvoicePreviewDialog({ open, onClose, invoiceData }: InvoicePrev
     () => resolvedInvoice ? normalizeInvoiceForPreview(resolvedInvoice) : null,
     [resolvedInvoice],
   );
+  const integrationStatus = textValue(resolvedInvoice?.integration_status) || "draft";
+  const reviewStatus = textValue(resolvedInvoice?.accounting_review_status) || "pending";
+  const editable = ["draft", "queued", "failed", "mapping_required"].includes(integrationStatus)
+    && !resolvedInvoice?.kolaybi_document_id;
 
   if (!invoiceData) return null;
 
@@ -226,6 +244,28 @@ export function InvoicePreviewDialog({ open, onClose, invoiceData }: InvoicePrev
             </Button>
           </div>
         </DialogHeader>
+
+        {editable && reviewStatus !== "approved" ? (
+          <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">Muhasebe onayı bekleyen taslak</p>
+              <p className="text-xs text-amber-800">Bu belge henüz KolayBi’ye gönderilmedi; gerekli düzeltmeler güvenle yapılabilir.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {canEdit && onEdit ? (
+                <Button type="button" variant="outline" size="sm" onClick={() => resolvedInvoice && onEdit(resolvedInvoice)}>
+                  <Edit3 className="mr-2 h-4 w-4" />Taslağı Düzenle
+                </Button>
+              ) : null}
+              {canApprove && onApprove ? (
+                <Button type="button" size="sm" disabled={actionBusy} onClick={() => resolvedInvoice && void onApprove(resolvedInvoice)}>
+                  {actionBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                  Onayla ve KolayBi’ye Gönder
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         {loadError ? (
           <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
