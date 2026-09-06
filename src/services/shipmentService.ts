@@ -202,6 +202,14 @@ export const shipmentService = {
         driver:drivers(id, driver_code, full_name),
         vehicle:vehicles(id, vehicle_code, cekici_plakasi, arac_tipi),
         customer:customers!shipments_customer_id_fkey(id, customer_code, name)
+        ,sale_invoice:sales_invoices!shipments_sale_invoice_id_fkey(
+          id,
+          invoice_no,
+          integration_status,
+          accounting_review_status,
+          kolaybi_document_id,
+          grand_total
+        )
         ,uetds_details:shipment_uetds_details(*)
         ,exceptions:shipment_exceptions(id, exception_type, status, occurred_at)
         ,delivery_documents(id, document_type, scan_status, is_active, version_number)

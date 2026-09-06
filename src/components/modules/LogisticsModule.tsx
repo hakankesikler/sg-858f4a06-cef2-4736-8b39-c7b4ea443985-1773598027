@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Truck, User, Plus, Edit, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck, AlertTriangle, ExternalLink, Loader2, Receipt } from "lucide-react";
+import { Truck, User, Plus, Edit, Edit3, Trash2, Package, FileText, FileDown, History, Copy, CircleX, ClipboardCheck, AlertTriangle, ExternalLink, Loader2, Receipt } from "lucide-react";
 import { driverService, Driver } from "@/services/driverService";
 import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { shipmentService, type ShipmentRevisionRequest } from "@/services/shipmentService";
@@ -92,11 +92,28 @@ export function LogisticsModule() {
   const [cancellingShipment, setCancellingShipment] = useState<any | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
 
-  const openShipmentInvoice = async (shipment: any) => {
+  const openShipmentInvoice = async (shipment: any, intent: "preview" | "edit" = "preview") => {
     if (!shipment.sale_invoice_id) return;
     setLoadingInvoiceId(shipment.sale_invoice_id);
     try {
-      setLinkedInvoice(await invoiceIntegrationService.getById(shipment.sale_invoice_id));
+      const invoice = await invoiceIntegrationService.getById(shipment.sale_invoice_id);
+      const editable = ["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft")
+        && !invoice.kolaybi_document_id
+        && (invoice.accounting_review_status || "pending") !== "approved";
+      if (intent === "edit") {
+        if (!editable) {
+          toast({
+            title: "Bu fatura artık düzenlenemez",
+            description: "Muhasebe onayı verilmiş veya KolayBi'ye gönderilmiş faturalar yalnızca önizlenebilir.",
+            variant: "destructive",
+          });
+          setLinkedInvoice(invoice);
+          return;
+        }
+        setEditingInvoice(invoice);
+        return;
+      }
+      setLinkedInvoice(invoice);
     } catch (error: any) {
       toast({ title: "Fatura açılamadı", description: error.message, variant: "destructive" });
     } finally {
@@ -804,17 +821,37 @@ export function LogisticsModule() {
                             </Button>
                           )}
                           {shipment.sale_invoice_id && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={loadingInvoiceId === shipment.sale_invoice_id}
-                              onClick={() => void openShipmentInvoice(shipment)}
-                              title="Bağlı fatura taslağını veya resmî faturayı aç"
-                            >
-                              {loadingInvoiceId === shipment.sale_invoice_id
-                                ? <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
-                                : <Receipt className="h-4 w-4 text-violet-600" />}
-                            </Button>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={loadingInvoiceId === shipment.sale_invoice_id}
+                                onClick={() => void openShipmentInvoice(shipment)}
+                                title="Bağlı fatura taslağını veya resmî faturayı aç"
+                                aria-label="Faturayı önizle"
+                              >
+                                {loadingInvoiceId === shipment.sale_invoice_id
+                                  ? <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
+                                  : <Receipt className="h-4 w-4 text-violet-600" />}
+                              </Button>
+                              {shipment.sale_invoice
+                                && ["draft", "queued", "failed", "mapping_required"].includes(shipment.sale_invoice.integration_status || "draft")
+                                && !shipment.sale_invoice.kolaybi_document_id
+                                && (shipment.sale_invoice.accounting_review_status || "pending") !== "approved" ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={loadingInvoiceId === shipment.sale_invoice_id}
+                                    onClick={() => void openShipmentInvoice(shipment, "edit")}
+                                    title="Fatura taslağını düzenle"
+                                    aria-label="Fatura taslağını düzenle"
+                                    className="border-orange-200 text-orange-700 hover:bg-orange-50 hover:text-orange-800"
+                                  >
+                                    <Edit3 className="h-4 w-4" />
+                                    <span className="ml-1 hidden 2xl:inline">Fatura Taslağı</span>
+                                  </Button>
+                                ) : null}
+                            </>
                           )}
                           {!["teslim_edildi", "Teslim Edildi", "iptal", "İptal"].includes(shipment.status) &&
                             !shipment.sale_invoice_id && (

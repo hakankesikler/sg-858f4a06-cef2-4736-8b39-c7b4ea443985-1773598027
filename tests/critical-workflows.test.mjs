@@ -1431,10 +1431,16 @@ test("sales invoice drafts stay editable until accounting approval", async () =>
   assert.match(editDialog, /\.from\("products_services"\)/);
   assert.match(editDialog, /\.eq\("invoice_enabled", true\)/);
   assert.match(editDialog, /En az bir geçerli ürün veya hizmet kalemi seçmelisiniz/);
+  assert.match(editDialog, /shipmentAmount > 0/);
+  assert.match(editDialog, /0 TL tutarlı veya miktarı sıfır olan bir fatura taslağı kaydedilemez/);
   assert.match(editDialog, /placeholder="İstisna kodu \(ör\. 311\)"/);
+  assert.match(dialog, /catalogPrice > 0 \? catalogPrice : Number\(current\.unitPrice \|\| 0\)/);
+  assert.match(dialog, /0 TL tutarlı veya miktarı sıfır olan bir fatura taslağı oluşturulamaz/);
   assert.doesNotMatch(pending, /invoiceIntegrationService\.send\(invoiceData\.id\)/);
   assert.match(office, /Muhasebe Onayı Bekliyor/);
   assert.match(logistics, /Bağlı fatura taslağını veya resmî faturayı aç/);
+  assert.match(logistics, /Fatura taslağını düzenle/);
+  assert.match(logistics, /openShipmentInvoice\(shipment, "edit"\)/);
   assert.match(preview, /Taslağı Düzenle/);
   assert.match(preview, /Onayla ve KolayBi’ye Gönder/);
   assert.match(service, /rex_approve_sales_invoice_draft/);

@@ -316,6 +316,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     const current = items[index];
     const next = [...items];
     const taxRate = Number(product.tax_rate ?? current.vatRate ?? 0);
+    const catalogPrice = Number(product.sale_price ?? 0);
     next[index] = calculateItemTotals({
       ...current,
       catalogProductId: product.id,
@@ -323,7 +324,9 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       kolaybiProductId: product.kolaybi_product_id,
       description: product.description || product.name,
       unit: product.unit || "Adet",
-      unitPrice: Number(product.sale_price ?? current.unitPrice ?? 0),
+      // Hizmet kartlarında fiyat çoğunlukla faturaya göre değişir. Katalogdaki
+      // 0 TL, sevkiyattan gelen gerçek satış bedelini ezmemelidir.
+      unitPrice: catalogPrice > 0 ? catalogPrice : Number(current.unitPrice || 0),
       vatRate: taxRate,
       exemptionCode: taxRate === 0 ? current.exemptionCode || "" : "",
     });
@@ -388,6 +391,14 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       toast({
         title: "E-belge türü henüz doğrulanmadı",
         description: "Çalışan seçimiyle fatura oluşturulamaz. Cari e-belge türü KolayBi senkronizasyonuyla otomatik doğrulanmalıdır.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (totals.subtotal <= 0 || items.some((item) => item.quantity <= 0 || item.unitPrice <= 0)) {
+      toast({
+        title: "Fatura tutarı kontrol edilmeli",
+        description: "0 TL tutarlı veya miktarı sıfır olan bir fatura taslağı oluşturulamaz.",
         variant: "destructive",
       });
       return;

@@ -62,7 +62,7 @@ export function EditInvoiceDialog({
       setDueDate(invoice.due_date || "");
       setNotes(invoice.notes || "");
       const loadEditorData = async () => {
-        const [itemsResult, catalogResult] = await Promise.all([
+        const [itemsResult, catalogResult, shipmentsResult] = await Promise.all([
           supabase
             .from("sales_invoice_items")
             .select("*")
@@ -74,17 +74,45 @@ export function EditInvoiceDialog({
             .eq("is_active", true)
             .order("invoice_sort_order", { ascending: true })
             .order("name", { ascending: true }),
+          supabase
+            .from("shipments")
+            .select("satis_tutar,shipment_cargo_items(adet,birim_fiyat,alt_toplam_fiyat)")
+            .eq("sale_invoice_id", invoice.id),
         ]);
 
-        if (itemsResult.error || catalogResult.error) {
+        if (itemsResult.error || catalogResult.error || shipmentsResult.error) {
           console.error(
             "Error loading invoice editor data:",
-            itemsResult.error || catalogResult.error,
+            itemsResult.error || catalogResult.error || shipmentsResult.error,
           );
           return;
         }
 
-        setItems(itemsResult.data || []);
+        const loadedItems = (itemsResult.data || []) as InvoiceItemForm[];
+        const hasPositiveInvoiceAmount = loadedItems.some((item) => Number(item.unit_price) > 0 || Number(item.total) > 0);
+        const shipmentAmount = (shipmentsResult.data || []).reduce((sum, shipment) => {
+          const recordedSalesAmount = Number(shipment.satis_tutar || 0);
+          if (recordedSalesAmount > 0) return sum + recordedSalesAmount;
+          const cargoAmount = (shipment.shipment_cargo_items || []).reduce(
+            (cargoSum, cargo) => cargoSum + Number(cargo.alt_toplam_fiyat ?? (Number(cargo.adet || 0) * Number(cargo.birim_fiyat || 0))),
+            0,
+          );
+          return sum + cargoAmount;
+        }, 0);
+
+        if (!hasPositiveInvoiceAmount && loadedItems.length === 1 && shipmentAmount > 0) {
+          const taxRate = Number(loadedItems[0].tax_rate || 0);
+          loadedItems[0] = {
+            ...loadedItems[0],
+            quantity: 1,
+            unit_price: shipmentAmount,
+            subtotal: shipmentAmount,
+            tax_amount: shipmentAmount * (taxRate / 100),
+            total: shipmentAmount * (1 + taxRate / 100),
+          };
+        }
+
+        setItems(loadedItems);
         setCatalog(catalogResult.data || []);
       };
 
@@ -175,6 +203,14 @@ export function EditInvoiceDialog({
       toast({
         title: "Eksik bilgi",
         description: "En az bir geçerli ürün veya hizmet kalemi seçmelisiniz.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (items.some((item) => Number(item.quantity) <= 0 || Number(item.unit_price) <= 0)) {
+      toast({
+        title: "Fatura tutarı kontrol edilmeli",
+        description: "0 TL tutarlı veya miktarı sıfır olan bir fatura taslağı kaydedilemez.",
         variant: "destructive",
       });
       return;
