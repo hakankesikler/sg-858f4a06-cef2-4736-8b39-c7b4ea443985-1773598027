@@ -1,10 +1,13 @@
 # REX TYS – KolayBi Fatura XSLT Şablonu
 
-`rex-tys-kolaybi-fatura.xslt`, UBL-TR e-Fatura ve e-Arşiv Fatura belgeleri için tek şablondur. Belgenin `ProfileID` alanına göre başlığı otomatik değiştirir.
+KolayBi'nin e-Fatura ve e-Arşiv şablon alanları için iki ayrı UBL-TR XSLT dosyası hazırlanmıştır. Belge başlığı, yanlış şablon türünün gösterilmesini önlemek için her dosyada sabittir.
 
 ## KolayBi'ye verilecek dosya
 
-- `rex-tys-kolaybi-fatura.xslt`
+- KolayBi **e-Fatura** alanına: `rex-tys-kolaybi-e-fatura.xslt`
+- KolayBi **e-Arşiv** alanına: `rex-tys-kolaybi-e-arsiv.xslt`
+
+Dosyalar birbirinin yerine yüklenmemelidir. Her iki şablon da aynı REX tasarımını ve GİB karekod üretimini kullanır; e-Arşiv elektronik iletim notu yalnızca e-Arşiv şablonunda bulunur.
 
 Şablon kendi içinde REX Lojistik web sitesi logosunu ve GİB logosunu taşır. Ayrı görsel yüklenmesi gerekmez.
 
@@ -30,4 +33,4 @@ KolayBi/API üzerinden UBL oluşturulurken aşağıdaki alanlar gönderilirse ş
 
 ## KolayBi'ye iletilecek kısa not
 
-Şablon UTF-8, XSLT 1.0 ve UBL-TR Invoice 2.x namespace yapısıyla hazırlanmıştır. e-Fatura/e-Arşiv ayrımı `cbc:ProfileID` üzerinden yapılır. Canlıya almadan önce KolayBi test ortamında örnek e-Fatura, e-Arşiv, tevkifatlı ve dövizli belgeyle doğrulanmalıdır.
+Şablonlar UTF-8, XSLT 1.0 ve UBL-TR Invoice 2.x namespace yapısıyla hazırlanmıştır. Canlıya almadan önce KolayBi test ortamında örnek e-Fatura, e-Arşiv, tevkifatlı ve dövizli belgeyle doğrulanmalıdır.

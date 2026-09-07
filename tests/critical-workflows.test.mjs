@@ -447,6 +447,25 @@ test("invoice descriptions and bank details are selected in REX TYS and snapshot
   assert.match(xslt, /"avkntckn"/);
 });
 
+test("KolayBi e-invoice and e-archive use separate fixed-label XSLT files", async () => {
+  const [eInvoiceXslt, eArchiveXslt, buildScript, guide] = await Promise.all([
+    read("docs/kolaybi-xslt/rex-tys-kolaybi-e-fatura.xslt"),
+    read("docs/kolaybi-xslt/rex-tys-kolaybi-e-arsiv.xslt"),
+    read("docs/kolaybi-xslt/build-kolaybi-xslt.mjs"),
+    read("docs/kolaybi-xslt/KOLAYBI_XSLT_KURULUM.md"),
+  ]);
+  assert.match(eInvoiceXslt, /<div class="doc-type">e-Fatura<\/div>/);
+  assert.doesNotMatch(eInvoiceXslt, /Bu belge e-Arşiv Fatura kapsamında/);
+  assert.match(eArchiveXslt, /<div class="doc-type">e-Arşiv Fatura<\/div>/);
+  assert.match(eArchiveXslt, /Bu belge e-Arşiv Fatura kapsamında/);
+  assert.match(eInvoiceXslt, /new QRCode/);
+  assert.match(eArchiveXslt, /new QRCode/);
+  assert.match(buildScript, /rex-tys-kolaybi-e-fatura\.xslt/);
+  assert.match(buildScript, /rex-tys-kolaybi-e-arsiv\.xslt/);
+  assert.match(guide, /KolayBi \*\*e-Fatura\*\* alanına/);
+  assert.match(guide, /KolayBi \*\*e-Arşiv\*\* alanına/);
+});
+
 test("incoming purchase invoices require documents, human matching and owner approval", async () => {
   const [sql, inbox, service] = await Promise.all([
     read("supabase/migrations/20260819013000_purchase_invoice_matching.sql"),

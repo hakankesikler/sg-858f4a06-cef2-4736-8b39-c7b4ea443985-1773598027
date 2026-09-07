@@ -85,7 +85,6 @@
   <xsl:template match="inv:Invoice">
     <xsl:variable name="currency" select="cbc:DocumentCurrencyCode"/>
     <xsl:variable name="profile" select="translate(normalize-space(cbc:ProfileID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/>
-    <xsl:variable name="isArchive" select="contains($profile,'EARSIV')"/>
     <xsl:variable name="qr" select="cac:AdditionalDocumentReference[contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'QR') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'KAREKOD') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'BARKOD') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'BARCODE')]/cac:Attachment/cbc:EmbeddedDocumentBinaryObject[1]"/>
     <xsl:variable name="qrUrl" select="cac:AdditionalDocumentReference[contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'QR') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'KAREKOD') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'BARKOD') or contains(translate(concat(cbc:DocumentTypeCode,' ',cbc:DocumentType,' ',cbc:ID),'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ'),'BARCODE')]/cac:Attachment/cac:ExternalReference/cbc:URI[1]"/>
     <html lang="tr">
@@ -166,7 +165,7 @@
             <div><img class="rex-logo" alt="REX Lojistik" src="data:image/jpeg;base64,__REX_LOGO_BASE64__"/></div>
             <div class="gib-block">
               <img class="gib-logo" alt="Gelir İdaresi Başkanlığı" src="data:image/jpeg;base64,__GIB_LOGO_BASE64__"/>
-              <div class="doc-type"><xsl:choose><xsl:when test="$isArchive">e-Arşiv Fatura</xsl:when><xsl:otherwise>e-Fatura</xsl:otherwise></xsl:choose></div>
+              <div class="doc-type">__DOCUMENT_TYPE_LABEL__</div>
               <div class="doc-subtype"><xsl:value-of select="cbc:InvoiceTypeCode"/></div>
             </div>
             <div class="qr-box">
@@ -268,7 +267,7 @@
                 <div class="total-row"><span>Vergiler Dahil Toplam</span><strong><xsl:call-template name="money"><xsl:with-param name="value" select="cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></strong></div>
                 <div class="total-row grand"><span>Ödenecek Tutar</span><strong><xsl:call-template name="money"><xsl:with-param name="value" select="cac:LegalMonetaryTotal/cbc:PayableAmount"/><xsl:with-param name="currency" select="$currency"/></xsl:call-template></strong></div>
               </div>
-              <xsl:if test="$isArchive"><div class="archive-note">Bu belge e-Arşiv Fatura kapsamında elektronik ortamda düzenlenmiş ve iletilmiştir.</div></xsl:if>
+              __ARCHIVE_NOTE__
             </div>
           </section>
 
