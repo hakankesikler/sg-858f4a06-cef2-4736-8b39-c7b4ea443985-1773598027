@@ -1379,6 +1379,16 @@ test("sales invoice e-document choice is automatic and TUSAN is confirmed as e-i
   assert.doesNotMatch(invoiceDialog, /E-belge türünü KolayBi cari\/fatura bilgileriyle kontrol ettim/);
 });
 
+test("KolayBi sandbox test identities receive deterministic e-document profiles", async () => {
+  const syncApi = await read("src/pages/api/kolaybi/office-sync.ts");
+  assert.match(syncApi, /identity === "1020304050" \|\| identity === "12345678901"/);
+  assert.match(syncApi, /documentType: "e_invoice" as const, scenario: "TICARIFATURA" as const/);
+  assert.match(syncApi, /identity === "11111111111"/);
+  assert.match(syncApi, /documentType: "e_archive" as const, scenario: "EARSIVFATURA" as const/);
+  assert.match(syncApi, /providerEnvironment === "test"/);
+  assert.match(syncApi, /kolaybi_e_document_source: "kolaybi_sandbox_test_identity"/);
+});
+
 test("shipment save lets PostgreSQL calculate the generated cargo subtotal", async () => {
   const sql = await read("supabase/migrations/20260905103000_fix_shipment_generated_subtotal.sql");
   const cargoInsert = sql.match(/INSERT INTO public\.shipment_cargo_items\([\s\S]*?FROM jsonb_array_elements\(p_cargo_items\) item;/)?.[0] || "";

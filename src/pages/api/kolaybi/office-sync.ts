@@ -86,6 +86,17 @@ function eDocumentProfile(item: any) {
   };
 }
 
+function sandboxIdentityEDocumentProfile(identityNo: string) {
+  const identity = digits(identityNo);
+  if (identity === "1020304050" || identity === "12345678901") {
+    return { documentType: "e_invoice" as const, scenario: "TICARIFATURA" as const };
+  }
+  if (identity === "11111111111") {
+    return { documentType: "e_archive" as const, scenario: "EARSIVFATURA" as const };
+  }
+  return null;
+}
+
 async function updateCustomerEDocumentProfile(
   admin: any,
   customerId: string,
@@ -375,10 +386,24 @@ async function findLocal(
     }
     if (result?.id) {
       const invoiceAddress = (Array.isArray(item?.address) ? item.address : []).find((address: any) => address?.address_type === "invoice") || item?.address?.[0];
-      await admin.from("customers").update({
+      const sandboxProfile = providerEnvironment === "test"
+        ? sandboxIdentityEDocumentProfile(row.taxIdentity)
+        : null;
+      const now = new Date().toISOString();
+      const { error: customerUpdateError } = await admin.from("customers").update({
         kolaybi_contact_id: Number(row.externalId),
         ...(invoiceAddress?.id ? { kolaybi_address_id: Number(invoiceAddress.id) } : {}),
+        ...(sandboxProfile ? {
+          kolaybi_e_document_type: sandboxProfile.documentType,
+          kolaybi_e_document_scenario: sandboxProfile.scenario,
+          kolaybi_e_document_source: "kolaybi_sandbox_test_identity",
+          kolaybi_e_document_environment: "test",
+          kolaybi_e_document_evidence_at: now,
+          kolaybi_e_document_checked_at: now,
+        } : {}),
+        updated_at: now,
       }).eq("id", result.id);
+      if (customerUpdateError) throw customerUpdateError;
       return { type: "customer", id: result.id };
     }
   }
