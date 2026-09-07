@@ -442,6 +442,9 @@ test("invoice descriptions and bank details are selected in REX TYS and snapshot
   assert.match(settings, /Fatura açıklama şablonları/);
   assert.match(settings, /Faturada gösterilecek banka hesapları/);
   assert.match(xslt, /Açıklama, Notlar ve Banka Bilgileri/);
+  assert.match(xslt, /new QRCode/);
+  assert.match(xslt, /"vkntckn"/);
+  assert.match(xslt, /"avkntckn"/);
 });
 
 test("incoming purchase invoices require documents, human matching and owner approval", async () => {

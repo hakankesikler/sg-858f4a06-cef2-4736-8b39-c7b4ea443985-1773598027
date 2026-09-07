@@ -8,7 +8,7 @@
 
 Şablon kendi içinde REX Lojistik web sitesi logosunu ve GİB logosunu taşır. Ayrı görsel yüklenmesi gerekmez.
 
-GİB karekodu, KolayBi'nin ürettiği UBL içindeki `AdditionalDocumentReference` alanından okunur. Şablon `QR`, `KAREKOD`, `BARKOD` ve `BARCODE` tanımlarını; hem gömülü Base64 görseli hem de harici URI biçimini destekler. Karekodun oluşması için KolayBi'nin nihai UBL belgesine karekod verisini eklemesi gerekir.
+GİB karekodu öncelikle KolayBi'nin ürettiği UBL içindeki `AdditionalDocumentReference` alanından okunur. Şablon `QR`, `KAREKOD`, `BARKOD` ve `BARCODE` tanımlarını; hem gömülü Base64 görseli hem de harici URI biçimini destekler. UBL içinde hazır karekod bulunmazsa, KolayBi'nin önceki resmî şablonuyla aynı alanları kullanan gömülü QR üreticisi karekodu fatura verilerinden oluşturur.
 
 ## TMS bilgilerinin faturada görünmesi
 
