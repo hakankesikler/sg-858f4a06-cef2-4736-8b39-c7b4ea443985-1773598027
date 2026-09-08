@@ -25,6 +25,7 @@ import { kolaybiOfficeService, type KolayBiOfficeData } from "@/services/kolaybi
 const EMPTY_DATA: KolayBiOfficeData = {
   salesInvoices: [], purchaseInvoices: [], expenses: [], products: [], customers: [],
   financialAccounts: [], transactions: [], projects: [], shipments: [], providerRecords: [], syncRuns: [],
+  associateRecords: [], customerFinancialDirectory: [], providerSummary: { records: 0, matched: 0, review: 0 },
   integrationPartners: [], outboundQueue: { pending: 0, review: 0 },
 };
 
@@ -41,6 +42,8 @@ const currencyCode = (value: unknown) => {
   const direct = candidate.match(/\b(TRY|TL|USD|EUR|GBP)\b/)?.[1];
   return direct === "TL" ? "TRY" : direct || "TRY";
 };
+
+const identityDigits = (value: unknown) => String(value || "").replace(/\D/g, "");
 
 const date = (value: unknown) => {
   if (!value) return "-";
@@ -195,62 +198,92 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
     return { sales, purchases, expenses, cash, delivered, waitingInvoice };
   }, [data]);
 
-  const accountBalanceRows = useMemo(() => data.providerRecords
-    .filter((record) => record.resource_type === "associate")
-    .flatMap((record) => {
+  const accountBalanceRows = useMemo(() => {
+    const customersById = new Map(data.customers.map((customer) => [String(customer.id), customer]));
+    const customersByCode = new Map<string, any | null>();
+    const customersByTaxIdentity = new Map<string, any | null>();
+    const addUnique = (lookup: Map<string, any | null>, key: string, customer: any) => {
+      if (!key) return;
+      lookup.set(key, lookup.has(key) ? null : customer);
+    };
+    data.customers.forEach((customer) => {
+      addUnique(customersByCode, String(customer.customer_code || "").trim().toUpperCase(), customer);
+      addUnique(customersByTaxIdentity, identityDigits(customer.vergi_no || customer.tc_no), customer);
+    });
+    const financialByCustomer = new Map(data.customerFinancialDirectory.map((row) => [String(row.customer_id), row]));
+
+    return data.associateRecords.map((record) => {
       let payload = record.payload || {};
       if (typeof payload === "string") {
         try { payload = JSON.parse(payload); } catch { payload = {}; }
       }
       const balances = Array.isArray(payload?.balances) ? payload.balances : [];
-      return balances.map((balance: any) => {
+      const parsedBalances = balances.map((balance: any) => {
         const amount = Number(balance?.balance || 0);
         const currency = currencyCode(balance?.currency || record.currency);
         const parsedTantamount = balance?.tantamount === null || balance?.tantamount === undefined ? Number.NaN : Number(balance.tantamount);
         const companyAmount = Number.isFinite(parsedTantamount)
           ? parsedTantamount
           : currency === "TRY" ? amount : 0;
-        return {
-          externalId: record.external_id,
-          name: record.display_name || [payload?.name, payload?.surname].filter(Boolean).join(" ") || record.external_code || record.external_id,
-          code: record.external_code || payload?.code || "-",
-          accountType: payload?.associate_type || "cari",
-          currency,
-          balance: amount,
-          companyAmount,
-          direction: amount > 0 ? "Tahsil Edilecek" : "Ödenecek",
-          lastSeenAt: record.last_seen_at,
-        };
+        return { currency, amount, companyAmount };
       });
+      const providerBalance = parsedBalances.reduce((sum, balance) => sum + balance.companyAmount, 0);
+      const materialBalances = parsedBalances.filter((balance) => Math.abs(balance.amount) >= 0.01);
+      const code = String(record.external_code || payload?.code || "").trim();
+      const taxIdentity = identityDigits(record.tax_identity || payload?.identity_no);
+      const directlyMatched = record.local_entity_type === "customer" && record.local_entity_id
+        ? customersById.get(String(record.local_entity_id))
+        : null;
+      const localCustomer = directlyMatched
+        || customersByTaxIdentity.get(taxIdentity)
+        || customersByCode.get(code.toUpperCase())
+        || null;
+      const localFinancial = localCustomer ? financialByCustomer.get(String(localCustomer.id)) : null;
+      const rexBalance = Number(localFinancial?.balance || 0);
+      const difference = rexBalance - providerBalance;
+      return {
+        externalId: record.external_id,
+        name: record.display_name || [payload?.name, payload?.surname].filter(Boolean).join(" ") || code || record.external_id,
+        code: code || "-",
+        taxIdentity: taxIdentity || "-",
+        accountType: payload?.associate_type || "cari",
+        currencyBreakdown: materialBalances.map((balance) => money(balance.amount, balance.currency)).join(" · ") || "0,00 TRY",
+        providerBalance,
+        rexBalance,
+        difference,
+        status: !localCustomer ? "unmatched" : Math.abs(difference) < 0.01 ? "matched" : "different",
+        lastSeenAt: record.last_seen_at,
+      };
     })
-    .filter((row) => Math.abs(row.balance) >= 0.01)
-    .sort((left, right) => Math.abs(right.companyAmount || right.balance) - Math.abs(left.companyAmount || left.balance)), [data.providerRecords]);
+      .filter((row) => Math.abs(row.providerBalance) >= 0.01 || Math.abs(row.rexBalance) >= 0.01 || row.currencyBreakdown !== "0,00 TRY")
+      .sort((left, right) => Math.abs(right.difference) - Math.abs(left.difference));
+  }, [data.associateRecords, data.customerFinancialDirectory, data.customers]);
 
   const balanceSummary = useMemo(() => accountBalanceRows.reduce((summary, row) => {
-    if (row.balance > 0) summary.receivable += Math.abs(row.companyAmount);
-    if (row.balance < 0) summary.payable += Math.abs(row.companyAmount);
+    if (row.providerBalance > 0) summary.receivable += row.providerBalance;
+    if (row.providerBalance < 0) summary.payable += Math.abs(row.providerBalance);
+    summary.rexNet += row.rexBalance;
+    if (row.status === "matched") summary.matched += 1;
+    if (row.status === "different") summary.different += 1;
+    if (row.status === "unmatched") summary.unmatched += 1;
     return summary;
-  }, { receivable: 0, payable: 0 }), [accountBalanceRows]);
+  }, { receivable: 0, payable: 0, rexNet: 0, matched: 0, different: 0, unmatched: 0 }), [accountBalanceRows]);
 
   const reconciliation = useMemo(() => {
-    const activeResources = new Set(["associate", "product", "expense_type", "sales_invoice", "purchase_invoice", "general_expense", "vault", "vault_transaction"]);
-    const records = data.providerRecords.filter((record) => activeResources.has(record.resource_type));
-    const matched = records.filter((record) => record.match_status === "matched").length;
-    const review = records.filter((record) => record.match_status === "review_required").length;
     const latestRun = data.syncRuns.find((run) => run.status !== "running") || data.syncRuns[0] || null;
     const activeRun = data.syncRuns.find((run) => run.status === "running" && Date.now() - new Date(run.started_at).getTime() <= 6 * 60_000) || null;
     const latestAt = latestRun?.completed_at || latestRun?.started_at || null;
     const ageHours = latestAt ? (Date.now() - new Date(latestAt).getTime()) / 3_600_000 : Number.POSITIVE_INFINITY;
     return {
-      records: records.length,
-      matched,
-      review,
+      records: data.providerSummary.records,
+      matched: data.providerSummary.matched,
+      review: data.providerSummary.review,
       failed: Number(latestRun?.failed_count || 0),
       latestAt,
       active: Boolean(activeRun),
       healthy: Boolean(latestAt && ageHours <= 2 && latestRun?.status === "completed" && Number(latestRun?.failed_count || 0) === 0),
     };
-  }, [data.providerRecords, data.syncRuns]);
+  }, [data.providerSummary, data.syncRuns]);
 
   const kolaybiPartner = data.integrationPartners.find((row) => row.code === "KOLAYBI") || null;
   const providerEnvironment = connection?.environment || data.syncRuns[0]?.provider_environment || kolaybiPartner?.environment || null;
@@ -262,18 +295,20 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
   const balanceExportRows = useMemo(() => accountBalanceRows.map((row) => ({
     "Cari Kodu": row.code,
     "Cari Ünvanı": row.name,
+    "VKN/TCKN": row.taxIdentity,
     "Cari Tipi": row.accountType,
-    "Bakiye Durumu": row.direction,
-    "Para Birimi": row.currency,
-    "Döviz Bakiyesi": Math.abs(row.balance),
-    "Şirket Para Birimi Karşılığı": Math.abs(row.companyAmount),
+    "Döviz Bakiyeleri": row.currencyBreakdown,
+    "KolayBi TRY Karşılığı": row.providerBalance,
+    "REX TYS Bakiyesi": row.rexBalance,
+    "Fark": row.difference,
+    "Mutabakat": row.status === "matched" ? "Mutabık" : row.status === "different" ? "Farklı" : "Cari eşleşmesi yok",
     "KolayBi ID": row.externalId,
     "Son Güncelleme": row.lastSeenAt,
   })), [accountBalanceRows]);
 
   const recordsByType = (type: string) => data.providerRecords.filter((row) => row.resource_type === type);
-  const mappingCount = data.providerRecords.filter((row) => row.match_status === "matched").length;
-  const reviewCount = data.providerRecords.filter((row) => row.match_status === "review_required").length;
+  const mappingCount = data.providerSummary.matched;
+  const reviewCount = data.providerSummary.review;
   const pendingProductCount = data.products.filter((row) => row.external_source === "kolaybi" && row.approval_status === "pending").length;
 
   const exportRows = async (name: string, rows: Record<string, unknown>[]) => {
@@ -524,8 +559,8 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
           {canViewAccounts && <Card>
             <CardHeader className="gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle>Cari Borç / Alacak Raporu</CardTitle>
-                <CardDescription>KolayBi'nin güncel cari bakiyeleri gösterilir; bakiyesi 0,00 olan cariler otomatik olarak gizlenir.</CardDescription>
+                <CardTitle>Cari Bakiye Mutabakatı</CardTitle>
+                <CardDescription>Tüm canlı KolayBi carileri REX TYS ile karşılaştırılır; iki tarafta da bakiyesi 0,00 olan cariler otomatik gizlenir.</CardDescription>
               </div>
               <div className="flex flex-wrap gap-2">
                 {canManageSync && <Button variant="outline" disabled={syncing} onClick={() => void synchronize("associates")}>
@@ -537,17 +572,27 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                 <div className="rounded-xl border border-green-200 bg-green-50 p-4"><p className="text-sm text-green-700">Tahsil Edilecek</p><p className="mt-1 text-xl font-bold text-green-900">{money(balanceSummary.receivable)}</p></div>
                 <div className="rounded-xl border border-orange-200 bg-orange-50 p-4"><p className="text-sm text-orange-700">Ödenecek</p><p className="mt-1 text-xl font-bold text-orange-900">{money(balanceSummary.payable)}</p></div>
-                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4"><p className="text-sm text-blue-700">Açık Bakiyeli Cari</p><p className="mt-1 text-xl font-bold text-blue-900">{accountBalanceRows.length}</p></div>
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4"><p className="text-sm text-blue-700">REX TYS Net</p><p className="mt-1 text-xl font-bold text-blue-900">{money(balanceSummary.rexNet)}</p></div>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="text-sm text-emerald-700">Mutabık Cari</p><p className="mt-1 text-xl font-bold text-emerald-900">{balanceSummary.matched}</p></div>
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4"><p className="text-sm text-red-700">Farklı / Eşleşmemiş</p><p className="mt-1 text-xl font-bold text-red-900">{balanceSummary.different + balanceSummary.unmatched}</p></div>
               </div>
               <div className="overflow-x-auto rounded-xl border">
-                <Table><TableHeader><TableRow><TableHead>Cari</TableHead><TableHead>Kod</TableHead><TableHead>Durum</TableHead><TableHead>Para</TableHead><TableHead className="text-right">Bakiye</TableHead><TableHead className="text-right">TRY Karşılığı</TableHead></TableRow></TableHeader><TableBody>
-                  {accountBalanceRows.length === 0 ? <EmptyRow columns={6} text="Açık bakiyeli cari bulunmuyor. KolayBi bağlantısı tamamlandıktan sonra Bakiyeleri Yenile düğmesini kullanın." /> : accountBalanceRows.map((row) => <TableRow key={`${row.externalId}-${row.currency}`}><TableCell className="font-medium">{row.name}</TableCell><TableCell className="font-mono">{row.code}</TableCell><TableCell><Badge variant="outline" className={row.balance > 0 ? "border-green-200 bg-green-50 text-green-700" : "border-orange-200 bg-orange-50 text-orange-700"}>{row.direction}</Badge></TableCell><TableCell>{row.currency}</TableCell><TableCell className="text-right font-semibold">{money(Math.abs(row.balance), row.currency)}</TableCell><TableCell className="text-right">{money(Math.abs(row.companyAmount))}</TableCell></TableRow>)}
+                <Table><TableHeader><TableRow><TableHead>Cari</TableHead><TableHead>Kod / VKN</TableHead><TableHead>Döviz Bakiyeleri</TableHead><TableHead className="text-right">KolayBi TRY</TableHead><TableHead className="text-right">REX TYS</TableHead><TableHead className="text-right">Fark</TableHead><TableHead>Mutabakat</TableHead></TableRow></TableHeader><TableBody>
+                  {accountBalanceRows.length === 0 ? <EmptyRow columns={7} text="Açık bakiyeli cari bulunmuyor. KolayBi bağlantısı tamamlandıktan sonra Bakiyeleri Yenile düğmesini kullanın." /> : accountBalanceRows.map((row) => <TableRow key={row.externalId}>
+                    <TableCell className="font-medium">{row.name}</TableCell>
+                    <TableCell><p className="font-mono">{row.code}</p><p className="text-xs text-slate-500">{row.taxIdentity}</p></TableCell>
+                    <TableCell className="whitespace-nowrap">{row.currencyBreakdown}</TableCell>
+                    <TableCell className="text-right font-semibold">{money(row.providerBalance)}</TableCell>
+                    <TableCell className="text-right">{money(row.rexBalance)}</TableCell>
+                    <TableCell className={`text-right font-semibold ${Math.abs(row.difference) < 0.01 ? "text-green-700" : "text-red-700"}`}>{money(row.difference)}</TableCell>
+                    <TableCell><Badge variant="outline" className={row.status === "matched" ? "border-green-200 bg-green-50 text-green-700" : row.status === "different" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-red-200 bg-red-50 text-red-700"}>{row.status === "matched" ? "Mutabık" : row.status === "different" ? "Farklı" : "Cari eşleşmesi yok"}</Badge></TableCell>
+                  </TableRow>)}
                 </TableBody></Table>
               </div>
-              <p className="text-xs text-slate-500">0,01 altındaki yuvarlama farkları sıfır kabul edilir. Pozitif bakiye tahsil edilecek, negatif bakiye ödenecek olarak gösterilir.</p>
+              <p className="text-xs text-slate-500">0,01 TL altındaki yuvarlama farkları mutabık kabul edilir. Pozitif KolayBi bakiyesi tahsil edilecek, negatif bakiye ödenecek tutardır. Döviz bakiyeleri KolayBi'nin güncel TRY karşılıklarıyla karşılaştırılır.</p>
             </CardContent>
           </Card>}
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

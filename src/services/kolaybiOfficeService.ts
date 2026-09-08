@@ -11,6 +11,9 @@ export type KolayBiOfficeData = {
   projects: any[];
   shipments: any[];
   providerRecords: any[];
+  associateRecords: any[];
+  customerFinancialDirectory: any[];
+  providerSummary: { records: number; matched: number; review: number };
   syncRuns: any[];
   integrationPartners: any[];
   outboundQueue: { pending: number; review: number };
@@ -27,6 +30,57 @@ async function rows(table: string, orderColumn = "created_at", ascending = false
 
 async function optionalRows(table: string, orderColumn = "created_at", limit = 500) {
   try { return await rows(table, orderColumn, false, limit); } catch { return []; }
+}
+
+async function optionalAllRows(
+  table: string,
+  orderColumn = "id",
+  filters: Record<string, string> = {},
+  pageSize = 1000,
+) {
+  try {
+    const result: any[] = [];
+    for (let from = 0; ; from += pageSize) {
+      let query = (supabase.from(table as any) as any)
+        .select("*")
+        .order(orderColumn, { ascending: true })
+        .range(from, from + pageSize - 1);
+      Object.entries(filters).forEach(([column, value]) => { query = query.eq(column, value); });
+      const { data, error } = await query;
+      if (error) throw error;
+      const page = data || [];
+      result.push(...page);
+      if (page.length < pageSize) break;
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
+async function optionalProviderRows(providerEnvironment: string, limit = 1000) {
+  try {
+    const { data, error } = await (supabase.from("kolaybi_master_records" as any) as any)
+      .select("*")
+      .eq("provider_environment", providerEnvironment)
+      .order("last_seen_at", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data || [];
+  } catch { return []; }
+}
+
+async function optionalProviderCount(providerEnvironment: string, matchStatus?: string) {
+  try {
+    let query = (supabase.from("kolaybi_master_records" as any) as any)
+      .select("id", { count: "exact", head: true })
+      .eq("provider_environment", providerEnvironment)
+      .in("resource_type", ["associate", "product", "expense_type", "sales_invoice", "purchase_invoice", "general_expense", "vault", "vault_transaction"]);
+    if (matchStatus) query = query.eq("match_status", matchStatus);
+    const { count, error } = await query;
+    if (error) throw error;
+    return Number(count || 0);
+  } catch { return 0; }
 }
 
 async function optionalCount(table: string, statuses: string[]) {
@@ -117,27 +171,43 @@ async function synchronizeAllResources() {
 
 export const kolaybiOfficeService = {
   async getData(): Promise<KolayBiOfficeData> {
+    const [syncRuns, integrationPartners] = await Promise.all([
+      optionalRows("kolaybi_sync_runs", "started_at"),
+      optionalRows("integration_partners", "updated_at", 20),
+    ]);
+    const kolaybiPartner = integrationPartners.find((row) => row.code === "KOLAYBI") || null;
+    const configuredEnvironment = kolaybiPartner?.environment || syncRuns[0]?.provider_environment;
+    const providerEnvironment = configuredEnvironment === "live" ? "live" : "test";
     const [
       salesInvoices, purchaseInvoices, expenses, products, customers,
-      financialAccounts, transactions, projects, shipments, providerRecords, syncRuns,
-      integrationPartners, outboundPending, outboundReview,
+      financialAccounts, transactions, projects, shipments, providerRecords, associateRecords,
+      customerFinancialDirectory, providerRecordsCount, providerMatchedCount, providerReviewCount,
+      outboundPending, outboundReview,
     ] = await Promise.all([
       rows("sales_invoices", "created_at"),
       optionalRows("purchase_invoices", "created_at"),
       rows("expenses", "expense_date"),
       rows("products_services", "created_at"),
-      rows("customers", "created_at"),
+      optionalAllRows("customers", "id"),
       rows("financial_accounts", "created_at"),
       financeTransactions(),
       Promise.resolve([]),
       rows("shipments", "created_at"),
-      optionalRows("kolaybi_master_records", "last_seen_at", 1000),
-      optionalRows("kolaybi_sync_runs", "started_at"),
-      optionalRows("integration_partners", "updated_at", 20),
+      optionalProviderRows(providerEnvironment, 1000),
+      optionalAllRows("kolaybi_master_records", "id", { provider_environment: providerEnvironment, resource_type: "associate" }),
+      optionalAllRows("rex_customer_financial_directory", "customer_id"),
+      optionalProviderCount(providerEnvironment),
+      optionalProviderCount(providerEnvironment, "matched"),
+      optionalProviderCount(providerEnvironment, "review_required"),
       optionalCount("kolaybi_outbound_jobs", ["pending", "processing"]),
       optionalCount("kolaybi_outbound_jobs", ["review_required", "dead"]),
     ]);
-    return { salesInvoices, purchaseInvoices, expenses, products, customers, financialAccounts, transactions, projects, shipments, providerRecords, syncRuns, integrationPartners, outboundQueue: { pending: outboundPending, review: outboundReview } };
+    return {
+      salesInvoices, purchaseInvoices, expenses, products, customers, financialAccounts, transactions, projects, shipments,
+      providerRecords, associateRecords, customerFinancialDirectory,
+      providerSummary: { records: providerRecordsCount, matched: providerMatchedCount, review: providerReviewCount },
+      syncRuns, integrationPartners, outboundQueue: { pending: outboundPending, review: outboundReview },
+    };
   },
 
   async health() {

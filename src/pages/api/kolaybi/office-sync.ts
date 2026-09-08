@@ -78,8 +78,15 @@ function ignoredProviderRecord(summary: string) {
 }
 
 function currency(value: any) {
-  const candidate = text(value).toUpperCase();
-  return ["TRY", "USD", "EUR", "GBP"].includes(candidate) ? candidate : "TRY";
+  const candidates = value && typeof value === "object"
+    ? [value.code, value.key, value.iso_code, value.currency, value.value, value.short_name, value.name, value.description]
+    : [value];
+  for (const candidateValue of candidates) {
+    const candidate = text(candidateValue).toUpperCase();
+    const matched = candidate.match(/\b(TRY|TL|USD|EUR|GBP)\b/)?.[1];
+    if (matched) return matched === "TL" ? "TRY" : matched;
+  }
+  return "TRY";
 }
 
 async function processWithConcurrency<T>(
@@ -290,7 +297,7 @@ function normalized(resource: Resource, item: any) {
   if (resource === "associates") {
     const name = [text(item?.name), text(item?.surname)].filter(Boolean).join(" ");
     const balance = Array.isArray(item?.balances) ? item.balances[0] : null;
-    return { externalId, displayName: name || text(item?.code), code: text(item?.code), taxIdentity: digits(item?.identity_no), currency: text(balance?.currency).toUpperCase() || null, amount: number(balance?.balance), payload };
+    return { externalId, displayName: name || text(item?.code), code: text(item?.code), taxIdentity: digits(item?.identity_no), currency: currency(balance?.currency), amount: number(balance?.balance), payload };
   }
   if (resource === "products") {
     return { externalId, displayName: text(item?.name), code: text(item?.code), taxIdentity: "", currency: text(item?.sale_currency || item?.purchase_currency).toUpperCase() || null, amount: number(item?.sale_price || item?.purchase_price), payload };
