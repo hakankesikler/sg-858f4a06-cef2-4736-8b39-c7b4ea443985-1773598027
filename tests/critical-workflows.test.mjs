@@ -466,6 +466,25 @@ test("KolayBi e-invoice and e-archive use separate fixed-label XSLT files", asyn
   assert.match(guide, /KolayBi \*\*e-Arşiv\*\* alanına/);
 });
 
+test("KolayBi live cutover remains read-only until explicitly enabled", async () => {
+  const [gate, officeSync, queue, associateSync, purchaseSync] = await Promise.all([
+    read("src/lib/kolaybi-live-gate.ts"),
+    read("src/pages/api/kolaybi/office-sync.ts"),
+    read("src/lib/kolaybi.ts"),
+    read("src/lib/kolaybi-associates.ts"),
+    read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
+  ]);
+
+  assert.match(gate, /KOLAYBI_LIVE_SYNC_ENABLED/);
+  assert.match(gate, /includes\("sandbox"\)/);
+  assert.match(gate, /assertKolayBiSyncEnabled/);
+  assert.match(officeSync, /req\.method === "POST" \|\| cronMode/);
+  assert.match(officeSync, /isKolayBiSyncEnabled\(baseUrl\)/);
+  assert.match(queue, /assertKolayBiSyncEnabled\(config\.baseUrl\)/);
+  assert.match(associateSync, /assertKolayBiSyncEnabled\(baseUrl\)/);
+  assert.match(purchaseSync, /isKolayBiSyncEnabled\(baseUrl\)/);
+});
+
 test("incoming purchase invoices require documents, human matching and owner approval", async () => {
   const [sql, inbox, service] = await Promise.all([
     read("supabase/migrations/20260819013000_purchase_invoice_matching.sql"),

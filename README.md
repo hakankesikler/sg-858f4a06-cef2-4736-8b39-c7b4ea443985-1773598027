@@ -26,6 +26,7 @@ KOLAYBI_API_KEY=
 KOLAYBI_CHANNEL=
 KOLAYBI_PRODUCT_ID=
 KOLAYBI_BASE_URL=https://ofis-api.kolaybi.com/kolaybi/v1
+KOLAYBI_LIVE_SYNC_ENABLED=false
 KOLAYBI_AUTO_SEND_E_DOCUMENT=false
 KOLAYBI_E_DOCUMENT_PREFIX=
 SUPABASE_SERVICE_ROLE_KEY=
@@ -33,6 +34,8 @@ CRON_SECRET=
 ```
 
 `CRON_SECRET` en az 16 karakterlik rastgele bir değer olmalıdır. `SUPABASE_SERVICE_ROLE_KEY` ve bütün KolayBi anahtarları yalnızca Vercel sunucu ortamında tutulur; `NEXT_PUBLIC_` ile başlayan değişkenlere kesinlikle yazılmaz.
+
+Canlı API bilgileri ilk kez tanımlanırken `KOLAYBI_LIVE_SYNC_ENABLED=false` tutulur. Bu durumda bağlantı kontrolü yapılabilir; otomatik senkronizasyon, cari/fatura aktarımı, tahsilat, iptal ve iade KolayBi canlı hesabına yazmaz. Kontrollü kabul testinden sonra değer `true` yapılarak canlı akış açılır.
 
 Önce cari kartındaki **KolayBi Contact ID** ve **Address ID** alanları eşleştirilir. Taşıma hizmeti için `KOLAYBI_PRODUCT_ID` veya `invoice_product_mappings` tablosundaki `HIZMET` eşlemesi kullanılır. Anahtarlar ya da eşlemeler eksikse yerel taslak korunur, sevkiyat faturalandı sayılmaz ve hata muhasebe ekranında gösterilir.
 

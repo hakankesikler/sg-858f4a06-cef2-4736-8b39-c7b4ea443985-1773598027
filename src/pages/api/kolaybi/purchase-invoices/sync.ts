@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { isKolayBiSyncEnabled } from "@/lib/kolaybi-live-gate";
 
 const defaultBaseUrl = "https://ofis-sandbox-api.kolaybi.com/kolaybi/v1";
 
@@ -103,6 +104,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const baseUrl = (process.env.KOLAYBI_BASE_URL || defaultBaseUrl).replace(/\/$/, "");
   if (!apiKey || !channel || !companyId) {
     return res.status(422).json({ error: "KolayBi API anahtarı, Channel ve Company ID bilgileri tamamlanmalıdır." });
+  }
+  if (!isKolayBiSyncEnabled(baseUrl)) {
+    return res.status(503).json({ error: "KolayBi canlı senkronizasyonu güvenli geçiş için kapalıdır." });
   }
 
   try {

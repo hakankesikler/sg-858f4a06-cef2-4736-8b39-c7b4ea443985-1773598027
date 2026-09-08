@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { assertKolayBiSyncEnabled } from "@/lib/kolaybi-live-gate";
 
 const DEFAULT_BASE_URL = "https://ofis-sandbox-api.kolaybi.com/kolaybi/v1";
 
@@ -95,6 +96,7 @@ export async function synchronizeKolayBiAssociate(input: {
   const baseUrl = (process.env.KOLAYBI_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, "");
   const providerEnvironment: "test" | "live" = baseUrl.includes("sandbox") ? "test" : "live";
   if (!apiKey || !channel) throw new Error("KolayBi API anahtarı ve Channel bilgileri tamamlanmalıdır.");
+  assertKolayBiSyncEnabled(baseUrl);
 
   const tokenResponse = await fetch(`${baseUrl}/access_token`, {
     method: "POST",

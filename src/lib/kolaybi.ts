@@ -1,4 +1,5 @@
 import { synchronizeKolayBiAssociate } from "@/lib/kolaybi-associates";
+import { assertKolayBiSyncEnabled } from "@/lib/kolaybi-live-gate";
 
 type DatabaseClient = any;
 
@@ -591,6 +592,8 @@ export async function processKolayBiJob(
     actorEmail?: string | null;
   } = {},
 ) {
+  const config = getConfig();
+  assertKolayBiSyncEnabled(config.baseUrl);
   const workerId = `rex-${crypto.randomUUID()}`;
   const { data: claimed, error: claimError } = await db.rpc("rex_claim_invoice_sync_job", {
     p_worker_id: workerId,
@@ -607,7 +610,6 @@ export async function processKolayBiJob(
   };
 
   try {
-    const config = getConfig();
     let invoice = await loadInvoice(db, job.invoice_id);
     if (job.job_type === "send" && !invoice.kolaybi_document_id) {
       if (!invoice.customer?.kolaybi_contact_id || !invoice.customer?.kolaybi_address_id) {
@@ -829,6 +831,7 @@ export async function proceedKolayBiInvoice(
   input: { invoiceId: string; vaultId: number; amount: number; issueDate: string },
 ) {
   const config = getConfig();
+  assertKolayBiSyncEnabled(config.baseUrl);
   const invoice = await loadInvoice(db, input.invoiceId);
   if (!invoice.kolaybi_document_id) {
     throw new KolayBiError("Fatura henüz KolayBi ile eşleştirilmemiş.", false);
@@ -864,6 +867,7 @@ export async function cancelKolayBiInvoice(
   input: { invoiceId: string; cancellationType: "iptal" | "iade"; reason: string },
 ) {
   const config = getConfig();
+  assertKolayBiSyncEnabled(config.baseUrl);
   const invoice = await loadInvoice(db, input.invoiceId);
   const documentId = Number(invoice.kolaybi_document_id || 0);
   if (!documentId) return { providerApplied: false, reference: null, result: null };

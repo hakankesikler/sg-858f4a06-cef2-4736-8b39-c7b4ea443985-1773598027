@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { isKolayBiSyncEnabled } from "@/lib/kolaybi-live-gate";
 
 const DEFAULT_BASE_URL = "https://ofis-sandbox-api.kolaybi.com/kolaybi/v1";
 const SUPPORTED_RESOURCES = ["associates", "products", "expense_types", "sales_invoices", "purchase_invoices", "general_expenses", "vaults", "vault_transactions"] as const;
@@ -733,6 +734,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const baseUrl = (process.env.KOLAYBI_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, "");
   const providerEnvironment: "test" | "live" = baseUrl.includes("sandbox") ? "test" : "live";
   if (!apiKey || !channel) return res.status(422).json({ error: "KolayBi API anahtarı ve Channel bilgileri tamamlanmalıdır." });
+
+  if ((req.method === "POST" || cronMode) && !isKolayBiSyncEnabled(baseUrl)) {
+    return res.status(503).json({
+      error: "KolayBi canlı senkronizasyonu güvenli geçiş için kapalıdır.",
+      environment: providerEnvironment,
+    });
+  }
 
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const updatePartner = async (success: boolean, errorMessage?: string | null, synced = false) => {
