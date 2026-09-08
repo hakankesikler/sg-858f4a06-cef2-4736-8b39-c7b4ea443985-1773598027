@@ -480,7 +480,9 @@ test("KolayBi live cutover remains read-only until explicitly enabled", async ()
   assert.match(gate, /assertKolayBiSyncEnabled/);
   assert.match(officeSync, /req\.method === "POST" \|\| cronMode/);
   assert.match(officeSync, /isKolayBiSyncEnabled\(baseUrl\)/);
-  assert.match(officeSync, /processWithConcurrency\(records, 16/);
+  assert.match(officeSync, /processWithConcurrency\(records, 24/);
+  assert.match(officeSync, /writeBatches\(admin, "kolaybi_master_records"/);
+  assert.match(officeSync, /writeBatches\(admin, "kolaybi_sync_events"/);
   assert.match(officeSync, /processWithConcurrency\(resourcesBeforeTransactions, 3, syncResource\)/);
   assert.match(officeSync, /if \(resources\.includes\("vault_transactions"\)\) await syncResource\("vault_transactions"\)/);
   assert.match(queue, /assertKolayBiSyncEnabled\(config\.baseUrl\)/);
@@ -1279,7 +1281,11 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(collection, /önce KolayBi faturasına/);
   const vercelConfig = JSON.parse(vercel);
   assert.match(vercel, /\/api\/kolaybi\/process-queue\?limit=10[\s\S]*\*\/15 \* \* \* \*/);
-  assert.match(vercel, /\/api\/kolaybi\/office-sync\?mode=active[\s\S]*7 \* \* \* \*/);
+  assert.match(vercel, /office-sync\?mode=active&resource=products/);
+  assert.match(vercel, /office-sync\?mode=active&resource=associates/);
+  assert.match(vercel, /office-sync\?mode=active&resource=sales_invoices/);
+  assert.match(vercel, /office-sync\?mode=active&resource=purchase_invoices/);
+  assert.match(vercel, /office-sync\?mode=active&resource=vault_transactions/);
   assert.match(vercel, /\/api\/kolaybi\/outbound-sync\?limit=20[\s\S]*12,27,42,57 \* \* \* \*/);
   assert.match(vercel, /\/api\/kolaybi\/purchase-invoices\/sync[\s\S]*17 \* \* \* \*/);
   assert.deepEqual(vercelConfig.regions, ["fra1"]);
@@ -1290,6 +1296,10 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(service, /resolveMapping/);
   assert.match(service, /reviewImportedProduct/);
   assert.match(service, /synchronizeAssociateTransactions/);
+  assert.match(service, /KOLAYBI_SYNC_RESOURCES/);
+  assert.match(service, /synchronizeAllResources/);
+  assert.match(api, /kolaybi-office:active:\$\{requested\}:\$\{hourKey\}/);
+  assert.match(api, /Senkronizasyon sunucu süre sınırında tamamlanamadı/);
   assert.doesNotMatch(cariForm, /<Label>Contact ID<\/Label>/);
   assert.doesNotMatch(cariForm, /<Label>Address ID<\/Label>/);
   assert.match(cariForm, /KolayBi Otomatik Eşleştirme/);

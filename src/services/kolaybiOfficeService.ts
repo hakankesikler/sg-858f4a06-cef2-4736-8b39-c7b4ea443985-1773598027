@@ -61,6 +61,60 @@ async function authenticatedFetch(url: string, init: RequestInit = {}) {
   return result;
 }
 
+const KOLAYBI_SYNC_RESOURCES = [
+  "products",
+  "expense_types",
+  "vaults",
+  "associates",
+  "general_expenses",
+  "sales_invoices",
+  "purchase_invoices",
+  "vault_transactions",
+] as const;
+type KolayBiSyncResource = (typeof KOLAYBI_SYNC_RESOURCES)[number];
+
+async function synchronizeResource(resource: string) {
+  return authenticatedFetch("/api/kolaybi/office-sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      resource,
+      idempotencyKey: `kolaybi-office:${resource}:${crypto.randomUUID()}`,
+    }),
+  });
+}
+
+async function synchronizeAllResources() {
+  const results: any[] = [];
+  const errors: string[] = [];
+  const runPhase = async (resources: readonly KolayBiSyncResource[], concurrency: number) => {
+    let nextIndex = 0;
+    const workers = Array.from({ length: Math.min(concurrency, resources.length) }, async () => {
+      while (nextIndex < resources.length) {
+        const resource = resources[nextIndex];
+        nextIndex += 1;
+        try {
+          results.push(await synchronizeResource(resource));
+        } catch (error: any) {
+          errors.push(`${resource}: ${String(error?.message || error)}`);
+        }
+      }
+    });
+    await Promise.all(workers);
+  };
+  await runPhase(["products", "expense_types", "vaults"], 3);
+  await runPhase(["associates", "general_expenses", "sales_invoices", "purchase_invoices"], 3);
+  await runPhase(["vault_transactions"], 1);
+  const runs = results.map((result) => result?.run).filter(Boolean);
+  const run = runs.reduce((summary, current) => ({
+    received_count: summary.received_count + Number(current.received_count || 0),
+    matched_count: summary.matched_count + Number(current.matched_count || 0),
+    review_count: summary.review_count + Number(current.review_count || 0),
+    failed_count: summary.failed_count + Number(current.failed_count || 0),
+  }), { received_count: 0, matched_count: 0, review_count: 0, failed_count: 0 });
+  return { success: errors.length === 0 && run.failed_count === 0, run, results, errors };
+}
+
 export const kolaybiOfficeService = {
   async getData(): Promise<KolayBiOfficeData> {
     const [
@@ -91,14 +145,7 @@ export const kolaybiOfficeService = {
   },
 
   async synchronize(resource = "all") {
-    return authenticatedFetch("/api/kolaybi/office-sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        resource,
-        idempotencyKey: `kolaybi-office:${resource}:${crypto.randomUUID()}`,
-      }),
-    });
+    return resource === "all" ? synchronizeAllResources() : synchronizeResource(resource);
   },
 
   async synchronizeOutbound(limit = 20) {

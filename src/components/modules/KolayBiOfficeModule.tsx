@@ -237,7 +237,8 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
     const records = data.providerRecords.filter((record) => activeResources.has(record.resource_type));
     const matched = records.filter((record) => record.match_status === "matched").length;
     const review = records.filter((record) => record.match_status === "review_required").length;
-    const latestRun = data.syncRuns[0] || null;
+    const latestRun = data.syncRuns.find((run) => run.status !== "running") || data.syncRuns[0] || null;
+    const activeRun = data.syncRuns.find((run) => run.status === "running" && Date.now() - new Date(run.started_at).getTime() <= 6 * 60_000) || null;
     const latestAt = latestRun?.completed_at || latestRun?.started_at || null;
     const ageHours = latestAt ? (Date.now() - new Date(latestAt).getTime()) / 3_600_000 : Number.POSITIVE_INFINITY;
     return {
@@ -246,12 +247,13 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
       review,
       failed: Number(latestRun?.failed_count || 0),
       latestAt,
-      healthy: Boolean(latestAt && ageHours <= 2 && Number(latestRun?.failed_count || 0) === 0),
+      active: Boolean(activeRun),
+      healthy: Boolean(latestAt && ageHours <= 2 && latestRun?.status === "completed" && Number(latestRun?.failed_count || 0) === 0),
     };
   }, [data.providerRecords, data.syncRuns]);
 
   const kolaybiPartner = data.integrationPartners.find((row) => row.code === "KOLAYBI") || null;
-  const providerEnvironment = connection?.environment || kolaybiPartner?.environment || data.syncRuns[0]?.provider_environment || null;
+  const providerEnvironment = connection?.environment || data.syncRuns[0]?.provider_environment || kolaybiPartner?.environment || null;
   const latestSyncAt = reconciliation.latestAt || kolaybiPartner?.last_sync_at || null;
   const nextSyncAt = latestSyncAt ? new Date(new Date(latestSyncAt).getTime() + 60 * 60 * 1000).toISOString() : null;
   const outboundPending = data.outboundQueue.pending;
@@ -325,7 +327,7 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
         </div>
         <div className="mt-4 flex flex-wrap gap-3 text-xs">
           <span className="rounded-full bg-white/15 px-3 py-1">Ortam: {providerEnvironment === "live" ? "Canlı" : providerEnvironment === "test" ? "Sandbox" : "Yapılandırılmadı"}</span>
-          <span className="rounded-full bg-white/15 px-3 py-1">Durum: {reconciliation.healthy ? "Güncel" : latestSyncAt ? "Kontrol gerekli" : "İlk çalışma bekleniyor"}</span>
+          <span className="rounded-full bg-white/15 px-3 py-1">Durum: {reconciliation.active ? "Senkronize ediliyor" : reconciliation.healthy ? "Güncel" : latestSyncAt ? "Kontrol gerekli" : "İlk çalışma bekleniyor"}</span>
           <span className="rounded-full bg-white/15 px-3 py-1">Eşleşen: {mappingCount}</span>
           <span className="rounded-full bg-white/15 px-3 py-1">Kontrol gereken: {reviewCount}</span>
           <span className="rounded-full bg-white/15 px-3 py-1">Cari kuyruğu: {outboundPending} bekleyen{outboundReview ? `, ${outboundReview} kontrol` : ""}</span>

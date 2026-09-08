@@ -16,10 +16,14 @@
       "path": "/api/kolaybi/process-queue?limit=10",
       "schedule": "*/15 * * * *"
     },
-    {
-      "path": "/api/kolaybi/office-sync?mode=active",
-      "schedule": "7 * * * *"
-    },
+    { "path": "/api/kolaybi/office-sync?mode=active&resource=products", "schedule": "7 * * * *" },
+    { "path": "/api/kolaybi/office-sync?mode=active&resource=expense_types", "schedule": "10 * * * *" },
+    { "path": "/api/kolaybi/office-sync?mode=active&resource=vaults", "schedule": "13 * * * *" },
+    { "path": "/api/kolaybi/office-sync?mode=active&resource=associates", "schedule": "17 * * * *" },
+    { "path": "/api/kolaybi/office-sync?mode=active&resource=general_expenses", "schedule": "22 * * * *" },
+    { "path": "/api/kolaybi/office-sync?mode=active&resource=sales_invoices", "schedule": "27 * * * *" },
+    { "path": "/api/kolaybi/office-sync?mode=active&resource=purchase_invoices", "schedule": "32 * * * *" },
+    { "path": "/api/kolaybi/office-sync?mode=active&resource=vault_transactions", "schedule": "37 * * * *" },
     {
       "path": "/api/kolaybi/outbound-sync?limit=20",
       "schedule": "12,27,42,57 * * * *"

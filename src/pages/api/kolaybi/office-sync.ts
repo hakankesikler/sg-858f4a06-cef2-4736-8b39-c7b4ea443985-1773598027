@@ -81,6 +81,22 @@ async function processWithConcurrency<T>(
   await Promise.all(workers);
 }
 
+async function writeBatches(
+  admin: any,
+  table: string,
+  records: any[],
+  options?: { onConflict?: string },
+) {
+  for (let index = 0; index < records.length; index += 250) {
+    const batch = records.slice(index, index + 250);
+    const query = options?.onConflict
+      ? admin.from(table).upsert(batch, { onConflict: options.onConflict })
+      : admin.from(table).insert(batch);
+    const { error } = await query;
+    if (error) throw error;
+  }
+}
+
 function invoiceHeader(item: any) {
   return item?.header || item?.document?.header || {};
 }
@@ -779,7 +795,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ success: true, environment: providerEnvironment, companies: listFrom(companies) });
     }
 
-    const requested = text(cronMode ? "all" : req.body?.resource || "all");
+    const requested = text(cronMode ? req.query.resource || "all" : req.body?.resource || "all");
     const resources: Resource[] = requested === "all" ? [...SUPPORTED_RESOURCES] : SUPPORTED_RESOURCES.includes(requested as Resource) ? [requested as Resource] : [];
     if (!resources.length) return res.status(400).json({ error: "Desteklenmeyen senkronizasyon kaynağı." });
     if (!companyId && resources.includes("sales_invoices")) {
@@ -791,8 +807,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!companyId) throw new ProviderError("E-belge karşılaştırması için KolayBi şirket kimliği belirlenemedi.");
     }
 
-    const hourKey = new Date().toISOString().slice(0, 13);
-    const idempotencyKey = text(cronMode ? `kolaybi-office:active:${hourKey}` : req.body?.idempotencyKey || `kolaybi-office:${crypto.randomUUID()}`);
+    const now = new Date();
+    const staleBefore = new Date(now.getTime() - 6 * 60_000).toISOString();
+    const staleMessage = "Senkronizasyon sunucu süre sınırında tamamlanamadı; ilgili bölüm sonraki çalışmada güvenle yeniden işlenecek.";
+    const { data: staleRuns } = await admin.from("kolaybi_sync_runs").update({
+      status: "failed",
+      completed_at: now.toISOString(),
+      last_error: staleMessage,
+    }).eq("provider_environment", providerEnvironment).eq("status", "running").lt("started_at", staleBefore)
+      .select("id,resource_type,provider_environment");
+    if (staleRuns?.length) {
+      await writeBatches(admin, "kolaybi_sync_events", staleRuns.map((staleRun: any) => ({
+        run_id: staleRun.id,
+        resource_type: staleRun.resource_type,
+        provider_environment: staleRun.provider_environment,
+        event_type: "sync_failed",
+        status: "error",
+        summary: staleMessage,
+        actor_id: actor.id,
+        actor_email: actor.email,
+      })));
+    }
+
+    const hourKey = now.toISOString().slice(0, 13);
+    const idempotencyKey = text(cronMode ? `kolaybi-office:active:${requested}:${hourKey}` : req.body?.idempotencyKey || `kolaybi-office:${crypto.randomUUID()}`);
     const { data: existing } = await admin.from("kolaybi_sync_runs").select("*").eq("idempotency_key", idempotencyKey).maybeSingle();
     if (existing) return res.status(200).json({ success: existing.status === "completed", alreadyProcessed: true, run: existing });
     const { data: run, error: runError } = await admin.from("kolaybi_sync_runs").insert({ resource_type: requested, provider_environment: providerEnvironment, idempotency_key: idempotencyKey, started_by: actor.id }).select().single();
@@ -804,6 +842,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const syncResource = async (resource: Resource) => {
       try {
         let records: any[] = [];
+        const masterRows = new Map<string, any>();
+        const eventRows: any[] = [];
         if (resource === "vault_transactions") {
           const { data: vaults, error: vaultError } = await admin.from("financial_accounts")
             .select("id,account_name,kolaybi_vault_id").eq("source", "kolaybi")
@@ -843,7 +883,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         }
         received += records.length;
-        await processWithConcurrency(records, 16, async (item) => {
+        await processWithConcurrency(records, 24, async (item) => {
           try {
             const row = normalized(resource, item);
             if (!row) { failed += 1; return; }
@@ -851,7 +891,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const matchStatus = local?.matchStatus || (local ? "matched" : "review_required");
             if (matchStatus === "matched") matched += 1;
             else if (matchStatus === "review_required") review += 1;
-            const { error } = await admin.from("kolaybi_master_records").upsert({
+            const masterRecord = {
               resource_type: resource === "sales_invoices" ? "sales_invoice"
                 : resource === "purchase_invoices" ? "purchase_invoice"
                   : resource === "expense_types" ? "expense_type"
@@ -870,9 +910,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               amount: row.amount,
               payload: row.payload,
               last_seen_at: new Date().toISOString(),
-            }, { onConflict: "provider_environment,resource_type,external_id" });
-            if (error) throw error;
-            const { error: eventError } = await admin.from("kolaybi_sync_events").insert({
+            };
+            masterRows.set(`${masterRecord.resource_type}:${row.externalId}`, masterRecord);
+            eventRows.push({
               run_id: run.id, resource_type: resource, external_id: row.externalId,
               provider_environment: providerEnvironment,
               event_type: local?.eventType || (local ? "record_matched" : "review_required"),
@@ -884,12 +924,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   : local ? `${row.displayName || row.externalId} TMS kaydıyla eşleştirildi` : `${row.displayName || row.externalId} için kullanıcı kontrolü gerekiyor`,
               actor_id: actor.id, actor_email: actor.email,
             });
-            if (eventError) throw eventError;
           } catch (error: any) {
             failed += 1;
             errors.push(`${resource}: ${String(error?.message || error).slice(0, 300)}`);
           }
         });
+        await writeBatches(admin, "kolaybi_master_records", [...masterRows.values()], {
+          onConflict: "provider_environment,resource_type,external_id",
+        });
+        await writeBatches(admin, "kolaybi_sync_events", eventRows);
       } catch (error: any) {
         failed += 1;
         errors.push(`${resource}: ${String(error?.message || error).slice(0, 300)}`);
