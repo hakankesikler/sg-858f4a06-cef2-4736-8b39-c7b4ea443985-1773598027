@@ -481,6 +481,8 @@ test("KolayBi live cutover remains read-only until explicitly enabled", async ()
   assert.match(officeSync, /req\.method === "POST" \|\| cronMode/);
   assert.match(officeSync, /isKolayBiSyncEnabled\(baseUrl\)/);
   assert.match(officeSync, /processWithConcurrency\(records, 16/);
+  assert.match(officeSync, /processWithConcurrency\(resourcesBeforeTransactions, 3, syncResource\)/);
+  assert.match(officeSync, /if \(resources\.includes\("vault_transactions"\)\) await syncResource\("vault_transactions"\)/);
   assert.match(queue, /assertKolayBiSyncEnabled\(config\.baseUrl\)/);
   assert.match(associateSync, /assertKolayBiSyncEnabled\(baseUrl\)/);
   assert.match(purchaseSync, /isKolayBiSyncEnabled\(baseUrl\)/);

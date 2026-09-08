@@ -801,7 +801,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let received = 0; let matched = 0; let review = 0; let failed = 0;
     const errors: string[] = [];
-    for (const resource of resources) {
+    const syncResource = async (resource: Resource) => {
       try {
         let records: any[] = [];
         if (resource === "vault_transactions") {
@@ -894,7 +894,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         failed += 1;
         errors.push(`${resource}: ${String(error?.message || error).slice(0, 300)}`);
       }
-    }
+    };
+
+    // Independent resource groups may be imported together. Vault transactions
+    // intentionally run after vaults so newly discovered account identities are
+    // available before their movements are requested.
+    const resourcesBeforeTransactions = resources.filter((resource) => resource !== "vault_transactions");
+    await processWithConcurrency(resourcesBeforeTransactions, 3, syncResource);
+    if (resources.includes("vault_transactions")) await syncResource("vault_transactions");
     const status = failed === 0 ? "completed" : received > 0 ? "partial" : "failed";
     const { data: completed } = await admin.from("kolaybi_sync_runs").update({ status, received_count: received, matched_count: matched, review_count: review, failed_count: failed, last_error: errors[0] || null, completed_at: new Date().toISOString(), metadata: { resources, automatic: cronMode, direction: "inbound" } }).eq("id", run.id).select().single();
     await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol`, metadata: { errors: errors.slice(0, 10), provider_environment: providerEnvironment, automatic: cronMode }, actor_id: actor.id, actor_email: actor.email });
