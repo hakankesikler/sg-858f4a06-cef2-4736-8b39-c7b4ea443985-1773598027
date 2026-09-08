@@ -64,6 +64,23 @@ function currency(value: any) {
   return ["TRY", "USD", "EUR", "GBP"].includes(candidate) ? candidate : "TRY";
 }
 
+async function processWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  processItem: (item: T) => Promise<void>,
+) {
+  let nextIndex = 0;
+  const workerCount = Math.min(Math.max(1, concurrency), items.length);
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      await processItem(items[currentIndex]);
+    }
+  });
+  await Promise.all(workers);
+}
+
 function invoiceHeader(item: any) {
   return item?.header || item?.document?.header || {};
 }
@@ -826,47 +843,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         }
         received += records.length;
-        for (const item of records) {
-          const row = normalized(resource, item);
-          if (!row) { failed += 1; continue; }
-          const local = await findLocal(admin, resource, item, row, providerEnvironment);
-          const matchStatus = local?.matchStatus || (local ? "matched" : "review_required");
-          if (matchStatus === "matched") matched += 1;
-          else if (matchStatus === "review_required") review += 1;
-          const { error } = await admin.from("kolaybi_master_records").upsert({
-            resource_type: resource === "sales_invoices" ? "sales_invoice"
-              : resource === "purchase_invoices" ? "purchase_invoice"
-                : resource === "expense_types" ? "expense_type"
-                  : resource === "general_expenses" ? "general_expense"
-                    : resource === "vaults" ? "vault"
-                      : resource === "vault_transactions" ? "vault_transaction" : resource.slice(0, -1),
-            external_id: row.externalId,
-            provider_environment: providerEnvironment,
-            local_entity_type: local?.type || null,
-            local_entity_id: local?.id || null,
-            match_status: matchStatus,
-            display_name: row.displayName || null,
-            external_code: row.code || null,
-            tax_identity: row.taxIdentity || null,
-            currency: row.currency,
-            amount: row.amount,
-            payload: row.payload,
-            last_seen_at: new Date().toISOString(),
-          }, { onConflict: "provider_environment,resource_type,external_id" });
-          if (error) { failed += 1; errors.push(error.message); continue; }
-          await admin.from("kolaybi_sync_events").insert({
-            run_id: run.id, resource_type: resource, external_id: row.externalId,
-            provider_environment: providerEnvironment,
-            event_type: local?.eventType || (local ? "record_matched" : "review_required"),
-            status: matchStatus === "matched" ? "success" : "warning",
-            summary: local?.eventType === "product_imported_pending"
-              ? `${row.displayName || row.externalId} pasif ürün kartı olarak aktarıldı; onay bekliyor`
-              : local?.eventType === "product_sync_updated"
-                ? `${row.displayName || row.externalId} ürün kartı güncellendi`
-                : local ? `${row.displayName || row.externalId} TMS kaydıyla eşleştirildi` : `${row.displayName || row.externalId} için kullanıcı kontrolü gerekiyor`,
-            actor_id: actor.id, actor_email: actor.email,
-          });
-        }
+        await processWithConcurrency(records, 16, async (item) => {
+          try {
+            const row = normalized(resource, item);
+            if (!row) { failed += 1; return; }
+            const local = await findLocal(admin, resource, item, row, providerEnvironment);
+            const matchStatus = local?.matchStatus || (local ? "matched" : "review_required");
+            if (matchStatus === "matched") matched += 1;
+            else if (matchStatus === "review_required") review += 1;
+            const { error } = await admin.from("kolaybi_master_records").upsert({
+              resource_type: resource === "sales_invoices" ? "sales_invoice"
+                : resource === "purchase_invoices" ? "purchase_invoice"
+                  : resource === "expense_types" ? "expense_type"
+                    : resource === "general_expenses" ? "general_expense"
+                      : resource === "vaults" ? "vault"
+                        : resource === "vault_transactions" ? "vault_transaction" : resource.slice(0, -1),
+              external_id: row.externalId,
+              provider_environment: providerEnvironment,
+              local_entity_type: local?.type || null,
+              local_entity_id: local?.id || null,
+              match_status: matchStatus,
+              display_name: row.displayName || null,
+              external_code: row.code || null,
+              tax_identity: row.taxIdentity || null,
+              currency: row.currency,
+              amount: row.amount,
+              payload: row.payload,
+              last_seen_at: new Date().toISOString(),
+            }, { onConflict: "provider_environment,resource_type,external_id" });
+            if (error) throw error;
+            const { error: eventError } = await admin.from("kolaybi_sync_events").insert({
+              run_id: run.id, resource_type: resource, external_id: row.externalId,
+              provider_environment: providerEnvironment,
+              event_type: local?.eventType || (local ? "record_matched" : "review_required"),
+              status: matchStatus === "matched" ? "success" : "warning",
+              summary: local?.eventType === "product_imported_pending"
+                ? `${row.displayName || row.externalId} pasif ürün kartı olarak aktarıldı; onay bekliyor`
+                : local?.eventType === "product_sync_updated"
+                  ? `${row.displayName || row.externalId} ürün kartı güncellendi`
+                  : local ? `${row.displayName || row.externalId} TMS kaydıyla eşleştirildi` : `${row.displayName || row.externalId} için kullanıcı kontrolü gerekiyor`,
+              actor_id: actor.id, actor_email: actor.email,
+            });
+            if (eventError) throw eventError;
+          } catch (error: any) {
+            failed += 1;
+            errors.push(`${resource}: ${String(error?.message || error).slice(0, 300)}`);
+          }
+        });
       } catch (error: any) {
         failed += 1;
         errors.push(`${resource}: ${String(error?.message || error).slice(0, 300)}`);
