@@ -59,6 +59,24 @@ function number(value: any) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function materialAssociateBalance(item: any): boolean | null {
+  const balances = Array.isArray(item?.balances) ? item.balances : [];
+  if (!balances.length) return null;
+  return balances.some((balance: any) => Math.abs(number(
+    balance?.balance ?? balance?.amount ?? balance?.total ?? balance?.remaining_amount,
+  )) > 0.01);
+}
+
+function ignoredProviderRecord(summary: string) {
+  return {
+    type: null,
+    id: null,
+    matchStatus: "ignored" as const,
+    eventType: "record_skipped" as const,
+    summary,
+  };
+}
+
 function currency(value: any) {
   const candidate = text(value).toUpperCase();
   return ["TRY", "USD", "EUR", "GBP"].includes(candidate) ? candidate : "TRY";
@@ -314,11 +332,6 @@ function productUnit(value: unknown) {
   return allowed.find((unit) => unit.toLocaleLowerCase("tr-TR") === candidate.toLocaleLowerCase("tr-TR")) || "Adet";
 }
 
-function providerProductCode(row: NonNullable<ReturnType<typeof normalized>>, environment: "test" | "live") {
-  const providerCode = (row.code || row.externalId).replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 80);
-  return environment === "test" ? `KB-TEST-${providerCode}` : providerCode || `KB-LIVE-${row.externalId}`;
-}
-
 async function findLocal(
   admin: any,
   resource: Resource,
@@ -440,6 +453,19 @@ async function findLocal(
       if (customerUpdateError) throw customerUpdateError;
       return { type: "customer", id: result.id };
     }
+    const hasMaterialBalance = materialAssociateBalance(item);
+    if (hasMaterialBalance === false) {
+      return ignoredProviderRecord("Sıfır bakiyeli ve REX TYS'de kullanılmayan KolayBi carisi arşiv kaydı olarak tutuldu.");
+    }
+    return {
+      type: null,
+      id: null,
+      matchStatus: "review_required" as const,
+      eventType: "review_required" as const,
+      summary: hasMaterialBalance
+        ? "Bakiyesi bulunan KolayBi carisi için güvenilir bir REX TYS eşleşmesi bulunamadı."
+        : "Bakiye bilgisi alınamayan KolayBi carisi için güvenilir bir REX TYS eşleşmesi bulunamadı.",
+    };
   }
   if (resource === "products") {
     const externalId = Number(row.externalId);
@@ -523,13 +549,17 @@ async function findLocal(
         purchase_currency: text(item?.purchase_currency).toUpperCase() || null,
         sale_currency: text(item?.sale_currency).toUpperCase() || null,
         provider_active: typeof providerActive === "boolean" ? providerActive : null,
+        approval_status: approved ? "approved" : "rejected",
         is_active: approved ? providerActive !== false : false,
         last_synced_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }).eq("id", providerProduct.id);
+      if (!approved) {
+        return ignoredProviderRecord("REX TYS fatura kataloğunda kullanılmayan KolayBi ürün/hizmeti yok sayıldı.");
+      }
       return {
         type: "product", id: providerProduct.id,
-        matchStatus: approved ? "matched" : providerProduct.approval_status === "rejected" ? "ignored" : "review_required",
+        matchStatus: "matched" as const,
         eventType: "product_sync_updated",
       };
     }
@@ -549,35 +579,7 @@ async function findLocal(
       return { type: "product", id: data.id };
     }
 
-    let code = providerProductCode(row, providerEnvironment);
-    const { data: codeCollision } = await admin.from("products_services").select("id").eq("code", code).maybeSingle();
-    if (codeCollision?.id) code = `${code}-${row.externalId}`;
-    const { data: created, error: createError } = await admin.from("products_services").insert({
-      code,
-      name: row.displayName || row.code || `KolayBi Ürün ${row.externalId}`,
-      description: text(item?.description) || null,
-      type: productType(item?.product_type),
-      unit: productUnit(item?.unit || item?.unit_name),
-      purchase_price: number(item?.purchase_price),
-      sale_price: number(item?.sale_price),
-      tax_rate: number(item?.vat_value),
-      stock_quantity: Math.round(number(item?.total_stock_quantity)),
-      min_stock_level: 0,
-      is_active: false,
-      external_source: "kolaybi",
-      provider_environment: providerEnvironment,
-      kolaybi_product_id: externalId,
-      provider_code: row.code || null,
-      provider_barcode: text(item?.barcode) || null,
-      purchase_currency: text(item?.purchase_currency).toUpperCase() || null,
-      sale_currency: text(item?.sale_currency).toUpperCase() || null,
-      provider_active: typeof providerActive === "boolean" ? providerActive : null,
-      approval_status: "pending",
-      last_synced_at: new Date().toISOString(),
-      notes: `KolayBi ${providerEnvironment === "test" ? "test" : "canlı"} ortamından otomatik aktarıldı. Kullanıma açılması için onay gerekir.`,
-    }).select("id").single();
-    if (createError) throw createError;
-    return { type: "product", id: created.id, matchStatus: "review_required", eventType: "product_imported_pending" };
+    return ignoredProviderRecord("REX TYS fatura kataloğunda kullanılmayan KolayBi ürün/hizmeti yok sayıldı.");
   }
   if (resource === "expense_types") {
     const externalId = Number(row.externalId);
@@ -710,10 +712,27 @@ async function findLocal(
       if (error) throw error;
       return { type: "sales_invoice", id: data.id };
     }
+    return ignoredProviderRecord("KolayBi'deki geçmiş satış faturası REX TYS tarafından oluşturulmadığı için arşiv kaydı olarak tutuldu.");
   }
   if (resource === "purchase_invoices") {
-    const { data } = await admin.from("purchase_invoices").select("id").or(`provider_document_id.eq.${row.externalId},invoice_no.eq.${row.code}`).limit(1).maybeSingle();
+    const { data: byProviderId, error: providerLookupError } = await admin.from("incoming_purchase_invoices")
+      .select("id")
+      .eq("source", "kolaybi")
+      .eq("provider_document_id", row.externalId)
+      .maybeSingle();
+    if (providerLookupError) throw providerLookupError;
+    let data = byProviderId;
+    if (!data?.id && row.code && [10, 11].includes(row.taxIdentity.length)) {
+      const { data: byLegalIdentity, error: legalLookupError } = await admin.from("incoming_purchase_invoices")
+        .select("id")
+        .eq("issuer_tax_id", row.taxIdentity)
+        .eq("invoice_no", row.code.toUpperCase())
+        .maybeSingle();
+      if (legalLookupError) throw legalLookupError;
+      data = byLegalIdentity;
+    }
     if (data?.id) return { type: "purchase_invoice", id: data.id };
+    return ignoredProviderRecord("KolayBi'deki geçmiş alış faturası resmi gelen belge akışında bulunmadığı için arşiv kaydı olarak tutuldu.");
   }
   return null;
 }
@@ -837,7 +856,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (runError) throw runError;
     await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: "sync_started", status: "info", summary: cronMode ? "KolayBi otomatik aktif akış senkronizasyonu başlatıldı" : "KolayBi ofis senkronizasyonu başlatıldı", actor_id: actor.id, actor_email: actor.email });
 
-    let received = 0; let matched = 0; let review = 0; let failed = 0;
+    let received = 0; let matched = 0; let review = 0; let ignored = 0; let failed = 0;
     const errors: string[] = [];
     const syncResource = async (resource: Resource) => {
       try {
@@ -891,6 +910,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const matchStatus = local?.matchStatus || (local ? "matched" : "review_required");
             if (matchStatus === "matched") matched += 1;
             else if (matchStatus === "review_required") review += 1;
+            else if (matchStatus === "ignored") ignored += 1;
             const masterRecord = {
               resource_type: resource === "sales_invoices" ? "sales_invoice"
                 : resource === "purchase_invoices" ? "purchase_invoice"
@@ -916,12 +936,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               run_id: run.id, resource_type: resource, external_id: row.externalId,
               provider_environment: providerEnvironment,
               event_type: local?.eventType || (local ? "record_matched" : "review_required"),
-              status: matchStatus === "matched" ? "success" : "warning",
-              summary: local?.eventType === "product_imported_pending"
-                ? `${row.displayName || row.externalId} pasif ürün kartı olarak aktarıldı; onay bekliyor`
-                : local?.eventType === "product_sync_updated"
+              status: matchStatus === "matched" ? "success" : matchStatus === "ignored" ? "info" : "warning",
+              summary: local?.summary || (local?.eventType === "product_sync_updated"
                   ? `${row.displayName || row.externalId} ürün kartı güncellendi`
-                  : local ? `${row.displayName || row.externalId} TMS kaydıyla eşleştirildi` : `${row.displayName || row.externalId} için kullanıcı kontrolü gerekiyor`,
+                  : local ? `${row.displayName || row.externalId} TMS kaydıyla eşleştirildi` : `${row.displayName || row.externalId} için kullanıcı kontrolü gerekiyor`),
               actor_id: actor.id, actor_email: actor.email,
             });
           } catch (error: any) {
@@ -946,8 +964,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await processWithConcurrency(resourcesBeforeTransactions, 3, syncResource);
     if (resources.includes("vault_transactions")) await syncResource("vault_transactions");
     const status = failed === 0 ? "completed" : received > 0 ? "partial" : "failed";
-    const { data: completed } = await admin.from("kolaybi_sync_runs").update({ status, received_count: received, matched_count: matched, review_count: review, failed_count: failed, last_error: errors[0] || null, completed_at: new Date().toISOString(), metadata: { resources, automatic: cronMode, direction: "inbound" } }).eq("id", run.id).select().single();
-    await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol`, metadata: { errors: errors.slice(0, 10), provider_environment: providerEnvironment, automatic: cronMode }, actor_id: actor.id, actor_email: actor.email });
+    const { data: completed } = await admin.from("kolaybi_sync_runs").update({ status, received_count: received, matched_count: matched, review_count: review, failed_count: failed, last_error: errors[0] || null, completed_at: new Date().toISOString(), metadata: { resources, automatic: cronMode, direction: "inbound", ignored_count: ignored } }).eq("id", run.id).select().single();
+    await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol, ${ignored} arşiv`, metadata: { errors: errors.slice(0, 10), provider_environment: providerEnvironment, automatic: cronMode, ignored_count: ignored }, actor_id: actor.id, actor_email: actor.email });
     await updatePartner(status === "completed", errors[0] || null, true);
     return res.status(status === "failed" ? 502 : 200).json({ success: status !== "failed", run: completed, errors: errors.slice(0, 10) });
   } catch (error: any) {

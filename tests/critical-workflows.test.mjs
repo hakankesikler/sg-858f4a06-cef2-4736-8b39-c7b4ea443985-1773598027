@@ -1225,10 +1225,13 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(api, /kolaybi_financial_action_type_id/);
   assert.match(api, /provider_environment/);
   assert.match(api, /review_required/);
-  assert.match(api, /product_imported_pending/);
-  assert.match(api, /KB-TEST-/);
-  assert.match(api, /approval_status: "pending"/);
-  assert.match(api, /is_active: false/);
+  assert.match(api, /materialAssociateBalance/);
+  assert.match(api, /if \(!balances\.length\) return null/);
+  assert.match(api, /Sıfır bakiyeli ve REX TYS'de kullanılmayan KolayBi carisi/);
+  assert.match(api, /incoming_purchase_invoices/);
+  assert.doesNotMatch(api, /from\("purchase_invoices"\)/);
+  assert.match(api, /REX TYS fatura kataloğunda kullanılmayan KolayBi ürün\/hizmeti yok sayıldı/);
+  assert.match(api, /ignored_count: ignored/);
   assert.match(api, /updatePartner/);
   assert.match(api, /integration_partners/);
   assert.match(api, /\/vaults/);
