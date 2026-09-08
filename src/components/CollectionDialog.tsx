@@ -60,6 +60,7 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
         .from("sales_invoices")
         .select("id, invoice_no, grand_total, currency, payment_status, kolaybi_document_id")
         .eq("customer_id", customer.id)
+        .is("archived_at", null)
         .neq("payment_status", "Ödendi")
         .not("invoice_no", "like", "BORC-%")
         .not("invoice_no", "like", "ALACAK-%")

@@ -1743,6 +1743,8 @@ export type Database = {
       }
       sales_invoices: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
           created_at: string | null
           currency: string
           customer_id: string | null
@@ -1765,6 +1767,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
           created_at?: string | null
           currency?: string
           customer_id?: string | null
@@ -1787,6 +1791,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
           created_at?: string | null
           currency?: string
           customer_id?: string | null

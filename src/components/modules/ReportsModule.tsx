@@ -50,7 +50,7 @@ export function ReportsModule() {
 
       if (hasPermission(currentAccess.permissions, "reports.accounting")) {
         const [{ data: sales }, { data: purchases }] = await Promise.all([
-          supabase.from("sales_invoices").select("grand_total"),
+          supabase.from("sales_invoices").select("grand_total").is("archived_at", null),
           supabase.from("purchases").select("total"),
         ]);
         next.sales = (sales || []).reduce((total, row) => total + Number(row.grand_total || 0), 0);
@@ -81,7 +81,7 @@ export function ReportsModule() {
       fileName = "cari_raporu.xlsx";
       sheetName = "Cariler";
     } else {
-      const { data, error } = await supabase.from("sales_invoices").select("invoice_no,invoice_date,grand_total,currency,payment_status").order("invoice_date", { ascending: false });
+      const { data, error } = await supabase.from("sales_invoices").select("invoice_no,invoice_date,grand_total,currency,payment_status").is("archived_at", null).order("invoice_date", { ascending: false });
       if (error) return toast({ title: "Yetki gerekli", description: "Finans raporu için muhasebe yetkisi gerekiyor.", variant: "destructive" });
       rows = data || [];
       fileName = "finans_raporu.xlsx";

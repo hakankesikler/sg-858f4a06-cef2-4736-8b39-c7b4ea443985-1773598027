@@ -241,6 +241,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
         const { data: salesData, error: salesError } = await supabase
         .from("sales_invoices")
         .select("*")
+        .is("archived_at", null)
         .order("created_at", { ascending: false });
         if (salesError) throw salesError;
         setSalesInvoices((salesData || []).filter(invoice =>

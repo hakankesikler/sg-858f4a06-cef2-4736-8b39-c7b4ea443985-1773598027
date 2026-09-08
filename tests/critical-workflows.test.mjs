@@ -1597,3 +1597,29 @@ test("shipments support multiple pickup and delivery stops with separately price
   assert.match(logistics, /alım noktası/);
   assert.match(logistics, /teslim noktası/);
 });
+
+test("legacy test sales invoices are archived without affecting operational totals", async () => {
+  const [sql, accounting, customerTransactions, collections, reports, service, officeSync] = await Promise.all([
+    read("supabase/migrations/20260908202159_archive_legacy_test_sales_invoices.sql"),
+    read("src/components/modules/AccountingModule.tsx"),
+    read("src/components/CustomerTransactionsDialog.tsx"),
+    read("src/components/CollectionDialog.tsx"),
+    read("src/components/modules/ReportsModule.tsx"),
+    read("src/services/accountingService.ts"),
+    read("src/pages/api/kolaybi/office-sync.ts"),
+  ]);
+
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS archived_at timestamptz/);
+  assert.match(sql, /archive_reason = 'Eski geliştirme\/test taslağı'/);
+  assert.match(sql, /AND integration_status = 'draft'/);
+  assert.match(sql, /AND kolaybi_document_id IS NULL/);
+  assert.match(sql, /AND official_invoice_no IS NULL/);
+  assert.match(sql, /AND official_uuid IS NULL/);
+  assert.match(sql, /AND user_id IS NULL/);
+  assert.match(accounting, /\.is\("archived_at", null\)/);
+  assert.match(customerTransactions, /\.is\("archived_at", null\)/);
+  assert.match(collections, /\.is\("archived_at", null\)/);
+  assert.match(reports, /\.is\("archived_at", null\)/);
+  assert.match(service, /\.is\("archived_at", null\)/);
+  assert.match(officeSync, /\.is\("archived_at", null\)/);
+});

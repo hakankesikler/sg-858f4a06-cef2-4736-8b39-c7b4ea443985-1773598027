@@ -685,7 +685,7 @@ async function findLocal(
       : `kolaybi_document_id.eq.${row.externalId}`;
     const { data } = await admin.from("sales_invoices")
       .select("id,customer_id,grand_total,due_date,payment_status")
-      .or(invoiceFilter).limit(1).maybeSingle();
+      .or(invoiceFilter).is("archived_at", null).limit(1).maybeSingle();
     customerId = data?.customer_id || customerId;
     if (profile && customerId) await updateCustomerEDocumentProfile(admin, customerId, profile, providerEnvironment);
     if (data?.id) {

@@ -105,6 +105,7 @@ export function CustomerTransactionsDialog({
           .from("sales_invoices")
           .select("*")
           .eq("customer_id", customer.id)
+          .is("archived_at", null)
           .not("invoice_no", "like", "BORC-%")
           .not("invoice_no", "like", "ALACAK-%")
           .order("invoice_date", { ascending: false });

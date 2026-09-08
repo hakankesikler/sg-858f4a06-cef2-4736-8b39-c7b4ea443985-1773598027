@@ -656,6 +656,7 @@ export const accountingService = {
           total
         )
       `)
+      .is("archived_at", null)
       .order("invoice_date", { ascending: false });
 
     if (error) throw error;
@@ -700,7 +701,7 @@ export const accountingService = {
   },
 
   async getSalesInvoiceStats(): Promise<any> {
-    const { data } = await supabase.from("sales_invoices").select("grand_total, payment_status, invoice_date");
+    const { data } = await supabase.from("sales_invoices").select("grand_total, payment_status, invoice_date").is("archived_at", null);
 
     const today = new Date();
     const currentMonth = today.getMonth();
