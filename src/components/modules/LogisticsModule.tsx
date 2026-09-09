@@ -814,7 +814,7 @@ export function LogisticsModule() {
                                 });
                               }
                             }}
-                            title="İrsaliye İndir"
+                            title="REX antetli taşıma belgesi / waybill indir"
                           >
                             <FileDown className="h-4 w-4 text-blue-600" />
                           </Button>

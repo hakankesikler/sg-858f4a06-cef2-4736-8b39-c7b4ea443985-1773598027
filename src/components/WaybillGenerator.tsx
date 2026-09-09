@@ -1,256 +1,305 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 
-interface WaybillData {
-  shipment_code: string;
-  pickup_date: string;
-  sender_name: string;
-  origin: string;
-  receiver: string;
-  receiver_district: string;
-  destination: string;
-  driver?: {
-    full_name: string;
-  };
-  vehicle?: {
-    cekici_plakasi: string;
-  };
-  cargo_items?: Array<{
-    adet: number;
-    cinsi: string;
-    kg_ds: number;
-  }>;
-  toplam_kg_ds?: number;
+export interface WaybillRouteStop {
+  stop_key?: string;
+  stop_type: "pickup" | "delivery";
+  sequence_no: number;
+  company_name: string;
+  address_line?: string | null;
+  district?: string | null;
+  city: string;
+  contact_name?: string | null;
+  contact_phone?: string | null;
+  instructions?: string | null;
 }
 
-const loadImage = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
+export interface WaybillCargoItem {
+  adet: number;
+  cinsi: string;
+  kg_ds: number;
+  route_description?: string | null;
+  pickup_stop_key?: string | null;
+  delivery_stop_key?: string | null;
+  pickup_stop?: { company_name?: string | null; district?: string | null; city?: string | null } | null;
+  delivery_stop?: { company_name?: string | null; district?: string | null; city?: string | null } | null;
+}
+
+export interface WaybillData {
+  shipment_code: string;
+  tracking_number?: string | null;
+  tracking_url?: string | null;
+  pickup_date?: string | null;
+  estimated_delivery_date?: string | null;
+  customer_name?: string | null;
+  customer?: { name?: string | null } | null;
+  sender_name?: string | null;
+  origin?: string | null;
+  receiver?: string | null;
+  receiver_district?: string | null;
+  destination?: string | null;
+  driver?: { full_name?: string | null; phone_1?: string | null } | null;
+  vehicle?: { cekici_plakasi?: string | null; dorse_plakasi?: string | null; arac_tipi?: string | null } | null;
+  cargo_items?: WaybillCargoItem[] | null;
+  shipment_cargo_items?: WaybillCargoItem[] | null;
+  route_stops?: WaybillRouteStop[] | null;
+  toplam_kg_ds?: number | null;
+  adet?: number | null;
+  cinsi?: string | null;
+  kg_ds?: number | null;
+}
+
+type AutoTableDocument = jsPDF & { lastAutoTable?: { finalY: number } };
+
+const NAVY: [number, number, number] = [23, 55, 99];
+const ORANGE: [number, number, number] = [243, 112, 33];
+const SLATE: [number, number, number] = [51, 65, 85];
+const LIGHT: [number, number, number] = [241, 245, 249];
+
+const pdfText = (value: unknown, fallback = "-") => {
+  const result = value == null || value === "" ? fallback : String(value);
+  return result.replace(/[ÇĞİÖŞÜçğıöşü]/g, (letter) => ({
+    Ç: "C", Ğ: "G", İ: "I", Ö: "O", Ş: "S", Ü: "U",
+    ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u",
+  })[letter] || letter);
+};
+
+const formatDate = (value?: string | null) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
+};
+
+const formatWeight = (value: number) => `${new Intl.NumberFormat("tr-TR", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+}).format(value)} kg/ds`;
+
+const loadImage = (src: string): Promise<HTMLImageElement> => new Promise((resolve, reject) => {
+  const image = new Image();
+  image.crossOrigin = "anonymous";
+  image.onload = () => resolve(image);
+  image.onerror = reject;
+  image.src = src;
+});
+
+const stopLabel = (stop?: WaybillRouteStop | null) => {
+  if (!stop) return "-";
+  return [stop.company_name, [stop.district, stop.city].filter(Boolean).join(" / ")]
+    .filter(Boolean)
+    .join(" - ");
+};
+
+const drawLetterhead = async (doc: jsPDF, shipment: WaybillData) => {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  doc.setFillColor(...ORANGE);
+  doc.rect(0, 0, pageWidth * 0.34, 2, "F");
+  doc.setFillColor(...NAVY);
+  doc.rect(pageWidth * 0.34, 0, pageWidth * 0.66, 2, "F");
+
+  try {
+    const logo = await loadImage("/rex-logo-circle.png");
+    doc.addImage(logo, "PNG", 14, 7, 26, 26);
+  } catch {
+    doc.setDrawColor(...NAVY);
+    doc.circle(27, 20, 12);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...NAVY);
+    doc.text("REX", 27, 22, { align: "center" });
+  }
+
+  doc.setTextColor(...NAVY);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("REX LOJISTIK TASIMACILIK DEPOLAMA", 44, 11);
+  doc.text("DANISMANLIK LIMITED SIRKETI", 44, 16);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.2);
+  doc.setTextColor(...SLATE);
+  doc.text("Folkart Towers A Kule No:47/B K:26 D:2601", 44, 22);
+  doc.text("Adalet Mah. Manas Bulvari 35530 Bayrakli / Izmir", 44, 26);
+  doc.text("+90 (543) 401 07 55  |  info@rexlojistik.com  |  www.rexlojistik.com", 44, 30);
+
+  doc.setTextColor(...NAVY);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.text("TASIMA BELGESI / WAYBILL", pageWidth - 14, 15, { align: "right" });
+  doc.setFontSize(8);
+  doc.setTextColor(...ORANGE);
+  doc.text(pdfText(shipment.shipment_code), pageWidth - 14, 22, { align: "right" });
+  doc.setTextColor(...SLATE);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Takip No: ${pdfText(shipment.tracking_number)}`, pageWidth - 14, 27, { align: "right" });
+  doc.setDrawColor(203, 213, 225);
+  doc.line(14, 36, pageWidth - 14, 36);
+};
+
+const addFooter = (doc: jsPDF, pageNumber: number, pageCount: number) => {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  doc.setDrawColor(...NAVY);
+  doc.setLineWidth(0.5);
+  doc.line(14, pageHeight - 16, pageWidth - 14, pageHeight - 16);
+  doc.setTextColor(...SLATE);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.text("TIO Yetki Belgesi: IZM.U-NET.TIO.35.6323  |  VKN: 7342549288", 14, pageHeight - 11);
+  doc.text(`Sayfa ${pageNumber} / ${pageCount}`, pageWidth - 14, pageHeight - 11, { align: "right" });
+  doc.text("Bu belge operasyon bilgilendirme amaclidir; mali belge veya sevk irsaliyesi yerine gecmez.", pageWidth / 2, pageHeight - 7, { align: "center" });
+};
+
+export const buildWaybillPdf = async (shipment: WaybillData) => {
+  const doc = new jsPDF({ unit: "mm", format: "a4" }) as AutoTableDocument;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  await drawLetterhead(doc, shipment);
+
+  autoTable(doc, {
+    startY: 42,
+    head: [["BELGE BILGILERI", "MUSTERI VE ROTA"]],
+    body: [[
+      pdfText([
+        `Sevkiyat: ${shipment.shipment_code}`,
+        `Yukleme: ${formatDate(shipment.pickup_date)}`,
+        `Tahmini teslim: ${formatDate(shipment.estimated_delivery_date)}`,
+      ].join("\n")),
+      pdfText([
+        `Musteri: ${shipment.customer_name || shipment.customer?.name || "-"}`,
+        `Cikis: ${shipment.origin || "-"}`,
+        `Varis: ${shipment.destination || "-"}`,
+      ].join("\n")),
+    ]],
+    theme: "grid",
+    headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+    styles: { fontSize: 8.5, cellPadding: 3.5, textColor: SLATE, valign: "top", lineColor: [203, 213, 225] },
+    columnStyles: { 0: { cellWidth: 82 }, 1: { cellWidth: 100 } },
+    margin: { left: 14, right: 14 },
   });
+
+  const routeStops = [...(shipment.route_stops || [])].sort((a, b) => {
+    if (a.stop_type !== b.stop_type) return a.stop_type === "pickup" ? -1 : 1;
+    return a.sequence_no - b.sequence_no;
+  });
+  if (routeStops.length) {
+    autoTable(doc, {
+      startY: (doc.lastAutoTable?.finalY || 67) + 7,
+      head: [["#", "DURAK", "FIRMA / KONUM", "YETKILI / NOT"]],
+      body: routeStops.map((stop) => [
+        `${stop.stop_type === "pickup" ? "A" : "T"}${stop.sequence_no}`,
+        stop.stop_type === "pickup" ? "ALIM" : "TESLIM",
+        pdfText([stop.company_name, stop.address_line, [stop.district, stop.city].filter(Boolean).join(" / ")].filter(Boolean).join("\n")),
+        pdfText([stop.contact_name, stop.contact_phone, stop.instructions].filter(Boolean).join("\n")),
+      ]),
+      theme: "grid",
+      headStyles: { fillColor: ORANGE, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5 },
+      styles: { fontSize: 7.5, cellPadding: 2.7, textColor: SLATE, valign: "top", lineColor: [203, 213, 225] },
+      columnStyles: { 0: { cellWidth: 12, halign: "center" }, 1: { cellWidth: 20 }, 2: { cellWidth: 78 }, 3: { cellWidth: 72 } },
+      margin: { left: 14, right: 14 },
+    });
+  }
+
+  const pickupByKey = new Map(routeStops.filter((stop) => stop.stop_type === "pickup").map((stop) => [stop.stop_key, stop]));
+  const deliveryByKey = new Map(routeStops.filter((stop) => stop.stop_type === "delivery").map((stop) => [stop.stop_key, stop]));
+  const cargoItems = shipment.shipment_cargo_items?.length
+    ? shipment.shipment_cargo_items
+    : shipment.cargo_items?.length
+      ? shipment.cargo_items
+      : [{ adet: Number(shipment.adet || 0), cinsi: shipment.cinsi || "-", kg_ds: Number(shipment.kg_ds || 0) }];
+
+  autoTable(doc, {
+    startY: (doc.lastAutoTable?.finalY || 67) + 7,
+    head: [["#", "YUK / ACIKLAMA", "ALIM", "TESLIM", "ADET", "KG/DS", "TOPLAM"]],
+    body: cargoItems.map((item, index) => {
+      const pickup = item.pickup_stop || pickupByKey.get(item.pickup_stop_key || "");
+      const delivery = item.delivery_stop || deliveryByKey.get(item.delivery_stop_key || "");
+      return [
+        index + 1,
+        pdfText([item.cinsi, item.route_description].filter(Boolean).join("\n")),
+        pdfText(item.pickup_stop ? [item.pickup_stop.company_name, item.pickup_stop.district, item.pickup_stop.city].filter(Boolean).join(" - ") : stopLabel(pickup as WaybillRouteStop)),
+        pdfText(item.delivery_stop ? [item.delivery_stop.company_name, item.delivery_stop.district, item.delivery_stop.city].filter(Boolean).join(" - ") : stopLabel(delivery as WaybillRouteStop)),
+        Number(item.adet || 0),
+        formatWeight(Number(item.kg_ds || 0)),
+        formatWeight(Number(item.adet || 0) * Number(item.kg_ds || 0)),
+      ];
+    }),
+    foot: [["", "", "", "", "", "TOPLAM", formatWeight(Number(shipment.toplam_kg_ds || cargoItems.reduce((sum, item) => sum + Number(item.adet || 0) * Number(item.kg_ds || 0), 0)))]],
+    theme: "grid",
+    headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7 },
+    footStyles: { fillColor: LIGHT, textColor: NAVY, fontStyle: "bold", fontSize: 7.5 },
+    styles: { fontSize: 7, cellPadding: 2.4, textColor: SLATE, valign: "top", lineColor: [203, 213, 225], overflow: "linebreak" },
+    columnStyles: {
+      0: { cellWidth: 8, halign: "center" },
+      1: { cellWidth: 46 },
+      2: { cellWidth: 35 },
+      3: { cellWidth: 35 },
+      4: { cellWidth: 12, halign: "right" },
+      5: { cellWidth: 22, halign: "right" },
+      6: { cellWidth: 24, halign: "right" },
+    },
+    margin: { left: 14, right: 14, bottom: 22 },
+  });
+
+  let cursorY = (doc.lastAutoTable?.finalY || 150) + 7;
+  if (cursorY > 238) {
+    doc.addPage();
+    await drawLetterhead(doc, shipment);
+    cursorY = 44;
+  }
+
+  autoTable(doc, {
+    startY: cursorY,
+    head: [["TASIYICI BILGILERI", "CANLI TAKIP"]],
+    body: [[
+      pdfText([
+        `Surucu: ${shipment.driver?.full_name || "Atama bekliyor"}`,
+        `Telefon: ${shipment.driver?.phone_1 || "-"}`,
+        `Cekici: ${shipment.vehicle?.cekici_plakasi || "Atama bekliyor"}`,
+        `Dorse: ${shipment.vehicle?.dorse_plakasi || "-"}`,
+      ].join("\n")),
+      pdfText([shipment.tracking_number, shipment.tracking_url].filter(Boolean).join("\n"), "Takip bilgisi bekleniyor"),
+    ]],
+    theme: "grid",
+    headStyles: { fillColor: ORANGE, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5 },
+    styles: { fontSize: 7.5, cellPadding: 3, textColor: SLATE, valign: "top", lineColor: [203, 213, 225] },
+    columnStyles: { 0: { cellWidth: 91 }, 1: { cellWidth: 91 } },
+    margin: { left: 14, right: 14 },
+  });
+
+  cursorY = (doc.lastAutoTable?.finalY || cursorY) + 8;
+  if (cursorY > 244) {
+    doc.addPage();
+    await drawLetterhead(doc, shipment);
+    cursorY = 44;
+  }
+
+  doc.setDrawColor(148, 163, 184);
+  doc.setLineWidth(0.3);
+  const signatureWidth = (pageWidth - 36) / 2;
+  doc.roundedRect(14, cursorY, signatureWidth, 25, 2, 2);
+  doc.roundedRect(22 + signatureWidth, cursorY, signatureWidth, 25, 2, 2);
+  doc.setTextColor(...NAVY);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text("TESLIM EDEN", 18, cursorY + 6);
+  doc.text("TESLIM ALAN", 26 + signatureWidth, cursorY + 6);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...SLATE);
+  doc.setFontSize(7);
+  doc.text("Ad Soyad / Imza:", 18, cursorY + 14);
+  doc.text("Ad Soyad / Imza:", 26 + signatureWidth, cursorY + 14);
+  doc.line(42, cursorY + 15, 14 + signatureWidth - 4, cursorY + 15);
+  doc.line(50 + signatureWidth, cursorY + 15, pageWidth - 18, cursorY + 15);
+
+  const pageCount = doc.getNumberOfPages();
+  for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+    doc.setPage(pageNumber);
+    addFooter(doc, pageNumber, pageCount);
+  }
+  return doc;
 };
 
 export const generateWaybill = async (shipment: WaybillData) => {
-  const doc = new jsPDF();
-  
-  // Page dimensions
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  
-  // Colors
-  const primaryColor: [number, number, number] = [41, 128, 185]; // Professional blue
-  const darkColor: [number, number, number] = [44, 62, 80];
-  const lightGray: [number, number, number] = [236, 240, 241];
-  
-  // Header background
-  doc.setFillColor(...primaryColor);
-  doc.rect(0, 0, pageWidth, 40, "F");
-  
-  // Load and add logo
-  try {
-    const logo = await loadImage("/rex-logo-circle.png");
-    doc.addImage(logo, "PNG", 15, 5, 30, 30);
-  } catch (error) {
-    console.warn("Logo could not be loaded:", error);
-  }
-  
-  // Company name (next to logo)
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
-  doc.text("REX LOJİSTİK", 50, 20);
-  
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-  doc.text("SEVK İRSALİYESİ", 50, 30);
-  
-  // Reset text color
-  doc.setTextColor(...darkColor);
-  
-  // Shipment info box
-  let yPos = 50;
-  
-  doc.setFillColor(...lightGray);
-  doc.rect(15, yPos, pageWidth - 30, 20, "F");
-  
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.text(`İrsaliye No: ${shipment.shipment_code}`, 20, yPos + 8);
-  doc.text(
-    `Tarih: ${format(new Date(shipment.pickup_date), "dd MMMM yyyy", { locale: tr })}`,
-    pageWidth - 20,
-    yPos + 8,
-    { align: "right" }
-  );
-  
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(
-    `Düzenlenme: ${format(new Date(), "dd.MM.yyyy HH:mm", { locale: tr })}`,
-    pageWidth - 20,
-    yPos + 15,
-    { align: "right" }
-  );
-  
-  // Sender and Receiver boxes
-  yPos = 80;
-  const boxWidth = (pageWidth - 45) / 2;
-  
-  // Sender box
-  doc.setDrawColor(...primaryColor);
-  doc.setLineWidth(0.5);
-  doc.rect(15, yPos, boxWidth, 35);
-  
-  doc.setFillColor(...primaryColor);
-  doc.rect(15, yPos, boxWidth, 8, "F");
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("GÖNDERİCİ", 20, yPos + 5);
-  
-  doc.setTextColor(...darkColor);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(shipment.sender_name || "-", 20, yPos + 15);
-  doc.text(shipment.origin || "-", 20, yPos + 22);
-  
-  // Receiver box
-  doc.setDrawColor(...primaryColor);
-  doc.rect(25 + boxWidth, yPos, boxWidth, 35);
-  
-  doc.setFillColor(...primaryColor);
-  doc.rect(25 + boxWidth, yPos, boxWidth, 8, "F");
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("ALICI", 30 + boxWidth, yPos + 5);
-  
-  doc.setTextColor(...darkColor);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(shipment.receiver || "-", 30 + boxWidth, yPos + 15);
-  doc.text(
-    `${shipment.destination || "-"} / ${shipment.receiver_district || "-"}`,
-    30 + boxWidth,
-    yPos + 22
-  );
-  
-  // Transport info
-  yPos = 125;
-  
-  doc.setFillColor(...lightGray);
-  doc.rect(15, yPos, pageWidth - 30, 20, "F");
-  
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("TAŞIYICI BİLGİLERİ", 20, yPos + 8);
-  
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(
-    `Sürücü: ${shipment.driver?.full_name || "-"}`,
-    20,
-    yPos + 15
-  );
-  doc.text(
-    `Araç Plakası: ${shipment.vehicle?.cekici_plakasi || "-"}`,
-    pageWidth / 2 + 10,
-    yPos + 15
-  );
-  
-  // Cargo details table
-  yPos = 155;
-  
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("YÜK DETAYLARI", 20, yPos);
-  
-  const cargoData = shipment.cargo_items?.map((item) => [
-    item.adet.toString(),
-    item.cinsi,
-    `${item.kg_ds} kg`,
-    `${(item.adet * item.kg_ds).toFixed(2)} kg`,
-  ]) || [];
-  
-  autoTable(doc, {
-    startY: yPos + 5,
-    head: [["Adet", "Cinsi", "KG/DS (Birim)", "Toplam KG"]],
-    body: cargoData,
-    foot: [["", "", "TOPLAM:", `${shipment.toplam_kg_ds?.toFixed(2) || 0} kg`]],
-    theme: "grid",
-    headStyles: {
-      fillColor: primaryColor,
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
-      fontSize: 9,
-    },
-    footStyles: {
-      fillColor: lightGray,
-      textColor: darkColor,
-      fontStyle: "bold",
-      fontSize: 9,
-    },
-    styles: {
-      fontSize: 9,
-      cellPadding: 3,
-    },
-    columnStyles: {
-      0: { halign: "center", cellWidth: 30 },
-      1: { halign: "left" },
-      2: { halign: "center", cellWidth: 35 },
-      3: { halign: "right", cellWidth: 35 },
-    },
-  });
-  
-  // Signature section
-  const finalY = (doc as any).lastAutoTable.finalY + 20;
-  
-  doc.setDrawColor(...darkColor);
-  doc.setLineWidth(0.3);
-  
-  // Delivery signature
-  doc.rect(15, finalY, boxWidth, 30);
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.text("TESLİM EDEN", 20, finalY + 8);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.text("Ad Soyad: ____________________", 20, finalY + 18);
-  doc.text("İmza: ____________________", 20, finalY + 25);
-  
-  // Receiver signature
-  doc.rect(25 + boxWidth, finalY, boxWidth, 30);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.text("TESLİM ALAN", 30 + boxWidth, finalY + 8);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.text("Ad Soyad: ____________________", 30 + boxWidth, finalY + 18);
-  doc.text("İmza: ____________________", 30 + boxWidth, finalY + 25);
-  
-  // Footer
-  doc.setFontSize(7);
-  doc.setTextColor(128, 128, 128);
-  doc.text(
-    "Bu belge elektronik ortamda oluşturulmuştur. Geçerlilik için ıslak imza gerekmektedir.",
-    pageWidth / 2,
-    pageHeight - 10,
-    { align: "center" }
-  );
-  
-  // QR Code placeholder (optional - can be implemented with qrcode library)
-  doc.setDrawColor(128, 128, 128);
-  doc.rect(pageWidth - 35, pageHeight - 40, 25, 25);
-  doc.setFontSize(6);
-  doc.text("QR KOD", pageWidth - 22.5, pageHeight - 12, { align: "center" });
-  
-  // Save PDF
-  doc.save(`Irsaliye_${shipment.shipment_code}.pdf`);
+  const doc = await buildWaybillPdf(shipment);
+  doc.save(`REX_Waybill_${shipment.shipment_code}.pdf`);
 };

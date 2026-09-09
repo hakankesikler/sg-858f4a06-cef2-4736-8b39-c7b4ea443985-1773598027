@@ -1624,6 +1624,26 @@ test("shipments support multiple pickup and delivery stops with separately price
   assert.match(logistics, /teslim noktası/);
 });
 
+test("shipment completion offers a privacy-safe WhatsApp message and a branded waybill", async () => {
+  const [notification, shipmentForm, waybill, customerWaybill] = await Promise.all([
+    read("src/components/ShipmentNotificationDialog.tsx"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/components/WaybillGenerator.tsx"),
+    read("src/lib/customer-waybill.ts"),
+  ]);
+
+  assert.match(notification, /REX LOJİSTİK - SEVKİYAT BİLGİSİ/);
+  assert.match(notification, /WhatsApp mesajı önizlemesi/);
+  assert.match(notification, /Waybill PDF/);
+  assert.doesNotMatch(notification, /driver_tc|T\.C\. Kimlik/);
+  assert.match(shipmentForm, /driver_phone: selectedDriver\?\.phone_1/);
+  assert.match(shipmentForm, /route_stops: routeStops/);
+  assert.match(shipmentForm, /cargo_items: cargoItems/);
+  assert.match(waybill, /TASIMA BELGESI \/ WAYBILL/);
+  assert.match(waybill, /mali belge veya sevk irsaliyesi yerine gecmez/);
+  assert.match(customerWaybill, /generateWaybill/);
+});
+
 test("legacy test sales invoices are archived without affecting operational totals", async () => {
   const [sql, accounting, customerTransactions, collections, reports, service, officeSync] = await Promise.all([
     read("supabase/migrations/20260908202159_archive_legacy_test_sales_invoices.sql"),

@@ -19,7 +19,7 @@ import { vehicleService, Vehicle } from "@/services/vehicleService";
 import { crmService, Customer } from "@/services/crmService";
 import { cn } from "@/lib/utils";
 import { openPrivateDocument } from "@/lib/private-storage";
-import { ShipmentNotificationDialog } from "@/components/ShipmentNotificationDialog";
+import { ShipmentNotificationDialog, type ShipmentNotificationData } from "@/components/ShipmentNotificationDialog";
 import { GpslineDeliveryEstimator } from "@/components/GpslineDeliveryEstimator";
 
 // Helper function to convert text to title case (Turkish locale aware)
@@ -119,20 +119,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   
   // Notification dialog state
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
-  const [notificationData, setNotificationData] = useState<{
-    shipment_code: string;
-    tracking_number: string;
-    tracking_url: string;
-    driver_name: string;
-    driver_tc: string;
-    driver_phone: string;
-    vehicle_plate: string;
-    trailer_plate: string;
-    origin: string;
-    destination: string;
-    customer_phone?: string;
-    customer_email?: string;
-  } | null>(null);
+  const [notificationData, setNotificationData] = useState<ShipmentNotificationData | null>(null);
   
   const [pickupStops, setPickupStops] = useState<ShipmentRouteStopInput[]>([
     createRouteStop("pickup", 1),
@@ -691,6 +678,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       return;
     }
 
+    let keepOpenForNotification = false;
     try {
       setIsSubmitting(true);
       const primaryPickup = pickupStops[0];
@@ -766,24 +754,38 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         const selectedCustomer = customers.find(c => c.id === formData.customer_id);
         
         
-        if (selectedDriver && selectedVehicle && selectedCustomer) {
+        if (selectedCustomer) {
           setNotificationData({
             shipment_code: savedShipment.shipment_code || shipmentCode,
             tracking_number: savedShipment.tracking_number || "",
             tracking_url: savedShipment.tracking_number
               ? `${window.location.origin}/takip/${encodeURIComponent(savedShipment.tracking_number)}`
               : "",
-            driver_name: selectedDriver.full_name || "",
-            driver_tc: selectedDriver.tc_no || "",
-            driver_phone: selectedDriver.phone || "",
-            vehicle_plate: selectedVehicle.cekici_plakasi || "",
-            trailer_plate: selectedVehicle.dorse_plakasi || "",
+            pickup_date: pickupDate,
+            estimated_delivery_date: estimatedDeliveryDate,
+            customer_name: selectedCustomer.name || selectedCustomer.company || "",
+            sender_name: primaryPickup.company_name,
+            receiver: primaryDelivery.company_name,
+            receiver_district: primaryDelivery.district || "",
+            driver_name: selectedDriver?.full_name || "",
+            driver_phone: selectedDriver?.phone_1 || "",
+            vehicle_plate: selectedVehicle?.cekici_plakasi || "",
+            trailer_plate: selectedVehicle?.dorse_plakasi || "",
+            driver: selectedDriver ? { full_name: selectedDriver.full_name, phone_1: selectedDriver.phone_1 } : null,
+            vehicle: selectedVehicle ? {
+              cekici_plakasi: selectedVehicle.cekici_plakasi,
+              dorse_plakasi: selectedVehicle.dorse_plakasi,
+              arac_tipi: selectedVehicle.arac_tipi,
+            } : null,
             origin: primaryPickup.city,
             destination: primaryDelivery.city,
+            route_stops: routeStops,
+            cargo_items: cargoItems,
+            toplam_kg_ds: totalKgDs,
             customer_phone: selectedCustomer.phone || "",
-            customer_email: selectedCustomer.email || ""
+            customer_email: selectedCustomer.email || "",
           });
-          
+          keepOpenForNotification = true;
           setShowNotificationDialog(true);
         }
         
@@ -798,7 +800,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       }
 
       onSuccess();
-      if (!showNotificationDialog) {
+      if (!keepOpenForNotification) {
         onClose();
       }
       resetForm();

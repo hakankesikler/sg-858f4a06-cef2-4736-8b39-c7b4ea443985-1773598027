@@ -131,7 +131,7 @@ export default function CustomerShipmentsPage() {
       return;
     }
     for (const shipment of rows) await downloadCustomerWaybill(shipment, profile);
-    toast({ title: `${rows.length} irsaliye hazırlandı` });
+    toast({ title: `${rows.length} taşıma belgesi hazırlandı` });
   };
 
   const logout = async () => {
@@ -159,7 +159,7 @@ export default function CustomerShipmentsPage() {
 
         <main className="max-w-[1600px] mx-auto p-4 sm:p-6 space-y-6">
           <div className="rounded-2xl bg-gradient-to-r from-blue-700 to-blue-500 text-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg">
-            <div><p className="text-blue-100 text-sm">{profile.customer_code || "REX Müşteri"}</p><h1 className="text-2xl sm:text-3xl font-bold mt-1">Sevkiyat Listesi</h1><p className="text-blue-100 mt-2">Güncel taşıma durumlarını izleyin, takip bağlantısı paylaşın ve irsaliyelerinizi indirin.</p></div>
+            <div><p className="text-blue-100 text-sm">{profile.customer_code || "REX Müşteri"}</p><h1 className="text-2xl sm:text-3xl font-bold mt-1">Sevkiyat Listesi</h1><p className="text-blue-100 mt-2">Güncel taşıma durumlarını izleyin, takip bağlantısı paylaşın ve taşıma belgelerinizi indirin.</p></div>
             <div className="grid grid-cols-3 gap-3 min-w-fit">
               <div className="bg-white/15 rounded-xl px-4 py-3 text-center"><p className="text-2xl font-bold">{shipments.length}</p><p className="text-xs text-blue-100">Toplam</p></div>
               <div className="bg-white/15 rounded-xl px-4 py-3 text-center"><p className="text-2xl font-bold">{activeCount}</p><p className="text-xs text-blue-100">Yolda</p></div>
@@ -181,7 +181,7 @@ export default function CustomerShipmentsPage() {
               <Button className="bg-blue-600 hover:bg-blue-700"><Search className="h-4 w-4 mr-2" />{filtered.length} Sonuç</Button>
               <Button variant="outline" onClick={resetFilters}><RotateCcw className="h-4 w-4 mr-2" />Temizle</Button>
               <Button variant="outline" onClick={() => void downloadList()} disabled={!filtered.length}><FileDown className="h-4 w-4 mr-2" />Excel İndir</Button>
-              <Button variant="outline" onClick={downloadSelectedWaybills} disabled={!filtered.length}><FileText className="h-4 w-4 mr-2" />{selected.length ? `Seçili İrsaliyeler (${selected.length})` : "İrsaliyeleri İndir"}</Button>
+              <Button variant="outline" onClick={downloadSelectedWaybills} disabled={!filtered.length}><FileText className="h-4 w-4 mr-2" />{selected.length ? `Seçili Belgeler (${selected.length})` : "Taşıma Belgelerini İndir"}</Button>
             </div>
           </Card>
 
@@ -209,7 +209,7 @@ export default function CustomerShipmentsPage() {
                       <td className="p-3">{formatDate(shipment.estimated_delivery_date)}</td>
                       <td className="p-3">{shipment.delivery_date || shipment.actual_delivery_date ? <span className="inline-flex items-center gap-1 text-green-700"><CheckCircle2 className="h-4 w-4" />{formatDate(shipment.delivery_date || shipment.actual_delivery_date)}</span> : "-"}</td>
                       <td className="p-3"><div className="flex justify-center gap-1">
-                        <button onClick={() => downloadCustomerWaybill(shipment, profile)} className="p-2 rounded-lg text-blue-700 hover:bg-blue-100" title="İrsaliye indir"><Download className="h-4 w-4" /></button>
+                        <button onClick={() => downloadCustomerWaybill(shipment, profile)} className="p-2 rounded-lg text-blue-700 hover:bg-blue-100" title="Taşıma belgesi / waybill indir"><Download className="h-4 w-4" /></button>
                         <button onClick={() => window.open(trackingUrl(shipment), "_blank", "noopener,noreferrer")} className="p-2 rounded-lg text-slate-700 hover:bg-slate-100" title="Canlı takip"><ExternalLink className="h-4 w-4" /></button>
                         {shipment.delivery_proof_url && <button onClick={() => setDocumentsShipment(shipment)} className="p-2 rounded-lg text-green-700 hover:bg-green-100" title="Teslim belge paketini görüntüle"><FileText className="h-4 w-4" /></button>}
                       </div></td>

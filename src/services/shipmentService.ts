@@ -203,8 +203,8 @@ export const shipmentService = {
       .select(`
         *,
         supplier:customers!shipments_supplier_id_fkey(id, customer_code, name),
-        driver:drivers(id, driver_code, full_name),
-        vehicle:vehicles(id, vehicle_code, cekici_plakasi, arac_tipi),
+        driver:drivers(id, driver_code, full_name, phone_1),
+        vehicle:vehicles(id, vehicle_code, cekici_plakasi, dorse_plakasi, arac_tipi),
         customer:customers!shipments_customer_id_fkey(id, customer_code, name)
         ,sale_invoice:sales_invoices!shipments_sale_invoice_id_fkey(
           id,
@@ -222,6 +222,7 @@ export const shipmentService = {
           id,
           adet,
           cinsi,
+          kg_ds,
           birim_fiyat,
           alt_toplam_fiyat,
           route_description,
@@ -330,8 +331,8 @@ export const shipmentService = {
       .select(`
         *,
         driver:drivers(id, driver_code, full_name, phone_1),
-        vehicle:vehicles(id, vehicle_code, cekici_plakasi, arac_tipi),
-        customer:customers!shipments_customer_id_fkey(id, customer_code, name, phone),
+        vehicle:vehicles(id, vehicle_code, cekici_plakasi, dorse_plakasi, arac_tipi),
+        customer:customers!shipments_customer_id_fkey(id, customer_code, name, phone, email),
         supplier:customers!shipments_supplier_id_fkey(id, customer_code, name, phone)
       `)
       .eq("id", id)
