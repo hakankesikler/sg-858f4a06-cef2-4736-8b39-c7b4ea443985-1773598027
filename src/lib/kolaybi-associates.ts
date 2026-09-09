@@ -150,7 +150,7 @@ export async function synchronizeKolayBiAssociate(input: {
       surname: names.surname,
       identity_no: identityNo,
       is_corporate: String(corporate),
-      associate_type: ["tedarikci", "personel", "ortak"].includes(String(customer.account_type)) ? "supplier" : "customer",
+      associate_type: ["tedarikci", "her_ikisi", "personel", "ortak"].includes(String(customer.account_type)) ? "supplier" : "customer",
       code: String(customer.customer_code || ""),
     });
     if (customer.tax_office) form.set("tax_office", String(customer.tax_office));

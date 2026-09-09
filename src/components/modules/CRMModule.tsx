@@ -220,7 +220,9 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
 
     // Filter by main account type
     if (filterType === "musteri") {
-      filtered = filtered.filter(c => c.account_type === "musteri" || !c.account_type);
+      filtered = filtered.filter(c => c.account_type === "musteri" || c.account_type === "her_ikisi" || !c.account_type);
+    } else if (filterType === "tedarikci") {
+      filtered = filtered.filter(c => c.account_type === "tedarikci" || c.account_type === "her_ikisi");
     } else if (filterType !== "all") {
       filtered = filtered.filter(c => c.account_type === filterType);
     }
@@ -656,6 +658,8 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
                         ? "Müşteri"
                         : customer.account_type === "tedarikci"
                         ? "Tedarikçi"
+                        : customer.account_type === "her_ikisi"
+                        ? "Müşteri ve Tedarikçi"
                         : customer.account_type === "personel"
                         ? "Personel"
                         : customer.account_type === "ortak"
@@ -704,7 +708,7 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
                       >
                         <Archive className="h-4 w-4 text-amber-600" />
                       </button>}
-                      {canManagePortalInvites && (customer.account_type === "musteri" || !customer.account_type) && (
+                      {canManagePortalInvites && (customer.account_type === "musteri" || customer.account_type === "her_ikisi" || !customer.account_type) && (
                         <button
                           type="button"
                           onClick={() => openPortalInvite(customer)}
@@ -796,6 +800,7 @@ export function CRMModule({ permissions }: { permissions: PermissionMap }) {
                     <p className="font-medium">
                       {selectedCustomer.account_type === "musteri" ? "Müşteri" : 
                        selectedCustomer.account_type === "tedarikci" ? "Tedarikçi" :
+                       selectedCustomer.account_type === "her_ikisi" ? "Müşteri ve Tedarikçi" :
                        selectedCustomer.account_type === "personel" ? "Personel" :
                        selectedCustomer.account_type === "ortak" ? "Ortak" : "Müşteri"}
                     </p>

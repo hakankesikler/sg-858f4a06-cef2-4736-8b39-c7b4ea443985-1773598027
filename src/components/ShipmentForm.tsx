@@ -539,7 +539,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       const customersList = customersData;
       
       const suppliersList = customersData.filter(c => {
-        const isTedarikci = c.account_type === "tedarikci";
+        const isTedarikci = c.account_type === "tedarikci" || c.account_type === "her_ikisi";
         const isCurrentlySelected = editMode && initialData?.supplier_id === c.id;
         return isTedarikci || isCurrentlySelected;
       });

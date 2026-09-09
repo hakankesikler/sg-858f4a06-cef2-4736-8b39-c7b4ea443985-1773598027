@@ -381,6 +381,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
     const types = {
       musteri: "Müşteri",
       tedarikci: "Tedarikçi",
+      her_ikisi: "Müşteri ve Tedarikçi",
       personel: "Personel",
       ortak: "Ortak"
     };
@@ -391,6 +392,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
     const icons = {
       musteri: Building2,
       tedarikci: Briefcase,
+      her_ikisi: Briefcase,
       personel: UserCircle2,
       ortak: UserCircle2
     };
@@ -432,6 +434,17 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
         .filter(payment => payment.customer_id === customerId && payment.transaction_type === "odeme")
         .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
       balance = -1 * (supplierInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0) - payments) + adjustmentBalance;
+    } else if (accountType === "her_ikisi") {
+      const customerInvoices = salesInvoices.filter(inv => inv.customer_id === customerId);
+      const supplierInvoices = purchaseInvoices.filter(inv => inv.supplier_id === customerId);
+      const collections = customerPayments
+        .filter(payment => payment.customer_id === customerId && payment.transaction_type === "tahsilat")
+        .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      const payments = customerPayments
+        .filter(payment => payment.customer_id === customerId && payment.transaction_type === "odeme")
+        .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      balance = customerInvoices.reduce((sum, inv) => sum + Number(inv.grand_total || 0), 0) - collections
+        - supplierInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0) + payments + adjustmentBalance;
     }
     // personel and ortak = 0 for now
     
@@ -445,7 +458,11 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
     // Filter by activeTab
     if (activeTab === "genel") {
       // Show both musteri and tedarikci in general view
-      if (accountType !== "musteri" && accountType !== "tedarikci") return false;
+      if (!["musteri", "tedarikci", "her_ikisi"].includes(accountType)) return false;
+    } else if (activeTab === "musteri") {
+      if (accountType !== "musteri" && accountType !== "her_ikisi") return false;
+    } else if (activeTab === "tedarikci") {
+      if (accountType !== "tedarikci" && accountType !== "her_ikisi") return false;
     } else {
       // Show only the selected type (musteri, tedarikci, personel, or ortak)
       if (accountType !== activeTab) return false;

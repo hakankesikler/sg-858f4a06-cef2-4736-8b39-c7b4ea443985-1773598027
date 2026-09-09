@@ -1514,6 +1514,41 @@ test("purchase invoices separate the operational carrier from the legal payable 
   assert.match(shipmentForm, /Operasyon Taşıyıcısı \(Opsiyonel\)/);
 });
 
+test("KolayBi purchase invoices create and link missing legal supplier cards without duplicates", async () => {
+  const [sql, syncApi, cariForm, accounting, crm, shipmentForm, transactions] = await Promise.all([
+    read("supabase/migrations/20260909170000_auto_create_kolaybi_purchase_suppliers.sql"),
+    read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
+    read("src/components/CariForm.tsx"),
+    read("src/components/modules/AccountingModule.tsx"),
+    read("src/components/modules/CRMModule.tsx"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/components/CustomerTransactionsDialog.tsx"),
+  ]);
+
+  assert.match(sql, /'her_ikisi'/);
+  assert.match(sql, /rex_ensure_kolaybi_purchase_supplier/);
+  assert.match(sql, /pg_advisory_xact_lock/);
+  assert.match(sql, /v_candidate_count > 1/);
+  assert.match(sql, /supplier_category=coalesce\(supplier_category,'diger'\)/);
+  assert.match(sql, /SET billing_supplier_id=v_customer_id/);
+  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.rex_ensure_kolaybi_purchase_supplier\(jsonb,jsonb,text\)\s+TO service_role/);
+  assert.match(sql, /rex_create_customer_portal_invite/);
+  assert.match(sql, /account_type, 'musteri'\) NOT IN \('musteri','her_ikisi'\)/);
+  assert.match(sql, /rex_crm_quote_to_opportunity/);
+  assert.match(sql, /rex_crm_duplicate_candidates/);
+  assert.match(sql, /rex_crm_convert_to_customer/);
+  assert.match(sql, /WITH \(security_invoker = true\)/);
+  assert.match(syncApi, /rex_ensure_kolaybi_purchase_supplier/);
+  assert.match(syncApi, /ensuredSupplierTaxes = new Set/);
+  assert.match(syncApi, /suppliers_created/);
+  assert.match(syncApi, /suppliers_promoted/);
+  assert.match(cariForm, /Müşteri ve Tedarikçi/);
+  assert.match(accounting, /accountType === "her_ikisi"/);
+  assert.match(crm, /c\.account_type === "her_ikisi"/);
+  assert.match(shipmentForm, /c\.account_type === "her_ikisi"/);
+  assert.match(transactions, /accountType === "tedarikci" \|\| accountType === "her_ikisi"/);
+});
+
 test("invoice preview follows official e-invoice and e-archive presentation data", async () => {
   const [dialog, template] = await Promise.all([
     read("src/components/InvoicePreviewDialog.tsx"),

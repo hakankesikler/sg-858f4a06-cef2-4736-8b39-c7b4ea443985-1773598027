@@ -99,7 +99,7 @@ export function CustomerTransactionsDialog({
       const accountType = customer.account_type || "musteri";
       let allTransactions: Transaction[] = [];
 
-      if (accountType === "musteri") {
+      if (accountType === "musteri" || accountType === "her_ikisi") {
         // Load sales invoices
         const { data: invoices, error: invError } = await supabase
           .from("sales_invoices")
@@ -156,7 +156,8 @@ export function CustomerTransactionsDialog({
             }))
           ];
         }
-      } else if (accountType === "tedarikci") {
+      }
+      if (accountType === "tedarikci" || accountType === "her_ikisi") {
         // Load purchase invoices
         const { data: purchases, error: purError } = await supabase
           .from("purchases")
@@ -170,18 +171,21 @@ export function CustomerTransactionsDialog({
 
         if (purchases) {
           const purchasesList = purchases as any[];
-          allTransactions = purchasesList.map((pur) => ({
-            id: pur.id,
-            date: pur.purchase_date || pur.created_at,
-            type: "Alış Faturası",
-            documentNo: pur.purchase_no || pur.invoice_no || "-",
-            debit: pur.total,
-            credit: 0,
-            currency: pur.currency || "TRY",
-            exchangeRate: 1,
-            localAmount: pur.total,
-            balance: 0,
-          }));
+          allTransactions = [
+            ...allTransactions,
+            ...purchasesList.map((pur) => ({
+              id: pur.id,
+              date: pur.purchase_date || pur.created_at,
+              type: "Alış Faturası",
+              documentNo: pur.purchase_no || pur.invoice_no || "-",
+              debit: pur.total,
+              credit: 0,
+              currency: pur.currency || "TRY",
+              exchangeRate: 1,
+              localAmount: pur.total,
+              balance: 0,
+            })),
+          ];
         }
 
         // Load customer payments (odeme - payments)
@@ -347,6 +351,7 @@ export function CustomerTransactionsDialog({
                 <Badge className="bg-orange-500 text-white">
                   {customer?.account_type === "musteri" && "Müşteri"}
                   {customer?.account_type === "tedarikci" && "Tedarikçi"}
+                  {customer?.account_type === "her_ikisi" && "Müşteri ve Tedarikçi"}
                   {customer?.account_type === "personel" && "Personel"}
                   {customer?.account_type === "ortak" && "Ortak"}
                 </Badge>

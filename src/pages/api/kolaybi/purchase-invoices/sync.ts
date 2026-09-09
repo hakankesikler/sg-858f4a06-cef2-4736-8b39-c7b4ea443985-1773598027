@@ -411,6 +411,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let existing = 0;
     let commercialMatches = 0;
     let associateMatches = 0;
+    let suppliersCreated = 0;
+    let suppliersPromoted = 0;
+    let supplierInvoicesLinked = 0;
+    let supplierReviews = 0;
+    const ensuredSupplierTaxes = new Set<string>();
     const skipReasons: Record<SkipReason, number> = {
       missing_document_id: 0,
       missing_invoice_no: 0,
@@ -430,6 +435,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         skipReasons[normalized.reason] += 1;
         continue;
       }
+      const supplierTax = String(normalized.invoice.issuer_tax_id || "").replace(/\D/g, "");
+      if (!ensuredSupplierTaxes.has(supplierTax)) {
+        ensuredSupplierTaxes.add(supplierTax);
+        const { data: supplierResult, error: supplierError } = await admin.rpc(
+          "rex_ensure_kolaybi_purchase_supplier" as any,
+          {
+            p_invoice: normalized.invoice,
+            p_associate: associate || {},
+            p_provider_environment: providerEnvironment,
+          } as any,
+        );
+        if (supplierError) {
+          errors.push(`${textValue(official?.no, official?.document_id, "Bilinmeyen belge")}: tedarikçi carisi oluşturulamadı: ${String(supplierError.message).slice(0, 180)}`);
+        } else {
+          const ensured = supplierResult as any;
+          if (ensured?.created) suppliersCreated += 1;
+          if (ensured?.promoted) suppliersPromoted += 1;
+          supplierInvoicesLinked += Number(ensured?.linked || 0);
+          if (ensured?.review_required) supplierReviews += 1;
+        }
+      }
       const { data, error } = await admin.rpc("rex_import_kolaybi_purchase_invoice" as any, { p_invoice: normalized.invoice } as any);
       if (error) {
         errors.push(`${textValue(official?.no, official?.document_id, "Bilinmeyen belge")}: ${String(error.message).slice(0, 180)}`);
@@ -446,6 +472,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       commercialReceived: commercialRows.length,
       commercialMatches,
       associateMatches,
+      suppliersCreated,
+      suppliersPromoted,
+      supplierInvoicesLinked,
+      supplierReviews,
       imported,
       existing,
       skipped,
@@ -459,6 +489,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       commercial_received: commercialRows.length,
       commercial_matches: commercialMatches,
       associate_matches: associateMatches,
+      suppliers_created: suppliersCreated,
+      suppliers_promoted: suppliersPromoted,
+      supplier_invoices_linked: supplierInvoicesLinked,
+      supplier_reviews: supplierReviews,
       imported,
       existing,
       skipped,

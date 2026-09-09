@@ -164,7 +164,7 @@ export const crmService = {
       
       if (accountType === "musteri") {
         prefix = "CST";
-      } else if (accountType === "tedarikci") {
+      } else if (accountType === "tedarikci" || accountType === "her_ikisi") {
         if (supplierCategory === "nakliyeci") {
           prefix = "NKL";
         } else if (supplierCategory === "tasiyici") {

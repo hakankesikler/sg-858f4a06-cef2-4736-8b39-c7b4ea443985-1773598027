@@ -20,6 +20,8 @@ interface CariFormProps {
   initialData?: any;
 }
 
+const isSupplierAccountType = (value: string) => value === "tedarikci" || value === "her_ikisi";
+
 export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initialData }: CariFormProps) {
   const { toast } = useToast();
   const populatedCustomerRef = useRef<string | null>(null);
@@ -244,7 +246,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.account_type === "tedarikci" && !formData.supplier_category) {
+    if (isSupplierAccountType(formData.account_type) && !formData.supplier_category) {
       toast({
         title: "Tedarikçi kategorisi gerekli",
         description: "Nakliyeci, taşıyıcı firma, forwarder/acente veya diğer tedarikçi kategorilerinden birini seçin.",
@@ -343,7 +345,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         email: emailInputRef.current?.value.trim() || formData.email,
         phone: formData.phone,
         account_type: formData.account_type,
-        supplier_category: formData.account_type === "tedarikci" ? (formData.supplier_category || null) : null,
+        supplier_category: isSupplierAccountType(formData.account_type) ? (formData.supplier_category || null) : null,
         status: "Aktif",
         tc_no: cariTuru === "gercek" ? formData.tc_no : null,
         vergi_no: cariTuru === "tuzel" ? formData.vergi_no : null,
@@ -532,6 +534,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     >
                       <option value="musteri">Müşteri</option>
                       <option value="tedarikci">Tedarikçi</option>
+                      <option value="her_ikisi">Müşteri ve Tedarikçi</option>
                       <option value="personel">Personel</option>
                       <option value="ortak">Ortak</option>
                     </select>
@@ -543,7 +546,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 </div>
 
                 {/* Tedarikçi Kategorisi for Gerçek Kişi */}
-                {formData.account_type === "tedarikci" && (
+                {isSupplierAccountType(formData.account_type) && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     <div className="space-y-2">
                       <Label>Tedarikçi Kategorisi</Label>
@@ -642,6 +645,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                     >
                       <option value="musteri">Müşteri</option>
                       <option value="tedarikci">Tedarikçi</option>
+                      <option value="her_ikisi">Müşteri ve Tedarikçi</option>
                       <option value="personel">Personel</option>
                       <option value="ortak">Ortak</option>
                     </select>
@@ -653,7 +657,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
                 </div>
 
                 {/* Tedarikçi Kategorisi for Tüzel Kişi */}
-                {formData.account_type === "tedarikci" && (
+                {isSupplierAccountType(formData.account_type) && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     <div className="space-y-2">
                       <Label>Tedarikçi Kategorisi</Label>
@@ -885,7 +889,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
               </Button>
             </div>
 
-            {formData.account_type === "tedarikci" && formData.supplier_category === "tasiyici" && (
+            {isSupplierAccountType(formData.account_type) && formData.supplier_category === "tasiyici" && (
               <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
                 <p className="font-semibold">Kurumsal taşıyıcı firma</p>
                 <p className="mt-1">
@@ -897,7 +901,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
             )}
 
             {/* Nakliyeci Specific Fields */}
-            {formData.account_type === "tedarikci" && formData.supplier_category === "nakliyeci" && (
+            {isSupplierAccountType(formData.account_type) && formData.supplier_category === "nakliyeci" && (
               <>
                 <div className="border-t pt-6 mt-6">
                   <h3 className="text-lg font-semibold mb-4">Nakliyeciye Özel Bilgiler</h3>
@@ -1066,7 +1070,7 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
             )}
 
             {/* Forwarder/NVOCC/Havayolu Acentesi Specific Fields */}
-            {formData.account_type === "tedarikci" && formData.supplier_category === "forwarder" && (
+            {isSupplierAccountType(formData.account_type) && formData.supplier_category === "forwarder" && (
               <>
                 <div className="border-t pt-6 mt-6">
                   <h3 className="text-lg font-semibold mb-4">

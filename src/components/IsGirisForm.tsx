@@ -335,7 +335,7 @@ export function IsGirisForm({ isOpen, onClose, onSuccess }: IsGirisFormProps) {
                         </Label>
                         <Select value={formData.tedarikci} onValueChange={(value) => handleInputChange("tedarikci", value)}>
                           <SelectTrigger className="bg-purple-50"><SelectValue placeholder="Tedarikçi seçin (isteğe bağlı)" /></SelectTrigger>
-                          <SelectContent>{customers.filter((customer) => customer.account_type === "tedarikci").map((customer) => customer.id && <SelectItem key={customer.id} value={customer.id}>{customer.customer_code} - {customer.name}</SelectItem>)}</SelectContent>
+                          <SelectContent>{customers.filter((customer) => customer.account_type === "tedarikci" || customer.account_type === "her_ikisi").map((customer) => customer.id && <SelectItem key={customer.id} value={customer.id}>{customer.customer_code} - {customer.name}</SelectItem>)}</SelectContent>
                         </Select>
                         <p className="text-xs text-slate-500">Cari kart sisteminden otomatik çekilir</p>
                       </div>
