@@ -1362,6 +1362,26 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(accounting, /KolayBiOfficeModule/);
 });
 
+test("KolayBi live associate sync imports open-balance customers and publishes provider balances", async () => {
+  const [migration, api, service] = await Promise.all([
+    read("supabase/migrations/20260909010000_kolaybi_customer_balance_sync.sql"),
+    read("src/pages/api/kolaybi/office-sync.ts"),
+    read("src/services/kolaybiOfficeService.ts"),
+  ]);
+
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.kolaybi_customer_balance_snapshots/);
+  assert.match(migration, /UNIQUE \(provider_environment, provider_associate_id, currency\)/);
+  assert.match(migration, /sum\(company_amount\)::numeric\(18,2\) AS balance/);
+  assert.match(migration, /WHERE provider_environment = 'live'/);
+  assert.match(migration, /coalesce\(p\.balance, l\.balance, 0\)/);
+  assert.match(api, /createAssociateCustomer/);
+  assert.match(api, /replaceAssociateBalanceSnapshots/);
+  assert.match(api, /Bakiyesi bulunan KolayBi carisi REX TYS'ye otomatik aktarıldı/);
+  assert.match(api, /provider_environment,provider_associate_id,currency/);
+  assert.match(api, /ambiguousMatch/);
+  assert.match(service, /rex_customer_financial_directory/);
+});
+
 test("international express cargo supports QuickShipper AWB tracking and mandatory 311 exemption invoices", async () => {
   const [sql, form, tracking, publicService, api, logistics, invoice] = await Promise.all([
     read("supabase/migrations/20260830153000_international_express_shipments.sql"),

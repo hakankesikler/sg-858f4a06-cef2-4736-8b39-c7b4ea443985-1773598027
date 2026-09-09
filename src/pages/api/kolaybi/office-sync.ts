@@ -67,6 +67,140 @@ function materialAssociateBalance(item: any): boolean | null {
   )) > 0.01);
 }
 
+function providerField(value: any) {
+  if (value === undefined || value === null) return "";
+  if (["string", "number"].includes(typeof value)) return text(value);
+  return text(value?.value || value?.name || value?.description || value?.title || value?.full_name);
+}
+
+function associateAccountType(value: any): "musteri" | "tedarikci" | "personel" | "ortak" {
+  const candidate = providerField(value).toLocaleLowerCase("tr-TR");
+  if (/supplier|vendor|tedarik/.test(candidate)) return "tedarikci";
+  if (/employee|personnel|personel|staff/.test(candidate)) return "personel";
+  if (/partner|shareholder|ortak/.test(candidate)) return "ortak";
+  return "musteri";
+}
+
+function associateCompanyAmount(balance: any) {
+  const amount = number(balance?.balance ?? balance?.amount ?? balance?.total ?? balance?.remaining_amount);
+  const balanceCurrency = currency(balance?.currency);
+  const tantamount = balance?.tantamount === null || balance?.tantamount === undefined
+    ? Number.NaN
+    : Number(balance.tantamount);
+  return {
+    currency: balanceCurrency,
+    amount,
+    companyAmount: Number.isFinite(tantamount) ? tantamount : balanceCurrency === "TRY" ? amount : 0,
+  };
+}
+
+async function replaceAssociateBalanceSnapshots(
+  admin: any,
+  item: any,
+  customerId: string,
+  associateId: number,
+  providerEnvironment: "test" | "live",
+) {
+  const balances = Array.isArray(item?.balances) ? item.balances : null;
+  if (!balances) return;
+  const now = new Date().toISOString();
+  const byCurrency = new Map<string, { balance: number; companyAmount: number; sourceRows: any[] }>();
+  balances.forEach((balance: any) => {
+    const parsed = associateCompanyAmount(balance);
+    const current = byCurrency.get(parsed.currency) || { balance: 0, companyAmount: 0, sourceRows: [] };
+    current.balance += parsed.amount;
+    current.companyAmount += parsed.companyAmount;
+    current.sourceRows.push({
+      balance: balance?.balance ?? balance?.amount ?? null,
+      tantamount: balance?.tantamount ?? null,
+      currency: parsed.currency,
+    });
+    byCurrency.set(parsed.currency, current);
+  });
+
+  const { error: deleteError } = await admin.from("kolaybi_customer_balance_snapshots").delete()
+    .eq("provider_environment", providerEnvironment)
+    .eq("provider_associate_id", associateId);
+  if (deleteError) throw deleteError;
+  if (!byCurrency.size) return;
+  const snapshotRows = [...byCurrency.entries()].map(([balanceCurrency, value]) => ({
+    customer_id: customerId,
+    provider_environment: providerEnvironment,
+    provider_associate_id: associateId,
+    currency: balanceCurrency,
+    balance: value.balance,
+    company_amount: value.companyAmount,
+    raw_payload: { balances: value.sourceRows },
+    last_synced_at: now,
+    updated_at: now,
+  }));
+  const { error: snapshotError } = await admin.from("kolaybi_customer_balance_snapshots")
+    .upsert(snapshotRows, { onConflict: "provider_environment,provider_associate_id,currency" });
+  if (snapshotError) throw snapshotError;
+}
+
+async function importedCustomerCode(
+  admin: any,
+  row: { externalId: string; code: string },
+  providerEnvironment: "test" | "live",
+) {
+  const preferred = row.code.trim();
+  if (preferred) {
+    const { data } = await admin.from("customers").select("id").eq("customer_code", preferred).limit(1);
+    if (!data?.length) return preferred;
+  }
+  return `KB-${providerEnvironment === "live" ? "L" : "T"}-${row.externalId}`;
+}
+
+async function createAssociateCustomer(
+  admin: any,
+  item: any,
+  row: { externalId: string; displayName: string; code: string; taxIdentity: string },
+  providerEnvironment: "test" | "live",
+  actor: { id: string | null; email: string },
+) {
+  const associateId = Number(row.externalId);
+  if (!Number.isSafeInteger(associateId) || associateId <= 0) throw new ProviderError("KolayBi cari kimliği geçerli değil.");
+  const addresses = Array.isArray(item?.address) ? item.address : [];
+  const invoiceAddress = addresses.find((address: any) => providerField(address?.address_type).toLowerCase() === "invoice") || addresses[0] || {};
+  const identity = row.taxIdentity;
+  const customerCode = await importedCustomerCode(admin, row, providerEnvironment);
+  const accountType = associateAccountType(item?.associate_type);
+  const customerData = {
+    name: row.displayName || row.code || `KolayBi Cari ${associateId}`,
+    company: row.displayName || null,
+    customer_code: customerCode,
+    account_type: accountType,
+    status: "Aktif",
+    phone: providerField(item?.phone) || null,
+    email: providerField(item?.email) || null,
+    address: providerField(invoiceAddress?.address || invoiceAddress?.full_address || invoiceAddress?.description) || null,
+    city: providerField(invoiceAddress?.city) || null,
+    district: providerField(invoiceAddress?.district) || null,
+    postal_code: providerField(invoiceAddress?.postal_code || invoiceAddress?.zip_code) || null,
+    tax_office: providerField(item?.tax_office) || null,
+    vergi_no: identity.length === 10 ? identity : null,
+    tc_no: identity.length === 11 ? identity : null,
+    kolaybi_contact_id: associateId,
+    kolaybi_address_id: Number(invoiceAddress?.id) || null,
+    notes: `KolayBi ${providerEnvironment === "live" ? "canlı" : "sandbox"} entegrasyonu ile otomatik oluşturuldu.`,
+    updated_at: new Date().toISOString(),
+  };
+  const { data: created, error } = await admin.from("customers").insert(customerData).select("id").single();
+  if (error) throw error;
+  const { error: auditError } = await admin.from("customer_audit_events").insert({
+    customer_id: created.id,
+    event_type: "imported",
+    reason: "Bakiyesi bulunan KolayBi carisi otomatik aktarıldı.",
+    old_data: null,
+    new_data: customerData,
+    actor_id: actor.id,
+    actor_email: actor.email,
+  });
+  if (auditError) throw auditError;
+  return created.id as string;
+}
+
 function ignoredProviderRecord(summary: string) {
   return {
     type: null,
@@ -345,6 +479,7 @@ async function findLocal(
   item: any,
   row: ReturnType<typeof normalized>,
   providerEnvironment: "test" | "live",
+  actor: { id: string | null; email: string },
 ) {
   if (!row) return null;
   if (resource === "vaults") {
@@ -419,24 +554,38 @@ async function findLocal(
   }
   if (resource === "associates") {
     let result: any = null;
-    const { data: byProvider } = await admin.from("customers").select("id")
-      .eq("kolaybi_contact_id", Number(row.externalId)).is("archived_at", null).maybeSingle();
-    result = byProvider;
+    let ambiguousMatch = false;
+    const { data: providerMapping } = await admin.from("kolaybi_master_records")
+      .select("local_entity_id")
+      .eq("provider_environment", providerEnvironment)
+      .eq("resource_type", "associate")
+      .eq("external_id", row.externalId)
+      .eq("local_entity_type", "customer")
+      .eq("match_status", "matched")
+      .maybeSingle();
+    if (providerMapping?.local_entity_id) {
+      const { data: mappedCustomer } = await admin.from("customers").select("id")
+        .eq("id", providerMapping.local_entity_id).is("archived_at", null).maybeSingle();
+      result = mappedCustomer;
+    }
     if (!result && [10, 11].includes(row.taxIdentity.length)) {
       const { data } = await admin.from("customers").select("id")
         .or(`vergi_no.eq.${row.taxIdentity},tc_no.eq.${row.taxIdentity}`)
         .is("archived_at", null).limit(2);
       if (data?.length === 1) result = data[0];
+      else if ((data?.length || 0) > 1) ambiguousMatch = true;
     }
     if (!result && row.code) {
       const { data } = await admin.from("customers").select("id")
         .eq("customer_code", row.code).is("archived_at", null).limit(2);
       if (data?.length === 1) result = data[0];
+      else if ((data?.length || 0) > 1) ambiguousMatch = true;
     }
     if (!result && text(item?.email)) {
       const { data } = await admin.from("customers").select("id")
         .ilike("email", text(item.email)).is("archived_at", null).limit(2);
       if (data?.length === 1) result = data[0];
+      else if ((data?.length || 0) > 1) ambiguousMatch = true;
     }
     if (result?.id) {
       const invoiceAddress = (Array.isArray(item?.address) ? item.address : []).find((address: any) => address?.address_type === "invoice") || item?.address?.[0];
@@ -458,19 +607,45 @@ async function findLocal(
         updated_at: now,
       }).eq("id", result.id);
       if (customerUpdateError) throw customerUpdateError;
+      await replaceAssociateBalanceSnapshots(
+        admin,
+        item,
+        result.id,
+        Number(row.externalId),
+        providerEnvironment,
+      );
       return { type: "customer", id: result.id };
     }
     const hasMaterialBalance = materialAssociateBalance(item);
     if (hasMaterialBalance === false) {
       return ignoredProviderRecord("Sıfır bakiyeli ve REX TYS'de kullanılmayan KolayBi carisi arşiv kaydı olarak tutuldu.");
     }
+    const hasDurableIdentity = [10, 11].includes(row.taxIdentity.length) || Boolean(row.code);
+    if (hasMaterialBalance === true && hasDurableIdentity && !ambiguousMatch) {
+      const customerId = await createAssociateCustomer(admin, item, row, providerEnvironment, actor);
+      await replaceAssociateBalanceSnapshots(
+        admin,
+        item,
+        customerId,
+        Number(row.externalId),
+        providerEnvironment,
+      );
+      return {
+        type: "customer",
+        id: customerId,
+        matchStatus: "matched" as const,
+        summary: "Bakiyesi bulunan KolayBi carisi REX TYS'ye otomatik aktarıldı.",
+      };
+    }
     return {
       type: null,
       id: null,
       matchStatus: "review_required" as const,
       eventType: "review_required" as const,
-      summary: hasMaterialBalance
-        ? "Bakiyesi bulunan KolayBi carisi için güvenilir bir REX TYS eşleşmesi bulunamadı."
+      summary: ambiguousMatch
+        ? "KolayBi carisi birden fazla REX TYS kaydıyla eşleşti; kullanıcı kontrolü gerekiyor."
+        : hasMaterialBalance
+        ? "Bakiyesi bulunan KolayBi carisi için otomatik kayıt açmaya yeterli kimlik veya cari kodu bulunamadı."
         : "Bakiye bilgisi alınamayan KolayBi carisi için güvenilir bir REX TYS eşleşmesi bulunamadı.",
     };
   }
@@ -913,7 +1088,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           try {
             const row = normalized(resource, item);
             if (!row) { failed += 1; return; }
-            const local = await findLocal(admin, resource, item, row, providerEnvironment);
+            const local = await findLocal(admin, resource, item, row, providerEnvironment, actor);
             const matchStatus = local?.matchStatus || (local ? "matched" : "review_required");
             if (matchStatus === "matched") matched += 1;
             else if (matchStatus === "review_required") review += 1;
