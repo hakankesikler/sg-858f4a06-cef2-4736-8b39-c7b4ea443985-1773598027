@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   IncomingPurchaseInvoice,
   PurchaseInvoiceCandidate,
+  PurchaseInvoiceStats,
   purchaseInvoiceService,
 } from "@/services/purchaseInvoiceService";
 import { AlertTriangle, CheckCircle2, Eye, FileUp, Link2, Loader2, RefreshCw, SearchCheck } from "lucide-react";
@@ -41,16 +42,28 @@ const statusClass = (status: string) => {
 const money = (value: number, currency = "TRY") =>
   new Intl.NumberFormat("tr-TR", { style: "currency", currency }).format(Number(value || 0));
 
+const paymentLabel: Record<string, string> = {
+  paid: "Ödendi",
+  partially_paid: "Kısmi Ödendi",
+  unpaid: "Ödenmedi",
+};
+
+const PAGE_SIZE = 50;
+
 type AllocationState = Record<string, { selected: boolean; amount: string }>;
 
 export function PurchaseInvoiceInbox() {
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<IncomingPurchaseInvoice[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [stats, setStats] = useState<PurchaseInvoiceStats>({ review_required: 0, approval_pending: 0, payment_pending: 0, paid: 0 });
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [status, setStatus] = useState("review_required");
   const [manualOpen, setManualOpen] = useState(false);
   const [matchInvoice, setMatchInvoice] = useState<IncomingPurchaseInvoice | null>(null);
   const [candidates, setCandidates] = useState<PurchaseInvoiceCandidate[]>([]);
@@ -69,25 +82,31 @@ export function PurchaseInvoiceInbox() {
   });
   const [file, setFile] = useState<File | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [invoiceData, supplierData] = await Promise.all([purchaseInvoiceService.list(), purchaseInvoiceService.suppliers()]);
-      setInvoices(invoiceData);
+      const [invoiceData, supplierData, summary] = await Promise.all([
+        purchaseInvoiceService.list({ page, pageSize: PAGE_SIZE, search: debouncedSearch, status }),
+        purchaseInvoiceService.suppliers(),
+        purchaseInvoiceService.stats(),
+      ]);
+      setInvoices(invoiceData.items);
+      setTotal(invoiceData.total);
       setSuppliers(supplierData);
+      setStats(summary);
     } catch (error: any) {
       toast({ title: "Alış faturaları yüklenemedi", description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch, page, status, toast]);
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { setPage(0); setDebouncedSearch(search); }, 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
-  const filtered = useMemo(() => invoices.filter((invoice) => {
-    const haystack = `${invoice.invoice_no} ${invoice.issuer_name} ${invoice.issuer_tax_id}`.toLocaleLowerCase("tr-TR");
-    return (status === "all" || invoice.status === status) && haystack.includes(search.toLocaleLowerCase("tr-TR"));
-  }), [invoices, search, status]);
+  useEffect(() => { void load(); }, [load]);
 
   const selectedTotal = useMemo(() => Object.values(allocations).reduce((sum, value) =>
     sum + (value.selected ? Number(value.amount || 0) : 0), 0), [allocations]);
@@ -227,10 +246,11 @@ export function PurchaseInvoiceInbox() {
   };
 
   return <div className="space-y-5">
-    <div className="grid gap-3 md:grid-cols-3">
-      <Card className="p-4 border-l-4 border-l-blue-500"><div className="text-sm text-slate-500">İncelenecek</div><div className="text-2xl font-bold">{invoices.filter((item) => item.status === "review_required").length}</div></Card>
-      <Card className="p-4 border-l-4 border-l-amber-500"><div className="text-sm text-slate-500">Yönetici Onayı</div><div className="text-2xl font-bold">{invoices.filter((item) => item.status === "approval_pending").length}</div></Card>
-      <Card className="p-4 border-l-4 border-l-emerald-500"><div className="text-sm text-slate-500">Ödeme Bekleyen</div><div className="text-2xl font-bold">{invoices.filter((item) => item.status === "payment_pending").length}</div></Card>
+    <div className="grid gap-3 md:grid-cols-4">
+      <Card className="p-4 border-l-4 border-l-blue-500"><div className="text-sm text-slate-500">İncelenecek</div><div className="text-2xl font-bold">{stats.review_required}</div></Card>
+      <Card className="p-4 border-l-4 border-l-amber-500"><div className="text-sm text-slate-500">Yönetici Onayı</div><div className="text-2xl font-bold">{stats.approval_pending}</div></Card>
+      <Card className="p-4 border-l-4 border-l-emerald-500"><div className="text-sm text-slate-500">Ödeme Bekleyen</div><div className="text-2xl font-bold">{stats.payment_pending}</div></Card>
+      <Card className="p-4 border-l-4 border-l-slate-400"><div className="text-sm text-slate-500">Ödenmiş / Geçmiş</div><div className="text-2xl font-bold">{stats.paid}</div></Card>
     </div>
 
     <Card className="p-4">
@@ -243,13 +263,13 @@ export function PurchaseInvoiceInbox() {
       </div>
       <div className="mt-4 flex flex-col gap-2 md:flex-row">
         <Input placeholder="Fatura no, unvan veya VKN ile ara" value={search} onChange={(event) => setSearch(event.target.value)} />
-        <Select value={status} onValueChange={setStatus}><SelectTrigger className="md:w-56"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">Tüm Durumlar</SelectItem>{Object.entries(statusLabel).map(([value,label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select>
+        <Select value={status} onValueChange={(value) => { setPage(0); setStatus(value); }}><SelectTrigger className="md:w-56"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">Tüm Durumlar</SelectItem>{Object.entries(statusLabel).map(([value,label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select>
       </div>
     </Card>
 
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Kaynak</TableHead><TableHead>Fatura</TableHead><TableHead>Düzenleyen</TableHead><TableHead>Fatura Carisi</TableHead><TableHead>Operasyon Taşıyıcısı</TableHead><TableHead>Tarih</TableHead><TableHead>Tutar</TableHead><TableHead>Durum</TableHead><TableHead className="text-right">İşlem</TableHead></TableRow></TableHeader>
-      <TableBody>{loading ? <TableRow><TableCell colSpan={9} className="py-10 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin"/></TableCell></TableRow> : filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="py-10 text-center text-slate-500">Bu filtreye uygun alış faturası yok.</TableCell></TableRow> : filtered.map((invoice) => <TableRow key={invoice.id}>
+      <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Kaynak</TableHead><TableHead>Fatura</TableHead><TableHead>Düzenleyen</TableHead><TableHead>Fatura Carisi</TableHead><TableHead>Operasyon Taşıyıcısı</TableHead><TableHead>Tarih</TableHead><TableHead>Tutar</TableHead><TableHead>Ödeme</TableHead><TableHead>İş Akışı</TableHead><TableHead className="text-right">İşlem</TableHead></TableRow></TableHeader>
+      <TableBody>{loading ? <TableRow><TableCell colSpan={10} className="py-10 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin"/></TableCell></TableRow> : invoices.length === 0 ? <TableRow><TableCell colSpan={10} className="py-10 text-center text-slate-500">Bu filtreye uygun alış faturası yok.</TableCell></TableRow> : invoices.map((invoice) => <TableRow key={invoice.id}>
         <TableCell><Badge variant="outline">{invoice.source === "kolaybi" ? "Otomatik" : "Manuel"}</Badge></TableCell>
         <TableCell><div className="font-mono font-medium">{invoice.invoice_no}</div><div className="text-xs text-slate-500">{invoice.document_type === "e_invoice" ? "E-Fatura" : "E-Arşiv"}</div></TableCell>
         <TableCell><div className="max-w-56 font-medium">{invoice.issuer_name}</div><div className="text-xs text-slate-500">{invoice.issuer_tax_id}</div></TableCell>
@@ -257,9 +277,11 @@ export function PurchaseInvoiceInbox() {
         <TableCell>{invoice.operational_supplier?.company || invoice.operational_supplier?.name || <span className="text-slate-500">Henüz bilinmiyor</span>}</TableCell>
         <TableCell>{new Date(invoice.invoice_date).toLocaleDateString("tr-TR")}</TableCell>
         <TableCell className="font-semibold">{money(invoice.grand_total, invoice.currency)}</TableCell>
+        <TableCell><Badge variant="outline" className={invoice.payment_status === "paid" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{paymentLabel[invoice.payment_status || ""] || invoice.payment_status || "Bilinmiyor"}</Badge></TableCell>
         <TableCell><Badge variant="outline" className={statusClass(invoice.status)}>{statusLabel[invoice.status] || invoice.status}</Badge></TableCell>
         <TableCell><div className="flex justify-end gap-1">{(invoice.file_path || invoice.official_uuid) && <Button size="sm" variant="ghost" onClick={() => void openDocument(invoice)} title="Belgeyi aç"><Eye className="h-4 w-4"/></Button>}<Button size="sm" variant="outline" onClick={() => void openMatch(invoice)}><SearchCheck className="mr-1 h-4 w-4"/>{["review_required","match_proposed"].includes(invoice.status) ? "Eşleştir" : "İncele"}</Button></div></TableCell>
       </TableRow>)}</TableBody></Table></div>
+      <div className="flex items-center justify-between border-t px-4 py-3 text-sm"><span>{total === 0 ? "0 kayıt" : `${page * PAGE_SIZE + 1}-${Math.min((page + 1) * PAGE_SIZE, total)} / ${total} kayıt`}</span><div className="flex gap-2"><Button size="sm" variant="outline" disabled={page === 0 || loading} onClick={() => setPage((value) => Math.max(0, value - 1))}>Önceki</Button><Button size="sm" variant="outline" disabled={(page + 1) * PAGE_SIZE >= total || loading} onClick={() => setPage((value) => value + 1)}>Sonraki</Button></div></div>
     </Card>
 
     <Dialog open={manualOpen} onOpenChange={setManualOpen}><DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Manuel E-Arşiv / Alış Faturası Yükle</DialogTitle></DialogHeader>

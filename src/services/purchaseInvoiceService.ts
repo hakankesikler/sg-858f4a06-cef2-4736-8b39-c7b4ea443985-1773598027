@@ -19,6 +19,8 @@ export type IncomingPurchaseInvoice = {
   status: string;
   operational_supplier_id?: string | null;
   billing_supplier_id?: string | null;
+  payment_status?: string | null;
+  provider_balance?: number | null;
   file_path?: string | null;
   official_uuid?: string | null;
   matched_at?: string | null;
@@ -27,6 +29,20 @@ export type IncomingPurchaseInvoice = {
   operational_supplier?: { id: string; name?: string | null; company?: string | null } | null;
   billing_supplier?: { id: string; name?: string | null; company?: string | null } | null;
   allocations?: PurchaseInvoiceAllocation[];
+};
+
+export type PurchaseInvoiceListOptions = {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: string;
+};
+
+export type PurchaseInvoiceStats = {
+  review_required: number;
+  approval_pending: number;
+  payment_pending: number;
+  paid: number;
 };
 
 export type PurchaseInvoiceAllocation = {
@@ -97,13 +113,35 @@ async function authenticatedFetch(url: string, init: RequestInit = {}) {
 }
 
 export const purchaseInvoiceService = {
-  async list(): Promise<IncomingPurchaseInvoice[]> {
-    const { data, error } = await (supabase as any)
+  async list(options: PurchaseInvoiceListOptions = {}): Promise<{ items: IncomingPurchaseInvoice[]; total: number }> {
+    const page = Math.max(0, options.page || 0);
+    const pageSize = Math.min(100, Math.max(10, options.pageSize || 50));
+    const from = page * pageSize;
+    let query = (supabase as any)
       .from("incoming_purchase_invoices")
-      .select("*, operational_supplier:customers!incoming_purchase_invoices_operational_supplier_id_fkey(id,name,company), billing_supplier:customers!incoming_purchase_invoices_billing_supplier_id_fkey(id,name,company), allocations:purchase_invoice_allocations(*,shipment:shipments(id,shipment_code,origin,destination,cost,cost_currency))")
-      .order("created_at", { ascending: false });
+      .select("*, operational_supplier:customers!incoming_purchase_invoices_operational_supplier_id_fkey(id,name,company), billing_supplier:customers!incoming_purchase_invoices_billing_supplier_id_fkey(id,name,company), allocations:purchase_invoice_allocations(*,shipment:shipments(id,shipment_code,origin,destination,cost,cost_currency))", { count: "exact" });
+    if (options.status && options.status !== "all") query = query.eq("status", options.status);
+    const term = String(options.search || "").replace(/[%_,()]/g, " ").trim().slice(0, 80);
+    if (term) query = query.or(`invoice_no.ilike.%${term}%,issuer_name.ilike.%${term}%,issuer_tax_id.ilike.%${term}%`);
+    const { data, error, count } = await query
+      .order("invoice_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .range(from, from + pageSize - 1);
     if (error) throw error;
-    return data || [];
+    return { items: data || [], total: count || 0 };
+  },
+
+  async stats(): Promise<PurchaseInvoiceStats> {
+    const statuses = ["review_required", "approval_pending", "payment_pending", "paid"] as const;
+    const counts = await Promise.all(statuses.map(async (status) => {
+      const { count, error } = await (supabase as any)
+        .from("incoming_purchase_invoices")
+        .select("id", { count: "exact", head: true })
+        .eq("status", status);
+      if (error) throw error;
+      return [status, count || 0] as const;
+    }));
+    return Object.fromEntries(counts) as PurchaseInvoiceStats;
   },
 
   async suppliers() {

@@ -1716,3 +1716,24 @@ test("legacy test sales invoices are archived without affecting operational tota
   assert.match(service, /\.is\("archived_at", null\)/);
   assert.match(officeSync, /\.is\("archived_at", null\)/);
 });
+
+test("paid KolayBi purchase history stays out of the review queue and the inbox is paginated", async () => {
+  const [sql, service, inbox] = await Promise.all([
+    read("supabase/migrations/20260909211500_reconcile_kolaybi_purchase_payment_status.sql"),
+    read("src/services/purchaseInvoiceService.ts"),
+    read("src/components/PurchaseInvoiceInbox.tsx"),
+  ]);
+
+  assert.match(sql, /v_payment_status IN \('paid'/);
+  assert.match(sql, /THEN 'paid'/);
+  assert.match(sql, /kolaybi_payment_reconciled/);
+  assert.match(sql, /UPDATE public\.incoming_purchase_invoices/);
+  assert.match(service, /\{ count: "exact" \}/);
+  assert.match(service, /\.range\(from, from \+ pageSize - 1\)/);
+  assert.match(service, /async stats\(\)/);
+  assert.match(inbox, /useState\("review_required"\)/);
+  assert.match(inbox, /Ödenmiş \/ Geçmiş/);
+  assert.match(inbox, /<TableHead>Ödeme<\/TableHead>/);
+  assert.match(inbox, /Önceki/);
+  assert.match(inbox, /Sonraki/);
+});
