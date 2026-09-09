@@ -517,6 +517,13 @@ test("KolayBi inbound purchase invoices are synchronized without exposing creden
     read("src/pages/api/kolaybi/purchase-invoices/[invoiceId]/pdf.ts"),
   ]);
   assert.match(syncApi, /direction: "inbound"/);
+  assert.match(syncApi, /min_issue_date: minIssueDate/);
+  assert.match(syncApi, /type: "purchase_invoice"/);
+  assert.match(syncApi, /commercialIndexes/);
+  assert.match(syncApi, /matchingCommercial/);
+  assert.match(syncApi, /matchingAssociate/);
+  assert.match(syncApi, /header\?\.associate/);
+  assert.match(syncApi, /skip_reasons: skipReasons/);
   assert.match(syncApi, /KOLAYBI_COMPANY_ID/);
   assert.match(syncApi, /rex_import_kolaybi_purchase_invoice/);
   assert.match(syncApi, /Authorization: `Bearer \$\{accessToken\}`/);

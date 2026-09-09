@@ -158,7 +158,17 @@ export function PurchaseInvoiceInbox() {
     try {
       setBusy(true);
       const result = await purchaseInvoiceService.syncKolayBi();
-      toast({ title: "Gelen faturalar kontrol edildi", description: `${result.imported || 0} yeni alış faturası havuza alındı.` });
+      const details = [
+        `${result.imported || 0} yeni alış faturası havuza alındı`,
+        `${result.existing || 0} mevcut kayıt güncellendi`,
+      ];
+      if (result.skipped) details.push(`${result.skipped} kayıt zorunlu tedarikçi bilgisi eksik olduğu için alınamadı`);
+      if (result.errors?.length) details.push(`${result.errors.length} kayıt hatası oluştu`);
+      toast({
+        title: result.skipped || result.errors?.length ? "Gelen faturalar kontrol gerektiriyor" : "Gelen faturalar güncellendi",
+        description: `${details.join(" · ")}.`,
+        variant: result.errors?.length ? "destructive" : "default",
+      });
       await load();
     } catch (error: any) {
       toast({ title: "Gelen faturalar yenilenemedi", description: error.message, variant: "destructive" });
