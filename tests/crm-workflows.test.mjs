@@ -152,5 +152,5 @@ test("CRM customer conversion triggers automatic KolayBi matching", async () => 
   const source = await read("src/components/modules/SalesCRMModule.tsx");
   assert.match(source, /const customerId = await salesCrmService\.convertToCustomer/);
   assert.match(source, /kolaybiOfficeService\.synchronizeAssociate\(customerId\)/);
-  assert.match(source, /KolayBi'deki mevcut cari VKN\/TCKN ile otomatik eşleştirildi/);
+  assert.match(source, /Mevcut cari VKN\/TCKN ile otomatik eşleştirildi/);
 });

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight, Ban, BarChart3, Boxes, Building2, CheckCircle2, CircleDollarSign,
-  Clock3, Edit3, Eye, FileSpreadsheet, Landmark, Loader2, PackageCheck, Receipt,
+  Edit3, Eye, FileSpreadsheet, Landmark, Loader2, PackageCheck, Receipt,
   RefreshCw, ShoppingCart, TriangleAlert, Link2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -288,9 +288,6 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
   const kolaybiPartner = data.integrationPartners.find((row) => row.code === "KOLAYBI") || null;
   const providerEnvironment = connection?.environment || data.syncRuns[0]?.provider_environment || kolaybiPartner?.environment || null;
   const latestSyncAt = reconciliation.latestAt || kolaybiPartner?.last_sync_at || null;
-  const nextSyncAt = latestSyncAt ? new Date(new Date(latestSyncAt).getTime() + 60 * 60 * 1000).toISOString() : null;
-  const outboundPending = data.outboundQueue.pending;
-  const outboundReview = data.outboundQueue.review;
 
   const balanceExportRows = useMemo(() => accountBalanceRows.map((row) => ({
     "Cari Kodu": row.code,
@@ -307,7 +304,6 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
   })), [accountBalanceRows]);
 
   const recordsByType = (type: string) => data.providerRecords.filter((row) => row.resource_type === type);
-  const mappingCount = data.providerSummary.matched;
   const reviewCount = data.providerSummary.review;
   const pendingProductCount = data.products.filter((row) => row.external_source === "kolaybi" && row.approval_status === "pending").length;
 
@@ -340,38 +336,10 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
     }
   };
 
-  if (loading) return <div className="flex min-h-64 items-center justify-center gap-3 text-slate-600"><Loader2 className="h-5 w-5 animate-spin" /> Entegre ofis hazırlanıyor...</div>;
+  if (loading) return <div className="flex min-h-64 items-center justify-center gap-3 text-slate-600"><Loader2 className="h-5 w-5 animate-spin" /> Muhasebe merkezi hazırlanıyor...</div>;
 
   return (
     <div className="space-y-5">
-      <div className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-[#173f73] via-[#244f84] to-[#e66d22] p-6 text-white shadow-sm">
-        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
-          <div>
-            <Badge className="mb-3 border-white/25 bg-white/15 text-white hover:bg-white/15">REX TYS + KolayBi</Badge>
-            <h2 className="text-2xl font-bold">KolayBi Entegre Ofis</h2>
-            <p className="mt-2 max-w-3xl text-sm text-blue-50">Satıştan sevkiyata, alış faturası eşleştirmesinden tahsilat ve kârlılığa kadar tek iş akışı. Operasyon kaydı REX TYS’de, resmî muhasebe belgesi KolayBi’de yönetilir.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {canViewMonitoring && <Button variant="secondary" onClick={() => void checkConnection(true)}><CheckCircle2 className="mr-2 h-4 w-4" />Bağlantı Testi</Button>}
-            {canManageSync && <Button className="bg-white text-[#173f73] hover:bg-blue-50" disabled={syncing} onClick={() => void synchronize("all")}>{syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Şimdi Senkronize Et</Button>}
-          </div>
-        </div>
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs text-blue-50">
-          <Clock3 className="h-4 w-4 shrink-0" />
-          <span><strong>Otomatik senkronizasyon aktif.</strong> KolayBi verileri saatlik alınır; yeni cariler en geç 15 dakika içinde aktarılır. Düğmeler yalnızca bağlantı testi ve acil yenileme içindir. Eşleşmiş cari kartın ünvan/adres değişikliği KolayBi API kısıtı nedeniyle KolayBi'de yapılır; ilişki ve muhasebe hareketleri otomatik alınmaya devam eder.</span>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-3 text-xs">
-          <span className="rounded-full bg-white/15 px-3 py-1">Ortam: {providerEnvironment === "live" ? "Canlı" : providerEnvironment === "test" ? "Sandbox" : "Yapılandırılmadı"}</span>
-          <span className="rounded-full bg-white/15 px-3 py-1">Durum: {reconciliation.active ? "Senkronize ediliyor" : reconciliation.healthy ? "Güncel" : latestSyncAt ? "Kontrol gerekli" : "İlk çalışma bekleniyor"}</span>
-          <span className="rounded-full bg-white/15 px-3 py-1">Eşleşen: {mappingCount}</span>
-          <span className="rounded-full bg-white/15 px-3 py-1">Kontrol gereken: {reviewCount}</span>
-          <span className="rounded-full bg-white/15 px-3 py-1">Cari kuyruğu: {outboundPending} bekleyen{outboundReview ? `, ${outboundReview} kontrol` : ""}</span>
-          <span className="rounded-full bg-white/15 px-3 py-1">Son çalışma: {dateTime(latestSyncAt)}</span>
-          <span className="rounded-full bg-white/15 px-3 py-1">Sonraki kontrol: {dateTime(nextSyncAt)}</span>
-        </div>
-        {(data.syncRuns[0]?.last_error || kolaybiPartner?.last_error) && <p className="mt-3 rounded-lg bg-red-950/25 px-3 py-2 text-xs text-red-50">Son uyarı: {data.syncRuns[0]?.last_error || kolaybiPartner?.last_error}</p>}
-      </div>
-
       <Tabs defaultValue="home" className="w-full">
         <TabsList className="h-auto w-full flex-wrap justify-start gap-1 bg-slate-100 p-1">
           <TabsTrigger value="home">Anasayfa</TabsTrigger>
@@ -396,7 +364,7 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
             <CardContent className="grid gap-3 lg:grid-cols-7 lg:items-center">
               {[
                 ["1", "Teklif / İş", "Satış"], ["2", "Onay", "Satış"], ["3", "Sevkiyat", "Operasyon"],
-                ["4", "Teslim Evrakı", "Operasyon"], ["5", "Fatura Taslağı", "Muhasebe"], ["6", "KolayBi e-Belge", "Muhasebe"], ["7", "Tahsilat / Kârlılık", "Finans"],
+                ["4", "Teslim Evrakı", "Operasyon"], ["5", "Fatura Taslağı", "Muhasebe"], ["6", "Resmî E-Belge", "Muhasebe"], ["7", "Tahsilat / Kârlılık", "Finans"],
               ].map(([step, title, owner], index) => (
                 <div key={step} className="relative rounded-xl border bg-white p-4">
                   <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#173f73] text-xs font-bold text-white">{step}</span><span className="font-semibold">{title}</span></div>
@@ -449,7 +417,7 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
         </TabsContent>
 
         <TabsContent value="sales" className="mt-5 space-y-4">
-          <div className="flex items-center justify-between"><div><h3 className="text-xl font-bold">Satış Yönetimi</h3><p className="text-sm text-slate-500">Teslim edilen sevkiyattan KolayBi e-fatura/e-arşiv ve tahsilat takibine</p></div>{canManageSync && <Button variant="outline" disabled={syncing} onClick={() => void synchronize("sales_invoices")}><RefreshCw className="mr-2 h-4 w-4" />Satışları Yenile</Button>}</div>
+          <div><h3 className="text-xl font-bold">Satış Yönetimi</h3><p className="text-sm text-slate-500">Teslim edilen sevkiyattan e-fatura/e-arşiv ve tahsilat takibine</p></div>
           <Card><Table><TableHeader><TableRow><TableHead>Fatura No</TableHead><TableHead>Tarih</TableHead><TableHead>Belge</TableHead><TableHead>Durum</TableHead><TableHead>Ödeme</TableHead><TableHead className="text-right">Tutar</TableHead><TableHead className="text-right">İşlemler</TableHead></TableRow></TableHeader><TableBody>
             {data.salesInvoices.length === 0 ? <EmptyRow columns={7} /> : data.salesInvoices.map((row) => {
               const editable = isEditableInvoice(row);
@@ -485,7 +453,7 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
         </TabsContent>
 
         <TabsContent value="purchase" className="mt-5 space-y-4">
-          <div><h3 className="text-xl font-bold">Satın Alma Yönetimi</h3><p className="text-sm text-slate-500">KolayBi gelen e-faturaları sevkiyat, tedarikçi ve ruhsat sahibi ayrımından bağımsız olarak doğru işe eşleştirin.</p></div>
+          <div><h3 className="text-xl font-bold">Satın Alma Yönetimi</h3><p className="text-sm text-slate-500">Gelen e-faturaları sevkiyat, tedarikçi ve fatura sahibi bilgileriyle doğru işe eşleştirin.</p></div>
           <PurchaseInvoiceInbox />
         </TabsContent>
 
@@ -493,14 +461,14 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
           <GeneralExpenseWorkspace
             expenses={data.expenses}
             canManage={canManageExpenses}
-            canSync={canManageSync}
+            canSync={false}
             syncing={syncing}
             onSync={async (resource) => { await synchronize(resource); }}
           />
         </TabsContent>
 
         <TabsContent value="products" className="mt-5 space-y-4">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><h3 className="text-xl font-bold">Ürünler ve Hizmetler</h3><p className="text-sm text-slate-500">KolayBi ürün kartları test/canlı ortamı ayrılarak otomatik alınır; onay verilene kadar işlemlerde kullanılamaz.</p></div>{canManageSync && <Button variant="outline" disabled={syncing} onClick={() => void synchronize("products")}><RefreshCw className="mr-2 h-4 w-4" />KolayBi'den Yenile</Button>}</div>
+          <div><h3 className="text-xl font-bold">Ürünler ve Hizmetler</h3><p className="text-sm text-slate-500">Fatura kalemlerinde kullanılan güncel ürün ve hizmet kataloğu</p></div>
           {pendingProductCount > 0 && <Card className="border-amber-200 bg-amber-50"><CardContent className="flex items-center gap-3 p-4"><TriangleAlert className="h-5 w-5 text-amber-600" /><div><p className="font-semibold text-amber-900">{pendingProductCount} ürün/hizmet kullanım onayı bekliyor</p><p className="text-sm text-amber-800">Onaylanmayan kartlar teklif ve fatura seçimlerine açılmaz.</p></div></CardContent></Card>}
           <Card><div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Kod</TableHead><TableHead>Ad</TableHead><TableHead>Tip</TableHead><TableHead>KDV</TableHead><TableHead>Kaynak</TableHead><TableHead>Durum</TableHead><TableHead className="text-right">Satış Fiyatı</TableHead><TableHead className="text-right">İşlem</TableHead></TableRow></TableHeader><TableBody>
             {data.products.length === 0 ? <EmptyRow columns={8} /> : data.products.map((row) => {
@@ -509,9 +477,9 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
               const approvalLabel = row.approval_status === "pending" ? "Onay bekliyor" : row.approval_status === "approved" ? "Aktif" : row.approval_status === "rejected" ? "Reddedildi" : row.is_active === false ? "Pasif" : "Yerel kayıt";
               const busy = mapped && mappingBusy === mapped.id;
               return <TableRow key={row.id}>
-                <TableCell><p className="font-mono">{row.code}</p>{row.provider_code && row.provider_code !== row.code && <p className="text-xs text-slate-500">KolayBi: {row.provider_code}</p>}</TableCell>
+                <TableCell><p className="font-mono">{row.code}</p></TableCell>
                 <TableCell className="font-medium">{row.name}</TableCell><TableCell>{row.type}</TableCell><TableCell>%{row.tax_rate ?? 20}</TableCell>
-                <TableCell>{imported ? <div className="flex flex-wrap gap-1"><Badge variant="outline">KolayBi</Badge><Badge variant="outline" className={row.provider_environment === "live" ? "border-green-200 bg-green-50 text-green-700" : "border-blue-200 bg-blue-50 text-blue-700"}>{row.provider_environment === "live" ? "Canlı" : "Test"}</Badge></div> : <Badge variant="outline">REX TYS</Badge>}</TableCell>
+                <TableCell><Badge variant="outline">{imported ? "Muhasebe" : "REX TYS"}</Badge></TableCell>
                 <TableCell><Badge variant="outline" className={statusClass(row.approval_status || mapped?.match_status || "review")}>{approvalLabel}</Badge></TableCell>
                 <TableCell className="text-right">{money(row.sale_price, row.sale_currency || "TRY")}</TableCell>
                 <TableCell><div className="flex justify-end gap-2">{imported && row.approval_status === "pending" && mapped && <>
@@ -524,8 +492,8 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
         </TabsContent>
 
         <TabsContent value="associates" className="mt-5 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-xl font-bold">Cari Hesaplar</h3><p className="text-sm text-slate-500">Müşteri, tedarikçi, personel ve ortak carilerinin VKN/TCKN, adres ve e-belge türü eşleşmesi</p></div>{canManageSync && <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={syncing} onClick={() => void synchronize("associates")}><RefreshCw className="mr-2 h-4 w-4" />Carileri Yenile</Button><Button variant="outline" disabled={syncing} onClick={() => void synchronize("sales_invoices")}><RefreshCw className="mr-2 h-4 w-4" />E-Belge Türlerini Karşılaştır</Button></div>}</div>
-          <Card><Table><TableHeader><TableRow><TableHead>Ünvan</TableHead><TableHead>Tip</TableHead><TableHead>VKN/TCKN</TableHead><TableHead>E-posta</TableHead><TableHead>E-Belge</TableHead><TableHead>KolayBi</TableHead></TableRow></TableHeader><TableBody>
+          <div><h3 className="text-xl font-bold">Cari Hesaplar</h3><p className="text-sm text-slate-500">Müşteri ve tedarikçi kartları ile otomatik belirlenen e-belge türleri</p></div>
+          <Card><Table><TableHeader><TableRow><TableHead>Ünvan</TableHead><TableHead>Tip</TableHead><TableHead>VKN/TCKN</TableHead><TableHead>E-posta</TableHead><TableHead>E-Belge</TableHead><TableHead>Durum</TableHead></TableRow></TableHeader><TableBody>
             {data.customers.length === 0 ? <EmptyRow columns={6} /> : data.customers.map((row) => { const mapped = recordsByType("associate").find((record) => record.local_entity_id === row.id); const eDocumentLabel = row.kolaybi_e_document_type === "e_invoice" ? "E-Fatura" : row.kolaybi_e_document_type === "e_archive" ? "E-Arşiv" : "Kontrol Gerekli"; return <TableRow key={row.id}><TableCell className="font-medium">{row.company || row.name}</TableCell><TableCell>{row.account_type || "musteri"}</TableCell><TableCell>{row.vergi_no || row.tc_no || "-"}</TableCell><TableCell>{row.email || "-"}</TableCell><TableCell><Badge variant="outline" className={statusClass(row.kolaybi_e_document_type ? "matched" : "review")}>{eDocumentLabel}</Badge></TableCell><TableCell><Badge variant="outline" className={statusClass(mapped?.match_status || "review")}>{mapped ? `Eşleşti #${mapped.external_id}` : "Kontrol Gerekli"}</Badge></TableCell></TableRow>; })}
           </TableBody></Table></Card>
         </TabsContent>
@@ -534,7 +502,7 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
           <FinanceWorkspace
             accounts={data.financialAccounts}
             transactions={data.transactions}
-            canSync={canManageSync}
+            canSync={false}
             syncing={syncing}
             onSync={async (resource) => { await synchronize(resource); }}
           />
@@ -545,15 +513,20 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
           <div><h3 className="text-xl font-bold">Raporlar ve Mutabakat</h3><p className="text-sm text-slate-500">Kullanılan satış, alış, gider, cari ve finans akışlarını karşılaştırın; XLSX olarak alın.</p></div>
           <Card className={reconciliation.healthy ? "border-green-200" : "border-amber-200"}>
             <CardHeader className="gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div><CardTitle>KolayBi ↔ REX TYS Mutabakatı</CardTitle><CardDescription>Yalnızca fiilen kullanılan sekiz kaynak izlenir. Sipariş, irsaliye, proforma, stok, çek/senet ve tarihsel projeler kapsam dışıdır.</CardDescription></div>
-              <Badge variant="outline" className={reconciliation.healthy ? "border-green-200 bg-green-50 text-green-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{reconciliation.healthy ? "Akış Güncel" : "Kontrol Gerekli"}</Badge>
+              <div><CardTitle>Muhasebe Entegrasyonu</CardTitle><CardDescription>Otomatik veri akışı ve mutabakat durumu</CardDescription></div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className={reconciliation.healthy ? "border-green-200 bg-green-50 text-green-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{reconciliation.healthy ? "Akış Güncel" : "Kontrol Gerekli"}</Badge>
+                {canViewMonitoring && <Button size="sm" variant="outline" onClick={() => void checkConnection(true)}><CheckCircle2 className="mr-2 h-4 w-4" />Bağlantıyı Kontrol Et</Button>}
+                {canManageSync && <Button size="sm" variant="outline" disabled={syncing} onClick={() => void synchronize("all")}>{syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Acil Yenile</Button>}
+              </div>
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-4">
-              <div className="rounded-xl border bg-slate-50 p-4"><p className="text-xs text-slate-500">KolayBi kayıtları</p><p className="mt-1 text-2xl font-bold">{reconciliation.records}</p></div>
+              <div className="rounded-xl border bg-slate-50 p-4"><p className="text-xs text-slate-500">Muhasebe kayıtları</p><p className="mt-1 text-2xl font-bold">{reconciliation.records}</p></div>
               <div className="rounded-xl border border-green-200 bg-green-50 p-4"><p className="text-xs text-green-700">Eşleşen</p><p className="mt-1 text-2xl font-bold text-green-900">{reconciliation.matched}</p></div>
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4"><p className="text-xs text-amber-700">İnsan kontrolü</p><p className="mt-1 text-2xl font-bold text-amber-900">{reconciliation.review}</p></div>
               <div className="rounded-xl border border-red-200 bg-red-50 p-4"><p className="text-xs text-red-700">Son çalışmadaki hata</p><p className="mt-1 text-2xl font-bold text-red-900">{reconciliation.failed}</p></div>
-              <p className="text-xs text-slate-500 md:col-span-4">Son senkronizasyon: {reconciliation.latestAt ? new Date(reconciliation.latestAt).toLocaleString("tr-TR") : "Henüz çalışmadı"}. İki saati aşan veya hata içeren akışlar kontrol gerektirir.</p>
+              <p className="text-xs text-slate-500 md:col-span-4">Ortam: {providerEnvironment === "live" ? "Canlı" : providerEnvironment === "test" ? "Test" : "Yapılandırılmadı"} · Son güncelleme: {dateTime(latestSyncAt)}</p>
+              {(data.syncRuns[0]?.last_error || kolaybiPartner?.last_error) && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 md:col-span-4">{data.syncRuns[0]?.last_error || kolaybiPartner?.last_error}</p>}
             </CardContent>
           </Card>
           {canViewAccounts && <Card>

@@ -226,7 +226,7 @@ export function CustomerTransactionsDialog({
           id: adjustment.id,
           date: adjustment.transaction_date,
           type: adjustment.source === "kolaybi"
-            ? `KolayBi · ${adjustment.provider_transaction_subtype || adjustment.provider_transaction_type || adjustment.transaction_type}`
+            ? `Muhasebe · ${adjustment.provider_transaction_subtype || adjustment.provider_transaction_type || adjustment.transaction_type}`
             : `Cari ${adjustment.transaction_type}`,
           documentNo: adjustment.reference_no || "-",
           debit: adjustment.transaction_type === "Borç" ? Number(adjustment.amount) : 0,
@@ -328,9 +328,9 @@ export function CustomerTransactionsDialog({
     try {
       const result = await kolaybiOfficeService.synchronizeAssociateTransactions(customer.id);
       await loadTransactions();
-      alert(`KolayBi cari hareketleri yenilendi: ${result.inserted || 0} yeni, ${result.updated || 0} güncel kayıt.`);
+      alert(`Cari hareketleri yenilendi: ${result.inserted || 0} yeni, ${result.updated || 0} güncel kayıt.`);
     } catch (error: any) {
-      alert(error?.message || "KolayBi cari hareketleri yenilenemedi.");
+      alert(error?.message || "Cari hareketleri yenilenemedi.");
     } finally { setIsProviderSyncing(false); }
   };
 
@@ -359,7 +359,7 @@ export function CustomerTransactionsDialog({
             {/* Action Menus */}
             <div className="flex gap-2">
               {customer?.kolaybi_contact_id && <Button variant="outline" disabled={isProviderSyncing} onClick={() => void synchronizeProvider()}>
-                <RefreshCw className={`mr-2 h-4 w-4 ${isProviderSyncing ? "animate-spin" : ""}`} />KolayBi'den Yenile
+                <RefreshCw className={`mr-2 h-4 w-4 ${isProviderSyncing ? "animate-spin" : ""}`} />Hareketleri Yenile
               </Button>}
               {/* Borç / Alacak Ekle Menüsü */}
               <DropdownMenu>

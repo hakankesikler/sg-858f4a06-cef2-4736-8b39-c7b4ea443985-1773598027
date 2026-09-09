@@ -104,7 +104,7 @@ export function LogisticsModule() {
         if (!editable) {
           toast({
             title: "Bu fatura artık düzenlenemez",
-            description: "Muhasebe onayı verilmiş veya KolayBi'ye gönderilmiş faturalar yalnızca önizlenebilir.",
+            description: "Muhasebe onayı verilmiş veya resmî e-belge sistemine gönderilmiş faturalar yalnızca önizlenebilir.",
             variant: "destructive",
           });
           setLinkedInvoice(invoice);

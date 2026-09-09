@@ -70,9 +70,9 @@ import { kolaybiOfficeService } from "@/services/kolaybiOfficeService";
 
 const INVOICE_INTEGRATION_LABELS: Record<string, string> = {
   draft: "Fatura Taslağı",
-  queued: "KolayBi Gönderimi Bekliyor",
-  processing: "KolayBi'ye Gönderiliyor",
-  submitted: "KolayBi'ye Gönderildi",
+  queued: "E-Belge Gönderimi Bekliyor",
+  processing: "E-Belgeye Gönderiliyor",
+  submitted: "E-Belgeye Gönderildi",
   official: "E-Belge Oluşturuldu",
   failed: "Gönderim Hatası",
   mapping_required: "Eşleştirme Eksik",
@@ -833,7 +833,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
 
       toast({
         title: failed ? "Muhasebe onayı kısmen tamamlandı" : "Muhasebe onayı tamamlandı",
-        description: `${succeeded} taslak onaylanıp KolayBi sürecine alındı${failed ? `, ${failed} taslak kontrol için bekliyor` : ""}.`,
+        description: `${succeeded} taslak onaylanıp e-belge sürecine alındı${failed ? `, ${failed} taslak kontrol için bekliyor` : ""}.`,
         variant: failed && !succeeded ? "destructive" : "default",
       });
 
@@ -908,7 +908,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
       const result = await invoiceIntegrationService.refreshStatus(invoice.id);
       const statusDetail = result.providerStatus || result.status;
       toast({
-        title: result.status === "official" ? "E-belge bilgileri alındı" : "KolayBi durumu güncellendi",
+        title: result.status === "official" ? "E-belge bilgileri alındı" : "E-belge durumu güncellendi",
         description: [result.invoiceNo || invoice.invoice_no, statusDetail]
           .filter(Boolean)
           .join(" • "),
@@ -933,7 +933,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
     <div className="p-6 space-y-6">
       <Tabs defaultValue={defaultAccountingTab} className="w-full">
         <TabsList className="flex flex-wrap h-auto">
-          {canViewOffice && <TabsTrigger value="office">Entegre Ofis</TabsTrigger>}
+          {canViewOffice && <TabsTrigger value="office">Muhasebe Merkezi</TabsTrigger>}
           {canViewSales && <TabsTrigger value="sales">Satış</TabsTrigger>}
           {canViewPurchase && <TabsTrigger value="purchase">Alış</TabsTrigger>}
           {canViewAccounts && <TabsTrigger value="cari">Cari Hesaplar</TabsTrigger>}
@@ -1156,7 +1156,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                         )}
                         {invoice.provider_status && (
                           <p className="mt-1 max-w-52 text-xs text-slate-600" title={invoice.provider_status}>
-                            KolayBi: {invoice.provider_status}
+                            E-Belge: {invoice.provider_status}
                           </p>
                         )}
                       </TableCell>
@@ -1218,7 +1218,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                               variant="ghost"
                               disabled={isLoading}
                               onClick={() => void handleRetryInvoice(invoice)}
-                              title={(invoice.accounting_review_status || "pending") === "approved" ? "KolayBi gönderimini yeniden dene" : "Muhasebe olarak onayla ve KolayBi'ye gönder"}
+                              title={(invoice.accounting_review_status || "pending") === "approved" ? "E-belge gönderimini yeniden dene" : "Muhasebe olarak onayla ve e-belgeye gönder"}
                             >
                               <Send className="h-4 w-4 text-blue-600" />
                             </Button>
@@ -1229,7 +1229,7 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                               variant="ghost"
                               disabled={isLoading}
                               onClick={() => void handleRefreshInvoiceStatus(invoice)}
-                              title="KolayBi durumunu sorgula"
+                              title="E-belge durumunu sorgula"
                             >
                               <RefreshCw className="h-4 w-4 text-sky-600" />
                             </Button>
@@ -1627,9 +1627,9 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
               try {
                 await kolaybiOfficeService.synchronize(resource);
                 await loadData();
-                toast({ title: "Finans bilgileri yenilendi", description: resource === "vaults" ? "Banka ve kasa bakiyeleri güncellendi." : "Hesap hareketleri KolayBi'den alındı." });
+                toast({ title: "Finans bilgileri yenilendi", description: resource === "vaults" ? "Banka ve kasa bakiyeleri güncellendi." : "Hesap hareketleri muhasebe sisteminden alındı." });
               } catch (error: any) {
-                toast({ title: "Finans bilgileri yenilenemedi", description: error?.message || "KolayBi bağlantısı tamamlanamadı.", variant: "destructive" });
+                toast({ title: "Finans bilgileri yenilenemedi", description: error?.message || "Muhasebe bağlantısı tamamlanamadı.", variant: "destructive" });
               } finally { setFinanceSyncing(false); }
             }}
           />
@@ -1746,11 +1746,11 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
             {(cancellationInvoice?.kolaybi_document_id || ["submitted", "official"].includes(cancellationInvoice?.integration_status)) && (
               <div className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
                 <Label>Dış Sistem İptal/İade Referansı *</Label>
-                <p className="text-xs text-amber-800">KolayBi/e-Fatura işlemini tamamladıktan sonra oluşan referans numarasını girin.</p>
+                <p className="text-xs text-amber-800">E-Fatura işlemini tamamladıktan sonra oluşan referans numarasını girin.</p>
                 <Input
                   value={invoiceCancellationReference}
                   onChange={(event) => setInvoiceCancellationReference(event.target.value)}
-                  placeholder="KolayBi veya e-Fatura referansı"
+                  placeholder="E-Fatura referansı"
                 />
               </div>
             )}

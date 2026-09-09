@@ -395,7 +395,7 @@ test("KolayBi invoices use a retryable idempotent state machine and only officia
   assert.match(reconciliation, /'cancelled','rejected'/);
   assert.match(reconciliation, /WHEN p_status='rejected' THEN 'failed'/);
   assert.match(invoiceDialog, /rex_create_sales_invoice_secure|invoiceIntegrationService\.createDraft/);
-  assert.match(accounting, /KolayBi Gönderimi Bekliyor/);
+  assert.match(accounting, /E-Belge Gönderimi Bekliyor/);
   assert.match(accounting, /handleRefreshInvoiceStatus/);
   assert.match(accounting, /handleOpenInvoicePdf/);
   assert.match(accounting, /invoice\.official_invoice_no/);
@@ -505,7 +505,7 @@ test("incoming purchase invoices require documents, human matching and owner app
   assert.match(sql, /v_email<>'info@rexlojistik\.com'/);
   assert.match(sql, /Sevkiyat dağılımı ve genel gider toplamı fatura toplamına eşit olmalıdır/);
   assert.match(sql, /incoming_purchase_invoices_legal_unique/);
-  assert.match(inbox, /KolayBi’den Kontrol Et/);
+  assert.match(inbox, /Gelenleri Yenile/);
   assert.match(inbox, /Kontrol Edildi, Eşleştir/);
   assert.match(service, /purchase-invoice-documents/);
   assert.match(service, /crypto\.subtle\.digest\("SHA-256"/);
@@ -1281,7 +1281,7 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(workflow, /recordKolayBiCustomerPayment/);
   assert.match(collection, /kolaybi_document_id/);
   assert.match(collection, /kolaybi_vault_id/);
-  assert.match(collection, /önce KolayBi faturasına/);
+  assert.match(collection, /fatura ve cari hareketlerine otomatik olarak işlenecektir/);
   const vercelConfig = JSON.parse(vercel);
   assert.match(vercel, /\/api\/kolaybi\/process-queue\?limit=10[\s\S]*\*\/15 \* \* \* \*/);
   assert.match(vercel, /office-sync\?mode=active&resource=products/);
@@ -1305,13 +1305,14 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(api, /Senkronizasyon sunucu süre sınırında tamamlanamadı/);
   assert.doesNotMatch(cariForm, /<Label>Contact ID<\/Label>/);
   assert.doesNotMatch(cariForm, /<Label>Address ID<\/Label>/);
-  assert.match(cariForm, /KolayBi Otomatik Eşleştirme/);
+  assert.doesNotMatch(cariForm, /KolayBi Otomatik Eşleştirme/);
   assert.match(cariForm, /synchronizeAssociate\(savedCustomer\.id\)/);
   assert.match(office, /VKN\/TCKN, cari kodu ve tekil e-posta eşleşmeleri otomatik yapılır/);
-  assert.match(office, /KolayBi Entegre Ofis/);
-  assert.match(office, /Otomatik senkronizasyon aktif/);
-  assert.match(office, /Bağlantı Testi/);
-  assert.match(office, /Şimdi Senkronize Et/);
+  assert.doesNotMatch(office, /KolayBi Entegre Ofis/);
+  assert.doesNotMatch(office, /Otomatik senkronizasyon aktif/);
+  assert.match(office, /Muhasebe Entegrasyonu/);
+  assert.match(office, /Bağlantıyı Kontrol Et/);
+  assert.match(office, /Acil Yenile/);
   assert.doesNotMatch(office, /Ortam:[\s\S]{0,160}Kontrol bekliyor/);
   assert.match(office, /KolayBi Eşleştirme Kontrolü/);
   assert.match(office, /TMS carisi seçin/);
@@ -1341,7 +1342,7 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(expenseWorkspace, /setExpenseCategoryActive/);
   assert.match(expenseWorkspace, /setExpenseTypeActive/);
   assert.match(office, /Ürünler ve Hizmetler/);
-  assert.match(office, /KolayBi'den Yenile/);
+  assert.doesNotMatch(office, /KolayBi'den Yenile/);
   assert.match(office, /Onay bekliyor/);
   assert.match(office, /reviewImportedProduct/);
   assert.match(office, /Canlı/);
@@ -1354,11 +1355,10 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(financeWorkspace, /Kümülatif Bakiye/);
   assert.doesNotMatch(office, /TabsTrigger value="projects"/);
   assert.match(office, /Raporlar ve Mutabakat/);
-  assert.match(office, /KolayBi ↔ REX TYS Mutabakatı/);
-  assert.match(office, /Sipariş, irsaliye, proforma, stok, çek\/senet ve tarihsel projeler kapsam dışıdır/);
+  assert.match(office, /Muhasebe Entegrasyonu/);
   assert.match(office, /XLSX İndir/);
   assert.match(office, /Satış – Operasyon – Muhasebe Akışı/);
-  assert.match(accounting, /Entegre Ofis/);
+  assert.match(accounting, /Muhasebe Merkezi/);
   assert.match(accounting, /KolayBiOfficeModule/);
 });
 
@@ -1440,11 +1440,11 @@ test("KolayBi official history determines each customer's e-invoice or e-archive
   assert.match(syncApi, /current\?\.kolaybi_e_document_environment === "live" && providerEnvironment === "test"/);
   assert.match(providerLib, /alignInvoiceWithCustomerProfile/);
   assert.match(providerLib, /recordCustomerEDocumentProfile/);
-  assert.match(invoiceDialog, /KolayBi doğrulandı/);
+  assert.match(invoiceDialog, /Sistem doğruladı/);
   assert.match(invoiceDialog, /Otomatik doğrulama bekleniyor/);
   assert.doesNotMatch(invoiceDialog, /manualEDocumentConfirmed/);
   assert.match(office, /E-Belge/);
-  assert.match(office, /E-Belge Türlerini Karşılaştır/);
+  assert.doesNotMatch(office, /E-Belge Türlerini Karşılaştır/);
   assert.match(office, /row\.kolaybi_e_document_type === "e_invoice"/);
 });
 
@@ -1458,7 +1458,7 @@ test("sales invoice e-document choice is automatic and TUSAN is confirmed as e-i
   assert.match(migration, /BEFORE INSERT ON public\.sales_invoices/);
   assert.match(migration, /NEW\.document_type := v_type/);
   assert.match(migration, /Cari e-belge türü henüz otomatik doğrulanmadı/);
-  assert.match(invoiceDialog, /E-Fatura\/E-Arşiv seçimi çalışana bırakılmaz/);
+  assert.match(invoiceDialog, /E-Fatura\/E-Arşiv seçimi sistem tarafından otomatik belirlenir/);
   assert.doesNotMatch(invoiceDialog, /E-belge türünü KolayBi cari\/fatura bilgileriyle kontrol ettim/);
 });
 
@@ -1526,7 +1526,7 @@ test("invoice preview follows official e-invoice and e-archive presentation data
 
   assert.match(template, /"e-Arşiv Fatura" : "e-Fatura"/);
   assert.match(template, /GİB KAREKOD/);
-  assert.match(template, /Resmîleştirme sonrasında KolayBi belgesinde oluşur/);
+  assert.match(template, /Resmîleştirme sonrasında e-belgede oluşur/);
   assert.match(template, /Resmî PDF’yi Aç/);
   assert.match(template, /Teslim şekli: Elektronik/);
   assert.match(template, /@page \{ size: A4; margin: 0; \}/);
@@ -1577,7 +1577,7 @@ test("sales invoice drafts stay editable until accounting approval", async () =>
   assert.match(logistics, /Fatura taslağını düzenle/);
   assert.match(logistics, /openShipmentInvoice\(shipment, "edit"\)/);
   assert.match(preview, /Taslağı Düzenle/);
-  assert.match(preview, /Onayla ve KolayBi’ye Gönder/);
+  assert.match(preview, /Onayla ve E-Belgeye Gönder/);
   assert.match(service, /rex_approve_sales_invoice_draft/);
 });
 

@@ -158,10 +158,10 @@ export function PurchaseInvoiceInbox() {
     try {
       setBusy(true);
       const result = await purchaseInvoiceService.syncKolayBi();
-      toast({ title: "KolayBi kontrol edildi", description: `${result.imported || 0} yeni alış faturası havuza alındı.` });
+      toast({ title: "Gelen faturalar kontrol edildi", description: `${result.imported || 0} yeni alış faturası havuza alındı.` });
       await load();
     } catch (error: any) {
-      toast({ title: "KolayBi senkronizasyonu tamamlanamadı", description: error.message, variant: "destructive" });
+      toast({ title: "Gelen faturalar yenilenemedi", description: error.message, variant: "destructive" });
     } finally { setBusy(false); }
   };
 
@@ -225,9 +225,9 @@ export function PurchaseInvoiceInbox() {
 
     <Card className="p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div><h2 className="text-xl font-semibold">Gelen Alış Faturaları</h2><p className="text-sm text-slate-500">KolayBi e-faturaları ve yüklenen e-arşivler tek kontrol havuzunda.</p></div>
+        <div><h2 className="text-xl font-semibold">Gelen Alış Faturaları</h2><p className="text-sm text-slate-500">Gelen e-faturalar ve yüklenen e-arşivler tek kontrol havuzunda.</p></div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => void sync()} disabled={busy}><RefreshCw className="mr-2 h-4 w-4"/>KolayBi’den Kontrol Et</Button>
+          <Button variant="outline" onClick={() => void sync()} disabled={busy}><RefreshCw className="mr-2 h-4 w-4"/>Gelenleri Yenile</Button>
           <Button onClick={() => setManualOpen(true)}><FileUp className="mr-2 h-4 w-4"/>E-Arşiv Yükle</Button>
         </div>
       </div>
@@ -240,7 +240,7 @@ export function PurchaseInvoiceInbox() {
     <Card className="overflow-hidden">
       <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Kaynak</TableHead><TableHead>Fatura</TableHead><TableHead>Düzenleyen</TableHead><TableHead>Fatura Carisi</TableHead><TableHead>Operasyon Taşıyıcısı</TableHead><TableHead>Tarih</TableHead><TableHead>Tutar</TableHead><TableHead>Durum</TableHead><TableHead className="text-right">İşlem</TableHead></TableRow></TableHeader>
       <TableBody>{loading ? <TableRow><TableCell colSpan={9} className="py-10 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin"/></TableCell></TableRow> : filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="py-10 text-center text-slate-500">Bu filtreye uygun alış faturası yok.</TableCell></TableRow> : filtered.map((invoice) => <TableRow key={invoice.id}>
-        <TableCell><Badge variant="outline">{invoice.source === "kolaybi" ? "KolayBi" : "Manuel"}</Badge></TableCell>
+        <TableCell><Badge variant="outline">{invoice.source === "kolaybi" ? "Otomatik" : "Manuel"}</Badge></TableCell>
         <TableCell><div className="font-mono font-medium">{invoice.invoice_no}</div><div className="text-xs text-slate-500">{invoice.document_type === "e_invoice" ? "E-Fatura" : "E-Arşiv"}</div></TableCell>
         <TableCell><div className="max-w-56 font-medium">{invoice.issuer_name}</div><div className="text-xs text-slate-500">{invoice.issuer_tax_id}</div></TableCell>
         <TableCell>{invoice.billing_supplier?.company || invoice.billing_supplier?.name || <div><span className="text-amber-700">Cari eşleşmesi bekliyor</span><div className="text-xs text-slate-500">{invoice.issuer_tax_id}</div></div>}</TableCell>

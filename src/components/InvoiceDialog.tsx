@@ -383,7 +383,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     if (!selectedCustomerProfile) {
       toast({
         title: "E-belge türü henüz doğrulanmadı",
-        description: "Çalışan seçimiyle fatura oluşturulamaz. Cari e-belge türü KolayBi senkronizasyonuyla otomatik doğrulanmalıdır.",
+        description: "Çalışan seçimiyle fatura oluşturulamaz. Cari e-belge türü otomatik olarak doğrulanmalıdır.",
         variant: "destructive",
       });
       return;
@@ -433,7 +433,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
 
       toast({
         title: "Fatura taslağı oluşturuldu",
-        description: `${invoice.invoice_no}. Taslak düzenlenebilir durumda; muhasebe inceleyip onaylamadan KolayBi'ye gönderilmeyecek.`,
+        description: `${invoice.invoice_no}. Taslak düzenlenebilir durumda; muhasebe inceleyip onaylamadan resmî e-belge sistemine gönderilmeyecek.`,
       });
 
       if (onSuccess) {
@@ -562,7 +562,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                 <div className="flex items-center justify-between gap-2">
                   <Label className="text-sm font-semibold">E-Belge Türü</Label>
                   {selectedCustomerProfile && (
-                    <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">KolayBi doğrulandı</Badge>
+                    <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">Sistem doğruladı</Badge>
                   )}
                 </div>
                 {selectedCustomerProfile ? (
@@ -591,8 +591,8 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                 )}
                 <p className="text-xs text-slate-500">
                   {selectedCustomerProfile
-                    ? `Resmî KolayBi e-belge geçmişine göre otomatik seçildi${selectedCustomerProfile.kolaybi_e_document_environment === "test" ? " (test ortamı)" : ""}.`
-                    : "E-Fatura/E-Arşiv seçimi çalışana bırakılmaz; KolayBi verisiyle sistem tarafından belirlenir."}
+                    ? `Resmî e-belge geçmişine göre otomatik seçildi${selectedCustomerProfile.kolaybi_e_document_environment === "test" ? " (test ortamı)" : ""}.`
+                    : "E-Fatura/E-Arşiv seçimi sistem tarafından otomatik belirlenir."}
                 </p>
               </div>
 
@@ -652,7 +652,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                 Banka bilgilerini faturada göster
               </label>
               {includeBankDetails && <div className="mt-3 grid gap-2 md:grid-cols-2">
-                {bankAccounts.length === 0 ? <p className="text-sm text-amber-700">Aktif fatura banka hesabı bulunmuyor. KolayBi Entegre Ofis → Finans bölümünden ekleyebilirsiniz.</p> : bankAccounts.map((account) => {
+                {bankAccounts.length === 0 ? <p className="text-sm text-amber-700">Aktif fatura banka hesabı bulunmuyor. Muhasebe Merkezi → Finans bölümünden ekleyebilirsiniz.</p> : bankAccounts.map((account) => {
                   const checked = selectedBankAccountIds.includes(account.id);
                   return <label key={account.id} className="flex items-start gap-2 rounded-md border p-2 text-sm">
                     <Checkbox checked={checked} onCheckedChange={(value) => setSelectedBankAccountIds((current) => value === true ? [...new Set([...current, account.id])] : current.filter((id) => id !== account.id))} />
@@ -680,11 +680,11 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                     <div>
                       <Label className="text-xs">Katalog Ürünü / Hizmeti</Label>
                       <Select value={item.catalogProductId || ""} onValueChange={(value) => handleCatalogProductChange(index, value)}>
-                        <SelectTrigger><SelectValue placeholder="KolayBi ile eşleşmiş ürün/hizmeti seçin" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder="Fatura ürünü/hizmeti seçin" /></SelectTrigger>
                         <SelectContent>
                           {catalogProducts.map((product) => (
                             <SelectItem key={product.id} value={product.id}>
-                              {product.code} · {product.name}{product.kolaybi_product_id ? ` · KolayBi #${product.kolaybi_product_id}` : " · eşleme bekliyor"}
+                              {product.code} · {product.name}{product.kolaybi_product_id ? "" : " · eşleme bekliyor"}
                             </SelectItem>
                           ))}
                         </SelectContent>

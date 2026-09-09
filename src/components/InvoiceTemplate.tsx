@@ -138,7 +138,7 @@ export function InvoiceTemplate({ data }: InvoiceTemplateProps) {
             ) : (
               <div className="flex h-[104px] w-[104px] flex-col items-center justify-center border border-dashed border-slate-400 p-2 text-center text-[7px] text-slate-500">
                 <strong className="text-[9px] text-slate-700">GİB KAREKOD</strong>
-                <span className="mt-1 break-all">{data.ettn || (data.isOfficial ? "Karekod resmî KolayBi PDF’sindedir." : "Resmîleştirme sonrasında KolayBi belgesinde oluşur.")}</span>
+                <span className="mt-1 break-all">{data.ettn || (data.isOfficial ? "Karekod resmî e-belge PDF’sindedir." : "Resmîleştirme sonrasında e-belgede oluşur.")}</span>
               </div>
             )}
             <Image src="/rex-logo-circle.png" alt="REX Lojistik" width={112} height={112} className="mt-2 h-20 w-20 rounded-full object-contain" />

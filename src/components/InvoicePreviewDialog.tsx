@@ -249,7 +249,7 @@ export function InvoicePreviewDialog({
           <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-semibold">Muhasebe onayı bekleyen taslak</p>
-              <p className="text-xs text-amber-800">Bu belge henüz KolayBi’ye gönderilmedi; gerekli düzeltmeler güvenle yapılabilir.</p>
+              <p className="text-xs text-amber-800">Bu belge henüz resmî e-belge sistemine gönderilmedi; gerekli düzeltmeler güvenle yapılabilir.</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {canEdit && onEdit ? (
@@ -260,7 +260,7 @@ export function InvoicePreviewDialog({
               {canApprove && onApprove ? (
                 <Button type="button" size="sm" disabled={actionBusy} onClick={() => resolvedInvoice && void onApprove(resolvedInvoice)}>
                   {actionBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                  Onayla ve KolayBi’ye Gönder
+                  Onayla ve E-Belgeye Gönder
                 </Button>
               ) : null}
             </div>

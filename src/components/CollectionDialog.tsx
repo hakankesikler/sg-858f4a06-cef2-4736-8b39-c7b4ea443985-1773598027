@@ -107,7 +107,7 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
       } as const;
       if (selectedInvoice?.kolaybi_document_id) {
         if (!selectedAccount?.kolaybi_vault_id) {
-          throw new Error("KolayBi faturası için KolayBi ile eşleşmiş bir kasa/banka hesabı seçilmelidir.");
+          throw new Error("Bu fatura için muhasebe sistemiyle eşleşmiş bir kasa/banka hesabı seçilmelidir.");
         }
         await workflowService.recordKolayBiCustomerPayment({
           ...paymentInput,
@@ -264,7 +264,7 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
                 </Select>
                 {formData.relatedInvoiceId && openInvoices.find((item) => item.id === formData.relatedInvoiceId)?.kolaybi_document_id && (
                   <p className="text-xs text-muted-foreground">
-                    Bu tahsilat önce KolayBi faturasına, ardından REX TYS cari hareketine işlenecektir.
+                    Tahsilat, fatura ve cari hareketlerine otomatik olarak işlenecektir.
                   </p>
                 )}
               </div>

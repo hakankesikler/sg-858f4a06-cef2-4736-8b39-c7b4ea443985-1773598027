@@ -26,7 +26,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
   const emailInputRef = useRef<HTMLInputElement>(null);
   const [cariTuru, setCariTuru] = useState<"gercek" | "tuzel">("tuzel");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isKolayBiSyncing, setIsKolayBiSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState("bilgi");
   const [customerCode, setCustomerCode] = useState("CST-000001");
   
@@ -388,17 +387,14 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
         : await crmService.createCustomer(submitData);
       console.log("=== SAVED CUSTOMER ===", savedCustomer);
 
-      let integrationDescription = "KolayBi eşleştirmesi otomatik olarak tamamlandı.";
+      let integrationDescription = "Muhasebe eşleştirmesi otomatik olarak tamamlandı.";
       try {
-        setIsKolayBiSyncing(true);
         const integration = await kolaybiOfficeService.synchronizeAssociate(savedCustomer.id);
         integrationDescription = integration.created
-          ? `Cari kaydedildi ve KolayBi ${integration.environment === "live" ? "canlı" : "sandbox"} ortamında otomatik oluşturuldu.`
-          : "Cari kaydedildi ve KolayBi'deki mevcut kart VKN/TCKN ile otomatik eşleştirildi.";
+          ? "Cari kaydedildi ve muhasebe sisteminde otomatik oluşturuldu."
+          : "Cari kaydedildi ve VKN/TCKN ile otomatik eşleştirildi.";
       } catch (integrationError: any) {
         integrationDescription = `Cari kaydedildi ve otomatik yeniden deneme kuyruğuna alındı: ${integrationError.message}`;
-      } finally {
-        setIsKolayBiSyncing(false);
       }
 
       toast({ title: "Cari kaydedildi", description: integrationDescription });
@@ -439,24 +435,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const createKolayBiAssociate = async () => {
-    if (!editMode || !initialData?.id) {
-      toast({ title: "Önce cariyi kaydedin", description: "KolayBi aktarımı mevcut bir cari kartı üzerinden yapılır.", variant: "destructive" });
-      return;
-    }
-    setIsKolayBiSyncing(true);
-    try {
-      const result = await kolaybiOfficeService.synchronizeAssociate(initialData.id);
-      setFormData((current) => ({ ...current, kolaybi_contact_id: String(result.contactId || ""), kolaybi_address_id: String(result.addressId || "") }));
-      toast({
-        title: result.created ? "KolayBi kaydı otomatik oluşturuldu" : "KolayBi eşleşmesi doğrulandı",
-        description: "VKN/TCKN ve fatura adresi kontrol edilerek bağlantı güncellendi.",
-      });
-    } catch (error: any) {
-      toast({ title: "KolayBi aktarımı tamamlanamadı", description: error.message, variant: "destructive" });
-    } finally { setIsKolayBiSyncing(false); }
   };
 
   const handleClose = () => {
@@ -1357,20 +1335,6 @@ export function CariForm({ isOpen, onClose, onSuccess, editMode = false, initial
 
           {/* Cari Detay Bilgileri Tab */}
           <TabsContent value="detay" className="flex-1 overflow-y-auto p-6 space-y-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b pb-2">KolayBi Otomatik Eşleştirme</h3>
-              <div className={`rounded-lg border p-4 ${formData.kolaybi_contact_id ? "border-emerald-200 bg-emerald-50" : "border-blue-200 bg-blue-50"}`}>
-                <p className={`font-medium ${formData.kolaybi_contact_id ? "text-emerald-900" : "text-blue-900"}`}>
-                  {formData.kolaybi_contact_id ? "KolayBi bağlantısı hazır" : "Kullanıcıdan KolayBi kimliği istenmez"}
-                </p>
-                <p className={`mt-1 text-sm ${formData.kolaybi_contact_id ? "text-emerald-800" : "text-blue-800"}`}>
-                  Cari kaydedildiğinde VKN/TCKN ile KolayBi otomatik aranır. Kesin eşleşme varsa bağlanır; kayıt yoksa etkin KolayBi ortamında otomatik oluşturulur. Geçici hatalar sistem tarafından yeniden denenir; yalnızca mükerrer veya çelişkili kayıtlar yetkili kontrolüne düşer.
-                </p>
-                {editMode && initialData?.id && <Button type="button" variant="outline" className="mt-3" disabled={isKolayBiSyncing} onClick={() => void createKolayBiAssociate()}>
-                  {isKolayBiSyncing ? "KolayBi kontrol ediliyor..." : "Eşleşmeyi Yeniden Doğrula"}
-                </Button>}
-              </div>
-            </div>
             {/* Vade Bilgileri */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold border-b pb-2">Vade Bilgileri</h3>

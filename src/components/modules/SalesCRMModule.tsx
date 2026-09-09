@@ -279,12 +279,12 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
     setSubmitting(true);
     try {
       const customerId = await salesCrmService.convertToCustomer(selected.id);
-      let description = "KolayBi eşleştirmesi otomatik olarak kontrol edildi.";
+      let description = "Muhasebe eşleştirmesi otomatik olarak kontrol edildi.";
       try {
         const integration = await kolaybiOfficeService.synchronizeAssociate(customerId);
         description = integration.created
-          ? `Cari KolayBi ${integration.environment === "live" ? "canlı" : "sandbox"} ortamında otomatik oluşturuldu.`
-          : "KolayBi'deki mevcut cari VKN/TCKN ile otomatik eşleştirildi.";
+          ? "Cari muhasebe sisteminde otomatik oluşturuldu."
+          : "Mevcut cari VKN/TCKN ile otomatik eşleştirildi.";
       } catch (integrationError: any) {
         description = `Cari oluşturuldu ve otomatik yeniden deneme kuyruğuna alındı: ${integrationError.message}`;
       }
@@ -451,7 +451,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
             </div>;
           })}</div></div>
         </div>
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"><strong>Kazanılma kuralı:</strong> Bu kayıt elle “Kazanıldı” yapılamaz. İlk iş emri onaylanıp sevkiyat tamamlandıktan ve KolayBi üzerinden resmî e-fatura/e-arşiv oluştuğunda sistem otomatik taşır.</div>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"><strong>Kazanılma kuralı:</strong> Bu kayıt elle “Kazanıldı” yapılamaz. İlk iş emri onaylanıp sevkiyat tamamlandıktan ve resmî e-fatura/e-arşiv oluştuğunda sistem otomatik taşır.</div>
       </div>}</DialogContent></Dialog>
 
       <Dialog open={contactOpen} onOpenChange={(open) => { setContactOpen(open); if (!open) setEditingContactId(null); }}><DialogContent><DialogHeader><DialogTitle>{editingContactId ? "Müşteri Yetkilisini Düzenle" : "Müşteri Yetkilisi Ekle"}</DialogTitle></DialogHeader><div className="grid gap-4 md:grid-cols-2"><div className="md:col-span-2"><Label>Ad soyad *</Label><Input value={contactForm.full_name} onChange={(e) => setContactForm({ ...contactForm, full_name: e.target.value })} /></div><div><Label>Görevi / ünvanı</Label><Input value={contactForm.title} onChange={(e) => setContactForm({ ...contactForm, title: e.target.value })} /></div><div><Label>Departman</Label><Input value={contactForm.department} onChange={(e) => setContactForm({ ...contactForm, department: e.target.value })} /></div><div><Label>E-posta</Label><Input type="email" value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} /></div><div><Label>Telefon</Label><Input value={contactForm.phone} onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} /></div><div><Label>Tercih edilen kanal</Label><select value={contactForm.preferred_channel} onChange={(e) => setContactForm({ ...contactForm, preferred_channel: e.target.value })} className="mt-1 w-full rounded-md border px-3 py-2"><option value="email">E-posta</option><option value="phone">Telefon</option><option value="whatsapp">WhatsApp</option><option value="meeting">Yüz yüze görüşme</option></select></div><div className="space-y-2 pt-6"><label className="flex items-center gap-2"><input type="checkbox" checked={contactForm.is_decision_maker} onChange={(e) => setContactForm({ ...contactForm, is_decision_maker: e.target.checked })} />Karar verici</label><label className="flex items-center gap-2"><input type="checkbox" checked={contactForm.is_primary} onChange={(e) => setContactForm({ ...contactForm, is_primary: e.target.checked })} />Birincil yetkili</label><label className="flex items-center gap-2"><input type="checkbox" checked={contactForm.commercial_consent} onChange={(e) => setContactForm({ ...contactForm, commercial_consent: e.target.checked })} />Ticari ileti onayı mevcut</label></div></div><DialogFooter><Button variant="outline" onClick={() => setContactOpen(false)}>Vazgeç</Button><Button onClick={() => void saveContact()} disabled={submitting || contactForm.full_name.trim().length < 2 || (!contactForm.email.trim() && !contactForm.phone.trim())}>Kaydet</Button></DialogFooter></DialogContent></Dialog>
