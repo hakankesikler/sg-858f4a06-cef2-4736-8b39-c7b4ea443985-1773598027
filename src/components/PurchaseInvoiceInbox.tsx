@@ -16,7 +16,7 @@ import {
   PurchaseInvoiceStats,
   purchaseInvoiceService,
 } from "@/services/purchaseInvoiceService";
-import { AlertTriangle, CheckCircle2, Eye, FileUp, Link2, Loader2, RefreshCw, SearchCheck } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, Eye, FileUp, Link2, Loader2, RefreshCw, SearchCheck } from "lucide-react";
 
 const statusLabel: Record<string, string> = {
   review_required: "İncelenecek",
@@ -49,6 +49,8 @@ const paymentLabel: Record<string, string> = {
 };
 
 const PAGE_SIZE = 50;
+type SortBy = "invoice_date" | "grand_total" | "payment_status";
+type SortDirection = "asc" | "desc";
 
 type AllocationState = Record<string, { selected: boolean; amount: string }>;
 
@@ -65,6 +67,8 @@ export function PurchaseInvoiceInbox() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState("review_required");
   const [paymentStatus, setPaymentStatus] = useState("all");
+  const [sortBy, setSortBy] = useState<SortBy>("invoice_date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [manualOpen, setManualOpen] = useState(false);
   const [matchInvoice, setMatchInvoice] = useState<IncomingPurchaseInvoice | null>(null);
   const [candidates, setCandidates] = useState<PurchaseInvoiceCandidate[]>([]);
@@ -87,7 +91,7 @@ export function PurchaseInvoiceInbox() {
     try {
       setLoading(true);
       const [invoiceData, supplierData, summary] = await Promise.all([
-        purchaseInvoiceService.list({ page, pageSize: PAGE_SIZE, search: debouncedSearch, status, paymentStatus }),
+        purchaseInvoiceService.list({ page, pageSize: PAGE_SIZE, search: debouncedSearch, status, paymentStatus, sortBy, sortDirection }),
         purchaseInvoiceService.suppliers(),
         purchaseInvoiceService.stats(),
       ]);
@@ -100,7 +104,7 @@ export function PurchaseInvoiceInbox() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, page, paymentStatus, status, toast]);
+  }, [debouncedSearch, page, paymentStatus, sortBy, sortDirection, status, toast]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { setPage(0); setDebouncedSearch(search); }, 300);
@@ -112,6 +116,19 @@ export function PurchaseInvoiceInbox() {
   const selectedTotal = useMemo(() => Object.values(allocations).reduce((sum, value) =>
     sum + (value.selected ? Number(value.amount || 0) : 0), 0), [allocations]);
   const distributionTotal = selectedTotal + Number(generalExpense || 0);
+  const toggleSort = (column: SortBy) => {
+    setPage(0);
+    if (sortBy === column) setSortDirection((current) => current === "asc" ? "desc" : "asc");
+    else {
+      setSortBy(column);
+      setSortDirection("desc");
+    }
+  };
+  const sortIcon = (column: SortBy) => sortBy !== column
+    ? <ArrowUpDown className="ml-1 h-3.5 w-3.5" aria-hidden="true"/>
+    : sortDirection === "asc"
+      ? <ArrowUp className="ml-1 h-3.5 w-3.5" aria-hidden="true"/>
+      : <ArrowDown className="ml-1 h-3.5 w-3.5" aria-hidden="true"/>;
   const matchingBillingSuppliers = useMemo(() => {
     const invoiceTax = (matchInvoice?.issuer_tax_id || "").replace(/\D/g, "");
     return suppliers.filter((supplier) => [supplier.vergi_no, supplier.tc_no]
@@ -271,7 +288,7 @@ export function PurchaseInvoiceInbox() {
     </Card>
 
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Kaynak</TableHead><TableHead>Fatura</TableHead><TableHead>Düzenleyen</TableHead><TableHead>Fatura Carisi</TableHead><TableHead>Operasyon Taşıyıcısı</TableHead><TableHead>Tarih</TableHead><TableHead>Tutar</TableHead><TableHead>Ödeme</TableHead><TableHead>İş Akışı</TableHead><TableHead className="text-right">İşlem</TableHead></TableRow></TableHeader>
+      <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Kaynak</TableHead><TableHead>Fatura</TableHead><TableHead>Düzenleyen</TableHead><TableHead>Fatura Carisi</TableHead><TableHead>Operasyon Taşıyıcısı</TableHead><TableHead><Button type="button" variant="ghost" size="sm" className="-ml-3 h-8 px-3 text-slate-500" onClick={() => toggleSort("invoice_date")} aria-label={`Tarihe göre ${sortBy === "invoice_date" && sortDirection === "desc" ? "artan" : "azalan"} sırala`}>Tarih{sortIcon("invoice_date")}</Button></TableHead><TableHead><Button type="button" variant="ghost" size="sm" className="-ml-3 h-8 px-3 text-slate-500" onClick={() => toggleSort("grand_total")} aria-label={`Tutara göre ${sortBy === "grand_total" && sortDirection === "desc" ? "artan" : "azalan"} sırala`}>Tutar{sortIcon("grand_total")}</Button></TableHead><TableHead><Button type="button" variant="ghost" size="sm" className="-ml-3 h-8 px-3 text-slate-500" onClick={() => toggleSort("payment_status")} aria-label={`Ödeme durumuna göre ${sortBy === "payment_status" && sortDirection === "desc" ? "artan" : "azalan"} sırala`}>Ödeme{sortIcon("payment_status")}</Button></TableHead><TableHead>İş Akışı</TableHead><TableHead className="text-right">İşlem</TableHead></TableRow></TableHeader>
       <TableBody>{loading ? <TableRow><TableCell colSpan={10} className="py-10 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin"/></TableCell></TableRow> : invoices.length === 0 ? <TableRow><TableCell colSpan={10} className="py-10 text-center text-slate-500">Bu filtreye uygun alış faturası yok.</TableCell></TableRow> : invoices.map((invoice) => <TableRow key={invoice.id}>
         <TableCell><Badge variant="outline">{invoice.source === "kolaybi" ? "Otomatik" : "Manuel"}</Badge></TableCell>
         <TableCell><div className="font-mono font-medium">{invoice.invoice_no}</div><div className="text-xs text-slate-500">{invoice.document_type === "e_invoice" ? "E-Fatura" : "E-Arşiv"}</div></TableCell>

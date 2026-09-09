@@ -37,6 +37,8 @@ export type PurchaseInvoiceListOptions = {
   search?: string;
   status?: string;
   paymentStatus?: string;
+  sortBy?: "invoice_date" | "grand_total" | "payment_status";
+  sortDirection?: "asc" | "desc";
 };
 
 export type PurchaseInvoiceStats = {
@@ -126,10 +128,11 @@ export const purchaseInvoiceService = {
     if (options.paymentStatus && options.paymentStatus !== "all") query = query.eq("payment_status", options.paymentStatus);
     const term = String(options.search || "").replace(/[%_,()]/g, " ").trim().slice(0, 80);
     if (term) query = query.or(`invoice_no.ilike.%${term}%,issuer_name.ilike.%${term}%,issuer_tax_id.ilike.%${term}%`);
-    const { data, error, count } = await query
-      .order("invoice_date", { ascending: false })
-      .order("created_at", { ascending: false })
-      .range(from, from + pageSize - 1);
+    const sortBy = options.sortBy || "invoice_date";
+    const ascending = options.sortDirection === "asc";
+    query = query.order(sortBy, { ascending, nullsFirst: false });
+    if (sortBy !== "invoice_date") query = query.order("invoice_date", { ascending: false });
+    const { data, error, count } = await query.order("created_at", { ascending: false }).range(from, from + pageSize - 1);
     if (error) throw error;
     return { items: data || [], total: count || 0 };
   },

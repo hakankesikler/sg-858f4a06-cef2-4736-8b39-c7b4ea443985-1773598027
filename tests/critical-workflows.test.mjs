@@ -1733,12 +1733,15 @@ test("paid KolayBi purchase history stays out of the review queue and the inbox 
   assert.match(service, /async stats\(\)/);
   assert.match(service, /paymentStatus/);
   assert.match(service, /\.eq\("payment_status", options\.paymentStatus\)/);
+  assert.match(service, /query\.order\(sortBy/);
   assert.match(inbox, /useState\("review_required"\)/);
   assert.match(inbox, /Tüm Ödeme Durumları/);
   assert.match(inbox, /Ödenmemiş/);
   assert.match(inbox, /Kısmi Ödenmiş/);
+  assert.match(inbox, /toggleSort\("grand_total"\)/);
+  assert.match(inbox, /toggleSort\("payment_status"\)/);
   assert.match(inbox, /Ödenmiş \/ Geçmiş/);
-  assert.match(inbox, /<TableHead>Ödeme<\/TableHead>/);
+  assert.match(inbox, />Ödeme\{sortIcon\("payment_status"\)\}<\/Button>/);
   assert.match(inbox, /Önceki/);
   assert.match(inbox, /Sonraki/);
 });
