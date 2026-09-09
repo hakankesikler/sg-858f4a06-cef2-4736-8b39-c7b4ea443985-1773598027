@@ -1731,7 +1731,12 @@ test("paid KolayBi purchase history stays out of the review queue and the inbox 
   assert.match(service, /\{ count: "exact" \}/);
   assert.match(service, /\.range\(from, from \+ pageSize - 1\)/);
   assert.match(service, /async stats\(\)/);
+  assert.match(service, /paymentStatus/);
+  assert.match(service, /\.eq\("payment_status", options\.paymentStatus\)/);
   assert.match(inbox, /useState\("review_required"\)/);
+  assert.match(inbox, /Tüm Ödeme Durumları/);
+  assert.match(inbox, /Ödenmemiş/);
+  assert.match(inbox, /Kısmi Ödenmiş/);
   assert.match(inbox, /Ödenmiş \/ Geçmiş/);
   assert.match(inbox, /<TableHead>Ödeme<\/TableHead>/);
   assert.match(inbox, /Önceki/);

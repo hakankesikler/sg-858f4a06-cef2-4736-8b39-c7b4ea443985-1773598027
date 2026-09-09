@@ -57,13 +57,14 @@ export function PurchaseInvoiceInbox() {
   const [invoices, setInvoices] = useState<IncomingPurchaseInvoice[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
-  const [stats, setStats] = useState<PurchaseInvoiceStats>({ review_required: 0, approval_pending: 0, payment_pending: 0, paid: 0 });
+  const [stats, setStats] = useState<PurchaseInvoiceStats>({ review_required: 0, approval_pending: 0, unpaid: 0, partially_paid: 0, paid: 0 });
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState("review_required");
+  const [paymentStatus, setPaymentStatus] = useState("all");
   const [manualOpen, setManualOpen] = useState(false);
   const [matchInvoice, setMatchInvoice] = useState<IncomingPurchaseInvoice | null>(null);
   const [candidates, setCandidates] = useState<PurchaseInvoiceCandidate[]>([]);
@@ -86,7 +87,7 @@ export function PurchaseInvoiceInbox() {
     try {
       setLoading(true);
       const [invoiceData, supplierData, summary] = await Promise.all([
-        purchaseInvoiceService.list({ page, pageSize: PAGE_SIZE, search: debouncedSearch, status }),
+        purchaseInvoiceService.list({ page, pageSize: PAGE_SIZE, search: debouncedSearch, status, paymentStatus }),
         purchaseInvoiceService.suppliers(),
         purchaseInvoiceService.stats(),
       ]);
@@ -99,7 +100,7 @@ export function PurchaseInvoiceInbox() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, page, status, toast]);
+  }, [debouncedSearch, page, paymentStatus, status, toast]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { setPage(0); setDebouncedSearch(search); }, 300);
@@ -246,10 +247,11 @@ export function PurchaseInvoiceInbox() {
   };
 
   return <div className="space-y-5">
-    <div className="grid gap-3 md:grid-cols-4">
+    <div className="grid gap-3 md:grid-cols-5">
       <Card className="p-4 border-l-4 border-l-blue-500"><div className="text-sm text-slate-500">İncelenecek</div><div className="text-2xl font-bold">{stats.review_required}</div></Card>
       <Card className="p-4 border-l-4 border-l-amber-500"><div className="text-sm text-slate-500">Yönetici Onayı</div><div className="text-2xl font-bold">{stats.approval_pending}</div></Card>
-      <Card className="p-4 border-l-4 border-l-emerald-500"><div className="text-sm text-slate-500">Ödeme Bekleyen</div><div className="text-2xl font-bold">{stats.payment_pending}</div></Card>
+      <Card className="p-4 border-l-4 border-l-orange-500"><div className="text-sm text-slate-500">Ödenmemiş</div><div className="text-2xl font-bold">{stats.unpaid}</div></Card>
+      <Card className="p-4 border-l-4 border-l-yellow-500"><div className="text-sm text-slate-500">Kısmi Ödenmiş</div><div className="text-2xl font-bold">{stats.partially_paid}</div></Card>
       <Card className="p-4 border-l-4 border-l-slate-400"><div className="text-sm text-slate-500">Ödenmiş / Geçmiş</div><div className="text-2xl font-bold">{stats.paid}</div></Card>
     </div>
 
@@ -261,9 +263,10 @@ export function PurchaseInvoiceInbox() {
           <Button onClick={() => setManualOpen(true)}><FileUp className="mr-2 h-4 w-4"/>E-Arşiv Yükle</Button>
         </div>
       </div>
-      <div className="mt-4 flex flex-col gap-2 md:flex-row">
+      <div className="mt-4 grid gap-2 md:grid-cols-[minmax(0,1fr)_220px_220px]">
         <Input placeholder="Fatura no, unvan veya VKN ile ara" value={search} onChange={(event) => setSearch(event.target.value)} />
-        <Select value={status} onValueChange={(value) => { setPage(0); setStatus(value); }}><SelectTrigger className="md:w-56"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">Tüm Durumlar</SelectItem>{Object.entries(statusLabel).map(([value,label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select>
+        <Select value={paymentStatus} onValueChange={(value) => { setPage(0); setPaymentStatus(value); if (value !== "all") setStatus("all"); }}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">Tüm Ödeme Durumları</SelectItem><SelectItem value="unpaid">Ödenmemiş</SelectItem><SelectItem value="partially_paid">Kısmi Ödenmiş</SelectItem><SelectItem value="paid">Ödenmiş</SelectItem></SelectContent></Select>
+        <Select value={status} onValueChange={(value) => { setPage(0); setStatus(value); }}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">Tüm İş Akışları</SelectItem>{Object.entries(statusLabel).map(([value,label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select>
       </div>
     </Card>
 

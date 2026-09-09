@@ -36,12 +36,14 @@ export type PurchaseInvoiceListOptions = {
   pageSize?: number;
   search?: string;
   status?: string;
+  paymentStatus?: string;
 };
 
 export type PurchaseInvoiceStats = {
   review_required: number;
   approval_pending: number;
-  payment_pending: number;
+  unpaid: number;
+  partially_paid: number;
   paid: number;
 };
 
@@ -121,6 +123,7 @@ export const purchaseInvoiceService = {
       .from("incoming_purchase_invoices")
       .select("*, operational_supplier:customers!incoming_purchase_invoices_operational_supplier_id_fkey(id,name,company), billing_supplier:customers!incoming_purchase_invoices_billing_supplier_id_fkey(id,name,company), allocations:purchase_invoice_allocations(*,shipment:shipments(id,shipment_code,origin,destination,cost,cost_currency))", { count: "exact" });
     if (options.status && options.status !== "all") query = query.eq("status", options.status);
+    if (options.paymentStatus && options.paymentStatus !== "all") query = query.eq("payment_status", options.paymentStatus);
     const term = String(options.search || "").replace(/[%_,()]/g, " ").trim().slice(0, 80);
     if (term) query = query.or(`invoice_no.ilike.%${term}%,issuer_name.ilike.%${term}%,issuer_tax_id.ilike.%${term}%`);
     const { data, error, count } = await query
@@ -132,8 +135,9 @@ export const purchaseInvoiceService = {
   },
 
   async stats(): Promise<PurchaseInvoiceStats> {
-    const statuses = ["review_required", "approval_pending", "payment_pending", "paid"] as const;
-    const counts = await Promise.all(statuses.map(async (status) => {
+    const workflowStatuses = ["review_required", "approval_pending"] as const;
+    const paymentStatuses = ["unpaid", "partially_paid", "paid"] as const;
+    const workflowCounts = await Promise.all(workflowStatuses.map(async (status) => {
       const { count, error } = await (supabase as any)
         .from("incoming_purchase_invoices")
         .select("id", { count: "exact", head: true })
@@ -141,7 +145,15 @@ export const purchaseInvoiceService = {
       if (error) throw error;
       return [status, count || 0] as const;
     }));
-    return Object.fromEntries(counts) as PurchaseInvoiceStats;
+    const paymentCounts = await Promise.all(paymentStatuses.map(async (paymentStatus) => {
+      const { count, error } = await (supabase as any)
+        .from("incoming_purchase_invoices")
+        .select("id", { count: "exact", head: true })
+        .eq("payment_status", paymentStatus);
+      if (error) throw error;
+      return [paymentStatus, count || 0] as const;
+    }));
+    return Object.fromEntries([...workflowCounts, ...paymentCounts]) as PurchaseInvoiceStats;
   },
 
   async suppliers() {
