@@ -27,6 +27,7 @@ export interface WaybillCargoItem {
 
 export interface WaybillData {
   shipment_code: string;
+  logo_data_url?: string | null;
   tracking_number?: string | null;
   tracking_url?: string | null;
   pickup_date?: string | null;
@@ -84,6 +85,8 @@ const loadImage = (src: string): Promise<HTMLImageElement> => new Promise((resol
   image.src = src;
 });
 
+const imageFormat = (source: string) => source.startsWith("data:image/png") ? "PNG" : "JPEG";
+
 const stopLabel = (stop?: WaybillRouteStop | null) => {
   if (!stop) return "-";
   return [stop.company_name, [stop.district, stop.city].filter(Boolean).join(" / ")]
@@ -99,28 +102,31 @@ const drawLetterhead = async (doc: jsPDF, shipment: WaybillData) => {
   doc.rect(pageWidth * 0.34, 0, pageWidth * 0.66, 2, "F");
 
   try {
-    const logo = await loadImage("/rex-logo-circle.png");
-    doc.addImage(logo, "PNG", 14, 7, 26, 26);
+    if (shipment.logo_data_url) {
+      doc.addImage(shipment.logo_data_url, imageFormat(shipment.logo_data_url), 14, -6, 48, 48, undefined, "FAST");
+    } else {
+      const logo = await loadImage("/rex_logo_gu_ncel.png");
+      doc.addImage(logo, "PNG", 14, -6, 48, 48, undefined, "FAST");
+    }
   } catch {
     doc.setDrawColor(...NAVY);
-    doc.circle(27, 20, 12);
+    doc.roundedRect(14, -6, 48, 48, 2, 2);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
+    doc.setFontSize(15);
     doc.setTextColor(...NAVY);
-    doc.text("REX", 27, 22, { align: "center" });
+    doc.text("REX", 38, 24, { align: "center" });
   }
 
   doc.setTextColor(...NAVY);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("REX LOJISTIK TASIMACILIK DEPOLAMA", 44, 11);
-  doc.text("DANISMANLIK LIMITED SIRKETI", 44, 16);
+  doc.setFontSize(10.5);
+  doc.text("REX LOJISTIK TASIMACILIK DEPOLAMA DANISMANLIK LIMITED SIRKETI", 14, 49);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.2);
+  doc.setFontSize(8.2);
   doc.setTextColor(...SLATE);
-  doc.text("Folkart Towers A Kule No:47/B K:26 D:2601", 44, 22);
-  doc.text("Adalet Mah. Manas Bulvari 35530 Bayrakli / Izmir", 44, 26);
-  doc.text("+90 (543) 401 07 55  |  info@rexlojistik.com  |  www.rexlojistik.com", 44, 30);
+  doc.text("Folkart Towers A Kule No:47/B K:26 D:2601", 14, 56);
+  doc.text("Adalet Mahallesi Manas Bulvari, Bayrakli, 35530, Izmir", 14, 62);
+  doc.text("+90 (232) 229 0014  |  +90 (543) 401 0755  |  info@rexlojistik.com  |  www.rexlojistik.com", 14, 68);
 
   doc.setTextColor(...NAVY);
   doc.setFont("helvetica", "bold");
@@ -131,9 +137,9 @@ const drawLetterhead = async (doc: jsPDF, shipment: WaybillData) => {
   doc.text(pdfText(shipment.shipment_code), pageWidth - 14, 22, { align: "right" });
   doc.setTextColor(...SLATE);
   doc.setFont("helvetica", "normal");
-  doc.text(`Takip No: ${pdfText(shipment.tracking_number)}`, pageWidth - 14, 27, { align: "right" });
+  doc.text(`Takip No / Tracking No: ${pdfText(shipment.tracking_number)}`, pageWidth - 14, 27, { align: "right" });
   doc.setDrawColor(203, 213, 225);
-  doc.line(14, 36, pageWidth - 14, 36);
+  doc.line(14, 76, pageWidth - 14, 76);
 };
 
 const addFooter = (doc: jsPDF, pageNumber: number, pageCount: number) => {
@@ -146,8 +152,14 @@ const addFooter = (doc: jsPDF, pageNumber: number, pageCount: number) => {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.text("TIO Yetki Belgesi: IZM.U-NET.TIO.35.6323  |  VKN: 7342549288", 14, pageHeight - 11);
-  doc.text(`Sayfa ${pageNumber} / ${pageCount}`, pageWidth - 14, pageHeight - 11, { align: "right" });
-  doc.text("Bu belge operasyon bilgilendirme amaclidir; mali belge veya sevk irsaliyesi yerine gecmez.", pageWidth / 2, pageHeight - 7, { align: "center" });
+  doc.text(`Sayfa / Page ${pageNumber} / ${pageCount}`, pageWidth - 14, pageHeight - 11, { align: "right" });
+  doc.setFontSize(5.7);
+  doc.text(
+    "Bu belge operasyon bilgilendirme amaclidir; mali belge veya sevk irsaliyesi yerine gecmez. / This document is for operational information only; it is not a fiscal document or delivery note.",
+    pageWidth / 2,
+    pageHeight - 7,
+    { align: "center", maxWidth: pageWidth - 28 },
+  );
 };
 
 export const buildWaybillPdf = async (shipment: WaybillData) => {
@@ -156,22 +168,22 @@ export const buildWaybillPdf = async (shipment: WaybillData) => {
   await drawLetterhead(doc, shipment);
 
   autoTable(doc, {
-    startY: 42,
-    head: [["BELGE BILGILERI", "MUSTERI VE ROTA"]],
+    startY: 82,
+    head: [["BELGE BILGILERI / DOCUMENT DETAILS", "MUSTERI VE ROTA / CUSTOMER & ROUTE"]],
     body: [[
       pdfText([
-        `Sevkiyat: ${shipment.shipment_code}`,
-        `Yukleme: ${formatDate(shipment.pickup_date)}`,
-        `Tahmini teslim: ${formatDate(shipment.estimated_delivery_date)}`,
+        `Sevkiyat / Shipment: ${shipment.shipment_code}`,
+        `Yukleme / Pickup: ${formatDate(shipment.pickup_date)}`,
+        `Tahmini teslim / Estimated delivery: ${formatDate(shipment.estimated_delivery_date)}`,
       ].join("\n")),
       pdfText([
-        `Musteri: ${shipment.customer_name || shipment.customer?.name || "-"}`,
-        `Cikis: ${shipment.origin || "-"}`,
-        `Varis: ${shipment.destination || "-"}`,
+        `Musteri / Customer: ${shipment.customer_name || shipment.customer?.name || "-"}`,
+        `Cikis / Origin: ${shipment.origin || "-"}`,
+        `Varis / Destination: ${shipment.destination || "-"}`,
       ].join("\n")),
     ]],
     theme: "grid",
-    headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+    headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.2 },
     styles: { fontSize: 8.5, cellPadding: 3.5, textColor: SLATE, valign: "top", lineColor: [203, 213, 225] },
     columnStyles: { 0: { cellWidth: 82 }, 1: { cellWidth: 100 } },
     margin: { left: 14, right: 14 },
@@ -184,17 +196,17 @@ export const buildWaybillPdf = async (shipment: WaybillData) => {
   if (routeStops.length) {
     autoTable(doc, {
       startY: (doc.lastAutoTable?.finalY || 67) + 7,
-      head: [["#", "DURAK", "FIRMA / KONUM", "YETKILI / NOT"]],
+      head: [["#", "DURAK / STOP", "FIRMA - KONUM / COMPANY - LOCATION", "YETKILI - NOT / CONTACT - NOTE"]],
       body: routeStops.map((stop) => [
         `${stop.stop_type === "pickup" ? "A" : "T"}${stop.sequence_no}`,
-        stop.stop_type === "pickup" ? "ALIM" : "TESLIM",
+        stop.stop_type === "pickup" ? "ALIM / PICKUP" : "TESLIM / DELIVERY",
         pdfText([stop.company_name, stop.address_line, [stop.district, stop.city].filter(Boolean).join(" / ")].filter(Boolean).join("\n")),
         pdfText([stop.contact_name, stop.contact_phone, stop.instructions].filter(Boolean).join("\n")),
       ]),
       theme: "grid",
-      headStyles: { fillColor: ORANGE, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5 },
+      headStyles: { fillColor: ORANGE, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 6.2 },
       styles: { fontSize: 7.5, cellPadding: 2.7, textColor: SLATE, valign: "top", lineColor: [203, 213, 225] },
-      columnStyles: { 0: { cellWidth: 12, halign: "center" }, 1: { cellWidth: 20 }, 2: { cellWidth: 78 }, 3: { cellWidth: 72 } },
+      columnStyles: { 0: { cellWidth: 10, halign: "center" }, 1: { cellWidth: 28 }, 2: { cellWidth: 76 }, 3: { cellWidth: 68 } },
       margin: { left: 14, right: 14 },
     });
   }
@@ -209,7 +221,7 @@ export const buildWaybillPdf = async (shipment: WaybillData) => {
 
   autoTable(doc, {
     startY: (doc.lastAutoTable?.finalY || 67) + 7,
-    head: [["#", "YUK / ACIKLAMA", "ALIM", "TESLIM", "ADET", "KG/DS", "TOPLAM"]],
+    head: [["#", "YUK - ACIKLAMA / CARGO - DESCRIPTION", "ALIM / PICKUP", "TESLIM / DELIVERY", "ADET / QTY", "KG/DS", "TOPLAM / TOTAL"]],
     body: cargoItems.map((item, index) => {
       const pickup = item.pickup_stop || pickupByKey.get(item.pickup_stop_key || "");
       const delivery = item.delivery_stop || deliveryByKey.get(item.delivery_stop_key || "");
@@ -223,19 +235,19 @@ export const buildWaybillPdf = async (shipment: WaybillData) => {
         formatWeight(Number(item.adet || 0) * Number(item.kg_ds || 0)),
       ];
     }),
-    foot: [["", "", "", "", "", "TOPLAM", formatWeight(Number(shipment.toplam_kg_ds || cargoItems.reduce((sum, item) => sum + Number(item.adet || 0) * Number(item.kg_ds || 0), 0)))]],
+    foot: [["", "", "", "", "", "TOPLAM / TOTAL", formatWeight(Number(shipment.toplam_kg_ds || cargoItems.reduce((sum, item) => sum + Number(item.adet || 0) * Number(item.kg_ds || 0), 0)))]],
     theme: "grid",
-    headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7 },
+    headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 5.7 },
     footStyles: { fillColor: LIGHT, textColor: NAVY, fontStyle: "bold", fontSize: 7.5 },
     styles: { fontSize: 7, cellPadding: 2.4, textColor: SLATE, valign: "top", lineColor: [203, 213, 225], overflow: "linebreak" },
     columnStyles: {
       0: { cellWidth: 8, halign: "center" },
-      1: { cellWidth: 46 },
+      1: { cellWidth: 44 },
       2: { cellWidth: 35 },
       3: { cellWidth: 35 },
-      4: { cellWidth: 12, halign: "right" },
-      5: { cellWidth: 22, halign: "right" },
-      6: { cellWidth: 24, halign: "right" },
+      4: { cellWidth: 14, halign: "right" },
+      5: { cellWidth: 21, halign: "right" },
+      6: { cellWidth: 25, halign: "right" },
     },
     margin: { left: 14, right: 14, bottom: 22 },
   });
@@ -244,33 +256,33 @@ export const buildWaybillPdf = async (shipment: WaybillData) => {
   if (cursorY > 238) {
     doc.addPage();
     await drawLetterhead(doc, shipment);
-    cursorY = 44;
+    cursorY = 82;
   }
 
   autoTable(doc, {
     startY: cursorY,
-    head: [["TASIYICI BILGILERI", "CANLI TAKIP"]],
+    head: [["TASIYICI BILGILERI / CARRIER DETAILS", "CANLI TAKIP / LIVE TRACKING"]],
     body: [[
       pdfText([
-        `Surucu: ${shipment.driver?.full_name || "Atama bekliyor"}`,
-        `Telefon: ${shipment.driver?.phone_1 || "-"}`,
-        `Cekici: ${shipment.vehicle?.cekici_plakasi || "Atama bekliyor"}`,
-        `Dorse: ${shipment.vehicle?.dorse_plakasi || "-"}`,
+        `Surucu / Driver: ${shipment.driver?.full_name || "Atama bekliyor / Assignment pending"}`,
+        `Telefon / Phone: ${shipment.driver?.phone_1 || "-"}`,
+        `Cekici / Tractor: ${shipment.vehicle?.cekici_plakasi || "Atama bekliyor / Assignment pending"}`,
+        `Dorse / Trailer: ${shipment.vehicle?.dorse_plakasi || "-"}`,
       ].join("\n")),
-      pdfText([shipment.tracking_number, shipment.tracking_url].filter(Boolean).join("\n"), "Takip bilgisi bekleniyor"),
+      pdfText([shipment.tracking_number, shipment.tracking_url].filter(Boolean).join("\n"), "Takip bilgisi bekleniyor / Tracking pending"),
     ]],
     theme: "grid",
-    headStyles: { fillColor: ORANGE, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5 },
+    headStyles: { fillColor: ORANGE, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 6.5 },
     styles: { fontSize: 7.5, cellPadding: 3, textColor: SLATE, valign: "top", lineColor: [203, 213, 225] },
     columnStyles: { 0: { cellWidth: 91 }, 1: { cellWidth: 91 } },
     margin: { left: 14, right: 14 },
   });
 
   cursorY = (doc.lastAutoTable?.finalY || cursorY) + 8;
-  if (cursorY > 244) {
+  if (cursorY > 250) {
     doc.addPage();
     await drawLetterhead(doc, shipment);
-    cursorY = 44;
+    cursorY = 82;
   }
 
   doc.setDrawColor(148, 163, 184);
@@ -281,13 +293,13 @@ export const buildWaybillPdf = async (shipment: WaybillData) => {
   doc.setTextColor(...NAVY);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.text("TESLIM EDEN", 18, cursorY + 6);
-  doc.text("TESLIM ALAN", 26 + signatureWidth, cursorY + 6);
+  doc.text("TESLIM EDEN / DELIVERED BY", 18, cursorY + 6);
+  doc.text("TESLIM ALAN / RECEIVED BY", 26 + signatureWidth, cursorY + 6);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...SLATE);
   doc.setFontSize(7);
-  doc.text("Ad Soyad / Imza:", 18, cursorY + 14);
-  doc.text("Ad Soyad / Imza:", 26 + signatureWidth, cursorY + 14);
+  doc.text("Ad Soyad - Imza / Name - Signature:", 18, cursorY + 14);
+  doc.text("Ad Soyad - Imza / Name - Signature:", 26 + signatureWidth, cursorY + 14);
   doc.line(42, cursorY + 15, 14 + signatureWidth - 4, cursorY + 15);
   doc.line(50 + signatureWidth, cursorY + 15, pageWidth - 18, cursorY + 15);
 

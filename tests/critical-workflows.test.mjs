@@ -1640,7 +1640,12 @@ test("shipment completion offers a privacy-safe WhatsApp message and a branded w
   assert.match(shipmentForm, /route_stops: routeStops/);
   assert.match(shipmentForm, /cargo_items: cargoItems/);
   assert.match(waybill, /TASIMA BELGESI \/ WAYBILL/);
+  assert.match(waybill, /BELGE BILGILERI \/ DOCUMENT DETAILS/);
+  assert.match(waybill, /TASIYICI BILGILERI \/ CARRIER DETAILS/);
+  assert.match(waybill, /rex_logo_gu_ncel\.png/);
+  assert.match(waybill, /logo_data_url/);
   assert.match(waybill, /mali belge veya sevk irsaliyesi yerine gecmez/);
+  assert.match(waybill, /This document is for operational information only/);
   assert.match(customerWaybill, /generateWaybill/);
 });
 
