@@ -1764,6 +1764,26 @@ test("legacy test sales invoices are archived without affecting operational tota
   assert.match(officeSync, /\.is\("archived_at", null\)/);
 });
 
+test("integrated sales list hides non-operational records and opens shipment history", async () => {
+  const [service, office] = await Promise.all([
+    read("src/services/kolaybiOfficeService.ts"),
+    read("src/components/modules/KolayBiOfficeModule.tsx"),
+  ]);
+
+  assert.match(service, /activeSalesInvoiceRows/);
+  assert.match(service, /\.is\("archived_at", null\)/);
+  assert.match(service, /\.not\("invoice_no", "like", "ALACAK-%"\)/);
+  assert.match(service, /\.not\("invoice_no", "like", "BORC-%"\)/);
+  assert.match(service, /salesInvoiceProviderRecords/);
+  assert.match(service, /otherEnvironmentInvoiceIds/);
+  assert.match(service, /currentEnvironmentInvoiceIds/);
+  assert.match(office, /ShipmentHistoryDialog/);
+  assert.match(office, />Sevkiyat</);
+  assert.match(office, /shipmentByInvoiceId/);
+  assert.match(office, /Sevkiyat geçmişini aç/);
+  assert.match(office, /Bağımsız belge/);
+});
+
 test("paid KolayBi purchase history stays out of the review queue and the inbox is paginated", async () => {
   const [sql, service, inbox] = await Promise.all([
     read("supabase/migrations/20260909211500_reconcile_kolaybi_purchase_payment_status.sql"),

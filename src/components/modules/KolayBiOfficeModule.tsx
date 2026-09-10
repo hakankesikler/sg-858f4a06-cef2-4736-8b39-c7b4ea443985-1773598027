@@ -16,6 +16,7 @@ import { GeneralExpenseWorkspace } from "@/components/GeneralExpenseWorkspace";
 import { FinanceWorkspace } from "@/components/FinanceWorkspace";
 import { EditInvoiceDialog } from "@/components/EditInvoiceDialog";
 import { InvoicePreviewDialog } from "@/components/InvoicePreviewDialog";
+import { ShipmentHistoryDialog } from "@/components/ShipmentHistoryDialog";
 import { useToast } from "@/hooks/use-toast";
 import { downloadExcel } from "@/lib/excel";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
@@ -96,6 +97,7 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
   const [mappingBusy, setMappingBusy] = useState<string | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<any | null>(null);
   const [editingInvoice, setEditingInvoice] = useState<any | null>(null);
+  const [historyShipment, setHistoryShipment] = useState<any | null>(null);
   const [invoiceActionBusy, setInvoiceActionBusy] = useState(false);
   const canManageSync = hasPermission(permissions, "integrations.connections", "manage");
   const canViewMonitoring = hasPermission(permissions, "integrations.monitoring");
@@ -307,6 +309,20 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
   const reviewCount = data.providerSummary.review;
   const pendingProductCount = data.products.filter((row) => row.external_source === "kolaybi" && row.approval_status === "pending").length;
 
+  const shipmentByInvoiceId = useMemo(() => {
+    const shipmentsById = new Map(data.shipments.map((shipment) => [String(shipment.id), shipment]));
+    const shipmentsBySaleInvoiceId = new Map(
+      data.shipments
+        .filter((shipment) => shipment.sale_invoice_id)
+        .map((shipment) => [String(shipment.sale_invoice_id), shipment]),
+    );
+    return (invoice: any) => (
+      (invoice.shipment_id ? shipmentsById.get(String(invoice.shipment_id)) : null)
+      || shipmentsBySaleInvoiceId.get(String(invoice.id))
+      || null
+    );
+  }, [data.shipments]);
+
   const exportRows = async (name: string, rows: Record<string, unknown>[]) => {
     try { await downloadExcel(name, rows, "REX TYS"); }
     catch (error: any) { toast({ title: "Excel raporu oluşturulamadı", description: error.message, variant: "destructive" }); }
@@ -418,13 +434,27 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
 
         <TabsContent value="sales" className="mt-5 space-y-4">
           <div><h3 className="text-xl font-bold">Satış Yönetimi</h3><p className="text-sm text-slate-500">Teslim edilen sevkiyattan e-fatura/e-arşiv ve tahsilat takibine</p></div>
-          <Card><Table><TableHeader><TableRow><TableHead>Fatura No</TableHead><TableHead>Tarih</TableHead><TableHead>Belge</TableHead><TableHead>Durum</TableHead><TableHead>Ödeme</TableHead><TableHead className="text-right">Tutar</TableHead><TableHead className="text-right">İşlemler</TableHead></TableRow></TableHeader><TableBody>
-            {data.salesInvoices.length === 0 ? <EmptyRow columns={7} /> : data.salesInvoices.map((row) => {
+          <Card><Table><TableHeader><TableRow><TableHead>Fatura No</TableHead><TableHead>Sevkiyat</TableHead><TableHead>Tarih</TableHead><TableHead>Belge</TableHead><TableHead>Durum</TableHead><TableHead>Ödeme</TableHead><TableHead className="text-right">Tutar</TableHead><TableHead className="text-right">İşlemler</TableHead></TableRow></TableHeader><TableBody>
+            {data.salesInvoices.length === 0 ? <EmptyRow columns={8} /> : data.salesInvoices.map((row) => {
               const editable = isEditableInvoice(row);
               const awaitingReview = editable && (row.accounting_review_status || "pending") !== "approved";
+              const shipment = shipmentByInvoiceId(row);
               return (
                 <TableRow key={row.id} className="cursor-pointer hover:bg-slate-50" onClick={() => setPreviewInvoice(row)}>
                   <TableCell className="font-mono">{row.invoice_no}</TableCell>
+                  <TableCell onClick={(event) => event.stopPropagation()}>
+                    {shipment ? (
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto p-0 font-mono text-[#173f73]"
+                        onClick={() => setHistoryShipment(shipment)}
+                        title="Sevkiyat geçmişini aç"
+                      >
+                        {shipment.shipment_code}
+                      </Button>
+                    ) : <span className="text-xs text-slate-500">Bağımsız belge</span>}
+                  </TableCell>
                   <TableCell>{date(row.invoice_date || row.created_at)}</TableCell>
                   <TableCell>{row.document_type === "e_invoice" ? "E-Fatura" : "E-Arşiv"}</TableCell>
                   <TableCell>
@@ -607,6 +637,12 @@ export function KolayBiOfficeModule({ permissions }: { permissions: PermissionMa
           }}
         />
       ) : null}
+
+      <ShipmentHistoryDialog
+        isOpen={Boolean(historyShipment)}
+        onClose={() => setHistoryShipment(null)}
+        shipment={historyShipment}
+      />
     </div>
   );
 }

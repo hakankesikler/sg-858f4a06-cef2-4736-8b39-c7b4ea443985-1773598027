@@ -32,6 +32,18 @@ async function optionalRows(table: string, orderColumn = "created_at", limit = 5
   try { return await rows(table, orderColumn, false, limit); } catch { return []; }
 }
 
+async function activeSalesInvoiceRows(limit = 500) {
+  const { data, error } = await (supabase.from("sales_invoices" as any) as any)
+    .select("*")
+    .is("archived_at", null)
+    .not("invoice_no", "like", "ALACAK-%")
+    .not("invoice_no", "like", "BORC-%")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
 async function optionalAllRows(
   table: string,
   orderColumn = "id",
@@ -182,9 +194,9 @@ export const kolaybiOfficeService = {
       salesInvoices, purchaseInvoices, expenses, products, customers,
       financialAccounts, transactions, projects, shipments, providerRecords, associateRecords,
       customerFinancialDirectory, providerRecordsCount, providerMatchedCount, providerReviewCount,
-      outboundPending, outboundReview,
+      outboundPending, outboundReview, salesInvoiceProviderRecords,
     ] = await Promise.all([
-      rows("sales_invoices", "created_at"),
+      activeSalesInvoiceRows(),
       optionalRows("purchase_invoices", "created_at"),
       rows("expenses", "expense_date"),
       rows("products_services", "created_at"),
@@ -201,9 +213,26 @@ export const kolaybiOfficeService = {
       optionalProviderCount(providerEnvironment, "review_required"),
       optionalCount("kolaybi_outbound_jobs", ["pending", "processing"]),
       optionalCount("kolaybi_outbound_jobs", ["review_required", "dead"]),
+      optionalAllRows("kolaybi_master_records", "id", { resource_type: "sales_invoice" }),
     ]);
+
+    const currentEnvironmentInvoiceIds = new Set(
+      salesInvoiceProviderRecords
+        .filter((record) => record.provider_environment === providerEnvironment && record.local_entity_id)
+        .map((record) => String(record.local_entity_id)),
+    );
+    const otherEnvironmentInvoiceIds = new Set(
+      salesInvoiceProviderRecords
+        .filter((record) => record.provider_environment !== providerEnvironment && record.local_entity_id)
+        .map((record) => String(record.local_entity_id)),
+    );
+    const visibleSalesInvoices = salesInvoices.filter((invoice) => (
+      !otherEnvironmentInvoiceIds.has(String(invoice.id))
+      || currentEnvironmentInvoiceIds.has(String(invoice.id))
+    ));
+
     return {
-      salesInvoices, purchaseInvoices, expenses, products, customers, financialAccounts, transactions, projects, shipments,
+      salesInvoices: visibleSalesInvoices, purchaseInvoices, expenses, products, customers, financialAccounts, transactions, projects, shipments,
       providerRecords, associateRecords, customerFinancialDirectory,
       providerSummary: { records: providerRecordsCount, matched: providerMatchedCount, review: providerReviewCount },
       syncRuns, integrationPartners, outboundQueue: { pending: outboundPending, review: outboundReview },
