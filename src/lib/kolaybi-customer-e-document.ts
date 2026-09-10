@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { assertKolayBiSyncEnabled } from "@/lib/kolaybi-live-gate";
 
 const DEFAULT_BASE_URL = "https://ofis-sandbox-api.kolaybi.com/kolaybi/v1";
+const PAGE_SIZE = 100;
+const MAX_PAGES = 40;
 const VALID_SCENARIOS = ["EARSIVFATURA", "TEMELFATURA", "TICARIFATURA", "KAMU"] as const;
 
 type Scenario = (typeof VALID_SCENARIOS)[number];
@@ -40,6 +42,11 @@ function listFrom(json: any): any[] {
   if (Array.isArray(json?.items)) return json.items;
   if (Array.isArray(json?.results)) return json.results;
   return [];
+}
+
+function lastPageFrom(json: any) {
+  const value = Number(json?.data?.last_page || json?.data?.meta?.last_page || json?.meta?.last_page || 0);
+  return Number.isFinite(value) && value > 0 ? Math.min(Math.trunc(value), MAX_PAGES) : null;
 }
 
 function text(value: unknown) {
@@ -114,6 +121,38 @@ async function providerRequest(url: string, headers: Record<string, string>, ini
   return readJson(await fetch(url, { ...init, headers: { ...headers, ...(init.headers || {}) }, signal: AbortSignal.timeout(25_000) }));
 }
 
+async function pagedProviderList(
+  baseUrl: string,
+  path: string,
+  params: URLSearchParams,
+  headers: Record<string, string>,
+) {
+  const rows = new Map<string, any>();
+  const seenPages = new Set<string>();
+  let page = 1;
+  let lastPage: number | null = null;
+  do {
+    const pageParams = new URLSearchParams(params);
+    pageParams.set("page", String(page));
+    pageParams.set("per_page", String(PAGE_SIZE));
+    const json = await providerRequest(`${baseUrl}${path}?${pageParams.toString()}`, headers);
+    const pageRows = listFrom(json);
+    const rowKey = (row: any) => text(
+      row?.commercial_doc_id || row?.document_id || row?.id || row?.uuid ||
+      row?.no || row?.invoice_no || row?.serial_no || row?.header?.serial_no,
+    );
+    const fingerprint = `${pageRows.length}:${rowKey(pageRows[0])}:${rowKey(pageRows.at(-1))}`;
+    if (seenPages.has(fingerprint)) break;
+    seenPages.add(fingerprint);
+    pageRows.forEach((row, index) => rows.set(rowKey(row) || `${page}:${index}`, row));
+    const reportedLastPage = lastPageFrom(json);
+    if (reportedLastPage) lastPage = Math.max(lastPage || 1, reportedLastPage);
+    if (pageRows.length < PAGE_SIZE) break;
+    page += 1;
+  } while (page <= (lastPage || MAX_PAGES) && page <= MAX_PAGES);
+  return [...rows.values()];
+}
+
 async function resolveCompanyId(baseUrl: string, headers: Record<string, string>) {
   const configured = Number(process.env.KOLAYBI_COMPANY_ID || 0);
   if (Number.isSafeInteger(configured) && configured > 0) return configured;
@@ -174,13 +213,19 @@ export async function resolveCustomerEDocumentProfile(input: {
   const headers = { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" };
   const companyId = await resolveCompanyId(baseUrl, headers);
 
+  const syncDays = Math.min(Math.max(Number(process.env.KOLAYBI_SALES_PROFILE_SYNC_DAYS || 1825), 90), 3650);
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - syncDays * 24 * 60 * 60 * 1_000);
   const commercialQuery = new URLSearchParams({
     type: "sale_invoice",
     associate_id: String(contactId),
     has_products: "false",
+    start_date: startDate.toISOString().slice(0, 10),
+    end_date: endDate.toISOString().slice(0, 10),
   });
   const customerIdentity = digits(customer.vergi_no || customer.tc_no);
-  const commercialRows = listFrom(await providerRequest(`${baseUrl}/invoices?${commercialQuery.toString()}`, headers))
+  const commercialReceived = await pagedProviderList(baseUrl, "/invoices", commercialQuery, headers);
+  const commercialRows = commercialReceived
     .filter((row) => {
       const returnedAssociateId = Number(row?.associate_id || row?.contact_id || row?.header?.associate?.id || 0);
       const returnedIdentity = digits(row?.header?.associate?.identity_no || row?.associate?.identity_no);
@@ -188,6 +233,13 @@ export async function resolveCustomerEDocumentProfile(input: {
       return !customerIdentity || !returnedIdentity || returnedIdentity === customerIdentity;
     })
     .sort((left, right) => text(right?.header?.issue_date || right?.issue_date).localeCompare(text(left?.header?.issue_date || left?.issue_date)));
+
+  console.info("[kolaybi:customer-e-document] commercial history scanned", {
+    customerId,
+    contactId,
+    received: commercialReceived.length,
+    matched: commercialRows.length,
+  });
 
   const documentIds = new Set(
     commercialRows.map(commercialDocumentId).filter((value) => Number.isSafeInteger(value) && value > 0),
@@ -201,10 +253,10 @@ export async function resolveCustomerEDocumentProfile(input: {
       company_id: String(companyId),
       direction: "outbound",
       party_name: partyName,
+      min_issue_date: startDate.toISOString().slice(0, 10),
+      max_issue_date: endDate.toISOString().slice(0, 10),
     });
-    const officialByParty = listFrom(
-      await providerRequest(`${baseUrl}/e_document/invoices?${officialByPartyQuery.toString()}`, headers),
-    )
+    const officialByParty = (await pagedProviderList(baseUrl, "/e_document/invoices", officialByPartyQuery, headers))
       .filter((row) => documentIds.has(officialDocumentId(row)) || serialNos.has(officialSerialNo(row)))
       .sort((left, right) => text(right?.issue_date || right?.invoice_date).localeCompare(text(left?.issue_date || left?.invoice_date)));
     resolved = officialByParty.map((row) => profileFromOfficialInvoice(row, environment)).find(Boolean) || null;
@@ -212,7 +264,7 @@ export async function resolveCustomerEDocumentProfile(input: {
 
   // Some KolayBi accounts do not apply party_name consistently. In that case,
   // query recent invoices by their verified commercial document IDs in small batches.
-  const fallbackCandidates = resolved ? [] : commercialRows.slice(0, 40);
+  const fallbackCandidates = resolved ? [] : commercialRows.slice(0, 20);
   for (let index = 0; index < fallbackCandidates.length && !resolved; index += 5) {
     const batch = fallbackCandidates.slice(index, index + 5);
     const results = await Promise.all(batch.map(async (commercial) => {
@@ -230,6 +282,13 @@ export async function resolveCustomerEDocumentProfile(input: {
   }
 
   if (!resolved) {
+    console.warn("[kolaybi:customer-e-document] official history not resolved", {
+      customerId,
+      contactId,
+      commercialReceived: commercialReceived.length,
+      commercialMatched: commercialRows.length,
+      candidateDocuments: documentIds.size,
+    });
     throw reviewError(
       "KolayBi'de bu cari için resmî e-belge geçmişi bulunamadı. E-Fatura/E-Arşiv türü çalışan tarafından tahmin edilmeden önce KolayBi cari mükellefiyet kaydı kontrol edilmelidir.",
     );

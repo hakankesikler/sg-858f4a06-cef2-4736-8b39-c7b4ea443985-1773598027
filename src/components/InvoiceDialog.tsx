@@ -575,8 +575,8 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                     {documentType === "e_invoice" ? "E-Fatura" : "E-Arşiv"}
                   </div>
                 ) : (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
-                    Otomatik doğrulama bekleniyor
+                  <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
+                    KolayBi gönderimde otomatik belirleyecek
                   </div>
                 )}
               </div>
@@ -590,7 +590,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                         : documentScenario === "TEMELFATURA" ? "Temel Fatura" : "E-Arşiv Fatura"}
                   </div>
                 ) : (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                  <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
                     Taslak oluşturulur; gerçek senaryoyu resmileştirme sırasında KolayBi belirler.
                   </div>
                 )}

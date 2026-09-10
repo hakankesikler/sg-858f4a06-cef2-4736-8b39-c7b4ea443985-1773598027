@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { isKolayBiSyncEnabled } from "@/lib/kolaybi-live-gate";
 
 const DEFAULT_BASE_URL = "https://ofis-sandbox-api.kolaybi.com/kolaybi/v1";
+const PROFILE_PAGE_SIZE = 100;
+const PROFILE_MAX_PAGES = 40;
 const SUPPORTED_RESOURCES = ["associates", "products", "expense_types", "sales_invoices", "purchase_invoices", "general_expenses", "vaults", "vault_transactions"] as const;
 type Resource = (typeof SUPPORTED_RESOURCES)[number];
 
@@ -40,6 +42,46 @@ function listFrom(json: any) {
   if (Array.isArray(json?.data)) return json.data;
   if (Array.isArray(json?.items)) return json.items;
   return [];
+}
+
+function lastPageFrom(json: any) {
+  const value = Number(json?.data?.last_page || json?.data?.meta?.last_page || json?.meta?.last_page || 0);
+  return Number.isFinite(value) && value > 0 ? Math.min(Math.trunc(value), PROFILE_MAX_PAGES) : null;
+}
+
+function providerRecordKey(item: any) {
+  return text(
+    item?.commercial_doc_id || item?.document_id || item?.id || item?.uuid ||
+    item?.no || item?.invoice_no || item?.serial_no || item?.header?.serial_no,
+  );
+}
+
+async function pagedProviderList(
+  baseUrl: string,
+  path: string,
+  params: URLSearchParams,
+  headers: Record<string, string>,
+) {
+  const rows = new Map<string, any>();
+  const seenPages = new Set<string>();
+  let page = 1;
+  let lastPage: number | null = null;
+  do {
+    const pageParams = new URLSearchParams(params);
+    pageParams.set("page", String(page));
+    pageParams.set("per_page", String(PROFILE_PAGE_SIZE));
+    const json = await providerRequest(`${baseUrl}${path}?${pageParams.toString()}`, { method: "GET", headers });
+    const pageRows = listFrom(json);
+    const fingerprint = `${pageRows.length}:${providerRecordKey(pageRows[0])}:${providerRecordKey(pageRows.at(-1))}`;
+    if (seenPages.has(fingerprint)) break;
+    seenPages.add(fingerprint);
+    pageRows.forEach((row, index) => rows.set(providerRecordKey(row) || `${page}:${index}`, row));
+    const reportedLastPage = lastPageFrom(json);
+    if (reportedLastPage) lastPage = Math.max(lastPage || 1, reportedLastPage);
+    if (pageRows.length < PROFILE_PAGE_SIZE) break;
+    page += 1;
+  } while (page <= (lastPage || PROFILE_MAX_PAGES) && page <= PROFILE_MAX_PAGES);
+  return [...rows.values()];
 }
 
 function transactionablesFrom(json: any) {
@@ -317,6 +359,173 @@ async function updateCustomerEDocumentProfile(
   }).eq("id", customerId);
   if (error) throw error;
   return true;
+}
+
+type ProfileCandidate = NonNullable<ReturnType<typeof eDocumentProfile>> & {
+  contactId: number;
+  taxIdentity: string;
+};
+
+function newerProfile(current: ProfileCandidate | undefined, incoming: ProfileCandidate) {
+  if (!current) return incoming;
+  return new Date(incoming.evidenceAt).getTime() > new Date(current.evidenceAt).getTime() ? incoming : current;
+}
+
+async function allMappedCustomers(admin: any) {
+  const rows: any[] = [];
+  for (let from = 0; from < 10_000; from += 1_000) {
+    const { data, error } = await admin.from("customers")
+      .select("id,vergi_no,tc_no,kolaybi_contact_id,kolaybi_e_document_environment,kolaybi_e_document_evidence_at")
+      .not("kolaybi_contact_id", "is", null)
+      .is("archived_at", null)
+      .range(from, from + 999);
+    if (error) throw error;
+    rows.push(...(data || []));
+    if ((data || []).length < 1_000) break;
+  }
+  return rows;
+}
+
+async function reconcileCustomerEDocumentProfiles(input: {
+  admin: any;
+  baseUrl: string;
+  companyId: string;
+  headers: Record<string, string>;
+  providerEnvironment: "test" | "live";
+}) {
+  const { admin, baseUrl, companyId, headers, providerEnvironment } = input;
+  const syncDays = Math.min(Math.max(Number(process.env.KOLAYBI_SALES_PROFILE_SYNC_DAYS || 1825), 90), 3650);
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - syncDays * 24 * 60 * 60 * 1_000);
+  const minIssueDate = startDate.toISOString().slice(0, 10);
+  const maxIssueDate = endDate.toISOString().slice(0, 10);
+  const dateWindows = Array.from(
+    { length: endDate.getUTCFullYear() - startDate.getUTCFullYear() + 1 },
+    (_, index) => {
+      const year = startDate.getUTCFullYear() + index;
+      return {
+        from: year === startDate.getUTCFullYear() ? minIssueDate : `${year}-01-01`,
+        to: year === endDate.getUTCFullYear() ? maxIssueDate : `${year}-12-31`,
+      };
+    },
+  );
+  const windowResults: Array<{ commercial: any[]; official: any[] }> = [];
+  for (const window of dateWindows) {
+    const [commercial, official] = await Promise.all([
+      pagedProviderList(baseUrl, "/invoices", new URLSearchParams({
+        type: "sale_invoice",
+        has_products: "false",
+        start_date: window.from,
+        end_date: window.to,
+      }), headers),
+      pagedProviderList(baseUrl, "/e_document/invoices", new URLSearchParams({
+        company_id: companyId,
+        direction: "outbound",
+        min_issue_date: window.from,
+        max_issue_date: window.to,
+      }), headers),
+    ]);
+    windowResults.push({ commercial, official });
+  }
+  const commercialRows = [...new Map(
+    windowResults.flatMap((result) => result.commercial)
+      .map((row) => [providerRecordKey(row), row] as const),
+  ).values()];
+  const officialRows = [...new Map(
+    windowResults.flatMap((result) => result.official)
+      .map((row) => [providerRecordKey(row), row] as const),
+  ).values()];
+
+  const officialByDocument = new Map<string, any>();
+  const officialBySerial = new Map<string, any>();
+  [...officialRows]
+    .sort((left, right) => text(right?.issue_date || right?.invoice_date).localeCompare(text(left?.issue_date || left?.invoice_date)))
+    .forEach((official) => {
+      const documentId = text(official?.document_id || official?.commercial_doc_id || official?.id);
+      const serialNo = text(official?.no || official?.invoice_no || official?.serial_no).toUpperCase();
+      if (documentId && !officialByDocument.has(documentId)) officialByDocument.set(documentId, official);
+      if (serialNo && !officialBySerial.has(serialNo)) officialBySerial.set(serialNo, official);
+    });
+
+  const byContactId = new Map<number, ProfileCandidate>();
+  const byTaxIdentity = new Map<string, ProfileCandidate>();
+  commercialRows.forEach((commercial) => {
+    const documentId = text(commercial?.commercial_doc_id || commercial?.document_id || commercial?.id);
+    const serialNo = text(commercial?.header?.serial_no || commercial?.serial_no || commercial?.invoice_no).toUpperCase();
+    const official = officialByDocument.get(documentId) || officialBySerial.get(serialNo);
+    if (!official) return;
+    const profile = eDocumentProfile({ ...commercial, _e_document: official });
+    if (!profile) return;
+    const contactId = Number(commercial?.associate_id || commercial?.contact_id || commercial?.header?.associate?.id || 0);
+    const taxIdentity = digits(commercial?.header?.associate?.identity_no || commercial?.associate?.identity_no);
+    const candidate: ProfileCandidate = { ...profile, contactId, taxIdentity };
+    if (Number.isSafeInteger(contactId) && contactId > 0) {
+      byContactId.set(contactId, newerProfile(byContactId.get(contactId), candidate));
+    }
+    if ([10, 11].includes(taxIdentity.length)) {
+      byTaxIdentity.set(taxIdentity, newerProfile(byTaxIdentity.get(taxIdentity), candidate));
+    }
+  });
+
+  const customers = await allMappedCustomers(admin);
+  const customerIdentityCounts = new Map<string, number>();
+  customers.forEach((customer) => {
+    const identity = digits(customer.vergi_no || customer.tc_no);
+    if ([10, 11].includes(identity.length)) {
+      customerIdentityCounts.set(identity, (customerIdentityCounts.get(identity) || 0) + 1);
+    }
+  });
+  let matchedCustomers = 0;
+  let updatedCustomers = 0;
+  let skippedNewerEvidence = 0;
+  await processWithConcurrency(customers, 16, async (customer) => {
+    const contactId = Number(customer.kolaybi_contact_id || 0);
+    const identity = digits(customer.vergi_no || customer.tc_no);
+    const candidate = byContactId.get(contactId) ||
+      (customerIdentityCounts.get(identity) === 1 ? byTaxIdentity.get(identity) : undefined);
+    if (!candidate) return;
+    matchedCustomers += 1;
+    const currentEvidence = customer.kolaybi_e_document_evidence_at
+      ? new Date(customer.kolaybi_e_document_evidence_at).getTime()
+      : 0;
+    const incomingEvidence = new Date(candidate.evidenceAt).getTime();
+    if (
+      (customer.kolaybi_e_document_environment === "live" && providerEnvironment === "test") ||
+      (customer.kolaybi_e_document_environment === providerEnvironment && currentEvidence >= incomingEvidence)
+    ) {
+      skippedNewerEvidence += 1;
+      return;
+    }
+    const now = new Date().toISOString();
+    const { error } = await admin.from("customers").update({
+      kolaybi_e_document_type: candidate.documentType,
+      kolaybi_e_document_scenario: candidate.scenario,
+      kolaybi_e_document_source: "kolaybi_official_invoice_bulk",
+      kolaybi_e_document_environment: providerEnvironment,
+      kolaybi_e_document_evidence_at: candidate.evidenceAt,
+      kolaybi_e_document_checked_at: now,
+      updated_at: now,
+    }).eq("id", customer.id);
+    if (error) throw error;
+    updatedCustomers += 1;
+  });
+
+  const stats = {
+    commercial_received: commercialRows.length,
+    official_received: officialRows.length,
+    profile_candidates: byContactId.size + [...byTaxIdentity.values()].filter((candidate) => candidate.contactId <= 0).length,
+    mapped_customers: customers.length,
+    matched_customers: matchedCustomers,
+    updated_customers: updatedCustomers,
+    skipped_newer_evidence: skippedNewerEvidence,
+    date_from: minIssueDate,
+    date_to: maxIssueDate,
+  };
+  console.info("[kolaybi:sales-profile] bulk reconciliation completed", {
+    providerEnvironment,
+    ...stats,
+  });
+  return { stats, officialByDocument };
 }
 
 function safePayload(resource: Resource, item: any) {
@@ -1039,6 +1248,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: "sync_started", status: "info", summary: cronMode ? "KolayBi otomatik aktif akış senkronizasyonu başlatıldı" : "KolayBi ofis senkronizasyonu başlatıldı", actor_id: actor.id, actor_email: actor.email });
 
     let received = 0; let matched = 0; let review = 0; let ignored = 0; let failed = 0;
+    let salesProfileReconciliation: Record<string, unknown> | null = null;
     const errors: string[] = [];
     const syncResource = async (resource: Resource) => {
       try {
@@ -1065,21 +1275,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
           records = records.slice(0, 3000);
         } else {
+          let fullOfficialByDocument: Map<string, any> | null = null;
+          if (resource === "sales_invoices" && companyId) {
+            const profileReconciliation = await reconcileCustomerEDocumentProfiles({
+              admin,
+              baseUrl,
+              companyId: String(companyId),
+              headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" },
+              providerEnvironment,
+            });
+            salesProfileReconciliation = profileReconciliation.stats;
+            fullOfficialByDocument = profileReconciliation.officialByDocument;
+          }
           const json = await providerRequest(`${baseUrl}${endpoint(resource)}`, { method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" } });
           records = listFrom(json);
           if (resource === "sales_invoices" && companyId) {
-            const query = new URLSearchParams({ company_id: String(companyId), direction: "outbound" });
-            const officialJson = await providerRequest(`${baseUrl}/e_document/invoices?${query.toString()}`, {
-              method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" },
-            });
-            const officialByDocument = new Map(
-              listFrom(officialJson).map((official: any) => [
-                text(official?.document_id || official?.id), official,
-              ]),
-            );
             records = records.map((record: any) => ({
               ...record,
-              _e_document: officialByDocument.get(text(record?.commercial_doc_id || record?.document_id || record?.id)) || null,
+              _e_document: fullOfficialByDocument?.get(text(record?.commercial_doc_id || record?.document_id || record?.id)) || null,
             }));
           }
         }
@@ -1146,8 +1359,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await processWithConcurrency(resourcesBeforeTransactions, 3, syncResource);
     if (resources.includes("vault_transactions")) await syncResource("vault_transactions");
     const status = failed === 0 ? "completed" : received > 0 ? "partial" : "failed";
-    const { data: completed } = await admin.from("kolaybi_sync_runs").update({ status, received_count: received, matched_count: matched, review_count: review, failed_count: failed, last_error: errors[0] || null, completed_at: new Date().toISOString(), metadata: { resources, automatic: cronMode, direction: "inbound", ignored_count: ignored } }).eq("id", run.id).select().single();
-    await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol, ${ignored} arşiv`, metadata: { errors: errors.slice(0, 10), provider_environment: providerEnvironment, automatic: cronMode, ignored_count: ignored }, actor_id: actor.id, actor_email: actor.email });
+    const runMetadata = { resources, automatic: cronMode, direction: "inbound", ignored_count: ignored, sales_profile_reconciliation: salesProfileReconciliation };
+    const { data: completed } = await admin.from("kolaybi_sync_runs").update({ status, received_count: received, matched_count: matched, review_count: review, failed_count: failed, last_error: errors[0] || null, completed_at: new Date().toISOString(), metadata: runMetadata }).eq("id", run.id).select().single();
+    await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol, ${ignored} arşiv`, metadata: { errors: errors.slice(0, 10), provider_environment: providerEnvironment, automatic: cronMode, ignored_count: ignored, sales_profile_reconciliation: salesProfileReconciliation }, actor_id: actor.id, actor_email: actor.email });
     await updatePartner(status === "completed", errors[0] || null, true);
     return res.status(status === "failed" ? 502 : 200).json({ success: status !== "failed", run: completed, errors: errors.slice(0, 10) });
   } catch (error: any) {

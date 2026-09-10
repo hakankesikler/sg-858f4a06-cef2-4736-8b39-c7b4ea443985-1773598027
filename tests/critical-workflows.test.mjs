@@ -1495,7 +1495,7 @@ test("KolayBi official history determines each customer's e-invoice or e-archive
   assert.match(providerLib, /alignInvoiceWithCustomerProfile/);
   assert.match(providerLib, /recordCustomerEDocumentProfile/);
   assert.match(invoiceDialog, /Sistem doğruladı/);
-  assert.match(invoiceDialog, /Otomatik doğrulama bekleniyor/);
+  assert.match(invoiceDialog, /KolayBi gönderimde otomatik belirleyecek/);
   assert.doesNotMatch(invoiceDialog, /manualEDocumentConfirmed/);
   assert.match(office, /E-Belge/);
   assert.doesNotMatch(office, /E-Belge Türlerini Karşılaştır/);
@@ -1543,8 +1543,11 @@ test("sales invoice e-document profile is resolved on demand and withholding sta
   assert.match(resolver, /associate_id: String\(contactId\)/);
   assert.match(resolver, /party_name: partyName/);
   assert.match(resolver, /returnedIdentity === customerIdentity/);
-  assert.match(resolver, /commercialRows\.slice\(0, 40\)/);
+  assert.match(resolver, /commercialRows\.slice\(0, 20\)/);
   assert.doesNotMatch(resolver, /\.slice\(0, 12\)/);
+  assert.match(resolver, /pagedProviderList/);
+  assert.match(resolver, /per_page/);
+  assert.match(resolver, /KOLAYBI_SALES_PROFILE_SYNC_DAYS/);
   assert.match(resolver, /\/e_document\/invoices\?/);
   assert.match(resolver, /document_id: String\(documentId\)/);
   assert.match(resolver, /kolaybi_official_invoice_on_demand/);
@@ -1563,6 +1566,17 @@ test("sales invoice e-document profile is resolved on demand and withholding sta
   assert.match(nartliftProfile, /kolaybi_contact_id = 6281105/);
   assert.match(nartliftProfile, /TICARIFATURA/);
   assert.match(nartliftProfile, /kolaybi_official_invoice_verified/);
+});
+
+test("KolayBi sales sync reconciles all customer e-document profiles from paged official history", async () => {
+  const syncApi = await read("src/pages/api/kolaybi/office-sync.ts");
+  assert.match(syncApi, /reconcileCustomerEDocumentProfiles/);
+  assert.match(syncApi, /pagedProviderList/);
+  assert.match(syncApi, /PROFILE_MAX_PAGES = 40/);
+  assert.match(syncApi, /KOLAYBI_SALES_PROFILE_SYNC_DAYS \|\| 1825/);
+  assert.match(syncApi, /kolaybi_official_invoice_bulk/);
+  assert.match(syncApi, /sales_profile_reconciliation/);
+  assert.match(syncApi, /resource === "sales_invoices" && companyId/);
 });
 
 test("new customers can create drafts while KolayBi resolves the official e-document scenario", async () => {

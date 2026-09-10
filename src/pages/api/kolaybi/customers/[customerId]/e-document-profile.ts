@@ -43,6 +43,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error: any) {
     const message = String(error?.message || "Cari e-belge türü doğrulanamadı.").slice(0, 500);
     if (error?.reviewRequired) {
+      console.warn("[kolaybi:customer-e-document] provider resolution pending", {
+        customerId,
+        reason: message,
+      });
       return res.status(200).json({
         success: true,
         profile: null,

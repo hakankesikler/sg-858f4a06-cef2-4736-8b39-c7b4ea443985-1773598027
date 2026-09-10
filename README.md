@@ -29,6 +29,7 @@ KOLAYBI_BASE_URL=https://ofis-api.kolaybi.com/kolaybi/v1
 KOLAYBI_LIVE_SYNC_ENABLED=false
 KOLAYBI_AUTO_SEND_E_DOCUMENT=false
 KOLAYBI_E_DOCUMENT_PREFIX=
+KOLAYBI_SALES_PROFILE_SYNC_DAYS=1825
 SUPABASE_SERVICE_ROLE_KEY=
 CRON_SECRET=
 ```
@@ -40,6 +41,8 @@ Canlı API bilgileri ilk kez tanımlanırken `KOLAYBI_LIVE_SYNC_ENABLED=false` t
 Önce cari kartındaki **KolayBi Contact ID** ve **Address ID** alanları eşleştirilir. Taşıma hizmeti için `KOLAYBI_PRODUCT_ID` veya `invoice_product_mappings` tablosundaki `HIZMET` eşlemesi kullanılır. Anahtarlar ya da eşlemeler eksikse yerel taslak korunur, sevkiyat faturalandı sayılmaz ve hata muhasebe ekranında gösterilir.
 
 Fatura durumları: `draft` → `queued` → `submitted` → `official`. Geçici bağlantı hataları artan bekleme süreleriyle yeniden denenir. Sevkiyat yalnızca `official` durumunda `faturalandi` olur. Vercel zamanlayıcısı kuyruğu her gün işler; muhasebe ekranı açıkken vadesi gelen işler ayrıca her dakika işlenir.
+
+Saatlik satış faturası senkronizasyonu KolayBi'nin sayfalı ticari ve resmî belge geçmişini son `KOLAYBI_SALES_PROFILE_SYNC_DAYS` gün için tarar. Bulunan en güncel resmî senaryo cari kartına otomatik yazılır; böylece mevcut cariler için E-Fatura/E-Arşiv doğrulaması tek tek yapılmaz.
 
 ## Teslim evrakı virüs taraması
 
