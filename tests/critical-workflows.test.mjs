@@ -1526,6 +1526,36 @@ test("KolayBi sandbox test identities receive deterministic e-document profiles"
   assert.match(syncApi, /kolaybi_e_document_source: "kolaybi_sandbox_test_identity"/);
 });
 
+test("sales invoice e-document profile is resolved on demand and withholding stays purchase-only", async () => {
+  const [resolver, endpoint, service, invoiceDialog, editDialog, provider, configuration, purchaseInbox, migration] = await Promise.all([
+    read("src/lib/kolaybi-customer-e-document.ts"),
+    read("src/pages/api/kolaybi/customers/[customerId]/e-document-profile.ts"),
+    read("src/services/invoiceIntegrationService.ts"),
+    read("src/components/InvoiceDialog.tsx"),
+    read("src/components/EditInvoiceDialog.tsx"),
+    read("src/lib/kolaybi.ts"),
+    read("src/components/InvoiceConfigurationPanel.tsx"),
+    read("src/components/PurchaseInvoiceInbox.tsx"),
+    read("supabase/migrations/20260910193000_disable_sales_invoice_withholding.sql"),
+  ]);
+
+  assert.match(resolver, /associate_id: String\(contactId\)/);
+  assert.match(resolver, /\/e_document\/invoices\?/);
+  assert.match(resolver, /document_id: String\(documentId\)/);
+  assert.match(resolver, /kolaybi_official_invoice_on_demand/);
+  assert.match(endpoint, /accounting\.sales/);
+  assert.match(endpoint, /synchronizeKolayBiAssociate/);
+  assert.match(service, /resolveCustomerEDocumentProfile\(input\.customerId\)/);
+  assert.match(invoiceDialog, /KolayBi ile doğrulanıyor/);
+  assert.doesNotMatch(invoiceDialog, /Tevkifat Kodu|Tevkifat Oranı/);
+  assert.match(editDialog, /withholdingCode: null/);
+  assert.doesNotMatch(provider, /items\[\$\{index\}\]\[withholding_code\]/);
+  assert.doesNotMatch(configuration, /Tevkifatlı taşıma/);
+  assert.match(purchaseInbox, /<Label>Tevkifat<\/Label>/);
+  assert.match(migration, /rex_clear_sales_invoice_item_withholding/);
+  assert.match(migration, /WHERE category = 'withholding_transport'/);
+});
+
 test("shipment save lets PostgreSQL calculate the generated cargo subtotal", async () => {
   const sql = await read("supabase/migrations/20260905103000_fix_shipment_generated_subtotal.sql");
   const cargoInsert = sql.match(/INSERT INTO public\.shipment_cargo_items\([\s\S]*?FROM jsonb_array_elements\(p_cargo_items\) item;/)?.[0] || "";

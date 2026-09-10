@@ -37,8 +37,6 @@ interface InvoiceItem {
   subtotal: number;
   vatAmount: number;
   total: number;
-  withholdingCode?: string;
-  withholdingValue?: number;
   exemptionCode?: string;
 }
 
@@ -77,13 +75,12 @@ interface InvoiceDialogProps {
 const defaultNotes = `Taşıma İşleri Organizatörlüğü Belge No: İZM.U-NET.TİO.35.6323
 Hizmetin kapsamı fatura kaleminde ve ilgili iş referansında belirtilmiştir.`;
 
-const categoryLabels: Record<InvoiceCategory, string> = {
-  domestic_transport: "Yurtiçi taşıma",
-  international_transport: "Uluslararası taşıma",
-  exempt_transport: "KDV istisnalı taşıma",
-  withholding_transport: "Tevkifatlı taşıma",
-  other: "Diğer hizmet",
-};
+const categoryOptions: Array<{ value: InvoiceCategory; label: string }> = [
+  { value: "domestic_transport", label: "Yurtiçi taşıma" },
+  { value: "international_transport", label: "Uluslararası taşıma" },
+  { value: "exempt_transport", label: "KDV istisnalı taşıma" },
+  { value: "other", label: "Diğer hizmet" },
+];
 
 const inferCategory = (shipment?: any): InvoiceCategory => {
   if (shipment?.service_mode === "international_express") return "exempt_transport";
@@ -116,6 +113,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string>(preSelectedCustomer?.id || "");
   const [selectedCustomerProfile, setSelectedCustomerProfile] = useState<InvoiceCustomer | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
   const [currency, setCurrency] = useState("TRY");
@@ -166,14 +164,25 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
 
   const loadCustomerEDocumentProfile = async (customerId: string) => {
     if (!customerId) return applyCustomerEDocumentProfile(null);
-    const { data, error } = await supabase.from("customers")
-      .select("id,name,company,kolaybi_e_document_type,kolaybi_e_document_scenario,kolaybi_e_document_source,kolaybi_e_document_environment,kolaybi_e_document_evidence_at")
-      .eq("id", customerId).single();
-    if (error) {
-      console.error("Cari e-belge profili yüklenemedi:", error);
-      return applyCustomerEDocumentProfile(null);
+    setProfileLoading(true);
+    try {
+      const profile = await invoiceIntegrationService.resolveCustomerEDocumentProfile(customerId);
+      applyCustomerEDocumentProfile({
+        id: customerId,
+        name: "",
+        company: null,
+        kolaybi_e_document_type: profile.documentType,
+        kolaybi_e_document_scenario: profile.documentScenario,
+        kolaybi_e_document_source: profile.source,
+        kolaybi_e_document_environment: profile.environment,
+        kolaybi_e_document_evidence_at: profile.evidenceAt,
+      });
+    } catch (error) {
+      console.error("Cari e-belge profili doğrulanamadı:", error);
+      applyCustomerEDocumentProfile(null);
+    } finally {
+      setProfileLoading(false);
     }
-    applyCustomerEDocumentProfile(data as InvoiceCustomer);
   };
 
   const applyNoteTemplate = (template: InvoiceNoteTemplate) => {
@@ -204,7 +213,8 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
           .order("name"),
       ]);
       if (catalogResult.error) throw catalogResult.error;
-      setNoteTemplates(templates);
+      const salesTemplates = templates.filter((template) => template.category !== "withholding_transport");
+      setNoteTemplates(salesTemplates);
       setBankAccounts(accounts);
       setCatalogProducts((catalogResult.data || []) as InvoiceCatalogProduct[]);
       setSelectedBankAccountIds(accounts.filter((account) => account.is_default).map((account) => account.id));
@@ -213,10 +223,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       setInvoiceCategory(initialCategory);
       const initialTemplate = (
         shipment?.service_mode === "international_express"
-          ? templates.find((template) => template.code === "EXPRESS_ISTISNA_311")
-          : templates.find((template) => template.category === initialCategory && template.is_default)
-            || templates.find((template) => template.category === initialCategory)
-      ) || templates[0];
+          ? salesTemplates.find((template) => template.code === "EXPRESS_ISTISNA_311")
+          : salesTemplates.find((template) => template.category === initialCategory && template.is_default)
+            || salesTemplates.find((template) => template.category === initialCategory)
+      ) || salesTemplates[0];
       if (initialTemplate) applyNoteTemplate(initialTemplate);
     } catch (error: any) {
       toast({ title: "Fatura açıklama ayarları yüklenemedi", description: error.message, variant: "destructive" });
@@ -297,8 +307,6 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       subtotal,
       vatAmount,
       total,
-      withholdingCode: item.withholdingCode || "",
-      withholdingValue: item.withholdingValue || 0,
       exemptionCode: item.exemptionCode || "",
     };
   };
@@ -380,14 +388,6 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
       });
       return;
     }
-    if (!selectedCustomerProfile) {
-      toast({
-        title: "E-belge türü henüz doğrulanmadı",
-        description: "Çalışan seçimiyle fatura oluşturulamaz. Cari e-belge türü otomatik olarak doğrulanmalıdır.",
-        variant: "destructive",
-      });
-      return;
-    }
     if (totals.subtotal <= 0 || items.some((item) => item.quantity <= 0 || item.unitPrice <= 0)) {
       toast({
         title: "Fatura tutarı kontrol edilmeli",
@@ -424,9 +424,6 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
           unitPrice: item.unitPrice,
           vatRate: item.vatRate,
           kolaybiProductId: item.kolaybiProductId || null,
-          withholdingCode: item.withholdingCode || null,
-          withholdingValue: item.withholdingValue || null,
-          withholdingType: item.withholdingCode ? "PERCENTAGE" : null,
           exemptionCode: item.exemptionCode || null,
         })),
       });
@@ -561,11 +558,15 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <Label className="text-sm font-semibold">E-Belge Türü</Label>
-                  {selectedCustomerProfile && (
+                  {selectedCustomerProfile && !profileLoading && (
                     <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">Sistem doğruladı</Badge>
                   )}
                 </div>
-                {selectedCustomerProfile ? (
+                {profileLoading ? (
+                  <div className="flex h-10 items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 text-sm font-medium text-blue-800">
+                    <Loader2 className="h-4 w-4 animate-spin" /> KolayBi ile doğrulanıyor
+                  </div>
+                ) : selectedCustomerProfile ? (
                   <div className="flex h-10 items-center rounded-md border border-green-200 bg-green-50 px-3 font-medium text-green-800">
                     {documentType === "e_invoice" ? "E-Fatura" : "E-Arşiv"}
                   </div>
@@ -632,7 +633,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                   if (template) applyNoteTemplate(template);
                 }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{Object.entries(categoryLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+                  <SelectContent>{categoryOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
@@ -754,7 +755,7 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                     </Button>
                   </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-2">
                     {item.vatRate === 0 && (
                       <div>
                         <Label className="text-xs">KDV İstisna Kodu *</Label>
@@ -765,26 +766,6 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                         />
                       </div>
                     )}
-                    <div>
-                      <Label className="text-xs">Tevkifat Kodu</Label>
-                      <Input
-                        value={item.withholdingCode || ""}
-                        onChange={(event) => handleItemChange(index, "withholdingCode", event.target.value)}
-                        placeholder="İsteğe bağlı GİB kodu"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Tevkifat Oranı (%)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={item.withholdingValue || ""}
-                        onChange={(event) => handleItemChange(index, "withholdingValue", Number(event.target.value) || 0)}
-                        placeholder="Örn. 50"
-                      />
-                    </div>
                   </div>
                 </div>
               ))}

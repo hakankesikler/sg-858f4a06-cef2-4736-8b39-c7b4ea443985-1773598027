@@ -16,11 +16,10 @@ import {
   type InvoiceNoteTemplate,
 } from "@/services/invoicePresentationService";
 
-const categoryLabels: Record<InvoiceCategory, string> = {
+const categoryLabels: Partial<Record<InvoiceCategory, string>> = {
   domestic_transport: "Yurtiçi taşıma",
   international_transport: "Uluslararası taşıma",
   exempt_transport: "KDV istisnalı taşıma",
-  withholding_transport: "Tevkifatlı taşıma",
   other: "Diğer hizmet",
 };
 
@@ -52,7 +51,7 @@ export function InvoiceConfigurationPanel({ canManage }: { canManage: boolean })
         invoicePresentationService.getTemplates(true),
         invoicePresentationService.getBankAccounts(true),
       ]);
-      setTemplates(templateRows);
+      setTemplates(templateRows.filter((row) => row.category !== "withholding_transport"));
       setBanks(bankRows);
     } catch (error: any) {
       toast({ title: "Fatura ayarları yüklenemedi", description: error.message, variant: "destructive" });
@@ -105,7 +104,7 @@ export function InvoiceConfigurationPanel({ canManage }: { canManage: boolean })
           </div>
           {canManage && <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50/40 p-4">
             <div className="flex items-center gap-2 font-semibold"><Plus className="h-4 w-4"/>{templateForm.id ? "Şablonu düzenle" : "Yeni şablon"}</div>
-            <div className="grid gap-3 md:grid-cols-2"><div><Label>Şablon adı *</Label><Input value={templateForm.name} onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}/></div><div><Label>Fatura türü *</Label><Select value={templateForm.category} onValueChange={(value: InvoiceCategory) => setTemplateForm({ ...templateForm, category: value, kolaybi_document_type: value === "exempt_transport" ? "ISTISNA" : value === "withholding_transport" ? "TEVKIFAT" : "SATIS", default_vat_rate: value === "exempt_transport" ? 0 : 20 })}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{Object.entries(categoryLabels).map(([value,label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div></div>
+            <div className="grid gap-3 md:grid-cols-2"><div><Label>Şablon adı *</Label><Input value={templateForm.name} onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}/></div><div><Label>Fatura türü *</Label><Select value={templateForm.category} onValueChange={(value: InvoiceCategory) => setTemplateForm({ ...templateForm, category: value, kolaybi_document_type: value === "exempt_transport" ? "ISTISNA" : "SATIS", default_vat_rate: value === "exempt_transport" ? 0 : 20 })}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{Object.entries(categoryLabels).map(([value,label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div></div>
             <div><Label>Kalem açıklama şablonu *</Label><Textarea rows={2} value={templateForm.line_description_template} onChange={(e) => setTemplateForm({ ...templateForm, line_description_template: e.target.value })}/><p className="mt-1 text-xs text-slate-500">Kullanılabilir alanlar: {"{{shipment_code}}"}, {"{{origin}}"}, {"{{destination}}"}, {"{{tracking_number}}"}, {"{{service_type}}"}, {"{{awb_number}}"}, {"{{express_carrier}}"}, {"{{package_type}}"}</p></div>
             <div><Label>Fatura notları *</Label><Textarea rows={5} value={templateForm.notes} onChange={(e) => setTemplateForm({ ...templateForm, notes: e.target.value })}/></div>
             <div className="grid gap-3 md:grid-cols-3"><div><Label>E-belge tipi</Label><Input value={templateForm.kolaybi_document_type} disabled/></div><div><Label>Varsayılan KDV %</Label><Input type="number" min="0" max="100" value={templateForm.default_vat_rate} onChange={(e) => setTemplateForm({ ...templateForm, default_vat_rate: Number(e.target.value) })}/></div><label className="flex items-end gap-2 pb-2 text-sm"><Switch checked={templateForm.is_default} onCheckedChange={(checked) => setTemplateForm({ ...templateForm, is_default: checked })}/>Bu türün varsayılanı</label></div>

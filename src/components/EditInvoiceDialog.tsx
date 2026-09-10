@@ -88,7 +88,12 @@ export function EditInvoiceDialog({
           return;
         }
 
-        const loadedItems = (itemsResult.data || []) as InvoiceItemForm[];
+        const loadedItems = ((itemsResult.data || []) as InvoiceItemForm[]).map((item) => ({
+          ...item,
+          withholding_code: null,
+          withholding_value: null,
+          withholding_type: null,
+        }));
         const hasPositiveInvoiceAmount = loadedItems.some((item) => Number(item.unit_price) > 0 || Number(item.total) > 0);
         const shipmentAmount = (shipmentsResult.data || []).reduce((sum, shipment) => {
           const recordedSalesAmount = Number(shipment.satis_tutar || 0);
@@ -232,9 +237,9 @@ export function EditInvoiceDialog({
           unitPrice: item.unit_price || 0,
           vatRate: item.tax_rate || 0,
           kolaybiProductId: item.kolaybi_product_id || null,
-          withholdingCode: item.withholding_code || null,
-          withholdingValue: item.withholding_value || null,
-          withholdingType: item.withholding_type || null,
+          withholdingCode: null,
+          withholdingValue: null,
+          withholdingType: null,
           exemptionCode: item.exemption_code || null,
         })),
       } as any);

@@ -3,6 +3,14 @@ import type { InvoiceCategory } from "@/services/invoicePresentationService";
 
 export type InvoiceDocumentType = "e_invoice" | "e_archive";
 
+export type ResolvedCustomerEDocumentProfile = {
+  documentType: InvoiceDocumentType;
+  documentScenario: "EARSIVFATURA" | "TEMELFATURA" | "TICARIFATURA" | "KAMU";
+  source: string;
+  environment: "test" | "live";
+  evidenceAt: string;
+};
+
 export type SecureInvoiceInput = {
   customerId: string;
   shipmentIds: string[];
@@ -53,8 +61,27 @@ async function responseJson(response: Response) {
   return result;
 }
 
+async function resolveCustomerEDocumentProfile(customerId: string): Promise<ResolvedCustomerEDocumentProfile> {
+  const response = await authenticatedFetch(`/api/kolaybi/customers/${customerId}/e-document-profile`, {
+    method: "POST",
+  });
+  const result = await responseJson(response);
+  return {
+    documentType: result.profile.documentType,
+    documentScenario: result.profile.scenario,
+    source: result.profile.source,
+    environment: result.profile.environment,
+    evidenceAt: result.profile.evidenceAt,
+  };
+}
+
 export const invoiceIntegrationService = {
+  resolveCustomerEDocumentProfile,
+
   async createDraft(input: SecureInvoiceInput) {
+    // Çalışan belge türünü seçmez. Her satış taslağı, KolayBi'de doğrulanmış
+    // güncel cari profiliyle oluşturulur; böylece E-Fatura/E-Arşiv tahmini yapılmaz.
+    const profile = await resolveCustomerEDocumentProfile(input.customerId);
     const { data, error } = await supabase.rpc("rex_create_sales_invoice_secure_v2" as any, {
       p_customer_id: input.customerId,
       p_shipment_ids: input.shipmentIds,
@@ -64,8 +91,8 @@ export const invoiceIntegrationService = {
       p_payment_status: input.paymentStatus,
       p_notes: input.notes,
       p_items: input.items,
-      p_document_type: input.documentType,
-      p_document_scenario: input.documentScenario,
+      p_document_type: profile.documentType,
+      p_document_scenario: profile.documentScenario,
       p_exchange_rate: input.exchangeRate,
       p_idempotency_key: input.idempotencyKey,
       p_invoice_category: input.invoiceCategory || "domestic_transport",

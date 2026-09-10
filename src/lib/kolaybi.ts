@@ -182,9 +182,6 @@ function validateInvoice(invoice: any, config: KolayBiConfig) {
     if (vatRate === 0 && !item.exemption_code) {
       throw new KolayBiError("Sıfır KDV oranlı kalemde istisna kodu zorunludur.", false);
     }
-    if (Boolean(item.withholding_code) !== Boolean(item.withholding_value)) {
-      throw new KolayBiError("Tevkifat kodu ve oranı birlikte girilmelidir.", false);
-    }
   }
 }
 
@@ -234,14 +231,6 @@ function invoiceForm(
     form.set(`items[${index}][unit_price]`, String(item.unit_price));
     form.set(`items[${index}][vat_rate]`, String(item.tax_rate || 0));
     form.set(`items[${index}][description]`, item.description || "Taşıma hizmeti");
-    if (item.withholding_code) {
-      form.set(`items[${index}][withholding_code]`, String(item.withholding_code));
-      form.set(`items[${index}][withholding_value]`, String(item.withholding_value));
-      form.set(
-        `items[${index}][withholding_type]`,
-        String(item.withholding_type || "PERCENTAGE"),
-      );
-    }
     if (item.exemption_code) {
       form.set(`items[${index}][exemption_code]`, String(item.exemption_code));
     }
