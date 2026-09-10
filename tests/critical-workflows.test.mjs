@@ -1769,3 +1769,45 @@ test("security-definer RPCs use a reviewed access matrix and server-only KolayBi
   assert.match(statusEndpoint, /SUPABASE_SECRET_KEY \|\| process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(statusEndpoint, /processKolayBiJob\(db, invoiceId, \{[\s\S]*admin/);
 });
+
+test("hot RLS paths and operational foreign keys are performance hardened", async () => {
+  const sql = await read("supabase/migrations/20260910110000_optimize_hot_rls_and_indexes.sql");
+
+  for (const table of [
+    "transactions",
+    "account_transactions",
+    "incoming_purchase_invoices",
+    "customers",
+    "sales_invoices",
+    "shipments",
+  ]) {
+    assert.match(sql, new RegExp(`DROP POLICY IF EXISTS rex_permission_write ON public\\.${table}`));
+  }
+
+  assert.match(sql, /user_id = \(SELECT auth\.uid\(\)\)/);
+  assert.match(sql, /recipient_id = \(SELECT auth\.uid\(\)\)/);
+  assert.match(sql, /\(SELECT auth\.jwt\(\)\) ->> 'email'/);
+  assert.match(sql, /CREATE POLICY rex_customers_no_direct_delete[\s\S]*FOR DELETE TO authenticated[\s\S]*USING \(false\)/);
+  assert.match(sql, /CREATE POLICY rex_permission_update ON public\.shipments[\s\S]*operations\.shipments[\s\S]*status <> ALL/);
+
+  for (const index of [
+    "customers_active_created_idx",
+    "transactions_transaction_date_idx",
+    "transactions_account_date_idx",
+    "transactions_related_invoice_id_idx",
+    "transactions_related_purchase_id_idx",
+    "incoming_purchase_invoices_payment_date_idx",
+    "incoming_purchase_invoices_operational_supplier_idx",
+    "incoming_purchase_invoices_legacy_purchase_idx",
+    "shipments_created_at_idx",
+    "shipments_customer_created_idx",
+    "shipments_supplier_pickup_idx",
+    "shipments_driver_id_idx",
+    "shipments_vehicle_id_idx",
+  ]) {
+    assert.match(sql, new RegExp(index));
+  }
+
+  assert.match(sql, /duplicate permissive hot-table paths remain/);
+  assert.match(sql, /a protected business table permits direct DELETE/);
+});
