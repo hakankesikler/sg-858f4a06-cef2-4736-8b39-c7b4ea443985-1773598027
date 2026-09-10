@@ -18,15 +18,12 @@ export interface PublicTrackingResult {
   pickup_date?: string | null;
   estimated_delivery_date?: string | null;
   delivery_date?: string | null;
-  delivered_to?: string | null;
-  delivery_proof_url?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   service_mode?: "road" | "international_express";
   booking_provider?: string | null;
   express_carrier?: string | null;
   awb_number?: string | null;
-  provider_reference?: string | null;
   package_type?: "document" | "package" | null;
   origin_country_code?: string | null;
   destination_country_code?: string | null;

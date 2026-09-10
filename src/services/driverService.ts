@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { uploadPrivateDocument } from "@/lib/private-storage";
+import { deletePrivateDocument, uploadPrivateDocument } from "@/lib/private-storage";
 
 export interface Driver {
   id?: string;
@@ -137,6 +137,11 @@ export const driverService = {
     const id = existingId || crypto.randomUUID();
     const documentUrl = file ? await this.uploadEhliyetFile(file, id) : driver.ehliyet_dosyasi_url;
     const payload = { ...driver, id, ehliyet_dosyasi_url: documentUrl };
-    return existingId ? this.updateDriver(id, payload) : this.createDriver(payload);
+    try {
+      return existingId ? await this.updateDriver(id, payload) : await this.createDriver(payload);
+    } catch (error) {
+      if (file && documentUrl) await deletePrivateDocument(documentUrl, "driver-documents").catch(() => undefined);
+      throw error;
+    }
   }
 };

@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 type StorageLocation = { backend: "supabase" | "r2"; bucket: string; path: string };
+const pendingR2UploadTokens = new Map<string, string>();
 
 function parseStorageReference(reference: string, fallbackBucket?: string): StorageLocation | null {
   if (reference.startsWith("r2://")) {
@@ -54,7 +55,7 @@ async function r2Request(payload: Record<string, unknown>) {
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result?.error || "R2 işlemi tamamlanamadı.");
-  return result as { url?: string; deleted?: boolean };
+  return result as { url?: string; path?: string; uploadToken?: string; deleted?: boolean; verified?: boolean };
 }
 
 export async function uploadPrivateDocument(bucket: string, path: string, file: File) {
@@ -73,17 +74,39 @@ export async function uploadPrivateDocument(bucket: string, path: string, file: 
     contentType: file.type,
     contentLength: file.size,
   });
-  if (!signed.url) throw new Error("R2 yükleme bağlantısı oluşturulamadı.");
+  if (!signed.url || !signed.path || !signed.uploadToken) throw new Error("R2 yükleme bağlantısı oluşturulamadı.");
   const upload = await fetch(signed.url, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
   if (!upload.ok) throw new Error(`R2 yüklemesi başarısız (${upload.status}).`);
-  return r2Reference(bucket, path);
+  try {
+    const verified = await r2Request({
+      operation: "verify-upload",
+      namespace: bucket,
+      path: signed.path,
+      uploadToken: signed.uploadToken,
+    });
+    if (!verified.verified) throw new Error("R2 yüklemesi doğrulanamadı.");
+  } catch (error) {
+    await r2Request({
+      operation: "cleanup-upload",
+      namespace: bucket,
+      path: signed.path,
+      uploadToken: signed.uploadToken,
+    }).catch(() => undefined);
+    throw error;
+  }
+  const reference = r2Reference(bucket, signed.path);
+  pendingR2UploadTokens.set(reference, signed.uploadToken);
+  return reference;
 }
 
 export async function deletePrivateDocument(reference: string, fallbackBucket?: string) {
   const parsed = parseStorageReference(reference, fallbackBucket);
   if (!parsed) return;
   if (parsed.backend === "r2") {
-    await r2Request({ operation: "delete", namespace: parsed.bucket, path: parsed.path });
+    const uploadToken = pendingR2UploadTokens.get(reference);
+    if (!uploadToken) return;
+    await r2Request({ operation: "cleanup-upload", namespace: parsed.bucket, path: parsed.path, uploadToken });
+    pendingR2UploadTokens.delete(reference);
     return;
   }
   const { error } = await supabase.storage.from(parsed.bucket).remove([parsed.path]);

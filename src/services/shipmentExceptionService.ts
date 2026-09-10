@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { uploadPrivateDocument } from "@/lib/private-storage";
+import { deletePrivateDocument, uploadPrivateDocument } from "@/lib/private-storage";
 
 export type ShipmentExceptionType =
   | "gecikme"
@@ -52,10 +52,15 @@ export const shipmentExceptionService = {
 
   async uploadPhotos(shipmentId: string, files: File[]): Promise<string[]> {
     const references: string[] = [];
-    for (const file of files) {
-      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `exceptions/${shipmentId}/${crypto.randomUUID()}.${extension}`;
-      references.push(await uploadPrivateDocument("shipment-exception-documents", path, file));
+    try {
+      for (const file of files) {
+        const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const path = `exceptions/${shipmentId}/${crypto.randomUUID()}.${extension}`;
+        references.push(await uploadPrivateDocument("shipment-exception-documents", path, file));
+      }
+    } catch (error) {
+      await Promise.all(references.map((reference) => deletePrivateDocument(reference, "shipment-exception-documents").catch(() => undefined)));
+      throw error;
     }
     return references;
   },
@@ -76,7 +81,10 @@ export const shipmentExceptionService = {
       p_responsible_user_id: input.responsibleUserId,
       p_occurred_at: input.occurredAt,
     } as any);
-    if (error) throw error;
+    if (error) {
+      await Promise.all(input.photoUrls.map((reference) => deletePrivateDocument(reference, "shipment-exception-documents").catch(() => undefined)));
+      throw error;
+    }
     return data as unknown as string;
   },
 

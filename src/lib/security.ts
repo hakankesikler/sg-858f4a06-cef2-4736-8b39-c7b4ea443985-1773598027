@@ -1,9 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { AppRole } from "@/lib/access-control";
 
-export const STAFF_IDLE_TIMEOUT_MS = 150 * 60 * 1000;
+export const STAFF_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 export const STAFF_MAX_SESSION_MS = 8 * 60 * 60 * 1000;
-export const MIN_PASSWORD_LENGTH = 6;
+export const MIN_PASSWORD_LENGTH = 12;
 export const STAFF_SESSION_STARTED_KEY = "rex_staff_session_started_at";
 export const STAFF_LAST_ACTIVITY_KEY = "rex_staff_last_activity_at";
 
@@ -17,7 +17,7 @@ export type SecurityEventType =
   | "session_timeout";
 
 export function roleRequiresMfa(role: AppRole) {
-  return role === "admin" || role === "accounting";
+  return ["admin", "sales", "operations", "accounting", "hr", "viewer", "demo"].includes(role);
 }
 
 export function passwordPolicyError(password: string) {
@@ -25,6 +25,7 @@ export function passwordPolicyError(password: string) {
   if (!/[a-zçğıöşü]/.test(password)) return "Şifre en az bir küçük harf içermelidir.";
   if (!/[A-ZÇĞİÖŞÜ]/.test(password)) return "Şifre en az bir büyük harf içermelidir.";
   if (!/\d/.test(password)) return "Şifre en az bir rakam içermelidir.";
+  if (!/[^\p{L}\p{N}]/u.test(password)) return "Şifre en az bir özel karakter içermelidir.";
   return null;
 }
 

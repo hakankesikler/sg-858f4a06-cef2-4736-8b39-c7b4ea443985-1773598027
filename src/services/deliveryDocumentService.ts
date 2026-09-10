@@ -112,7 +112,7 @@ export const deliveryDocumentService = {
     } as any);
 
     if (error || !data) {
-      await deletePrivateDocument(reference, "shipment-documents");
+      await deletePrivateDocument(reference, "shipment-documents").catch(() => undefined);
       throw error || new Error("Teslim evrakı kaydedilemedi.");
     }
 

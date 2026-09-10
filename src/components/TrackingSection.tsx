@@ -2,9 +2,8 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Copy, ExternalLink, FileCheck2, Loader2, MapPin, Package, Search, Truck } from "lucide-react";
+import { CheckCircle, Copy, ExternalLink, Loader2, MapPin, Package, Search, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getPrivateDocumentSignedUrl } from "@/lib/private-storage";
 import { publicTrackingService, type PublicTrackingResult } from "@/services/publicTrackingService";
 
 interface TrackingSectionProps {
@@ -64,8 +63,6 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState("");
-  const [documentError, setDocumentError] = useState("");
-  const [documentLoading, setDocumentLoading] = useState(false);
   const { toast } = useToast();
 
   const lookup = useCallback(async (number: string, silent = false) => {
@@ -139,20 +136,6 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
     toast({ title: "Bağlantı kopyalandı", description: "Takip bağlantısını müşterinizle paylaşabilirsiniz." });
   };
 
-  const openDeliveryProof = async () => {
-    if (!result?.delivery_proof_url) return;
-    setDocumentLoading(true);
-    setDocumentError("");
-    try {
-      const signedUrl = await getPrivateDocumentSignedUrl(result.delivery_proof_url, "shipment-documents");
-      window.location.assign(signedUrl);
-    } catch (documentError: any) {
-      setDocumentError("Bu eski teslim evrakının fiziksel dosyası bulunamadı. REX Lojistik ile iletişime geçebilirsiniz.");
-    } finally {
-      setDocumentLoading(false);
-    }
-  };
-
   const currentRank = result?.service_mode === "international_express"
     ? expressStatusRank(result.carrier_status || result.status)
     : statusRank(result?.status);
@@ -201,7 +184,6 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
                         <div className="mt-3 space-y-1 text-sm text-slate-600">
                           <p><span className="font-semibold">Taşıyıcı:</span> {result.express_carrier || "Atama bekliyor"}</p>
                           {result.awb_number && <p><span className="font-semibold">AWB:</span> <span className="font-mono">{result.awb_number}</span></p>}
-                          {result.provider_reference && <p><span className="font-semibold">QuickShipper Gönderi No:</span> <span className="font-mono">{result.provider_reference}</span></p>}
                         </div>
                       )}
                     </div>
@@ -266,17 +248,10 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
                         <div>
                           <p className="font-semibold text-green-900">Teslimat tamamlandı</p>
                           <p className="mt-1 text-sm text-green-800">
-                            Teslim tarihi: {formatDate(result.delivery_date)}{result.delivered_to ? ` · Teslim alan: ${result.delivered_to}` : ""}
+                            Teslim tarihi: {formatDate(result.delivery_date)}
                           </p>
                         </div>
-                        {result.delivery_proof_url && (
-                          <Button type="button" onClick={() => void openDeliveryProof()} className="bg-green-700 hover:bg-green-800" disabled={documentLoading}>
-                            {documentLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileCheck2 className="mr-2 h-4 w-4" />}
-                            Teslim Evrakını Görüntüle
-                          </Button>
-                        )}
                       </div>
-                      {documentError && <p className="mt-3 text-sm text-red-700">{documentError}</p>}
                     </div>
                   )}
 

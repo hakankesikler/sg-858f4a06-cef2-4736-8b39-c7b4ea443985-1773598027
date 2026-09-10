@@ -205,7 +205,7 @@ export const purchaseInvoiceService = {
       p_operational_supplier_id: input.operationalSupplierId || null,
     });
     if (error) {
-      await deletePrivateDocument(reference, "purchase-invoice-documents");
+      await deletePrivateDocument(reference, "purchase-invoice-documents").catch(() => undefined);
       throw error;
     }
     return data as string;

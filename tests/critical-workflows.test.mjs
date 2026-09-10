@@ -228,6 +228,24 @@ test("public tracking shows only server-masked sender and receiver hints", async
   assert.match(tracking, /result\.receiver_masked/);
 });
 
+test("public tracking never exposes delivery evidence, recipient identity or provider internals", async () => {
+  const [sql, api, service, tracking] = await Promise.all([
+    read("supabase/migrations/20260910143000_harden_public_tracking_privacy.sql"),
+    read("src/pages/api/tracking/express.ts"),
+    read("src/services/publicTrackingService.ts"),
+    read("src/components/TrackingSection.tsx"),
+  ]);
+  const publicFunction = sql.slice(sql.indexOf("CREATE OR REPLACE FUNCTION public.rex_public_track_shipment"));
+  assert.doesNotMatch(publicFunction, /'delivered_to'|'delivery_proof_url'|'provider_reference'/);
+  assert.match(sql, /DROP POLICY IF EXISTS rex_public_delivered_proof_select/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.rex_is_delivered_proof_object\(text\) FROM PUBLIC,anon,authenticated/);
+  assert.match(api, /delete shipment\.delivered_to/);
+  assert.match(api, /delete shipment\.delivery_proof_url/);
+  assert.match(api, /delete shipment\.provider_reference/);
+  assert.doesNotMatch(service, /delivery_proof_url|delivered_to|provider_reference/);
+  assert.doesNotMatch(tracking, /openDeliveryProof|Teslim Evrakını Görüntüle|result\.provider_reference/);
+});
+
 test("customer portal remains company-scoped and does not expose internal costs", async () => {
   const sql = await read("supabase/migrations/20260818224500_customer_portal.sql");
   const start = sql.indexOf("CREATE OR REPLACE FUNCTION public.rex_customer_portal_shipments");
@@ -720,14 +738,25 @@ test("delivery file antivirus scanning is server-side, quarantined and fail-visi
   assert.match(service, /crypto\.subtle\.digest\("SHA-256"/);
 });
 
-test("private documents can move to bucket-scoped Cloudflare R2 without breaking legacy Supabase references", async () => {
-  const [storage, r2, api, scan, env, nextConfig] = await Promise.all([
+test("production traffic cannot bypass Cloudflare through the Vercel hostname", async () => {
+  const proxy = await read("src/proxy.ts");
+  assert.match(proxy, /VERCEL_ENV\s*!==\s*["']production["']/);
+  assert.match(proxy, /rexlojistik\.com/);
+  assert.match(proxy, /www\.rexlojistik\.com/);
+  assert.match(proxy, /x-forwarded-host/);
+  assert.match(proxy, /status:\s*404/);
+  assert.match(proxy, /Cache-Control["']?:\s*["']no-store/);
+});
+
+test("private documents use permission-scoped and verified Cloudflare R2 uploads without breaking legacy references", async () => {
+  const [storage, r2, api, scan, env, nextConfig, migration] = await Promise.all([
     read("src/lib/private-storage.ts"),
     read("src/lib/r2-server.ts"),
     read("src/pages/api/storage/signed-url.ts"),
     read("src/pages/api/security/scan-delivery-document.ts"),
     read(".env.example"),
     read("next.config.mjs"),
+    read("supabase/migrations/20260910144000_allow_verified_r2_document_references.sql"),
   ]);
   assert.match(storage, /NEXT_PUBLIC_PRIVATE_STORAGE_BACKEND === "r2"/);
   assert.match(storage, /r2:\/\//);
@@ -736,9 +765,21 @@ test("private documents can move to bucket-scoped Cloudflare R2 without breaking
   assert.match(r2, /R2_ACCESS_KEY_ID/);
   assert.match(r2, /R2_SECRET_ACCESS_KEY/);
   assert.match(r2, /expiresIn: 300/);
-  assert.match(api, /rex_has_role/);
-  assert.match(api, /rolesByNamespace/);
+  assert.match(api, /rex_has_permission/);
+  assert.match(api, /permissionByNamespace/);
   assert.match(api, /mimeTypesByNamespace/);
+  assert.match(api, /generatedUploadPath/);
+  assert.match(api, /verify-upload/);
+  assert.match(api, /cleanup-upload/);
+  assert.match(api, /isObjectReferenced/);
+  assert.doesNotMatch(api, /operation === "delete"/);
+  assert.match(r2, /ContentLength: contentLength/);
+  assert.match(r2, /HeadObjectCommand/);
+  assert.match(r2, /ResponseContentDisposition: "attachment"/);
+  assert.match(storage, /pendingR2UploadTokens/);
+  assert.match(storage, /operation: "verify-upload"/);
+  assert.match(migration, /r2:\/\/shipment-documents\/delivery-documents/);
+  assert.match(migration, /r2:\/\/shipment-exception-documents\/exceptions/);
   assert.match(scan, /downloadR2Object/);
   assert.match(env, /NEXT_PUBLIC_PRIVATE_STORAGE_BACKEND=supabase/);
   assert.doesNotMatch(env, /NEXT_PUBLIC_R2_(?:ACCESS|SECRET)/);
@@ -825,9 +866,10 @@ test("staff permissions support audited per-person cross-department view and man
   assert.match(portal, /hasPermission\(permissions, "crm\.customers", "manage"\)/);
 });
 
-test("staff security requires MFA for privileged roles and records immutable security events", async () => {
-  const [sql, login, mfa, settings, session, securityLib, api, config] = await Promise.all([
+test("staff security requires MFA for every staff role and records immutable security events", async () => {
+  const [sql, allStaffSql, login, mfa, settings, session, securityLib, api, config] = await Promise.all([
     read("supabase/migrations/20260825090000_staff_security_controls.sql"),
+    read("supabase/migrations/20260910145000_require_mfa_for_all_staff.sql"),
     read("src/pages/login.tsx"),
     read("src/pages/personel/mfa.tsx"),
     read("src/components/settings/SecuritySettings.tsx"),
@@ -837,6 +879,8 @@ test("staff security requires MFA for privileged roles and records immutable sec
     read("next.config.mjs"),
   ]);
   assert.match(sql, /p_role IN \('admin', 'accounting'\)/);
+  assert.match(allStaffSql, /p_role IN \('admin','sales','operations','accounting','hr','viewer','demo'\)/);
+  assert.match(allStaffSql, /auth\.jwt\(\) ->> 'aal'[\s\S]*<> 'aal2'/);
   assert.match(sql, /auth\.jwt\(\) ->> 'aal'[^\n]*'aal2'/);
   assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.staff_security_events/);
   assert.match(sql, /CREATE TRIGGER rex_staff_security_events_append_only/);
@@ -848,10 +892,10 @@ test("staff security requires MFA for privileged roles and records immutable sec
   assert.match(mfa, /mfa\.verify/);
   assert.match(settings, /Diğer Tüm Cihazlardan Çıkış Yap/);
   assert.match(settings, /Güvenlik Hareketleri/);
-  assert.match(settings, /2 saat 30 dakika/);
+  assert.match(settings, /30 dakika/);
   assert.match(session, /STAFF_IDLE_TIMEOUT_MS/);
   assert.match(session, /STAFF_MAX_SESSION_MS/);
-  assert.match(securityLib, /STAFF_IDLE_TIMEOUT_MS = 150 \* 60 \* 1000/);
+  assert.match(securityLib, /STAFF_IDLE_TIMEOUT_MS = 30 \* 60 \* 1000/);
   assert.match(securityLib, /STAFF_MAX_SESSION_MS = 8 \* 60 \* 60 \* 1000/);
   assert.match(api, /tokenAssuranceLevel\(token\) !== "aal2"/);
   assert.match(config, /Content-Security-Policy/);
@@ -1147,7 +1191,10 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
   assert.match(recoveryGate, /token_hash/);
   assert.match(recoveryGate, /type=recovery/);
   assert.doesNotMatch(recoveryGate, /supabase\.auth/);
-  assert.match(security, /MIN_PASSWORD_LENGTH = 6/);
+  assert.match(security, /MIN_PASSWORD_LENGTH = 12/);
+  assert.match(security, /STAFF_IDLE_TIMEOUT_MS = 30 \* 60 \* 1000/);
+  assert.match(security, /\["admin", "sales", "operations", "accounting", "hr", "viewer", "demo"\]\.includes\(role\)/);
+  assert.match(security, /en az bir özel karakter/);
 });
 
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
@@ -1415,7 +1462,7 @@ test("international express cargo supports QuickShipper AWB tracking and mandato
   assert.match(form, /formData\.service_mode === "road"/);
   assert.match(tracking, /REX takip numarası veya FedEx, UPS, DHL ve Aramex AWB/);
   assert.match(tracking, /Taşıyıcıda Canlı Takip/);
-  assert.match(tracking, /QuickShipper Gönderi No/);
+  assert.doesNotMatch(tracking, /QuickShipper Gönderi No/);
   assert.match(publicService, /\^\[A-Z0-9-\]\{6,40\}\$/);
   assert.match(publicService, /\/api\/tracking\/express/);
   assert.match(api, /QUICKSHIPPER_TRACKING_API_URL/);

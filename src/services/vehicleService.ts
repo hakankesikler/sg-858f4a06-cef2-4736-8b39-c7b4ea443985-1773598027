@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { uploadPrivateDocument } from "@/lib/private-storage";
+import { deletePrivateDocument, uploadPrivateDocument } from "@/lib/private-storage";
 
 export interface Vehicle {
   id?: string;
@@ -137,6 +137,11 @@ export const vehicleService = {
     const id = existingId || crypto.randomUUID();
     const documentUrl = file ? await this.uploadRuhsatFile(file, id) : vehicle.ruhsat_dosyasi_url;
     const payload = { ...vehicle, id, ruhsat_dosyasi_url: documentUrl };
-    return existingId ? this.updateVehicle(id, payload) : this.createVehicle(payload);
+    try {
+      return existingId ? await this.updateVehicle(id, payload) : await this.createVehicle(payload);
+    } catch (error) {
+      if (file && documentUrl) await deletePrivateDocument(documentUrl, "vehicle-documents").catch(() => undefined);
+      throw error;
+    }
   }
 };

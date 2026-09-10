@@ -1,6 +1,7 @@
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -61,7 +62,12 @@ function objectKey(namespace: R2Namespace, path: string) {
   return `${namespace}/${safeR2Path(path)}`;
 }
 
-export async function createR2UploadUrl(namespace: R2Namespace, path: string, contentType: string) {
+export async function createR2UploadUrl(
+  namespace: R2Namespace,
+  path: string,
+  contentType: string,
+  contentLength: number,
+) {
   const value = config();
   return getSignedUrl(
     client(),
@@ -69,6 +75,7 @@ export async function createR2UploadUrl(namespace: R2Namespace, path: string, co
       Bucket: value.bucket,
       Key: objectKey(namespace, path),
       ContentType: contentType,
+      ContentLength: contentLength,
     }),
     { expiresIn: 300 },
   );
@@ -78,9 +85,22 @@ export async function createR2DownloadUrl(namespace: R2Namespace, path: string) 
   const value = config();
   return getSignedUrl(
     client(),
-    new GetObjectCommand({ Bucket: value.bucket, Key: objectKey(namespace, path) }),
+    new GetObjectCommand({
+      Bucket: value.bucket,
+      Key: objectKey(namespace, path),
+      ResponseContentDisposition: "attachment",
+    }),
     { expiresIn: 300 },
   );
+}
+
+export async function inspectR2Object(namespace: R2Namespace, path: string) {
+  const value = config();
+  const result = await client().send(new HeadObjectCommand({ Bucket: value.bucket, Key: objectKey(namespace, path) }));
+  return {
+    contentLength: result.ContentLength,
+    contentType: result.ContentType,
+  };
 }
 
 export async function deleteR2Object(namespace: R2Namespace, path: string) {

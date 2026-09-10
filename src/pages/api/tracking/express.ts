@@ -106,6 +106,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
+  delete shipment.delivered_to;
+  delete shipment.delivery_proof_url;
+  delete shipment.provider_reference;
+
   res.setHeader("Cache-Control", "private, no-store");
   return res.status(200).json(shipment);
 }
