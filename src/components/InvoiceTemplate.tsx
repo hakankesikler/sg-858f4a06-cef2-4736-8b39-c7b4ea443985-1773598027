@@ -74,242 +74,232 @@ const formatCurrency = (amount: number, currency: string) => `${new Intl.NumberF
   maximumFractionDigits: 2,
 }).format(amount)} ${currency}`;
 
-const safeDate = (value?: string, includeTime = false) => {
+const safeDate = (value?: string) => {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("tr-TR", includeTime
-    ? { dateStyle: "short", timeStyle: "medium" }
-    : { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
 };
+
+const optionalParts = (parts: Array<string | undefined>) => parts.filter(Boolean).join(" · ");
+
+function PartyCard({ title, name, children }: { title: string; name: string; children: React.ReactNode }) {
+  return (
+    <section className="invoice-xslt-party-card">
+      <div className="invoice-xslt-kicker">{title}</div>
+      <div className="invoice-xslt-party-name">{name}</div>
+      <div className="invoice-xslt-party-lines">{children}</div>
+    </section>
+  );
+}
 
 export function InvoiceTemplate({ data }: InvoiceTemplateProps) {
   const documentLabel = data.documentKind === "e_archive" ? "e-Arşiv Fatura" : "e-Fatura";
   const vatBreakdown = Array.from(data.items.reduce((rates, item) => {
     const current = rates.get(item.vatRate) || { base: 0, amount: 0 };
-    rates.set(item.vatRate, {
-      base: current.base + item.subtotal,
-      amount: current.amount + item.vatAmount,
-    });
+    rates.set(item.vatRate, { base: current.base + item.subtotal, amount: current.amount + item.vatAmount });
     return rates;
   }, new Map<number, { base: number; amount: number }>()).entries()).sort(([a], [b]) => a - b);
   const customerLocation = [data.customerDistrict, data.customerCity].filter(Boolean).join(" / ");
+  const hasPaymentDetails = Boolean(data.paymentMethod || data.dueDate || data.bankAccounts.length);
 
   return (
     <>
-      <article
-        id="invoice-template"
-        className="invoice-print-page mx-auto min-w-[720px] max-w-[210mm] bg-white p-5 text-[10px] leading-[1.35] text-slate-800 shadow-sm sm:p-8"
-      >
+      <article id="invoice-template" className="invoice-xslt-page">
         {!data.isOfficial ? (
-          <div className="invoice-draft-banner mb-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-center text-[9px] font-bold tracking-wide text-amber-900">
-            REX TYS TASLAK ÖNİZLEME · RESMÎ E-BELGE DEĞİLDİR
-          </div>
+          <div className="invoice-xslt-draft-banner">REX TYS TASLAK ÖNİZLEME · RESMÎ E-BELGE DEĞİLDİR</div>
         ) : null}
-        <div className="mb-4 h-1 rounded-full bg-[linear-gradient(90deg,#f37021_0_34%,#173763_34%_100%)]" />
+        <div className="invoice-xslt-brand-line" />
 
-        <header className="grid grid-cols-[1.35fr_.7fr_.7fr] items-start gap-4 border-b-2 border-slate-300 pb-4">
-          <section>
-            <h1 className="text-[12px] font-bold leading-snug text-[#14213d]">
-              REX LOJİSTİK TAŞIMACILIK DEPOLAMA<br />DANIŞMANLIK LİMİTED ŞİRKETİ
-            </h1>
-            <div className="mt-2 space-y-0.5 text-[9px] text-slate-600">
-              <p>Folkart Towers A Kule No:47/B K:26 D:2601</p>
-              <p>Adalet Mahallesi Manas Bulvarı 35530 Bayraklı / İzmir</p>
-              <p>Tel: +90 (543) 401 07 55 · www.rexlojistik.com</p>
-              <p>e-Posta: info@rexlojistik.com</p>
-              <p><strong>Vergi Dairesi:</strong> Karşıyaka · <strong>VKN:</strong> 7342549288</p>
-              <p><strong>MERSİS No:</strong> 0734259288000001</p>
-            </div>
-          </section>
-
-          <section className="flex flex-col items-center text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-600 text-lg font-extrabold text-red-600">GİB</div>
-            <p className="mt-1 text-[12px] font-extrabold text-[#173763]">{documentLabel}</p>
-            <p className="mt-0.5 font-semibold text-[#f37021]">{data.invoiceType}</p>
-            <div className="mt-2 w-full border border-slate-500 px-2 py-1.5 text-[7px] leading-tight text-slate-600">
-              REX LOJİSTİK<br />ELEKTRONİK BELGE
-            </div>
-          </section>
-
-          <section className="flex flex-col items-end">
+        <header className="invoice-xslt-header">
+          <Image src="/rex-logo-full.jpg" alt="REX Lojistik" width={475} height={259} priority className="invoice-xslt-rex-logo" />
+          <div className="invoice-xslt-gib-block">
+            <div className="invoice-xslt-gib-logo">GİB</div>
+            <div className="invoice-xslt-doc-type">{documentLabel}</div>
+            <div className="invoice-xslt-doc-subtype">{data.invoiceType}</div>
+          </div>
+          <div className="invoice-xslt-qr-box">
             {data.qrImage ? (
-              <Image src={data.qrImage} alt="Fatura karekodu" width={104} height={104} unoptimized className="h-[104px] w-[104px] object-contain" />
+              <Image src={data.qrImage} alt="Fatura karekodu" width={76} height={76} unoptimized className="invoice-xslt-qr" />
             ) : (
-              <div className="flex h-[104px] w-[104px] flex-col items-center justify-center border border-dashed border-slate-400 p-2 text-center text-[7px] text-slate-500">
-                <strong className="text-[9px] text-slate-700">GİB KAREKOD</strong>
-                <span className="mt-1 break-all">{data.ettn || (data.isOfficial ? "Karekod resmî e-belge PDF’sindedir." : "Resmîleştirme sonrasında e-belgede oluşur.")}</span>
+              <div className="invoice-xslt-qr invoice-xslt-qr-fallback">
+                {data.ettn || (data.isOfficial ? "Karekod resmî e-belgededir." : "Resmîleştirme sonrasında e-belgede oluşur.")}
               </div>
             )}
-            <Image src="/rex-logo-circle.png" alt="REX Lojistik" width={112} height={112} className="mt-2 h-20 w-20 rounded-full object-contain" />
-          </section>
+            <div className="invoice-xslt-qr-caption">GİB KAREKOD</div>
+          </div>
         </header>
 
-        <section className="mt-4 grid grid-cols-[1.15fr_.85fr] gap-5">
-          <div>
-            <p className="font-bold text-[#173763]">SAYIN</p>
-            <p className="mt-1 text-[12px] font-bold uppercase text-slate-900">{data.customerName}</p>
-            <div className="mt-2 space-y-0.5 text-[9px] text-slate-600">
-              {data.customerAddress ? <p>{data.customerAddress}</p> : null}
-              {customerLocation ? <p>{customerLocation}</p> : null}
-              {data.customerPhone ? <p>Tel: {data.customerPhone}</p> : null}
-              {data.customerWebsite ? <p>Web: {data.customerWebsite}</p> : null}
-              {data.customerEmail ? <p>e-Posta: {data.customerEmail}</p> : null}
-              {data.customerTaxOffice ? <p>Vergi Dairesi: {data.customerTaxOffice}</p> : null}
-              {data.customerTaxNumber ? <p>{data.customerTaxLabel || "VKN/TCKN"}: {data.customerTaxNumber}</p> : null}
-              <p className="mt-2 break-all"><strong>ETTN:</strong> {data.ettn || "Belge henüz resmîleştirilmedi"}</p>
+        <section className="invoice-xslt-meta">
+          {[
+            ["Fatura No", data.invoiceNo],
+            ["Düzenleme Tarihi", safeDate(data.invoiceDate)],
+            ["Senaryo", data.scenario],
+            ["Para Birimi", data.currency],
+            ["ETTN", data.ettn || "Resmîleştirme sonrasında oluşur"],
+            ["Son Ödeme", safeDate(data.dueDate)],
+            ["Özelleştirme", data.customizationNo],
+            ["Belge Tipi", data.invoiceType],
+          ].map(([label, value]) => (
+            <div key={label} className="invoice-xslt-meta-item">
+              <div className="invoice-xslt-meta-label">{label}</div>
+              <div className="invoice-xslt-meta-value">{value}</div>
             </div>
-          </div>
-
-          <table className="w-full border-collapse border border-slate-300 text-[9px]">
-            <tbody>
-              {[
-                ["Tarih", safeDate(data.invoiceDate)],
-                ["Fatura No", data.invoiceNo],
-                ["Özelleştirme No", data.customizationNo],
-                ["Senaryo", data.scenario],
-                ["Fatura Tipi", data.invoiceType],
-                ["Oluşma Zamanı", safeDate(data.createdAt, true)],
-                ...(data.tysReference ? [["REX TYS Taslak No", data.tysReference]] : []),
-              ].map(([label, value]) => (
-                <tr key={label} className="border-b border-slate-300 last:border-b-0">
-                  <th className="w-[44%] bg-slate-50 px-2 py-1.5 text-left font-semibold">{label}</th>
-                  <td className="break-all px-2 py-1.5">{value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          ))}
         </section>
 
-        <section className="mt-5 overflow-hidden rounded-md border border-slate-300">
-          <table className="w-full table-fixed border-collapse text-[8px]">
-            <thead className="bg-[#173763] text-white">
-              <tr>
-                <th className="w-[4%] px-1 py-2 text-center">#</th>
-                <th className="w-[29%] px-1 py-2 text-left">Mal / Hizmet</th>
-                <th className="w-[9%] px-1 py-2 text-right">Miktar</th>
-                <th className="w-[14%] px-1 py-2 text-right">Birim Fiyat</th>
-                <th className="w-[11%] px-1 py-2 text-right">İndirim</th>
-                <th className="w-[8%] px-1 py-2 text-right">KDV %</th>
-                <th className="w-[12%] px-1 py-2 text-right">KDV</th>
-                <th className="w-[13%] px-1 py-2 text-right">Tutar</th>
-              </tr>
-            </thead>
+        <div className="invoice-xslt-parties">
+          <PartyCard title="Hizmet Sağlayıcı" name="REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ">
+            <div>Folkart Towers A Kule No:47/B K:26 D:2601</div>
+            <div>Adalet Mahallesi Manas Bulvarı 35530 Bayraklı / İzmir</div>
+            <div><b>Vergi Dairesi:</b> Karşıyaka</div>
+            <div><b>VKN:</b> 7342549288</div>
+            <div><b>MERSİS No:</b> 0734259288000001</div>
+            <div><b>Telefon:</b> +90 (543) 401 07 55</div>
+            <div><b>E-posta:</b> info@rexlojistik.com</div>
+          </PartyCard>
+          <PartyCard title="Sayın / Müşteri" name={data.customerName}>
+            {data.customerAddress ? <div>{data.customerAddress}</div> : null}
+            {customerLocation ? <div>{customerLocation}</div> : null}
+            {data.customerTaxOffice ? <div><b>Vergi Dairesi:</b> {data.customerTaxOffice}</div> : null}
+            {data.customerTaxNumber ? <div><b>{data.customerTaxLabel || "VKN/TCKN"}:</b> {data.customerTaxNumber}</div> : null}
+            {data.customerPhone ? <div><b>Telefon:</b> {data.customerPhone}</div> : null}
+            {data.customerWebsite ? <div><b>Web:</b> {data.customerWebsite}</div> : null}
+            {data.customerEmail ? <div><b>E-posta:</b> {data.customerEmail}</div> : null}
+          </PartyCard>
+        </div>
+
+        {data.tysReference ? (
+          <section className="invoice-xslt-operation">
+            <div className="invoice-xslt-kicker">REX TYS · Taşıma ve operasyon bilgileri</div>
+            <div className="invoice-xslt-operation-grid">
+              <div><div className="invoice-xslt-operation-label">REX TYS Taslak No</div><div className="invoice-xslt-operation-value">{data.tysReference}</div></div>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="invoice-xslt-lines">
+          <table>
+            <colgroup>
+              <col style={{ width: "4%" }} /><col style={{ width: "31%" }} /><col style={{ width: "9%" }} />
+              <col style={{ width: "14%" }} /><col style={{ width: "10%" }} /><col style={{ width: "7%" }} />
+              <col style={{ width: "12%" }} /><col style={{ width: "13%" }} />
+            </colgroup>
+            <thead><tr>
+              <th className="invoice-xslt-center">#</th><th>Hizmet / Açıklama</th><th className="invoice-xslt-num">Miktar</th>
+              <th className="invoice-xslt-num">Birim Fiyat</th><th className="invoice-xslt-num">İndirim</th><th className="invoice-xslt-num">KDV %</th>
+              <th className="invoice-xslt-num">KDV</th><th className="invoice-xslt-num">Tutar</th>
+            </tr></thead>
             <tbody>
               {data.items.length ? data.items.map((item, index) => (
-                <tr key={`${item.productCode || item.description}-${index}`} className="border-b border-slate-200 even:bg-slate-50 last:border-b-0">
-                  <td className="px-1 py-2 text-center align-top">{index + 1}</td>
-                  <td className="px-1 py-2 align-top">
-                    <p className="font-semibold text-[#173763]">{item.description}</p>
-                    {item.productCode ? <p className="mt-0.5 text-[7px] text-slate-500">Kod: {item.productCode}</p> : null}
-                    {item.lineDescription ? <p className="mt-0.5 whitespace-pre-line text-[7px] text-slate-500">{item.lineDescription}</p> : null}
+                <tr key={`${item.productCode || item.description}-${index}`}>
+                  <td className="invoice-xslt-center">{index + 1}</td>
+                  <td>
+                    <div className="invoice-xslt-item-name">{item.description}</div>
+                    {item.lineDescription ? <div className="invoice-xslt-item-desc">{item.lineDescription}</div> : null}
+                    {item.productCode ? <div className="invoice-xslt-item-desc">Kod: {item.productCode}</div> : null}
                   </td>
-                  <td className="px-1 py-2 text-right align-top">{item.quantity} {item.unit}</td>
-                  <td className="px-1 py-2 text-right align-top">{formatCurrency(item.unitPrice, data.currency)}</td>
-                  <td className="px-1 py-2 text-right align-top">{formatCurrency(item.discountAmount, data.currency)}</td>
-                  <td className="px-1 py-2 text-right align-top">%{item.vatRate}</td>
-                  <td className="px-1 py-2 text-right align-top">{formatCurrency(item.vatAmount, data.currency)}</td>
-                  <td className="px-1 py-2 text-right align-top font-semibold">{formatCurrency(item.subtotal, data.currency)}</td>
+                  <td className="invoice-xslt-num">{item.quantity} {item.unit}</td>
+                  <td className="invoice-xslt-num">{formatCurrency(item.unitPrice, data.currency)}</td>
+                  <td className="invoice-xslt-num">{formatCurrency(item.discountAmount, data.currency)}</td>
+                  <td className="invoice-xslt-num">% {item.vatRate}</td>
+                  <td className="invoice-xslt-num">{formatCurrency(item.vatAmount, data.currency)}</td>
+                  <td className="invoice-xslt-num invoice-xslt-strong">{formatCurrency(item.subtotal, data.currency)}</td>
                 </tr>
-              )) : (
-                <tr><td colSpan={8} className="px-3 py-8 text-center text-slate-500">Fatura kalemleri bulunamadı.</td></tr>
-              )}
+              )) : <tr><td colSpan={8} className="invoice-xslt-empty">Fatura kalemleri bulunamadı.</td></tr>}
             </tbody>
           </table>
         </section>
 
-        <section className="invoice-summary mt-4 grid grid-cols-[1.15fr_.85fr] items-start gap-4">
-          <div className="space-y-3">
+        <section className="invoice-xslt-summary">
+          <div>
             {vatBreakdown.length ? (
-              <div className="rounded-md border border-slate-300 p-3">
-                <p className="mb-2 font-bold text-[#173763]">Vergi Özeti</p>
-                <table className="w-full border-collapse text-[8px]">
-                  <thead className="bg-slate-100"><tr><th className="p-1 text-left">Vergi</th><th className="p-1 text-right">Matrah</th><th className="p-1 text-right">Oran</th><th className="p-1 text-right">Tutar</th></tr></thead>
+              <div className="invoice-xslt-info-card">
+                <div className="invoice-xslt-info-title">Vergi Özeti</div>
+                <table className="invoice-xslt-tax-table">
+                  <thead><tr><th>Vergi</th><th className="invoice-xslt-num">Matrah</th><th className="invoice-xslt-num">Oran</th><th className="invoice-xslt-num">Tutar</th></tr></thead>
                   <tbody>{vatBreakdown.map(([rate, totals]) => (
-                    <tr key={rate} className="border-t border-slate-200"><td className="p-1">KDV</td><td className="p-1 text-right">{formatCurrency(totals.base, data.currency)}</td><td className="p-1 text-right">%{rate}</td><td className="p-1 text-right">{formatCurrency(totals.amount, data.currency)}</td></tr>
+                    <tr key={rate}><td>KDV</td><td className="invoice-xslt-num">{formatCurrency(totals.base, data.currency)}</td><td className="invoice-xslt-num">% {rate}</td><td className="invoice-xslt-num">{formatCurrency(totals.amount, data.currency)}</td></tr>
                   ))}</tbody>
                 </table>
               </div>
             ) : null}
-
-            <div className="rounded-md border border-slate-300 p-3">
-              <p className="mb-1 font-bold text-[#173763]">Açıklamalar ve Notlar</p>
-              <p className="whitespace-pre-line text-[8px] leading-relaxed text-slate-600">{data.notes || DEFAULT_NOTES}</p>
-              {data.bankAccounts.map((account, index) => (
-                <div key={account.iban || index} className="mt-2 border-t border-slate-200 pt-2 text-[8px] text-slate-600">
-                  <strong>{account.label || "Banka Hesabı"}</strong><br />
-                  {[account.account_holder, account.bank_name, account.branch_name].filter(Boolean).join(" · ")}<br />
-                  {account.iban ? <>IBAN: {account.iban}</> : null}
-                  {account.swift_code ? <> · SWIFT: {account.swift_code}</> : null}
-                  {account.currency ? <> · {account.currency}</> : null}
+            {hasPaymentDetails ? (
+              <div className="invoice-xslt-info-card">
+                <div className="invoice-xslt-info-title">Ödeme Bilgileri</div>
+                <div className="invoice-xslt-party-lines">
+                  {data.paymentMethod ? <div><b>Ödeme Yöntemi:</b> {data.paymentMethod}</div> : null}
+                  {data.dueDate ? <div><b>Vade:</b> {safeDate(data.dueDate)}</div> : null}
+                  {data.bankAccounts.map((account, index) => (
+                    <div key={account.iban || index} className="invoice-xslt-bank-account">
+                      <b>{account.label || "Banka Hesabı"}</b>
+                      {optionalParts([account.account_holder, account.bank_name, account.branch_name]) ? <><br />{optionalParts([account.account_holder, account.bank_name, account.branch_name])}</> : null}
+                      {account.iban ? <><br />IBAN: {account.iban}</> : null}
+                      {account.swift_code ? <> · SWIFT: {account.swift_code}</> : null}
+                      {account.currency ? <> · {account.currency}</> : null}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            ) : null}
+            <div className="invoice-xslt-info-card">
+              <div className="invoice-xslt-info-title">Açıklama, Notlar ve Banka Bilgileri</div>
+              <div className="invoice-xslt-notes">{data.notes || DEFAULT_NOTES}</div>
             </div>
           </div>
-
-          <div className="overflow-hidden rounded-md border border-slate-300 text-[9px]">
+          <div className="invoice-xslt-totals">
             {[
               ["Mal / Hizmet Toplamı", data.subtotal],
               ...(data.discountAmount ? [["Toplam İndirim", data.discountAmount] as [string, number]] : []),
               ["KDV Hariç Toplam", data.subtotal],
               ["Hesaplanan KDV", data.vatAmount],
               ["Vergiler Dahil Toplam", data.grandTotal],
-            ].map(([label, amount]) => (
-              <div key={label} className="flex justify-between gap-3 border-b border-slate-200 px-3 py-2 last:border-b-0">
-                <span>{label}</span><strong>{formatCurrency(amount as number, data.currency)}</strong>
-              </div>
-            ))}
-            <div className="flex justify-between gap-3 bg-[#173763] px-3 py-2.5 text-[11px] font-bold text-white">
-              <span>Ödenecek Tutar</span><span>{formatCurrency(data.grandTotal, data.currency)}</span>
-            </div>
-            {data.dueDate ? <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-slate-600">Son ödeme: <strong>{safeDate(data.dueDate)}</strong></div> : null}
-            {data.paymentMethod ? <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-slate-600">Ödeme yöntemi: <strong>{data.paymentMethod}</strong></div> : null}
+            ].map(([label, amount]) => <div key={label} className="invoice-xslt-total-row"><span>{label}</span><strong>{formatCurrency(amount as number, data.currency)}</strong></div>)}
+            <div className="invoice-xslt-total-row invoice-xslt-grand"><span>Ödenecek Tutar</span><strong>{formatCurrency(data.grandTotal, data.currency)}</strong></div>
           </div>
         </section>
 
-        {data.documentKind === "e_archive" ? (
-          <p className="invoice-archive-note mt-3 rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-[8px] font-semibold text-orange-900">
-            Bu belge e-Arşiv izni kapsamında elektronik ortamda düzenlenmiş ve iletilmiştir. Teslim şekli: Elektronik.
-          </p>
-        ) : null}
+        {data.documentKind === "e_archive" ? <p className="invoice-xslt-archive-note">Bu belge e-Arşiv Fatura kapsamında elektronik ortamda düzenlenmiş ve iletilmiştir. Teslim şekli: Elektronik.</p> : null}
 
-        <footer className="invoice-footer mt-4 grid grid-cols-[1fr_auto] gap-4 border-t-2 border-[#173763] pt-2 text-[7px] leading-relaxed text-slate-500">
-          <p><strong className="text-[#173763]">REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ</strong><br />TİO Yetki Belgesi: İZM.U-NET.TİO.35.6323 · www.rexlojistik.com · info@rexlojistik.com</p>
-          <p className="max-w-64 text-right">Bu fatura elektronik ortamda oluşturulmuştur.<br />Doğrulama: {data.ettn || "Resmî ETTN bekleniyor"}</p>
+        <footer className="invoice-xslt-footer">
+          <div><strong>REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ</strong><br />TİO Yetki Belgesi: İZM.U-NET.TİO.35.6323 · www.rexlojistik.com · info@rexlojistik.com</div>
+          <div className="invoice-xslt-electronic">Bu fatura elektronik ortamda oluşturulmuştur.<br />Doğrulama bilgisi: {data.ettn || "Resmî ETTN bekleniyor"}</div>
         </footer>
 
-        <div className="invoice-actions mt-5 flex flex-wrap justify-end gap-3">
-          {data.officialPdfUrl ? (
-            <a href={data.officialPdfUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-4 py-2 text-[13px] font-medium text-slate-700 hover:bg-slate-50">
-              <ExternalLink className="h-4 w-4" /> Resmî PDF’yi Aç
-            </a>
-          ) : null}
-          <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-md bg-[#173763] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#244a80]">
-            <Printer className="h-4 w-4" /> Yazdır
-          </button>
+        <div className="invoice-actions invoice-xslt-actions">
+          {data.officialPdfUrl ? <a href={data.officialPdfUrl} target="_blank" rel="noreferrer"><ExternalLink /> Resmî PDF’yi Aç</a> : null}
+          <button type="button" onClick={() => window.print()}><Printer /> Yazdır</button>
         </div>
       </article>
 
       <style jsx global>{`
-        @media print {
-          @page { size: A4; margin: 0; }
-          body * { visibility: hidden !important; }
-          #invoice-template, #invoice-template * { visibility: visible !important; }
-          #invoice-template {
-            position: absolute !important;
-            inset: 0 auto auto 0 !important;
-            width: 210mm !important;
-            max-width: none !important;
-            min-height: 0 !important;
-            margin: 0 !important;
-            padding: 8mm !important;
-            box-shadow: none !important;
-          }
-          #invoice-template table, .invoice-summary, .invoice-archive-note, .invoice-footer {
-            break-inside: avoid;
-          }
-          .invoice-actions { display: none !important; }
-        }
+        .invoice-xslt-page{width:100%;max-width:210mm;min-width:720px;margin:0 auto;padding:9mm;color:#15213d;background:#fff;font:10.5px Arial,Helvetica,sans-serif;box-shadow:0 1px 3px rgb(15 23 42 / 8%)}
+        .invoice-xslt-page *{box-sizing:border-box}.invoice-xslt-draft-banner{margin-bottom:10px;border:1px solid #f4c869;border-radius:8px;padding:8px 10px;background:#fffaf0;color:#7d421a;text-align:center;font-size:8.5px;font-weight:800;letter-spacing:.55px}
+        .invoice-xslt-brand-line{height:4px;margin-bottom:12px;border-radius:3px;background:linear-gradient(90deg,#f37021 0 34%,#173763 34% 100%)}
+        .invoice-xslt-header{display:grid;grid-template-columns:1.15fr .9fr .8fr;align-items:center;gap:14px;min-height:94px}.invoice-xslt-rex-logo{width:178px;height:auto;max-height:82px;object-fit:contain;object-position:left center}
+        .invoice-xslt-gib-block{text-align:center}.invoice-xslt-gib-logo{display:flex;width:49px;height:49px;margin:0 auto 4px;align-items:center;justify-content:center;border:2px solid #cf3d34;border-radius:999px;color:#cf3d34;font-size:15px;font-weight:800}
+        .invoice-xslt-doc-type{color:#173763;font-size:17px;font-weight:800;letter-spacing:.2px}.invoice-xslt-doc-subtype{margin-top:3px;color:#f37021;font-size:10px;font-weight:700;text-transform:uppercase}
+        .invoice-xslt-qr-box{justify-self:end;width:92px;text-align:center}.invoice-xslt-qr{display:block;width:76px;height:76px;margin:0 auto;object-fit:contain}.invoice-xslt-qr-fallback{display:flex;align-items:center;justify-content:center;border:1px dashed #a8b3c4;border-radius:8px;padding:8px 5px;color:#53617a;font-size:7px;overflow-wrap:anywhere}
+        .invoice-xslt-qr-caption{margin-top:3px;color:#6a7588;font-size:7px;font-weight:700;letter-spacing:.35px;text-transform:uppercase}.invoice-xslt-meta{display:grid;grid-template-columns:repeat(4,1fr);margin:11px 0;overflow:hidden;border:1px solid #dbe2ec;border-radius:10px}
+        .invoice-xslt-meta-item{min-height:46px;padding:8px 10px;border-right:1px solid #e7ecf2;border-bottom:1px solid #e7ecf2}.invoice-xslt-meta-item:nth-child(4n){border-right:0}.invoice-xslt-meta-item:nth-last-child(-n+4){border-bottom:0}
+        .invoice-xslt-meta-label{color:#6a7588;font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}.invoice-xslt-meta-value{margin-top:4px;color:#14213d;font-weight:700;overflow-wrap:anywhere}
+        .invoice-xslt-parties{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.invoice-xslt-party-card{min-height:126px;border:1px solid #dbe2ec;border-radius:10px;padding:11px 13px}.invoice-xslt-kicker{margin-bottom:5px;color:#f37021;font-size:8.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+        .invoice-xslt-party-name{margin-bottom:7px;color:#173763;font-size:12.5px;font-weight:800}.invoice-xslt-party-lines{color:#38455c;line-height:1.55}.invoice-xslt-operation{margin:10px 0;border-left:4px solid #f37021;border-radius:0 9px 9px 0;padding:10px 12px;background:#f7f9fc}
+        .invoice-xslt-operation-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px 15px;margin-top:7px}.invoice-xslt-operation-label{color:#6a7588;font-size:8px;font-weight:700;text-transform:uppercase}.invoice-xslt-operation-value{margin-top:3px;font-weight:700;overflow-wrap:anywhere}
+        .invoice-xslt-page table{width:100%;border-collapse:collapse}.invoice-xslt-lines{margin-top:10px;overflow:hidden;border:1px solid #dbe2ec;border-radius:9px}.invoice-xslt-lines table{table-layout:fixed}.invoice-xslt-page th{padding:7px 5px;background:#173763;color:#fff;font-size:8px;letter-spacing:.35px;text-align:left;text-transform:uppercase}
+        .invoice-xslt-page td{padding:7px 5px;border-bottom:1px solid #e7ecf2;vertical-align:top}.invoice-xslt-page tbody tr:nth-child(even){background:#fafbfd}.invoice-xslt-lines th{padding:7px 3px;font-size:7.2px}.invoice-xslt-lines td{padding:7px 3px}.invoice-xslt-lines td.invoice-xslt-num{font-size:7.4px;letter-spacing:-.12px}
+        .invoice-xslt-num{text-align:right!important;white-space:nowrap}.invoice-xslt-center{text-align:center!important}.invoice-xslt-strong{font-weight:700}.invoice-xslt-item-name{color:#173763;font-weight:700}.invoice-xslt-item-desc{margin-top:3px;color:#697489;font-size:8.5px;line-height:1.35;white-space:pre-line}.invoice-xslt-empty{padding:24px!important;color:#697489;text-align:center}
+        .invoice-xslt-summary{display:grid;grid-template-columns:1.15fr .85fr;align-items:start;gap:12px;margin-top:11px}.invoice-xslt-info-card{margin-bottom:9px;border:1px solid #dbe2ec;border-radius:9px;padding:10px 12px}.invoice-xslt-info-title{margin-bottom:7px;color:#173763;font-size:10px;font-weight:800}.invoice-xslt-notes{color:#455168;line-height:1.5;white-space:pre-line;overflow-wrap:anywhere}
+        .invoice-xslt-tax-table th{background:#eef2f7;color:#263650}.invoice-xslt-tax-table td{padding:5px 4px;font-size:8.5px}.invoice-xslt-bank-account{margin-top:7px;padding-top:7px;border-top:1px solid #e7ecf2}.invoice-xslt-totals{overflow:hidden;border:1px solid #dbe2ec;border-radius:9px}.invoice-xslt-total-row{display:flex;justify-content:space-between;gap:12px;padding:7px 11px;border-bottom:1px solid #e7ecf2}
+        .invoice-xslt-total-row:last-child{border-bottom:0}.invoice-xslt-total-row strong{color:#173763}.invoice-xslt-grand{padding:10px 11px;background:#173763;color:#fff;font-size:12px;font-weight:800}.invoice-xslt-grand strong{color:#fff}.invoice-xslt-archive-note{margin-top:9px;border:1px solid #fed8bd;border-radius:8px;padding:8px 10px;background:#fff7f0;color:#9b451b;font-weight:700}
+        .invoice-xslt-footer{display:grid;grid-template-columns:1fr auto;gap:12px;margin-top:12px;border-top:2px solid #173763;padding-top:8px;color:#5e697d;font-size:8.5px;line-height:1.5}.invoice-xslt-footer strong{color:#173763}.invoice-xslt-electronic{text-align:right}.invoice-xslt-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:18px}
+        .invoice-xslt-actions a,.invoice-xslt-actions button{display:inline-flex;align-items:center;gap:8px;border:1px solid #cbd5e1;border-radius:7px;padding:8px 14px;background:#fff;color:#334155;font-size:13px;font-weight:600}.invoice-xslt-actions button{border-color:#173763;background:#173763;color:#fff}.invoice-xslt-actions svg{width:16px;height:16px}
+        @page { size: A4; margin: 0; }
+        @media print{body *{visibility:hidden!important}#invoice-template,#invoice-template *{visibility:visible!important}#invoice-template{position:absolute!important;inset:0 auto auto 0!important;width:210mm!important;max-width:none!important;min-width:0!important;min-height:0!important;margin:0!important;padding:9mm!important;box-shadow:none!important}.invoice-xslt-lines,.invoice-xslt-summary,.invoice-xslt-info-card,.invoice-xslt-totals,.invoice-xslt-archive-note,.invoice-xslt-footer{break-inside: avoid}.invoice-actions{display:none!important}}
       `}</style>
     </>
   );
