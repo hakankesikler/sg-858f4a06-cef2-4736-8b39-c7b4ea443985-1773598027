@@ -42,6 +42,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ success: true, profile });
   } catch (error: any) {
     const message = String(error?.message || "Cari e-belge türü doğrulanamadı.").slice(0, 500);
-    return res.status(error?.reviewRequired ? 409 : 502).json({ error: message, reviewRequired: Boolean(error?.reviewRequired) });
+    if (error?.reviewRequired) {
+      return res.status(200).json({
+        success: true,
+        profile: null,
+        providerResolutionPending: true,
+        message,
+      });
+    }
+    return res.status(502).json({ error: message, reviewRequired: false });
   }
 }

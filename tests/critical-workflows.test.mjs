@@ -304,8 +304,8 @@ test("delivery proof and KolayBi synchronization keep distinct audit events", as
   assert.match(api, /rex_record_invoice_sync_result/);
   assert.match(api, /classifyKolayBiEDocument/);
   assert.match(api, /identity\.uuid && identity\.invoiceNo/);
-  assert.match(api, /assertCustomerEDocumentEnvironment/);
-  assert.match(api, /Yanlışlıkla e-Arşiv oluşmaması için gönderim durduruldu/);
+  assert.match(api, /hasVerifiedCustomerEDocumentProfile/);
+  assert.match(api, /KolayBi\/entegratör mükellefiyet sorgusunun karar vermesini/);
   assert.match(api, /environment !== kolayBiEnvironment\(config\)/);
   assert.match(history, /kolaybi_sync_succeeded/);
 });
@@ -1512,7 +1512,7 @@ test("sales invoice e-document choice is automatic and TUSAN is confirmed as e-i
   assert.match(migration, /BEFORE INSERT ON public\.sales_invoices/);
   assert.match(migration, /NEW\.document_type := v_type/);
   assert.match(migration, /Cari e-belge türü henüz otomatik doğrulanmadı/);
-  assert.match(invoiceDialog, /E-Fatura\/E-Arşiv seçimi sistem tarafından otomatik belirlenir/);
+  assert.match(invoiceDialog, /E-Fatura\/E-Arşiv türü KolayBi mükellefiyet sorgusundan alınır/);
   assert.doesNotMatch(invoiceDialog, /E-belge türünü KolayBi cari\/fatura bilgileriyle kontrol ettim/);
 });
 
@@ -1554,6 +1554,27 @@ test("sales invoice e-document profile is resolved on demand and withholding sta
   assert.match(purchaseInbox, /<Label>Tevkifat<\/Label>/);
   assert.match(migration, /rex_clear_sales_invoice_item_withholding/);
   assert.match(migration, /WHERE category = 'withholding_transport'/);
+});
+
+test("new customers can create drafts while KolayBi resolves the official e-document scenario", async () => {
+  const [endpoint, service, provider, invoiceDialog, migration] = await Promise.all([
+    read("src/pages/api/kolaybi/customers/[customerId]/e-document-profile.ts"),
+    read("src/services/invoiceIntegrationService.ts"),
+    read("src/lib/kolaybi.ts"),
+    read("src/components/InvoiceDialog.tsx"),
+    read("supabase/migrations/20260910204500_allow_provider_resolved_sales_e_documents.sql"),
+  ]);
+
+  assert.match(endpoint, /providerResolutionPending: true/);
+  assert.match(service, /if \(!result\.profile\) return null/);
+  assert.match(service, /profile\?\.documentType \|\| input\.documentType/);
+  assert.match(provider, /hasVerifiedCustomerEDocumentProfile/);
+  assert.match(provider, /if \(hasVerifiedCustomerEDocumentProfile\(invoice, config\)\)/);
+  assert.doesNotMatch(provider, /assertCustomerEDocumentEnvironment/);
+  assert.match(invoiceDialog, /gerçek senaryoyu resmileştirme sırasında KolayBi belirler/);
+  assert.match(migration, /v_environment = 'live'/);
+  assert.match(migration, /NEW\.document_type := 'e_archive'/);
+  assert.doesNotMatch(migration, /RAISE EXCEPTION 'Cari e-belge türü henüz otomatik doğrulanmadı/);
 });
 
 test("shipment save lets PostgreSQL calculate the generated cargo subtotal", async () => {

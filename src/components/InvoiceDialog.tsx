@@ -167,6 +167,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     setProfileLoading(true);
     try {
       const profile = await invoiceIntegrationService.resolveCustomerEDocumentProfile(customerId);
+      if (!profile) {
+        applyCustomerEDocumentProfile(null);
+        return;
+      }
       applyCustomerEDocumentProfile({
         id: customerId,
         name: "",
@@ -587,13 +591,13 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
                   </div>
                 ) : (
                   <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                    Cari profili doğrulanmadan fatura oluşturulamaz.
+                    Taslak oluşturulur; gerçek senaryoyu resmileştirme sırasında KolayBi belirler.
                   </div>
                 )}
                 <p className="text-xs text-slate-500">
                   {selectedCustomerProfile
                     ? `Resmî e-belge geçmişine göre otomatik seçildi${selectedCustomerProfile.kolaybi_e_document_environment === "test" ? " (test ortamı)" : ""}.`
-                    : "E-Fatura/E-Arşiv seçimi sistem tarafından otomatik belirlenir."}
+                    : "Çalışan seçim yapmaz; E-Fatura/E-Arşiv türü KolayBi mükellefiyet sorgusundan alınır."}
                 </p>
               </div>
 

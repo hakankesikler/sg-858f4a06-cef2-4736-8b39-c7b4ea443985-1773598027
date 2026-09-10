@@ -211,7 +211,12 @@ function invoiceForm(
   form.set("receiver_email", invoice.customer.invoice_email || invoice.customer.email || "");
   form.set("type", options.invoiceType || "sale_invoice");
   form.set("document_type", options.documentType || invoice.kolaybi_document_type || "SATIS");
-  form.set("document_scenario", invoice.document_scenario);
+  // Yeni bir carinin geçmiş resmî belgesi olmayabilir. Bu durumda senaryoyu
+  // göndermeyerek KolayBi/entegratör mükellefiyet sorgusunun karar vermesini
+  // sağlarız. Resmileştirme cevabındaki gerçek senaryo aşağıda kaydedilir.
+  if (hasVerifiedCustomerEDocumentProfile(invoice, config)) {
+    form.set("document_scenario", invoice.document_scenario);
+  }
   if (options.returnReference) {
     form.set("return_invoice_references[serial_no]", options.returnReference.serialNo);
     form.set("return_invoice_references[issue_date]", options.returnReference.issueDate);
@@ -494,17 +499,13 @@ function providerEDocumentProfile(data: any): CustomerEDocumentProfile | null {
   };
 }
 
-function assertCustomerEDocumentEnvironment(invoice: any, config: KolayBiConfig) {
-  if (invoice.document_type !== "e_invoice") return;
-  const expectedEnvironment = kolayBiEnvironment(config);
-  const customerEnvironment = invoice.customer?.kolaybi_e_document_environment;
-  if (customerEnvironment === expectedEnvironment) return;
-
-  const environmentLabel = expectedEnvironment === "test" ? "sandbox" : "canlı";
-  throw new KolayBiError(
-    `Cari e-Fatura bilgisi KolayBi ${environmentLabel} ortamında doğrulanmadı. ` +
-      "Yanlışlıkla e-Arşiv oluşmaması için gönderim durduruldu. Cari e-Fatura kaydını bu ortamda senkronize edin.",
-    false,
+function hasVerifiedCustomerEDocumentProfile(invoice: any, config: KolayBiConfig) {
+  const documentType = invoice.customer?.kolaybi_e_document_type;
+  const scenario = invoice.customer?.kolaybi_e_document_scenario;
+  return (
+    ["e_archive", "e_invoice"].includes(documentType) &&
+    ["EARSIVFATURA", "TEMELFATURA", "TICARIFATURA", "KAMU"].includes(scenario) &&
+    invoice.customer?.kolaybi_e_document_environment === kolayBiEnvironment(config)
   );
 }
 
@@ -629,7 +630,6 @@ export async function processKolayBiJob(
       }
       await alignInvoiceWithCustomerProfile(workerDb, invoice, config);
     }
-    if (job.job_type === "send") assertCustomerEDocumentEnvironment(invoice, config);
     const token = await getAccessToken(config);
     const commonHeaders = {
       Channel: config.channel,
