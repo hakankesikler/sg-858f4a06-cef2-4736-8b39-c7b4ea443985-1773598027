@@ -28,7 +28,7 @@ Keep the R2 bucket private and scope its API token to that bucket only. Enable `
 ## Deployment gate
 
 1. Run `pnpm install --frozen-lockfile`.
-2. Run `pnpm run security:scan`, `pnpm run lint`, and `pnpm run test`.
+2. Run `pnpm run security:audit`, `pnpm run security:scan`, `pnpm run lint`, and `pnpm run test`.
 3. Run `pnpm run build` with the same environment-variable names used in Vercel.
 4. Deploy to Preview and run `SMOKE_BASE_URL=<preview-url> pnpm run test:smoke`.
 5. Promote only after Supabase/Auth/CAPTCHA, quote submission, login, and cron authentication checks pass.
