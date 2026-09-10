@@ -744,6 +744,10 @@ test("production traffic cannot bypass Cloudflare through the Vercel hostname", 
   assert.match(proxy, /rexlojistik\.com/);
   assert.match(proxy, /www\.rexlojistik\.com/);
   assert.match(proxy, /x-forwarded-host/);
+  assert.match(proxy, /CRON_PATHS/);
+  assert.match(proxy, /process\.env\.CRON_SECRET/);
+  assert.match(proxy, /request\.headers\.get\("authorization"\) === `Bearer \$\{cronSecret\}`/);
+  assert.match(proxy, /CRON_PATHS\.has\(request\.nextUrl\.pathname\)/);
   assert.match(proxy, /status:\s*404/);
   assert.match(proxy, /Cache-Control["']?:\s*["']no-store/);
 });
