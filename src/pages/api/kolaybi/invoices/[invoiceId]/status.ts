@@ -7,9 +7,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const token = req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : "";
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   const invoiceId = typeof req.query.invoiceId === "string" ? req.query.invoiceId : "";
   if (!token) return res.status(401).json({ error: "Oturum doğrulanamadı." });
-  if (!supabaseUrl || !anonKey) return res.status(500).json({ error: "Sunucu veritabanı ayarları eksik." });
+  if (!supabaseUrl || !anonKey || !serviceKey) return res.status(500).json({ error: "Sunucu veritabanı ayarları eksik." });
   if (!invoiceId) return res.status(400).json({ error: "Fatura kimliği zorunludur." });
 
   const db = createClient(supabaseUrl, anonKey, {
@@ -20,13 +21,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (userError || !userData.user) return res.status(401).json({ error: "Oturum süresi dolmuş." });
   const { data: allowed } = await db.rpc("rex_has_role" as any, { required_roles: ["admin", "accounting"] } as any);
   if (!allowed) return res.status(403).json({ error: "Faturalandırma yetkiniz bulunmuyor." });
+  const admin = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 
   try {
     const { error: queueError } = await db.rpc("rex_queue_invoice_status_check" as any, {
       p_invoice_id: invoiceId,
     } as any);
     if (queueError) throw queueError;
-    const result = await processKolayBiJob(db, invoiceId);
+    const result = await processKolayBiJob(db, invoiceId, {
+      admin,
+      actorId: userData.user.id,
+      actorEmail: userData.user.email,
+    });
     return res.status(200).json({ success: true, ...result });
   } catch (error: any) {
     const safe = publicKolayBiError(error);

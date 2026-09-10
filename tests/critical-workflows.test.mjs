@@ -1745,3 +1745,27 @@ test("paid KolayBi purchase history stays out of the review queue and the inbox 
   assert.match(inbox, /Önceki/);
   assert.match(inbox, /Sonraki/);
 });
+
+test("security-definer RPCs use a reviewed access matrix and server-only KolayBi workers", async () => {
+  const [sql, kolaybi, statusEndpoint] = await Promise.all([
+    read("supabase/migrations/20260909201711_tighten_function_access_matrix.sql"),
+    read("src/lib/kolaybi.ts"),
+    read("src/pages/api/kolaybi/invoices/[invoiceId]/status.ts"),
+  ]);
+
+  assert.equal((sql.match(/\nALTER FUNCTION public\./g) || []).length >= 8, true);
+  assert.match(sql, /SECURITY DEFINER[\s\S]*SET search_path = public, pg_temp/);
+  assert.match(sql, /rex_purchase_invoice_candidates[\s\S]*rex_has_role\(ARRAY\['admin', 'accounting'\]\)/);
+  assert.match(sql, /REVOKE EXECUTE ON FUNCTION public\.rex_generate_tracking_number\(\)[\s\S]*FROM authenticated/);
+  assert.match(sql, /REVOKE EXECUTE ON FUNCTION public\.rex_validate_transport_assignment/);
+  assert.match(sql, /REVOKE EXECUTE ON FUNCTION public\.rex_uetds_dashboard\(\)/);
+  assert.match(sql, /REVOKE EXECUTE ON FUNCTION public\.rex_claim_invoice_sync_job/);
+  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.rex_claim_invoice_sync_job[\s\S]*TO service_role/);
+  assert.match(sql, /public shipment tracking is unavailable/);
+  assert.match(kolaybi, /const workerDb = options\.admin \|\| db/);
+  assert.match(kolaybi, /workerDb\.rpc\("rex_claim_invoice_sync_job"/);
+  assert.match(kolaybi, /workerDb\.rpc\("rex_record_invoice_provider_document"/);
+  assert.match(kolaybi, /recordResult\(workerDb/);
+  assert.match(statusEndpoint, /SUPABASE_SECRET_KEY \|\| process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(statusEndpoint, /processKolayBiJob\(db, invoiceId, \{[\s\S]*admin/);
+});

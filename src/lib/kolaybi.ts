@@ -594,8 +594,13 @@ export async function processKolayBiJob(
 ) {
   const config = getConfig();
   assertKolayBiSyncEnabled(config.baseUrl);
+  // Queue claiming and provider reconciliation are server-side integration
+  // operations. API handlers pass a service-role client after checking the
+  // signed-in user's application role; never perform these writes with the
+  // caller's broad `authenticated` database role.
+  const workerDb = options.admin || db;
   const workerId = `rex-${crypto.randomUUID()}`;
-  const { data: claimed, error: claimError } = await db.rpc("rex_claim_invoice_sync_job", {
+  const { data: claimed, error: claimError } = await workerDb.rpc("rex_claim_invoice_sync_job", {
     p_worker_id: workerId,
     p_invoice_id: invoiceId || null,
   });
@@ -610,7 +615,7 @@ export async function processKolayBiJob(
   };
 
   try {
-    let invoice = await loadInvoice(db, job.invoice_id);
+    let invoice = await loadInvoice(workerDb, job.invoice_id);
     if (job.job_type === "send" && !invoice.kolaybi_document_id) {
       if (!invoice.customer?.kolaybi_contact_id || !invoice.customer?.kolaybi_address_id) {
         if (!options.admin) {
@@ -626,14 +631,14 @@ export async function processKolayBiJob(
           actorId: options.actorId || null,
           actorEmail: options.actorEmail || "system@rex.local",
         });
-        invoice = await loadInvoice(db, job.invoice_id);
+        invoice = await loadInvoice(workerDb, job.invoice_id);
         console.info("[kolaybi:invoice] automatic associate matching completed", {
           invoiceId: invoice.id,
           customerId: invoice.customer_id,
           mapped: Boolean(invoice.customer?.kolaybi_contact_id && invoice.customer?.kolaybi_address_id),
         });
       }
-      await alignInvoiceWithCustomerProfile(db, invoice, config);
+      await alignInvoiceWithCustomerProfile(workerDb, invoice, config);
     }
     if (job.job_type === "send") assertCustomerEDocumentEnvironment(invoice, config);
     const token = await getAccessToken(config);
@@ -657,7 +662,7 @@ export async function processKolayBiJob(
           config,
           commonHeaders,
         });
-        invoice = await loadInvoice(db, job.invoice_id);
+        invoice = await loadInvoice(workerDb, job.invoice_id);
       }
     }
 
@@ -692,8 +697,8 @@ export async function processKolayBiJob(
       }
       const identity = providerInvoiceIdentity(detail);
       const reconciliationStatus = classifyKolayBiEDocument(detail);
-      await recordCustomerEDocumentProfile(db, invoice, detail, config);
-      await recordResult(db, {
+      await recordCustomerEDocumentProfile(workerDb, invoice, detail, config);
+      await recordResult(workerDb, {
         jobId: job.job_id,
         status: reconciliationStatus,
         documentId: identity.documentId || Number(invoice.kolaybi_document_id),
@@ -728,7 +733,7 @@ export async function processKolayBiJob(
       createData = providerData(createJson);
       documentId = Number(createData.document_id || createData.id || createData.document?.id || 0);
       if (!documentId) throw new KolayBiError("KolayBi fatura belge kimliği dönmedi.", true);
-      const { error: documentError } = await db.rpc("rex_record_invoice_provider_document", {
+      const { error: documentError } = await workerDb.rpc("rex_record_invoice_provider_document", {
         p_job_id: job.job_id,
         p_document_id: documentId,
         p_provider_status: createData.status || "created",
@@ -738,7 +743,7 @@ export async function processKolayBiJob(
     }
 
     if (!config.autoSendEDocument) {
-      await recordResult(db, {
+      await recordResult(workerDb, {
         jobId: job.job_id,
         status: "submitted",
         documentId,
@@ -761,8 +766,8 @@ export async function processKolayBiJob(
     const official = providerData(sendJson);
     const identity = providerInvoiceIdentity(official);
     const reconciliationStatus = classifyKolayBiEDocument(official);
-    await recordCustomerEDocumentProfile(db, invoice, official, config);
-    await recordResult(db, {
+    await recordCustomerEDocumentProfile(workerDb, invoice, official, config);
+    await recordResult(workerDb, {
       jobId: job.job_id,
       status: reconciliationStatus,
       documentId: identity.documentId || documentId,
@@ -788,7 +793,7 @@ export async function processKolayBiJob(
       ? "mapping_required"
       : "failed";
     try {
-      await recordResult(db, {
+      await recordResult(workerDb, {
         jobId: job.job_id,
         status,
         retryable,
