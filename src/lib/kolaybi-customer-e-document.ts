@@ -66,16 +66,19 @@ function commercialSerialNo(value: any) {
 }
 
 function officialDocumentId(value: any) {
-  return Number(value?.document_id || value?.commercial_doc_id || value?.id || 0);
+  return Number(value?.commercial_doc_id || value?.document_id || value?.id || 0);
 }
 
 function officialSerialNo(value: any) {
-  return text(value?.no || value?.invoice_no || value?.serial_no).toUpperCase();
+  return text(value?.document_no || value?.no || value?.invoice_no || value?.serial_no).toUpperCase();
 }
 
 function profileFromOfficialInvoice(value: any, environment: "test" | "live"): CustomerEDocumentProfile | null {
-  const scenario = text(value?.scenario || value?.document_scenario).toUpperCase() as Scenario;
-  const officialIdentity = text(value?.uuid || value?.ettn || value?.no || value?.invoice_no);
+  const scenario = text(value?.document_scenario || value?.scenario || value?.invoice_scenario).toUpperCase() as Scenario;
+  const officialIdentity = text(
+    value?.document_uuid || value?.uuid || value?.ettn ||
+    value?.document_no || value?.no || value?.invoice_no || value?.serial_no,
+  );
   if (!officialIdentity || !VALID_SCENARIOS.includes(scenario)) return null;
   const rawEvidence = text(value?.issue_date || value?.invoice_date);
   const parsedEvidence = rawEvidence ? new Date(rawEvidence) : new Date();
@@ -138,8 +141,8 @@ async function pagedProviderList(
     const json = await providerRequest(`${baseUrl}${path}?${pageParams.toString()}`, headers);
     const pageRows = listFrom(json);
     const rowKey = (row: any) => text(
-      row?.commercial_doc_id || row?.document_id || row?.id || row?.uuid ||
-      row?.no || row?.invoice_no || row?.serial_no || row?.header?.serial_no,
+      row?.commercial_doc_id || row?.document_id || row?.id || row?.document_uuid || row?.uuid ||
+      row?.document_no || row?.no || row?.invoice_no || row?.serial_no || row?.header?.serial_no,
     );
     const fingerprint = `${pageRows.length}:${rowKey(pageRows[0])}:${rowKey(pageRows.at(-1))}`;
     if (seenPages.has(fingerprint)) break;

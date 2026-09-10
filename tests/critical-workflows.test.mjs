@@ -1574,6 +1574,7 @@ test("sales invoice e-document profile is resolved on demand and withholding sta
 
 test("KolayBi sales sync reconciles all customer e-document profiles from paged official history", async () => {
   const syncApi = await read("src/pages/api/kolaybi/office-sync.ts");
+  const resolver = await read("src/lib/kolaybi-customer-e-document.ts");
   assert.match(syncApi, /reconcileCustomerEDocumentProfiles/);
   assert.match(syncApi, /pagedProviderList/);
   assert.match(syncApi, /PROFILE_MAX_PAGES = 40/);
@@ -1581,6 +1582,12 @@ test("KolayBi sales sync reconciles all customer e-document profiles from paged 
   assert.match(syncApi, /kolaybi_official_invoice_bulk/);
   assert.match(syncApi, /sales_profile_reconciliation/);
   assert.match(syncApi, /resource === "sales_invoices" && companyId/);
+  assert.match(syncApi, /official\?\.document_scenario/);
+  assert.match(syncApi, /official\?\.document_uuid/);
+  assert.match(syncApi, /official\?\.document_no/);
+  assert.match(resolver, /value\?\.document_scenario/);
+  assert.match(resolver, /value\?\.document_uuid/);
+  assert.match(resolver, /value\?\.document_no/);
 });
 
 test("new customers can create drafts while KolayBi resolves the official e-document scenario", async () => {

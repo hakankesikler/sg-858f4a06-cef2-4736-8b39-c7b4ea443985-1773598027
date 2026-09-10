@@ -51,8 +51,8 @@ function lastPageFrom(json: any) {
 
 function providerRecordKey(item: any) {
   return text(
-    item?.commercial_doc_id || item?.document_id || item?.id || item?.uuid ||
-    item?.no || item?.invoice_no || item?.serial_no || item?.header?.serial_no,
+    item?.commercial_doc_id || item?.document_id || item?.id || item?.document_uuid || item?.uuid ||
+    item?.document_no || item?.no || item?.invoice_no || item?.serial_no || item?.header?.serial_no,
   );
 }
 
@@ -308,8 +308,11 @@ function invoiceEDocument(item: any) {
 
 function eDocumentProfile(item: any) {
   const official = invoiceEDocument(item);
-  const scenario = text(official?.scenario || official?.document_scenario).toUpperCase();
-  const officialIdentity = text(official?.uuid || official?.ettn || official?.no || official?.invoice_no);
+  const scenario = text(official?.document_scenario || official?.scenario || official?.invoice_scenario).toUpperCase();
+  const officialIdentity = text(
+    official?.document_uuid || official?.uuid || official?.ettn ||
+    official?.document_no || official?.no || official?.invoice_no || official?.serial_no,
+  );
   if (!officialIdentity || !["EARSIVFATURA", "TEMELFATURA", "TICARIFATURA", "KAMU"].includes(scenario)) return null;
   const header = invoiceHeader(item);
   const issueDate = text(official?.issue_date || header?.issue_date || item?.issue_date).slice(0, 10);
@@ -317,7 +320,10 @@ function eDocumentProfile(item: any) {
     documentType: scenario === "EARSIVFATURA" ? "e_archive" as const : "e_invoice" as const,
     scenario,
     evidenceAt: /^\d{4}-\d{2}-\d{2}$/.test(issueDate) ? `${issueDate}T12:00:00.000Z` : new Date().toISOString(),
-    documentId: text(official?.document_id || item?.commercial_doc_id || item?.document_id || item?.id),
+    documentId: text(
+      official?.commercial_doc_id || official?.document_id || official?.id ||
+      item?.commercial_doc_id || item?.document_id || item?.id,
+    ),
   };
 }
 
@@ -441,8 +447,8 @@ async function reconcileCustomerEDocumentProfiles(input: {
   [...officialRows]
     .sort((left, right) => text(right?.issue_date || right?.invoice_date).localeCompare(text(left?.issue_date || left?.invoice_date)))
     .forEach((official) => {
-      const documentId = text(official?.document_id || official?.commercial_doc_id || official?.id);
-      const serialNo = text(official?.no || official?.invoice_no || official?.serial_no).toUpperCase();
+      const documentId = text(official?.commercial_doc_id || official?.document_id || official?.id);
+      const serialNo = text(official?.document_no || official?.no || official?.invoice_no || official?.serial_no).toUpperCase();
       if (documentId && !officialByDocument.has(documentId)) officialByDocument.set(documentId, official);
       if (serialNo && !officialBySerial.has(serialNo)) officialBySerial.set(serialNo, official);
     });
@@ -609,12 +615,12 @@ function safePayload(resource: Resource, item: any) {
       } : null,
     } : null,
     e_document: item?._e_document ? {
-      document_id: item._e_document.document_id,
-      uuid: item._e_document.uuid,
-      no: item._e_document.no,
-      status: item._e_document.status,
-      scenario: item._e_document.scenario,
-      type: item._e_document.type,
+      document_id: item._e_document.commercial_doc_id || item._e_document.document_id || item._e_document.id,
+      uuid: item._e_document.document_uuid || item._e_document.uuid || item._e_document.ettn,
+      no: item._e_document.document_no || item._e_document.no || item._e_document.invoice_no || item._e_document.serial_no,
+      status: item._e_document.document_status || item._e_document.status,
+      scenario: item._e_document.document_scenario || item._e_document.scenario || item._e_document.invoice_scenario,
+      type: item._e_document.document_type || item._e_document.type,
       issue_date: item._e_document.issue_date,
       cancelled_at: item._e_document.cancelled_at,
     } : null,
