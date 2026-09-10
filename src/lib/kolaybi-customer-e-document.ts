@@ -35,13 +35,35 @@ async function readJson(response: Response) {
 function listFrom(json: any): any[] {
   if (Array.isArray(json?.data?.data)) return json.data.data;
   if (Array.isArray(json?.data?.items)) return json.data.items;
+  if (Array.isArray(json?.data?.results)) return json.data.results;
   if (Array.isArray(json?.data)) return json.data;
   if (Array.isArray(json?.items)) return json.items;
+  if (Array.isArray(json?.results)) return json.results;
   return [];
 }
 
 function text(value: unknown) {
   return value === undefined || value === null ? "" : String(value).trim();
+}
+
+function digits(value: unknown) {
+  return text(value).replace(/\D/g, "");
+}
+
+function commercialDocumentId(value: any) {
+  return Number(value?.commercial_doc_id || value?.document_id || value?.id || 0);
+}
+
+function commercialSerialNo(value: any) {
+  return text(value?.header?.serial_no || value?.serial_no || value?.invoice_no).toUpperCase();
+}
+
+function officialDocumentId(value: any) {
+  return Number(value?.document_id || value?.commercial_doc_id || value?.id || 0);
+}
+
+function officialSerialNo(value: any) {
+  return text(value?.no || value?.invoice_no || value?.serial_no).toUpperCase();
 }
 
 function profileFromOfficialInvoice(value: any, environment: "test" | "live"): CustomerEDocumentProfile | null {
@@ -157,29 +179,54 @@ export async function resolveCustomerEDocumentProfile(input: {
     associate_id: String(contactId),
     has_products: "false",
   });
+  const customerIdentity = digits(customer.vergi_no || customer.tc_no);
   const commercialRows = listFrom(await providerRequest(`${baseUrl}/invoices?${commercialQuery.toString()}`, headers))
     .filter((row) => {
       const returnedAssociateId = Number(row?.associate_id || row?.contact_id || row?.header?.associate?.id || 0);
-      return returnedAssociateId <= 0 || returnedAssociateId === contactId;
+      const returnedIdentity = digits(row?.header?.associate?.identity_no || row?.associate?.identity_no);
+      if (returnedAssociateId > 0 && returnedAssociateId !== contactId) return false;
+      return !customerIdentity || !returnedIdentity || returnedIdentity === customerIdentity;
     })
-    .sort((left, right) => text(right?.header?.issue_date || right?.issue_date).localeCompare(text(left?.header?.issue_date || left?.issue_date)))
-    .slice(0, 12);
+    .sort((left, right) => text(right?.header?.issue_date || right?.issue_date).localeCompare(text(left?.header?.issue_date || left?.issue_date)));
+
+  const documentIds = new Set(
+    commercialRows.map(commercialDocumentId).filter((value) => Number.isSafeInteger(value) && value > 0),
+  );
+  const serialNos = new Set(commercialRows.map(commercialSerialNo).filter(Boolean));
 
   let resolved: CustomerEDocumentProfile | null = null;
-  for (const commercial of commercialRows) {
-    const documentId = Number(commercial?.commercial_doc_id || commercial?.document_id || commercial?.id || 0);
-    if (!Number.isSafeInteger(documentId) || documentId <= 0) continue;
-    const officialQuery = new URLSearchParams({
+  if (commercialRows.length > 0) {
+    const partyName = text(customer.company || customer.name);
+    const officialByPartyQuery = new URLSearchParams({
       company_id: String(companyId),
       direction: "outbound",
-      document_id: String(documentId),
+      party_name: partyName,
     });
-    const officialRows = listFrom(await providerRequest(`${baseUrl}/e_document/invoices?${officialQuery.toString()}`, headers));
-    const official = officialRows.find(
-      (row) => Number(row?.document_id || row?.commercial_doc_id || row?.id || 0) === documentId,
-    );
-    resolved = official ? profileFromOfficialInvoice(official, environment) : null;
-    if (resolved) break;
+    const officialByParty = listFrom(
+      await providerRequest(`${baseUrl}/e_document/invoices?${officialByPartyQuery.toString()}`, headers),
+    )
+      .filter((row) => documentIds.has(officialDocumentId(row)) || serialNos.has(officialSerialNo(row)))
+      .sort((left, right) => text(right?.issue_date || right?.invoice_date).localeCompare(text(left?.issue_date || left?.invoice_date)));
+    resolved = officialByParty.map((row) => profileFromOfficialInvoice(row, environment)).find(Boolean) || null;
+  }
+
+  // Some KolayBi accounts do not apply party_name consistently. In that case,
+  // query recent invoices by their verified commercial document IDs in small batches.
+  const fallbackCandidates = resolved ? [] : commercialRows.slice(0, 40);
+  for (let index = 0; index < fallbackCandidates.length && !resolved; index += 5) {
+    const batch = fallbackCandidates.slice(index, index + 5);
+    const results = await Promise.all(batch.map(async (commercial) => {
+      const documentId = commercialDocumentId(commercial);
+      if (!Number.isSafeInteger(documentId) || documentId <= 0) return null;
+      const officialQuery = new URLSearchParams({
+        company_id: String(companyId),
+        direction: "outbound",
+        document_id: String(documentId),
+      });
+      const officialRows = listFrom(await providerRequest(`${baseUrl}/e_document/invoices?${officialQuery.toString()}`, headers));
+      return officialRows.find((row) => officialDocumentId(row) === documentId) || null;
+    }));
+    resolved = results.map((row) => profileFromOfficialInvoice(row, environment)).find(Boolean) || null;
   }
 
   if (!resolved) {

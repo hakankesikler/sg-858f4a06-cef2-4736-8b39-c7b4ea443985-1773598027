@@ -1527,7 +1527,7 @@ test("KolayBi sandbox test identities receive deterministic e-document profiles"
 });
 
 test("sales invoice e-document profile is resolved on demand and withholding stays purchase-only", async () => {
-  const [resolver, endpoint, service, invoiceDialog, editDialog, provider, configuration, purchaseInbox, migration] = await Promise.all([
+  const [resolver, endpoint, service, invoiceDialog, editDialog, provider, configuration, purchaseInbox, migration, nartliftProfile] = await Promise.all([
     read("src/lib/kolaybi-customer-e-document.ts"),
     read("src/pages/api/kolaybi/customers/[customerId]/e-document-profile.ts"),
     read("src/services/invoiceIntegrationService.ts"),
@@ -1537,9 +1537,14 @@ test("sales invoice e-document profile is resolved on demand and withholding sta
     read("src/components/InvoiceConfigurationPanel.tsx"),
     read("src/components/PurchaseInvoiceInbox.tsx"),
     read("supabase/migrations/20260910193000_disable_sales_invoice_withholding.sql"),
+    read("supabase/migrations/20260910223000_backfill_nartlift_e_document_profile.sql"),
   ]);
 
   assert.match(resolver, /associate_id: String\(contactId\)/);
+  assert.match(resolver, /party_name: partyName/);
+  assert.match(resolver, /returnedIdentity === customerIdentity/);
+  assert.match(resolver, /commercialRows\.slice\(0, 40\)/);
+  assert.doesNotMatch(resolver, /\.slice\(0, 12\)/);
   assert.match(resolver, /\/e_document\/invoices\?/);
   assert.match(resolver, /document_id: String\(documentId\)/);
   assert.match(resolver, /kolaybi_official_invoice_on_demand/);
@@ -1554,6 +1559,10 @@ test("sales invoice e-document profile is resolved on demand and withholding sta
   assert.match(purchaseInbox, /<Label>Tevkifat<\/Label>/);
   assert.match(migration, /rex_clear_sales_invoice_item_withholding/);
   assert.match(migration, /WHERE category = 'withholding_transport'/);
+  assert.match(nartliftProfile, /6290569996/);
+  assert.match(nartliftProfile, /kolaybi_contact_id = 6281105/);
+  assert.match(nartliftProfile, /TICARIFATURA/);
+  assert.match(nartliftProfile, /kolaybi_official_invoice_verified/);
 });
 
 test("new customers can create drafts while KolayBi resolves the official e-document scenario", async () => {
