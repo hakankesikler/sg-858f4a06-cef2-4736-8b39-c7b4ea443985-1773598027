@@ -2,7 +2,7 @@ export type MarketingIcon = "truck" | "route" | "globe" | "plane" | "ship" | "za
 
 export type MarketingPageData = {
   slug: string;
-  kind: "service" | "about" | "contact";
+  kind: "service" | "guide" | "about" | "contact";
   icon: MarketingIcon;
   eyebrow: string;
   title: string;
@@ -246,7 +246,152 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Kapıdan kapıya denizyolu hizmeti alınabilir mi?", answer: "Uygun hatlarda çıkış ve varış kara taşımaları denizyolu operasyonuna eklenerek kapıdan kapıya plan yapılabilir." },
       { question: "Konteyner türünü kim belirler?", answer: "Yükün ölçüsü, ağırlığı, ambalajı, yükleme biçimi ve özel gereksinimleri incelenerek uygun konteyner seçeneği önerilir." },
     ],
-    related: ["uluslararasi-karayolu-tasimaciligi", "hava-kargo", "depolama"],
+    related: ["denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi", "lcl-mi-fcl-mi"],
+  },
+  "denizyolu-parsiyel-tasimacilik": {
+    slug: "denizyolu-parsiyel-tasimacilik",
+    kind: "service",
+    icon: "ship",
+    eyebrow: "LCL · Paylaşımlı konteyner",
+    title: "Denizyolu Parsiyel Taşımacılık (LCL)",
+    lead: "Konteynerin tamamını doldurmayan ticari yüklerinizi; uygun maliyet, hareket programı ve teslim hedefini birlikte gözeten LCL seçenekleriyle limandan limana veya kapıdan kapıya organize ediyoruz.",
+    seoTitle: "Denizyolu Parsiyel Taşımacılık (LCL) | REX Lojistik",
+    seoDescription: "LCL denizyolu parsiyel taşımacılık, CBM bazlı yük planlama, konsolidasyon, liman ve kapı teslim seçenekleri için REX Lojistik'ten teklif alın.",
+    keywords: ["denizyolu parsiyel taşımacılık", "LCL taşımacılık", "parsiyel deniz kargo", "palet denizyolu taşıma", "LCL navlun"],
+    highlights: [
+      { title: "Akılcı Maliyet", text: "Kullanılan hacme uygun seçenekler toplam taşıma kapsamıyla karşılaştırılır" },
+      { title: "Planlı Transit", text: "Konsolidasyon kapanışı ve gemi programı teslim hedefiyle eşleştirilir" },
+      { title: "Uçtan Uca Akış", text: "Depo, liman ve teslim adresi arasındaki etaplar tek planda ele alınır" },
+    ],
+    sections: [
+      {
+        title: "LCL taşımacılık nasıl çalışır?",
+        paragraphs: [
+          "LCL, aynı varış yönünde ilerleyen farklı göndericilere ait yüklerin bir konteynerde konsolide edilmesidir. Gönderici komple konteyner yerine kullandığı hacim ve taşıma koşullarına göre planlanan hizmetten yararlanır.",
+          "REX Lojistik; yükün koli veya palet adedini, ölçülerini, brüt ağırlığını, çıkış ve teslim adreslerini değerlendirir. Farklı çıkış programları ve liman bağlantıları arasından maliyet ile transit süre dengesini kuran seçenekler tek teklif kapsamında açıklanır.",
+        ],
+        bullets: ["Paletli ve kolili ticari yükler", "İthalat ve ihracat yönlü LCL organizasyonu", "Depodan limana ve limandan adrese transfer", "Yük ve taşıma evrakı koordinasyonu"],
+      },
+      {
+        title: "Teklifte hangi bilgiler gerekir?",
+        paragraphs: [
+          "Doğru LCL teklifi için her ambalajın en, boy ve yüksekliği; adet, brüt ağırlık, ürün tanımı ve istiflenebilirlik bilgisi paylaşılmalıdır. Bu bilgiler toplam CBM ile ağırlık esaslı ücretlendirme karşılaştırmasının yapılmasını sağlar.",
+          "Çıkış ve varış masrafları, konsolidasyon hizmeti, liman işlemleri ve kara transferleri teklif kapsamına göre değişebilir. Bu nedenle yalnızca ana navlun rakamı değil; kapıdan kapıya toplam maliyet, hareket günü ve tahmini transit süre birlikte karşılaştırılır.",
+        ],
+      },
+      {
+        title: "LCL ne zaman güçlü bir seçenektir?",
+        paragraphs: [
+          "Konteynerin tamamını doldurmayan, sevk tarihi konsolidasyon programına uyabilen ve uygun şekilde ambalajlanmış yüklerde LCL önemli bir alternatiftir. Düzenli çıkışa uygun yüklerde gereksiz kapasite maliyetini azaltırken öngörülebilir bir sevk takvimi kurmaya yardımcı olur. Yük hacmi yükseldiğinde ise LCL ile FCL toplam maliyeti ve transit planı birlikte karşılaştırılmalıdır.",
+          "Hassas, kırılabilir veya özel elleçleme gerektiren ürünlerde yalnızca maliyet değil; aktarma, yükleme şekli ve hasar riski de seçim kriteri olmalıdır.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Yük ölçümü", text: "Koli veya palet ölçüleri, adet ve brüt ağırlık alınır." },
+      { title: "Konsolidasyon", text: "Uygun çıkış programı ve liman bağlantısı belirlenir." },
+      { title: "Denizyolu sevki", text: "Yük konteynere alınır ve planlanan gemiyle taşınır." },
+      { title: "Ayrıştırma & teslim", text: "Varışta yük ayrıştırılır ve seçilen kapsama göre teslim edilir." },
+    ],
+    faq: [
+      { question: "LCL ile bir palet gönderilebilir mi?", answer: "Evet. Ölçüleri, ağırlığı, ürün niteliği ve güzergâhı uygun olan tek paletli ticari yükler LCL olarak planlanabilir." },
+      { question: "LCL fiyatı sadece CBM'ye göre mi hesaplanır?", answer: "Her zaman değil. Hacim, brüt ağırlık, rota, ürün, yerel masraflar ve hizmet kapsamı birlikte değerlendirilir. Bazı tarifelerde hacim ve ağırlık karşılaştırması kullanılır." },
+      { question: "LCL taşıma FCL'den daha mı ucuzdur?", answer: "Düşük hacimlerde avantajlı olabilir; ancak hacim yükseldikçe konsolidasyon ve yerel masraflar nedeniyle FCL alternatifiyle toplam maliyet karşılaştırması yapılmalıdır." },
+      { question: "Kapıdan kapıya LCL hizmeti alınabilir mi?", answer: "Uygun hatlarda çıkış ve varış kara taşımaları LCL operasyona eklenerek kapıdan kapıya plan hazırlanabilir." },
+    ],
+    related: ["cbm-hesaplama", "lcl-mi-fcl-mi", "denizyolu-konteyner-tasimaciligi"],
+  },
+  "denizyolu-konteyner-tasimaciligi": {
+    slug: "denizyolu-konteyner-tasimaciligi",
+    kind: "service",
+    icon: "ship",
+    eyebrow: "FCL · Komple konteyner",
+    title: "Denizyolu Konteyner Taşımacılığı (FCL)",
+    lead: "İthalat ve ihracat yüklerinizi; doğru ekipman, rekabetçi toplam maliyet ve teslim hedefinize uygun gemi programı odağında FCL konteyner seçenekleriyle planlıyoruz.",
+    seoTitle: "Denizyolu Konteyner Taşımacılığı (FCL) | REX Lojistik",
+    seoDescription: "FCL komple konteyner taşımacılığı, 20 ve 40 feet konteyner seçenekleri, liman ve kapı teslim operasyonları için REX Lojistik'ten teklif alın.",
+    keywords: ["denizyolu konteyner taşımacılığı", "FCL taşımacılık", "komple konteyner", "20 DC konteyner", "40 HC konteyner"],
+    highlights: [
+      { title: "Maliyet Kontrolü", text: "Navlun ve yerel masraflar toplam taşıma bedeli üzerinden değerlendirilir" },
+      { title: "Program Seçeneği", text: "Gemi hareketleri teslim hedefi ve ekipman uygunluğuyla karşılaştırılır" },
+      { title: "Doğru Ekipman", text: "Kapasite kaybını ve operasyon gecikmesini azaltan konteyner seçimi yapılır" },
+    ],
+    sections: [
+      {
+        title: "FCL konteyner taşımacılığı nedir?",
+        paragraphs: [
+          "FCL, bir konteynerin tek göndericinin yüküne ayrıldığı taşıma modelidir. Konteynerin fiziksel olarak tamamen dolması şart değildir; gönderici tahsis edilen konteynerin tamamını kullanır.",
+          "Bu model, yüksek hacimli yüklerde, düzenli ihracat ve ithalat programlarında veya diğer yüklerle konsolide edilmesi tercih edilmeyen ürünlerde değerlendirilir. Konteyner türü; ürün, toplam ağırlık, hacim, yükleme biçimi ve kapı açıklığı dikkate alınarak belirlenir. Doğru ekipman seçimi kullanılmayan kapasiteyi, yeniden elleçlemeyi ve zaman kaybını azaltmaya yardımcı olur.",
+        ],
+        bullets: ["20 DC, 40 DC ve 40 HC seçenekleri", "Reefer, Open Top ve Flat Rack değerlendirmesi", "Liman-liman veya kapı-kapı organizasyon", "İthalat ve ihracat taşıma evrakı koordinasyonu"],
+      },
+      {
+        title: "Doğru konteyner nasıl seçilir?",
+        paragraphs: [
+          "Ağır fakat düşük hacimli yükler ile hafif fakat hacimli yükler aynı konteyner ihtiyacını oluşturmaz. İç ölçüler, kapı açıklığı, yük dağılımı, ambalaj ve yükleme ekipmanı birlikte kontrol edilmelidir.",
+          "Standart ölçü tabloları ön planlama için kullanılır. Rezervasyon öncesinde tahsis edilen ekipmanın teknik özellikleri ve operasyonun geçerli ağırlık sınırları ayrıca teyit edilmelidir.",
+        ],
+      },
+      {
+        title: "Toplam maliyeti etkileyen kalemler",
+        paragraphs: [
+          "Deniz navlununun yanında çıkış ve varış terminal masrafları, kara taşıması, ekipman teslimi, serbest süre, ardiye, demuraj ve detention koşulları toplam maliyeti etkileyebilir.",
+          "Teklifte dahil ve hariç hizmetlerin, teslim şeklinin, yükleme adresinin ve serbest sürelerin açık biçimde belirtilmesi sonradan oluşabilecek maliyet farklarını azaltır. Alternatif gemi programları aynı kapsamla karşılaştırılarak bütçe ve teslim tarihi arasında daha dengeli bir seçim yapılır.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Kapasite analizi", text: "Yük ölçüsü, ağırlığı ve yükleme yöntemi değerlendirilir." },
+      { title: "Ekipman & rezervasyon", text: "Uygun konteyner ve gemi programı seçilir." },
+      { title: "Yükleme & liman", text: "Konteyner temini, dolum ve liman teslimi koordine edilir." },
+      { title: "Varış & son teslim", text: "Varış operasyonu ve seçilen kara bağlantısı takip edilir." },
+    ],
+    faq: [
+      { question: "FCL için konteyner tamamen dolu olmak zorunda mı?", answer: "Hayır. FCL, konteynerin tek göndericiye tahsis edilmesini ifade eder; konteynerin fiziksel olarak tamamen dolması zorunlu değildir." },
+      { question: "20 DC ile 40 HC arasındaki temel fark nedir?", answer: "40 HC daha uzun ve daha yüksek iç hacim sunar. Doğru seçim yalnızca hacme değil, toplam ağırlığa, yük dağılımına ve operasyon koşullarına göre yapılır." },
+      { question: "Konteyner taşımasında kapıdan kapıya hizmet verilebilir mi?", answer: "Uygun güzergâhlarda konteynerin yükleme adresine temini ve varışta teslim adresine ulaştırılması denizyolu planına dahil edilebilir." },
+      { question: "Demuraj ve detention nasıl önlenir?", answer: "Serbest sürelerin önceden bilinmesi, evrak ve teslim programının hazırlanması ve konteyner hareketlerinin zamanında tamamlanması riski azaltır; koşullar taşıyıcı ve limana göre değişir." },
+    ],
+    related: ["konteyner-olculeri", "lcl-mi-fcl-mi", "denizyolu-parsiyel-tasimacilik"],
+  },
+  "lcl-mi-fcl-mi": {
+    slug: "lcl-mi-fcl-mi",
+    kind: "guide",
+    icon: "ship",
+    eyebrow: "Karşılaştırmalı seçim rehberi",
+    title: "LCL mi FCL mi?",
+    lead: "Parsiyel denizyolu ile komple konteyner seçeneklerini; yalnızca CBM üzerinden değil, kapıdan kapıya toplam maliyet ve hedeflenen transit süre birlikte düşünülerek karşılaştırın.",
+    seoTitle: "LCL mi FCL mi? Denizyolu Taşıma Karşılaştırması | REX",
+    seoDescription: "LCL ve FCL arasındaki farkları; hacim, maliyet, elleçleme ve teslim süresi açısından karşılaştırın. Yükünüz için doğru denizyolu modelini seçin.",
+    keywords: ["LCL mi FCL mi", "LCL FCL farkı", "parsiyel mi konteyner mi", "denizyolu taşıma karşılaştırma"],
+    highlights: [], sections: [], faq: [],
+    related: ["cbm-hesaplama", "denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi"],
+  },
+  "konteyner-olculeri": {
+    slug: "konteyner-olculeri",
+    kind: "guide",
+    icon: "ship",
+    eyebrow: "Teknik ölçü ve kapasite rehberi",
+    title: "Konteyner Ölçüleri ve Kapasiteleri",
+    lead: "20 DC, 40 DC ve 40 HC konteynerleri karşılaştırarak gereksiz kapasite maliyetini azaltan ve yüklemeyi hızlandıran ekipman seçimine sağlam bir başlangıç yapın.",
+    seoTitle: "20'lik, 40'lık ve 40 HC Konteyner Ölçüleri | REX",
+    seoDescription: "20 DC, 40 DC ve 40 HC konteyner iç ölçüleri, kapı açıklıkları ve yaklaşık hacimleri. Yük planlaması için karşılaştırma tablosu.",
+    keywords: ["konteyner ölçüleri", "20 lik konteyner ölçüleri", "40 lık konteyner ölçüleri", "40 HC ölçüleri", "konteyner kapasitesi"],
+    highlights: [], sections: [], faq: [],
+    related: ["cbm-hesaplama", "denizyolu-konteyner-tasimaciligi", "lcl-mi-fcl-mi"],
+  },
+  "cbm-hesaplama": {
+    slug: "cbm-hesaplama",
+    kind: "guide",
+    icon: "ship",
+    eyebrow: "Ücretsiz yük hacmi aracı",
+    title: "CBM Hesaplama Aracı",
+    lead: "Koli veya palet ölçülerinizi girerek toplam hacmi ve ağırlığı netleştirin; size uygun maliyet ve transit süre seçeneklerinin daha hızlı hazırlanmasını sağlayın.",
+    seoTitle: "CBM Hesaplama Aracı | Denizyolu Hacim Hesabı | REX",
+    seoDescription: "Ücretsiz CBM hesaplama aracıyla koli ve paletlerinizin toplam metreküpünü, brüt ağırlığını ve yaklaşık LCL W/M değerini hesaplayın.",
+    keywords: ["CBM hesaplama", "metreküp hesaplama", "koli hacmi hesaplama", "LCL hesaplama", "konteyner hacim hesaplama"],
+    highlights: [], sections: [], faq: [],
+    related: ["lcl-mi-fcl-mi", "konteyner-olculeri", "denizyolu-parsiyel-tasimacilik"],
   },
   "express-kargo": {
     slug: "express-kargo",

@@ -13,6 +13,8 @@ const serviceLinks = [
   { href: "/uluslararasi-karayolu-tasimaciligi", label: "Uluslararası Karayolu" },
   { href: "/hava-kargo", label: "Hava Kargo" },
   { href: "/denizyolu-tasimaciligi", label: "Denizyolu Taşımacılığı" },
+  { href: "/denizyolu-parsiyel-tasimacilik", label: "Denizyolu Parsiyel (LCL)" },
+  { href: "/denizyolu-konteyner-tasimaciligi", label: "Konteyner Taşımacılığı (FCL)" },
   { href: "/express-kargo", label: "Express Kargo" },
   { href: "/depolama", label: "Depolama Hizmetleri" },
 ];

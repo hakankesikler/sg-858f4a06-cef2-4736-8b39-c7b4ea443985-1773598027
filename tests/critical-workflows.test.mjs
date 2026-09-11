@@ -1218,6 +1218,42 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
   assert.match(security, /en az bir özel karakter/);
 });
 
+test("sea freight content hub publishes LCL, FCL, container and CBM resources", async () => {
+  const slugs = [
+    "denizyolu-parsiyel-tasimacilik",
+    "denizyolu-konteyner-tasimaciligi",
+    "lcl-mi-fcl-mi",
+    "konteyner-olculeri",
+    "cbm-hesaplama",
+  ];
+  const [content, resourcePage, header, footer, sitemap, calculator] = await Promise.all([
+    read("src/content/marketing-pages.ts"),
+    read("src/components/SeaFreightResourcePage.tsx"),
+    read("src/components/Header.tsx"),
+    read("src/components/Footer.tsx"),
+    read("public/sitemap.xml"),
+    read("src/pages/cbm-hesaplama.tsx"),
+  ]);
+
+  for (const slug of slugs) {
+    assert.match(content, new RegExp(`"${slug}"`));
+    assert.match(sitemap, new RegExp(`https://www\\.rexlojistik\\.com/${slug}`));
+  }
+
+  assert.match(header, /Denizyolu Parsiyel \(LCL\)/);
+  assert.match(header, /Konteyner Taşımacılığı \(FCL\)/);
+  assert.match(footer, /CBM Hesaplama/);
+  assert.match(resourcePage, /"@type": "Article"/);
+  assert.match(resourcePage, /"@type": "FAQPage"/);
+  assert.match(content, /Akılcı Maliyet/);
+  assert.match(content, /Planlı Transit/);
+  assert.match(content, /Maliyet Kontrolü/);
+  assert.match(content, /Program Seçeneği/);
+  assert.match(calculator, /Boy × En × Yükseklik × Adet ÷ 1\.000\.000/);
+  assert.match(calculator, /Doğru ölçü, daha isabetli seçenek/);
+  assert.match(calculator, /aria-live="polite"/);
+});
+
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
   const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, reconciliationSql, automaticSyncSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, associateCreateApi, associateHelper, outboundSyncApi, proceedApi, cancelApi, providerLib, workflow, collection, vercel, service, office, expenseWorkspace, financeWorkspace, accounting, cariForm] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
