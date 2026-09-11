@@ -228,22 +228,39 @@ test("public tracking shows only server-masked sender and receiver hints", async
   assert.match(tracking, /result\.receiver_masked/);
 });
 
-test("public tracking never exposes delivery evidence, recipient identity or provider internals", async () => {
-  const [sql, api, service, tracking] = await Promise.all([
+test("public tracking masks the delivery recipient and limits proof access to 24 hours", async () => {
+  const [hardenedSql, timedSql, api, deliveryApi, service, tracking] = await Promise.all([
     read("supabase/migrations/20260910143000_harden_public_tracking_privacy.sql"),
+    read("supabase/migrations/20260911150000_public_delivery_document_24h.sql"),
     read("src/pages/api/tracking/express.ts"),
+    read("src/pages/api/tracking/delivery-document.ts"),
     read("src/services/publicTrackingService.ts"),
     read("src/components/TrackingSection.tsx"),
   ]);
-  const publicFunction = sql.slice(sql.indexOf("CREATE OR REPLACE FUNCTION public.rex_public_track_shipment"));
+  const publicFunction = timedSql.slice(timedSql.indexOf("CREATE OR REPLACE FUNCTION public.rex_public_track_shipment"));
   assert.doesNotMatch(publicFunction, /'delivered_to'|'delivery_proof_url'|'provider_reference'/);
-  assert.match(sql, /DROP POLICY IF EXISTS rex_public_delivered_proof_select/);
-  assert.match(sql, /REVOKE ALL ON FUNCTION public\.rex_is_delivered_proof_object\(text\) FROM PUBLIC,anon,authenticated/);
+  assert.match(publicFunction, /'delivered_to_masked'.*rex_mask_public_party_name\(s\.delivered_to\)/s);
+  assert.match(publicFunction, /'delivery_document_available_until'/);
+  assert.match(publicFunction, /s\.delivered_at\+interval '24 hours'/);
+  assert.match(timedSql, /ADD COLUMN IF NOT EXISTS delivered_at timestamptz/);
+  assert.match(timedSql, /CREATE TRIGGER rex_shipments_stamp_delivered_at_insert/);
+  assert.match(timedSql, /CREATE TRIGGER rex_shipments_stamp_delivered_at_update/);
+  assert.match(hardenedSql, /DROP POLICY IF EXISTS rex_public_delivered_proof_select/);
+  assert.match(hardenedSql, /REVOKE ALL ON FUNCTION public\.rex_is_delivered_proof_object\(text\) FROM PUBLIC,anon,authenticated/);
   assert.match(api, /delete shipment\.delivered_to/);
   assert.match(api, /delete shipment\.delivery_proof_url/);
   assert.match(api, /delete shipment\.provider_reference/);
-  assert.doesNotMatch(service, /delivery_proof_url|delivered_to|provider_reference/);
-  assert.doesNotMatch(tracking, /openDeliveryProof|Teslim Evrakını Görüntüle|result\.provider_reference/);
+  assert.match(deliveryApi, /\^REX-\[A-F0-9\]\{16\}\$/);
+  assert.match(deliveryApi, /deliveredAt \+ accessWindowMs/);
+  assert.match(deliveryApi, /allowedScanStatuses = new Set\(\["clean", "legacy_unscanned"\]\)/);
+  assert.match(deliveryApi, /createR2ViewUrl/);
+  assert.doesNotMatch(deliveryApi, /res\.status\(200\)\.json\([^)]*file_reference/s);
+  assert.match(service, /delivered_to_masked\?: string \| null/);
+  assert.match(service, /delivery_document_available_until\?: string \| null/);
+  assert.match(tracking, /result\.delivered_to_masked/);
+  assert.match(tracking, /Teslim Evrakını Görüntüle/);
+  assert.match(tracking, /\/api\/tracking\/delivery-document\?tracking=/);
+  assert.doesNotMatch(tracking, /result\.provider_reference/);
 });
 
 test("customer portal remains company-scoped and does not expose internal costs", async () => {

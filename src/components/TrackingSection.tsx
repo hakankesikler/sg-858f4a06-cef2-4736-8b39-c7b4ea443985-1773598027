@@ -2,7 +2,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Copy, ExternalLink, Loader2, MapPin, Package, Search, Truck } from "lucide-react";
+import { CheckCircle, Copy, ExternalLink, FileText, Loader2, MapPin, Package, Search, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { publicTrackingService, type PublicTrackingResult } from "@/services/publicTrackingService";
 
@@ -63,6 +63,7 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState("");
+  const [expiredDeliveryDocumentDeadline, setExpiredDeliveryDocumentDeadline] = useState<string | null>(null);
   const { toast } = useToast();
 
   const lookup = useCallback(async (number: string, silent = false) => {
@@ -102,6 +103,18 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
     return () => window.clearInterval(timer);
   }, [lookup, result?.status, result?.tracking_number]);
 
+  const deliveryDocumentDeadline = result?.delivery_document_available_until || null;
+  useEffect(() => {
+    if (!deliveryDocumentDeadline) return;
+    const remaining = new Date(deliveryDocumentDeadline).getTime() - Date.now();
+    if (!Number.isFinite(remaining) || remaining <= 0) return;
+    const timer = window.setTimeout(
+      () => setExpiredDeliveryDocumentDeadline(deliveryDocumentDeadline),
+      Math.min(remaining + 250, 2_147_483_647),
+    );
+    return () => window.clearTimeout(timer);
+  }, [deliveryDocumentDeadline]);
+
   const stages = useMemo(() => {
     const events = result?.events || [];
     const eventDate = (statuses: string[]) => events.find((event) => statuses.includes(event.new_status || ""))?.event_at;
@@ -140,6 +153,11 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
     ? expressStatusRank(result.carrier_status || result.status)
     : statusRank(result?.status);
   const cancelled = ["iptal", "İptal"].includes(result?.status || "");
+  const deliveryDocumentAvailable = Boolean(
+    deliveryDocumentDeadline &&
+    expiredDeliveryDocumentDeadline !== deliveryDocumentDeadline &&
+    new Date(deliveryDocumentDeadline).getTime() > Date.now(),
+  );
 
   return (
     <section id="takip" className="py-20 bg-slate-50/60 scroll-mt-24">
@@ -250,7 +268,21 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
                           <p className="mt-1 text-sm text-green-800">
                             Teslim tarihi: {formatDate(result.delivery_date)}
                           </p>
+                          {result.delivered_to_masked && (
+                            <p className="mt-1 text-sm text-green-800">Teslim alan: {result.delivered_to_masked}</p>
+                          )}
                         </div>
+                        {deliveryDocumentAvailable && (
+                          <Button type="button" className="bg-green-700 hover:bg-green-800" asChild>
+                            <a
+                              href={`/api/tracking/delivery-document?tracking=${encodeURIComponent(result.tracking_number)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <FileText className="mr-2 h-4 w-4" /> Teslim Evrakını Görüntüle
+                            </a>
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}

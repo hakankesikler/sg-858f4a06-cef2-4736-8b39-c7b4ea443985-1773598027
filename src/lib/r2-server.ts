@@ -94,6 +94,19 @@ export async function createR2DownloadUrl(namespace: R2Namespace, path: string) 
   );
 }
 
+export async function createR2ViewUrl(namespace: R2Namespace, path: string) {
+  const value = config();
+  return getSignedUrl(
+    client(),
+    new GetObjectCommand({
+      Bucket: value.bucket,
+      Key: objectKey(namespace, path),
+      ResponseContentDisposition: "inline",
+    }),
+    { expiresIn: 300 },
+  );
+}
+
 export async function inspectR2Object(namespace: R2Namespace, path: string) {
   const value = config();
   const result = await client().send(new HeadObjectCommand({ Bucket: value.bucket, Key: objectKey(namespace, path) }));

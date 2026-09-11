@@ -18,6 +18,8 @@ export interface PublicTrackingResult {
   pickup_date?: string | null;
   estimated_delivery_date?: string | null;
   delivery_date?: string | null;
+  delivered_to_masked?: string | null;
+  delivery_document_available_until?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   service_mode?: "road" | "international_express";

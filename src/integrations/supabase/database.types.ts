@@ -2086,6 +2086,7 @@ export type Database = {
           currency: string | null
           customer_id: string | null
           delivered_to: string | null
+          delivered_at: string | null
           delivery_date: string | null
           delivery_proof_url: string | null
           destination: string | null
@@ -2134,6 +2135,7 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           delivered_to?: string | null
+          delivered_at?: string | null
           delivery_date?: string | null
           delivery_proof_url?: string | null
           destination?: string | null
@@ -2182,6 +2184,7 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           delivered_to?: string | null
+          delivered_at?: string | null
           delivery_date?: string | null
           delivery_proof_url?: string | null
           destination?: string | null
