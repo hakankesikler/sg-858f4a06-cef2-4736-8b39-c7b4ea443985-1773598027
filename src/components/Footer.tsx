@@ -30,7 +30,11 @@ export function Footer() {
               <li><Link href="/denizyolu-parsiyel-tasimacilik" className="hover:text-orange-300 transition-colors">Denizyolu Parsiyel (LCL)</Link></li>
               <li><Link href="/denizyolu-konteyner-tasimaciligi" className="hover:text-orange-300 transition-colors">Konteyner Taşımacılığı (FCL)</Link></li>
               <li><Link href="/cbm-hesaplama" className="hover:text-orange-300 transition-colors">CBM Hesaplama</Link></li>
-              <li><Link href="/express-kargo" className="hover:text-orange-300 transition-colors">Express Kargo</Link></li>
+              <li><Link href="/express-kargo" className="hover:text-orange-300 transition-colors">Uluslararası Express Kargo</Link></li>
+              <li><Link href="/yurtdisindan-turkiyeye-express-kargo" className="hover:text-orange-300 transition-colors">Yurt Dışından Türkiye'ye Express</Link></li>
+              <li><Link href="/turkiyeden-yurtdisina-express-kargo" className="hover:text-orange-300 transition-colors">Türkiye'den Yurt Dışına Express</Link></li>
+              <li><Link href="/express-kargo-hacimsel-agirlik-hesaplama" className="hover:text-orange-300 transition-colors">Express Kargo Desi Hesaplama</Link></li>
+              <li><Link href="/yurtdisi-kargo-gonderim-rehberi" className="hover:text-orange-300 transition-colors">Yurt Dışı Kargo Rehberi</Link></li>
               <li><Link href="/depolama" className="hover:text-orange-300 transition-colors">Depolama Hizmetleri</Link></li>
             </ul>
           </div>

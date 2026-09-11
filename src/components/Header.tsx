@@ -17,7 +17,9 @@ const serviceLinks = [
   { href: "/denizyolu-tasimaciligi", label: "Denizyolu Taşımacılığı" },
   { href: "/denizyolu-parsiyel-tasimacilik", label: "Denizyolu Parsiyel (LCL)" },
   { href: "/denizyolu-konteyner-tasimaciligi", label: "Konteyner Taşımacılığı (FCL)" },
-  { href: "/express-kargo", label: "Express Kargo" },
+  { href: "/express-kargo", label: "Uluslararası Express Kargo" },
+  { href: "/yurtdisindan-turkiyeye-express-kargo", label: "Yurt Dışından Türkiye'ye Express" },
+  { href: "/turkiyeden-yurtdisina-express-kargo", label: "Türkiye'den Yurt Dışına Express" },
   { href: "/depolama", label: "Depolama Hizmetleri" },
 ];
 
@@ -51,7 +53,7 @@ export function Header() {
                 <Link href="/#hizmetler" className="flex items-center gap-1 py-7 font-medium text-gray-700 transition-colors hover:text-orange-500">
                   Hizmetler <ChevronDown className="h-4 w-4" aria-hidden="true" />
                 </Link>
-                <div className="invisible absolute left-1/2 top-full w-80 -translate-x-1/2 -translate-y-2 rounded-2xl border border-slate-200 bg-white p-2 opacity-0 shadow-2xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                <div className="invisible absolute left-1/2 top-full grid w-[680px] -translate-x-1/2 -translate-y-2 grid-cols-2 rounded-2xl border border-slate-200 bg-white p-2 opacity-0 shadow-2xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
                   {serviceLinks.map((item) => (
                     <Link key={item.href} href={item.href} className="block rounded-xl px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-orange-50 hover:text-orange-600">
                       {item.label}

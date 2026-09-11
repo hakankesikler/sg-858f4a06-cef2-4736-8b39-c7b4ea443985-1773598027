@@ -1293,6 +1293,46 @@ test("air cargo content hub publishes nationwide pickup, comparison and chargeab
   assert.match(footer, /Hava Kargo Ağırlık Hesaplama/);
 });
 
+test("express cargo hub publishes inbound, outbound and planning resources without exposing intermediary integrations", async () => {
+  const expressSlugs = [
+    "yurtdisindan-turkiyeye-express-kargo",
+    "turkiyeden-yurtdisina-express-kargo",
+    "express-kargo-hacimsel-agirlik-hesaplama",
+    "yurtdisi-kargo-gonderim-rehberi",
+  ];
+  const [content, resourcePage, calculator, guide, header, footer, services, sitemap] = await Promise.all([
+    read("src/content/marketing-pages.ts"),
+    read("src/components/ExpressCargoResourcePage.tsx"),
+    read("src/pages/express-kargo-hacimsel-agirlik-hesaplama.tsx"),
+    read("src/pages/yurtdisi-kargo-gonderim-rehberi.tsx"),
+    read("src/components/Header.tsx"),
+    read("src/components/Footer.tsx"),
+    read("src/components/Services.tsx"),
+    read("public/sitemap.xml"),
+  ]);
+
+  for (const slug of expressSlugs) {
+    assert.match(content, new RegExp(`"${slug}"`));
+    assert.match(sitemap, new RegExp(`/${slug}<`));
+  }
+
+  const publicExpressCopy = [content, resourcePage, guide, services].join("\n");
+  assert.match(content, /220'den fazla ülke ve bölgeye/);
+  assert.match(content, /Türkiye'den dünyaya, dünyadan Türkiye'ye/);
+  assert.match(content, /DHL Express, FedEx, UPS veya Aramex/);
+  assert.match(content, /ortaklık, yetkili temsilcilik veya marka onayı anlamına gelmez/);
+  assert.doesNotMatch(publicExpressCopy, /QuickShipper|Navlungo/i);
+  assert.match(resourcePage, /Express kargo bilgi merkezi/);
+  assert.match(resourcePage, /Dünyadan Türkiye'ye/);
+  assert.match(resourcePage, /FAQPage/);
+  assert.match(calculator, /volumeCm3 \/ 5_000/);
+  assert.match(calculator, /Boy × En × Yükseklik × Adet ÷ 5\.000/);
+  assert.match(calculator, /aria-live="polite"/);
+  assert.match(guide, /Taşıyıcı değil, uygun servis seçilir/);
+  assert.match(header, /Yurt Dışından Türkiye'ye Express/);
+  assert.match(footer, /Express Kargo Desi Hesaplama/);
+});
+
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
   const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, reconciliationSql, automaticSyncSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, associateCreateApi, associateHelper, outboundSyncApi, proceedApi, cancelApi, providerLib, workflow, collection, vercel, service, office, expenseWorkspace, financeWorkspace, accounting, cariForm] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),

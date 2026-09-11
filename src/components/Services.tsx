@@ -43,8 +43,8 @@ const services: Service[] = [
   },
   {
     icon: Package,
-    title: "Express Kargo Hizmeti",
-    description: "Dünya çapında güvenilir express kargo iş ortaklarımızla dünyanın ulaşılabilir her ülkesine hızlı dosya, paket ve kargo teslimatı.",
+    title: "Uluslararası Express Kargo",
+    description: "Türkiye'den 220'den fazla ülke ve bölgeye gönderim; yurt dışındaki uygun adresten Türkiye'ye paket alımı.",
     href: "/express-kargo",
   },
   {
