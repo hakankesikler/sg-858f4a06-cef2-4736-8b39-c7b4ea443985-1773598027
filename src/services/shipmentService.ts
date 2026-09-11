@@ -217,7 +217,7 @@ export const shipmentService = {
         ,uetds_details:shipment_uetds_details(*)
         ,exceptions:shipment_exceptions(id, exception_type, status, occurred_at)
         ,delivery_documents(id, document_type, scan_status, is_active, version_number)
-        ,route_stops:shipment_route_stops(id,stop_key,stop_type,sequence_no,company_name,address_line,district,city,contact_name,contact_phone,instructions,planned_at)
+        ,route_stops:shipment_route_stops(id,stop_key,stop_type,sequence_no,company_name,party_type,identity_no,source_customer_id,address_line,district,city,contact_name,contact_phone,instructions,planned_at)
         ,shipment_cargo_items(
           id,
           adet,

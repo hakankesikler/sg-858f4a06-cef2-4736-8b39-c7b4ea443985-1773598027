@@ -1929,6 +1929,74 @@ export type Database = {
           },
         ]
       }
+      shipment_party_directory: {
+        Row: {
+          address_line: string | null
+          city: string | null
+          company_name: string
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          district: string | null
+          id: string
+          identity_no: string | null
+          last_used_at: string
+          location_key: string
+          normalized_name: string
+          party_type: string
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          address_line?: string | null
+          city?: string | null
+          company_name: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          district?: string | null
+          id?: string
+          identity_no?: string | null
+          last_used_at?: string
+          location_key: string
+          normalized_name: string
+          party_type?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          address_line?: string | null
+          city?: string | null
+          company_name?: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          district?: string | null
+          id?: string
+          identity_no?: string | null
+          last_used_at?: string
+          location_key?: string
+          normalized_name?: string
+          party_type?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_party_directory_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shipment_route_stops: {
         Row: {
           address_line: string | null
@@ -1939,10 +2007,13 @@ export type Database = {
           created_at: string
           district: string | null
           id: string
+          identity_no: string | null
           instructions: string | null
+          party_type: string
           planned_at: string | null
           sequence_no: number
           shipment_id: string
+          source_customer_id: string | null
           stop_key: string
           stop_type: string
           updated_at: string
@@ -1956,10 +2027,13 @@ export type Database = {
           created_at?: string
           district?: string | null
           id?: string
+          identity_no?: string | null
           instructions?: string | null
+          party_type?: string
           planned_at?: string | null
           sequence_no: number
           shipment_id: string
+          source_customer_id?: string | null
           stop_key: string
           stop_type: string
           updated_at?: string
@@ -1973,15 +2047,25 @@ export type Database = {
           created_at?: string
           district?: string | null
           id?: string
+          identity_no?: string | null
           instructions?: string | null
+          party_type?: string
           planned_at?: string | null
           sequence_no?: number
           shipment_id?: string
+          source_customer_id?: string | null
           stop_key?: string
           stop_type?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "shipment_route_stops_source_customer_id_fkey"
+            columns: ["source_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shipment_route_stops_shipment_id_fkey"
             columns: ["shipment_id"]

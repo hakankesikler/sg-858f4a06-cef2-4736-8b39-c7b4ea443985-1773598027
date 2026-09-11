@@ -1798,6 +1798,38 @@ test("shipments support multiple pickup and delivery stops with separately price
   assert.match(logistics, /teslim noktası/);
 });
 
+test("shipment parties distinguish companies from people and learn reusable addresses", async () => {
+  const [migration, form, stopCard, routeService, shipmentService] = await Promise.all([
+    read("supabase/migrations/20260911120000_learn_shipment_parties.sql"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/components/ShipmentPartyStopCard.tsx"),
+    read("src/services/shipmentRouteService.ts"),
+    read("src/services/shipmentService.ts"),
+  ]);
+
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.shipment_party_directory/);
+  assert.match(migration, /party_type IN \('corporate','individual'\)/);
+  assert.match(migration, /ADD COLUMN IF NOT EXISTS identity_no/);
+  assert.match(migration, /ADD COLUMN IF NOT EXISTS source_customer_id/);
+  assert.match(migration, /ON CONFLICT \(normalized_name,location_key\) DO UPDATE/);
+  assert.match(migration, /use_count=shipment_party_directory\.use_count\+1/);
+  assert.match(migration, /GRANT SELECT ON TABLE public\.shipment_party_directory TO authenticated/);
+  assert.match(migration, /REVOKE ALL ON TABLE public\.shipment_party_directory FROM PUBLIC,anon,authenticated/);
+  assert.match(form, /shipmentRouteService\.getPartyDirectory/);
+  assert.match(form, /customerEntry\.address_line/);
+  assert.match(form, /applyPartyDirectoryEntry/);
+  assert.match(form, /Girilen kurumsal Vergi No 10, bireysel T\.C\. Kimlik No 11 haneli olmalıdır/);
+  assert.match(form, /sender_tax_id: primaryPickup\.identity_no/);
+  assert.match(form, /receiver_tax_id: primaryDelivery\.identity_no/);
+  assert.match(stopCard, /Kurumsal/);
+  assert.match(stopCard, /Bireysel/);
+  assert.match(stopCard, /Vergi No \(VKN\)/);
+  assert.match(stopCard, /T\.C\. Kimlik No/);
+  assert.match(stopCard, /Kayıtlı Bilgiyi \/ Adresi Kullan/);
+  assert.match(routeService, /shipment_party_directory/);
+  assert.match(shipmentService, /party_type,identity_no,source_customer_id/);
+});
+
 test("shipment completion offers the approved driver details in WhatsApp and a branded waybill", async () => {
   const [notification, shipmentForm, waybill, customerWaybill] = await Promise.all([
     read("src/components/ShipmentNotificationDialog.tsx"),

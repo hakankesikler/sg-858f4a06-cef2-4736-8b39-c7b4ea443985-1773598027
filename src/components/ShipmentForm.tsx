@@ -5,22 +5,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { shipmentService, Shipment } from "@/services/shipmentService";
 import { shipmentCargoService, type CargoItemInput } from "@/services/shipmentCargoService";
-import { shipmentRouteService, type ShipmentRouteStopInput, type ShipmentRouteStopType } from "@/services/shipmentRouteService";
-import { driverService, Driver } from "@/services/driverService";
-import { vehicleService, Vehicle } from "@/services/vehicleService";
-import { crmService, Customer } from "@/services/crmService";
-import { cn } from "@/lib/utils";
+import {
+  shipmentRouteService,
+  type ShipmentPartyDirectoryEntry,
+  type ShipmentRouteStopInput,
+  type ShipmentRouteStopType,
+} from "@/services/shipmentRouteService";
+import { driverService } from "@/services/driverService";
+import { vehicleService } from "@/services/vehicleService";
+import { crmService } from "@/services/crmService";
 import { openPrivateDocument } from "@/lib/private-storage";
 import { ShipmentNotificationDialog, type ShipmentNotificationData } from "@/components/ShipmentNotificationDialog";
 import { GpslineDeliveryEstimator } from "@/components/GpslineDeliveryEstimator";
+import { ShipmentPartyStopCard } from "@/components/ShipmentPartyStopCard";
 
 // Helper function to convert text to title case (Turkish locale aware)
 const toTitleCase = (str: string | null | undefined): string => {
@@ -75,6 +78,9 @@ const createRouteStop = (
   stop_type: stopType,
   sequence_no: sequenceNo,
   company_name: values.company_name || "",
+  party_type: values.party_type || "corporate",
+  identity_no: values.identity_no || "",
+  source_customer_id: values.source_customer_id || "",
   address_line: values.address_line || "",
   district: values.district || "",
   city: values.city || "",
@@ -102,6 +108,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [learnedParties, setLearnedParties] = useState<ShipmentPartyDirectoryEntry[]>([]);
   const [canAssignCarrier, setCanAssignCarrier] = useState(false);
   
   // Search states
@@ -109,13 +116,6 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const [searchDriver, setSearchDriver] = useState("");
   const [searchVehicle, setSearchVehicle] = useState("");
   const [searchCustomer, setSearchCustomer] = useState("");
-  
-  // Suggestions from past shipments
-  const [senderSuggestions, setSenderSuggestions] = useState<string[]>([]);
-  const [receiverSuggestions, setReceiverSuggestions] = useState<string[]>([]);
-  const [districtSuggestions, setDistrictSuggestions] = useState<string[]>([]);
-  const [originSuggestions, setOriginSuggestions] = useState<string[]>([]);
-  const [destinationSuggestions, setDestinationSuggestions] = useState<string[]>([]);
   
   // Notification dialog state
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
@@ -248,6 +248,40 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     return filtered;
   }, [customers, searchCustomer]);
 
+  const partyDirectory = useMemo<ShipmentPartyDirectoryEntry[]>(() => {
+    const byLocation = new Map<string, ShipmentPartyDirectoryEntry>();
+    const add = (entry: ShipmentPartyDirectoryEntry) => {
+      const key = [
+        normalizeTurkish(entry.company_name || "").trim(),
+        normalizeTurkish(entry.address_line || "").trim(),
+        normalizeTurkish(entry.district || "").trim(),
+        normalizeTurkish(entry.city || "").trim(),
+      ].join("|");
+      const existing = byLocation.get(key);
+      if (!existing || (!existing.customer_id && entry.customer_id)) byLocation.set(key, entry);
+    };
+
+    customers.forEach((customer) => add({
+      id: `customer-${customer.id}`,
+      customer_id: customer.id,
+      party_type: customer.tc_no && !customer.vergi_no ? "individual" : "corporate",
+      identity_no: customer.vergi_no || customer.tc_no || null,
+      company_name: customer.company || customer.name || "",
+      address_line: customer.branch_address || customer.address || null,
+      district: customer.district || null,
+      city: customer.city || null,
+      contact_name: customer.authorized_person_name || null,
+      contact_phone: customer.authorized_person_phone || customer.phone || null,
+      use_count: 0,
+      last_used_at: customer.updated_at || customer.created_at || "",
+    }));
+    learnedParties.forEach(add);
+    return [...byLocation.values()].sort((left, right) => {
+      if (Boolean(left.customer_id) !== Boolean(right.customer_id)) return left.customer_id ? -1 : 1;
+      return (right.last_used_at || "").localeCompare(left.last_used_at || "");
+    });
+  }, [customers, learnedParties]);
+
   // Cargo items management functions
   const addCargoItem = () => {
     setCargoItems([...cargoItems, { 
@@ -272,7 +306,32 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     value: string,
   ) => {
     const setter = stopType === "pickup" ? setPickupStops : setDeliveryStops;
-    setter((current) => current.map((stop, stopIndex) => stopIndex === index ? { ...stop, [field]: value } : stop));
+    setter((current) => current.map((stop, stopIndex) => stopIndex === index ? {
+      ...stop,
+      [field]: value,
+      ...(field === "party_type" ? { identity_no: "" } : {}),
+      ...(field === "party_type" || field === "company_name" ? { source_customer_id: "" } : {}),
+    } : stop));
+  };
+
+  const applyPartyDirectoryEntry = (
+    stopType: ShipmentRouteStopType,
+    index: number,
+    entry: ShipmentPartyDirectoryEntry,
+  ) => {
+    const setter = stopType === "pickup" ? setPickupStops : setDeliveryStops;
+    setter((current) => current.map((stop, stopIndex) => stopIndex === index ? {
+      ...stop,
+      company_name: entry.company_name,
+      party_type: entry.party_type,
+      identity_no: entry.identity_no || "",
+      source_customer_id: entry.customer_id || "",
+      address_line: entry.address_line || "",
+      district: entry.district || "",
+      city: entry.city || "",
+      contact_name: entry.contact_name || "",
+      contact_phone: entry.contact_phone || "",
+    } : stop));
   };
 
   const addRouteStop = (stopType: ShipmentRouteStopType) => {
@@ -513,11 +572,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
   const loadSelectionData = async () => {
     try {
-      const [driversData, vehiclesData, customersData, carrierPermission] = await Promise.all([
+      const [driversData, vehiclesData, customersData, carrierPermission, partyDirectoryData] = await Promise.all([
         driverService.getDrivers(),
         vehicleService.getVehicles(),
         crmService.getCustomers(),
         shipmentService.canAssignTransportCarrier(),
+        shipmentRouteService.getPartyDirectory().catch((error) => {
+          console.warn("Shipment party directory could not be loaded:", error);
+          return [];
+        }),
       ]);
       setCanAssignCarrier(carrierPermission);
       const today = new Date().toISOString().slice(0, 10);
@@ -546,54 +609,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       
       setCustomers(customersList);
       setSuppliers(suppliersList);
+      setLearnedParties(partyDirectoryData);
       
-      await loadSuggestions();
     } catch (error) {
       console.error("Error loading selection data:", error);
-    }
-  };
-
-  const loadSuggestions = async () => {
-    try {
-      const shipments = await shipmentService.getShipments();
-      
-      const senders = [...new Set(
-        shipments
-          .map(s => s.sender_name)
-          .filter(Boolean)
-      )].sort();
-      
-      const receivers = [...new Set(
-        shipments
-          .map(s => s.receiver)
-          .filter(Boolean)
-      )].sort();
-      
-      const districts = [...new Set(
-        shipments
-          .map(s => s.receiver_district)
-          .filter(Boolean)
-      )].sort();
-      
-      const origins = [...new Set(
-        shipments
-          .map(s => s.origin)
-          .filter(Boolean)
-      )].sort();
-      
-      const destinations = [...new Set(
-        shipments
-          .map(s => s.destination)
-          .filter(Boolean)
-      )].sort();
-      
-      setSenderSuggestions(senders);
-      setReceiverSuggestions(receivers);
-      setDistrictSuggestions(districts);
-      setOriginSuggestions(origins);
-      setDestinationSuggestions(destinations);
-    } catch (error) {
-      console.error("Error loading suggestions:", error);
     }
   };
 
@@ -608,22 +627,27 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   };
 
   const handleCustomerChange = (customerId: string) => {
-    setFormData({ ...formData, customer_id: customerId });
+    setFormData((current) => ({ ...current, customer_id: customerId }));
     
     const selectedCustomer = customers.find(c => c.id === customerId);
     if (selectedCustomer && !editMode) {
-      const customerName = selectedCustomer.name || "";
-      
-      if (!formData.sender_name) {
-        setFormData(prev => ({
-          ...prev,
-          customer_id: customerId,
-          sender_name: customerName
-        }));
+      const customerEntry = partyDirectory.find((entry) => entry.customer_id === customerId);
+      if (customerEntry) {
+        setPickupStops((current) => current.map((stop, index) => index === 0 && !stop.company_name.trim()
+          ? {
+            ...stop,
+            company_name: customerEntry.company_name,
+            party_type: customerEntry.party_type,
+            identity_no: customerEntry.identity_no || "",
+            source_customer_id: customerId,
+            address_line: customerEntry.address_line || "",
+            district: customerEntry.district || "",
+            city: customerEntry.city || "",
+            contact_name: customerEntry.contact_name || "",
+            contact_phone: customerEntry.contact_phone || "",
+          }
+          : stop));
       }
-      setPickupStops((current) => current.map((stop, index) => index === 0 && !stop.company_name
-        ? { ...stop, company_name: customerName }
-        : stop));
     }
   };
 
@@ -642,6 +666,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     const invalidCargo = cargoItems.some(item => item.adet <= 0 || item.kg_ds <= 0 || !item.cinsi.trim());
     const routeStops = [...pickupStops, ...deliveryStops];
     const invalidRouteStops = routeStops.some((stop) => !stop.company_name.trim() || !stop.city.trim());
+    const invalidIdentity = routeStops.some((stop) => {
+      const identity = (stop.identity_no || "").replace(/\D/g, "");
+      if (!identity) return false;
+      return stop.party_type === "individual" ? identity.length !== 11 : identity.length !== 10;
+    });
     const invalidCargoRoute = cargoItems.some((item) =>
       !pickupStops.some((stop) => stop.stop_key === item.pickup_stop_key) ||
       !deliveryStops.some((stop) => stop.stop_key === item.delivery_stop_key)
@@ -656,7 +685,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       !/^[A-Z]{2}$/.test(formData.origin_country_code) ||
       !/^[A-Z]{2}$/.test(formData.destination_country_code)
     );
-    if (!formData.customer_id || incompleteAssignment || missingHaulierAssignment || unauthorizedCarrierAssignment || invalidExpress ||
+    if (!formData.customer_id || incompleteAssignment || missingHaulierAssignment || unauthorizedCarrierAssignment || invalidExpress || invalidIdentity ||
         !pickupDate || invalidCargo || invalidRouteStops || invalidCargoRoute) {
       toast({
         title: "Eksik Bilgi",
@@ -668,6 +697,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             ? "Kurumsal taşıyıcı ataması için personel hesabınıza ayrıca yetki verilmelidir."
           : invalidExpress
             ? "Express gönderide sağlayıcı, dosya/paket türü ile çıkış ve varış ülke kodları zorunludur."
+          : invalidIdentity
+            ? "Girilen kurumsal Vergi No 10, bireysel T.C. Kimlik No 11 haneli olmalıdır. Bu alanları boş da bırakabilirsiniz."
           : invalidRouteStops
             ? "Her alım ve teslim noktası için firma/ad ile il bilgisi zorunludur."
           : invalidCargoRoute
@@ -683,6 +714,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       setIsSubmitting(true);
       const primaryPickup = pickupStops[0];
       const primaryDelivery = deliveryStops[0];
+      const submittedUetdsData = {
+        ...uetdsData,
+        sender_tax_id: primaryPickup.identity_no || uetdsData.sender_tax_id,
+        receiver_tax_id: primaryDelivery.identity_no || uetdsData.receiver_tax_id,
+      };
       
       const submitData = {
         shipment_code: shipmentCode,
@@ -717,7 +753,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         cinsi: formData.cinsi || (editMode && initialData ? initialData.cinsi : null),
         kg_ds: formData.kg_ds ? parseFloat(formData.kg_ds) : (editMode && initialData && initialData.kg_ds ? initialData.kg_ds : null),
         toplam_kg_ds: totalKgDs,
-        _uetds_details: uetdsData,
+        _uetds_details: submittedUetdsData,
       };
 
       if (isCompletedEdit) {
@@ -737,7 +773,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
         submitData,
         cargoItems,
         undefined,
-        uetdsData,
+        submittedUetdsData,
         routeStops,
       );
 
@@ -1129,6 +1165,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
           <div className="border-t pt-4">
             <h3 className="font-semibold mb-4">Müşteri ve Çok Duraklı Güzergâh</h3>
+            <p className="mb-4 text-sm text-slate-600">
+              Ödeme sorumlusu cariden bağımsız olarak her alım ve teslim noktası değiştirilebilir. Sistem, kullanılan firma/kişi, adres ve iletişim bilgilerini sonraki sevkiyatlar için hatırlar.
+            </p>
             
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div className="space-y-2">
@@ -1177,44 +1216,17 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     </Button>
                   </div>
                   {group.stops.map((stop, index) => (
-                    <div key={stop.stop_key} className="space-y-3 rounded-lg border bg-white p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold">{index + 1}. {group.type === "pickup" ? "Alım" : "Teslim"} Noktası</span>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => removeRouteStop(group.type, index)} disabled={group.stops.length === 1}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="space-y-1 sm:col-span-2">
-                          <Label className="text-xs">Firma / Ad *</Label>
-                          <Input value={stop.company_name} onChange={(event) => updateRouteStop(group.type, index, "company_name", event.target.value)} placeholder={group.type === "pickup" ? "Teknik İstif Merkez" : "Migros Kocayatak"} />
-                        </div>
-                        <div className="space-y-1 sm:col-span-2">
-                          <Label className="text-xs">Açık Adres</Label>
-                          <Input value={stop.address_line || ""} onChange={(event) => updateRouteStop(group.type, index, "address_line", event.target.value)} placeholder="Mahalle, cadde, bina / tesis" />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">İlçe</Label>
-                          <Input value={stop.district || ""} onChange={(event) => updateRouteStop(group.type, index, "district", event.target.value)} placeholder="Sancaktepe" />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">İl *</Label>
-                          <Input value={stop.city} onChange={(event) => updateRouteStop(group.type, index, "city", event.target.value)} placeholder="İstanbul" />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Yetkili Kişi</Label>
-                          <Input value={stop.contact_name || ""} onChange={(event) => updateRouteStop(group.type, index, "contact_name", event.target.value)} />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Telefon</Label>
-                          <Input value={stop.contact_phone || ""} onChange={(event) => updateRouteStop(group.type, index, "contact_phone", event.target.value)} />
-                        </div>
-                        <div className="space-y-1 sm:col-span-2">
-                          <Label className="text-xs">Durak Notu</Label>
-                          <Textarea value={stop.instructions || ""} onChange={(event) => updateRouteStop(group.type, index, "instructions", event.target.value)} placeholder="Giriş kapısı, randevu, yükleme/boşaltma talimatı..." rows={2} />
-                        </div>
-                      </div>
-                    </div>
+                    <ShipmentPartyStopCard
+                      key={stop.stop_key}
+                      stopType={group.type}
+                      index={index}
+                      stop={stop}
+                      canRemove={group.stops.length > 1}
+                      partyDirectory={partyDirectory}
+                      onChange={(field, value) => updateRouteStop(group.type, index, field, value)}
+                      onApplyDirectoryEntry={(entry) => applyPartyDirectoryEntry(group.type, index, entry)}
+                      onRemove={() => removeRouteStop(group.type, index)}
+                    />
                   ))}
                 </div>
               ))}
