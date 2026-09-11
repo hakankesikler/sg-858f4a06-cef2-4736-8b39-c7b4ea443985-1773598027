@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,7 +92,9 @@ const createRouteStop = (
 
 export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, initialData }: ShipmentFormProps) {
   const { toast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationAttempted, setValidationAttempted] = useState(false);
   const [shipmentCode, setShipmentCode] = useState("SHP-000001");
   const [pickupDate, setPickupDate] = useState("");
   const [estimatedDeliveryDate, setEstimatedDeliveryDate] = useState("");
@@ -651,10 +653,25 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
     }
   };
 
+  const revealFirstInvalidField = () => {
+    window.requestAnimationFrame(() => {
+      const firstInvalid = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
+      firstInvalid?.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstInvalid?.focus({ preventScroll: true });
+    });
+  };
+
+  const handleClose = () => {
+    setValidationAttempted(false);
+    onClose();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (isCompletedEdit && revisionReason.trim().length < 10) {
+      setValidationAttempted(true);
+      revealFirstInvalidField();
       toast({
         title: "Revizyon gerekçesi gerekli",
         description: "Tamamlanmış sevkiyat için en az 10 karakterlik revizyon gerekçesi yazın.",
@@ -685,8 +702,12 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       !/^[A-Z]{2}$/.test(formData.origin_country_code) ||
       !/^[A-Z]{2}$/.test(formData.destination_country_code)
     );
+    const missingCustomer = !formData.customer_id;
+    const missingPickupDate = !pickupDate;
     if (!formData.customer_id || incompleteAssignment || missingHaulierAssignment || unauthorizedCarrierAssignment || invalidExpress || invalidIdentity ||
         !pickupDate || invalidCargo || invalidRouteStops || invalidCargoRoute) {
+      setValidationAttempted(true);
+      revealFirstInvalidField();
       toast({
         title: "Eksik Bilgi",
         description: incompleteAssignment
@@ -703,11 +724,19 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             ? "Her alım ve teslim noktası için firma/ad ile il bilgisi zorunludur."
           : invalidCargoRoute
             ? "Her yük kalemi için alım ve teslim noktası seçilmelidir."
-          : "Müşteri, yükleme tarihi ve geçerli yük kalemleri zorunludur.",
+          : missingCustomer
+            ? "Müşteri (Ödeme Sorumlusu) seçilmelidir."
+          : invalidCargo
+            ? "Her yük kaleminde adet, cins ve KG/DS bilgisi geçerli olmalıdır."
+          : missingPickupDate
+            ? "Yükleme tarihi seçilmelidir."
+          : "Lütfen kırmızı işaretli zorunlu alanları tamamlayın.",
         variant: "destructive",
       });
       return;
     }
+
+    setValidationAttempted(false);
 
     let keepOpenForNotification = false;
     try {
@@ -854,6 +883,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   };
 
   const resetForm = () => {
+    setValidationAttempted(false);
     setFormData({
       service_mode: "road",
       booking_provider: "quickshipper",
@@ -907,13 +937,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) handleClose();
+    }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editMode ? "Sevkiyat Düzenle" : "Yeni Sevkiyat Oluştur"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" noValidate>
           <div className="space-y-2">
             <Label>Sevkiyat Kodu</Label>
             <Input value={shipmentCode} disabled className="bg-gray-50" />
@@ -948,13 +980,14 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 <div className="space-y-2">
                   <Label>Hizmet Sağlayıcı *</Label>
                   <Select value={formData.booking_provider} onValueChange={(value) => setFormData({ ...formData, booking_provider: value })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger aria-invalid={validationAttempted && !formData.booking_provider}><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="quickshipper">QuickShipper</SelectItem>
                       <SelectItem value="direct">Taşıyıcı ile doğrudan</SelectItem>
                       <SelectItem value="other">Diğer sağlayıcı</SelectItem>
                     </SelectContent>
                   </Select>
+                  {validationAttempted && !formData.booking_provider && <p className="text-xs font-medium text-red-600">Hizmet sağlayıcı seçilmelidir.</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>Entegratör / Taşıyıcı</Label>
@@ -976,9 +1009,10 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 <div className="space-y-2">
                   <Label>Gönderi Türü *</Label>
                   <Select value={formData.package_type} onValueChange={(value) => setFormData({ ...formData, package_type: value })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger aria-invalid={validationAttempted && !formData.package_type}><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="document">Dosya</SelectItem><SelectItem value="package">Paket</SelectItem></SelectContent>
                   </Select>
+                  {validationAttempted && !formData.package_type && <p className="text-xs font-medium text-red-600">Gönderi türü seçilmelidir.</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>QuickShipper Gönderi No</Label>
@@ -1003,8 +1037,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2"><Label>Çıkış Ülke Kodu *</Label><Input value={formData.origin_country_code} onChange={(event) => setFormData({ ...formData, origin_country_code: event.target.value.replace(/[^a-z]/gi, "").toUpperCase().slice(0, 2) })} placeholder="TR" /></div>
-                <div className="space-y-2"><Label>Varış Ülke Kodu *</Label><Input value={formData.destination_country_code} onChange={(event) => setFormData({ ...formData, destination_country_code: event.target.value.replace(/[^a-z]/gi, "").toUpperCase().slice(0, 2) })} placeholder="DE, US, GB..." /></div>
+                <div className="space-y-2">
+                  <Label>Çıkış Ülke Kodu *</Label>
+                  <Input value={formData.origin_country_code} onChange={(event) => setFormData({ ...formData, origin_country_code: event.target.value.replace(/[^a-z]/gi, "").toUpperCase().slice(0, 2) })} placeholder="TR" aria-invalid={validationAttempted && !/^[A-Z]{2}$/.test(formData.origin_country_code)} />
+                  {validationAttempted && !/^[A-Z]{2}$/.test(formData.origin_country_code) && <p className="text-xs font-medium text-red-600">İki harfli ülke kodu girilmelidir.</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label>Varış Ülke Kodu *</Label>
+                  <Input value={formData.destination_country_code} onChange={(event) => setFormData({ ...formData, destination_country_code: event.target.value.replace(/[^a-z]/gi, "").toUpperCase().slice(0, 2) })} placeholder="DE, US, GB..." aria-invalid={validationAttempted && !/^[A-Z]{2}$/.test(formData.destination_country_code)} />
+                  {validationAttempted && !/^[A-Z]{2}$/.test(formData.destination_country_code) && <p className="text-xs font-medium text-red-600">İki harfli ülke kodu girilmelidir.</p>}
+                </div>
                 <div className="space-y-2 md:col-span-3"><Label>Taşıyıcı Durum Açıklaması</Label><Input value={formData.carrier_status_description} onChange={(event) => setFormData({ ...formData, carrier_status_description: event.target.value })} placeholder="Gümrük, gecikme veya teslim bilgisi" /></div>
                 <p className="md:col-span-3 text-xs text-slate-500">AWB girildiğinde REX takip ekranı bu numarayla da sorgulanır ve müşteriyi resmî taşıyıcı takip sayfasına yönlendirir.</p>
               </div>
@@ -1059,7 +1101,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 }}
               />
               <Select value={formData.driver_id} onValueChange={(value) => setFormData({ ...formData, driver_id: value })}>
-                <SelectTrigger>
+                <SelectTrigger aria-invalid={validationAttempted && !formData.driver_id && (selectedSupplierIsHaulier || Boolean(formData.vehicle_id))}>
                   <SelectValue placeholder="Sürücü seçin" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1074,6 +1116,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   )}
                 </SelectContent>
               </Select>
+              {validationAttempted && !formData.driver_id && (selectedSupplierIsHaulier || Boolean(formData.vehicle_id)) && <p className="text-xs font-medium text-red-600">Sürücü seçilmelidir.</p>}
             </div>
             <div className={`space-y-2 ${formData.service_mode === "road" ? "" : "hidden"}`}>
               <Label>Araç {selectedSupplierIsHaulier ? "*" : selectedSupplierIsCarrier ? "(Opsiyonel)" : ""}</Label>
@@ -1088,7 +1131,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 }}
               />
               <Select value={formData.vehicle_id} onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}>
-                <SelectTrigger>
+                <SelectTrigger aria-invalid={validationAttempted && !formData.vehicle_id && (selectedSupplierIsHaulier || Boolean(formData.driver_id))}>
                   <SelectValue placeholder="Araç seçin" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1103,6 +1146,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   )}
                 </SelectContent>
               </Select>
+              {validationAttempted && !formData.vehicle_id && (selectedSupplierIsHaulier || Boolean(formData.driver_id)) && <p className="text-xs font-medium text-red-600">Araç seçilmelidir.</p>}
             </div>
           </div>
 
@@ -1171,7 +1215,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div className="space-y-2">
-                <Label>Müşteri (Ödeme Sorumlusu)</Label>
+                <Label>Müşteri (Ödeme Sorumlusu) *</Label>
                 <Input
                   placeholder="Müşteri ara..."
                   value={searchCustomer}
@@ -1185,7 +1229,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   }}
                 />
                 <Select value={formData.customer_id} onValueChange={handleCustomerChange}>
-                  <SelectTrigger>
+                  <SelectTrigger aria-invalid={validationAttempted && !formData.customer_id}>
                     <SelectValue placeholder="Müşteri seçin" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1200,6 +1244,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     )}
                   </SelectContent>
                 </Select>
+                {validationAttempted && !formData.customer_id && <p className="text-xs font-medium text-red-600">Faturayı ödeyecek müşteri seçilmelidir.</p>}
               </div>
             </div>
             
@@ -1222,6 +1267,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                       index={index}
                       stop={stop}
                       canRemove={group.stops.length > 1}
+                      validationAttempted={validationAttempted}
                       partyDirectory={partyDirectory}
                       onChange={(field, value) => updateRouteStop(group.type, index, field, value)}
                       onApplyDirectoryEntry={(entry) => applyPartyDirectoryEntry(group.type, index, entry)}
@@ -1248,7 +1294,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                   <div className="space-y-1 md:col-span-1 xl:col-span-3">
                     <Label className="text-xs">Alım Noktası *</Label>
                     <Select value={item.pickup_stop_key || ""} onValueChange={(value) => updateCargoItem(index, "pickup_stop_key", value)}>
-                      <SelectTrigger><SelectValue placeholder="Alım noktası seçin" /></SelectTrigger>
+                      <SelectTrigger aria-invalid={validationAttempted && !pickupStops.some((stop) => stop.stop_key === item.pickup_stop_key)}><SelectValue placeholder="Alım noktası seçin" /></SelectTrigger>
                       <SelectContent>
                         {pickupStops.map((stop, stopIndex) => (
                           <SelectItem key={stop.stop_key} value={stop.stop_key}>
@@ -1257,11 +1303,12 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                         ))}
                       </SelectContent>
                     </Select>
+                    {validationAttempted && !pickupStops.some((stop) => stop.stop_key === item.pickup_stop_key) && <p className="text-xs font-medium text-red-600">Alım noktası seçilmelidir.</p>}
                   </div>
                   <div className="space-y-1 md:col-span-1 xl:col-span-3">
                     <Label className="text-xs">Teslim Noktası *</Label>
                     <Select value={item.delivery_stop_key || ""} onValueChange={(value) => updateCargoItem(index, "delivery_stop_key", value)}>
-                      <SelectTrigger><SelectValue placeholder="Teslim noktası seçin" /></SelectTrigger>
+                      <SelectTrigger aria-invalid={validationAttempted && !deliveryStops.some((stop) => stop.stop_key === item.delivery_stop_key)}><SelectValue placeholder="Teslim noktası seçin" /></SelectTrigger>
                       <SelectContent>
                         {deliveryStops.map((stop, stopIndex) => (
                           <SelectItem key={stop.stop_key} value={stop.stop_key}>
@@ -1270,6 +1317,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                         ))}
                       </SelectContent>
                     </Select>
+                    {validationAttempted && !deliveryStops.some((stop) => stop.stop_key === item.delivery_stop_key) && <p className="text-xs font-medium text-red-600">Teslim noktası seçilmelidir.</p>}
                   </div>
                   <div className="space-y-1 xl:col-span-1">
                     <Label className="text-xs opacity-0">Sil</Label>
@@ -1278,25 +1326,29 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                     </Button>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Adet</Label>
+                    <Label className="text-xs">Adet *</Label>
                     <Input
                       type="number"
                       value={item.adet || ""}
                       onChange={(e) => updateCargoItem(index, 'adet', e.target.value)}
                       placeholder="10"
                       min="1"
+                      aria-invalid={validationAttempted && item.adet <= 0}
                     />
+                    {validationAttempted && item.adet <= 0 && <p className="text-xs font-medium text-red-600">Adet 1 veya daha büyük olmalıdır.</p>}
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Cinsi</Label>
+                    <Label className="text-xs">Cinsi *</Label>
                     <Input
                       value={item.cinsi}
                       onChange={(e) => updateCargoItem(index, 'cinsi', e.target.value)}
                       placeholder="Koli, Palet..."
+                      aria-invalid={validationAttempted && !item.cinsi.trim()}
                     />
+                    {validationAttempted && !item.cinsi.trim() && <p className="text-xs font-medium text-red-600">Yük cinsi girilmelidir.</p>}
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">KG/DS (Birim)</Label>
+                    <Label className="text-xs">KG/DS (Birim) *</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -1304,7 +1356,9 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                       onChange={(e) => updateCargoItem(index, 'kg_ds', e.target.value)}
                       placeholder="30.00"
                       min="0.01"
+                      aria-invalid={validationAttempted && item.kg_ds <= 0}
                     />
+                    {validationAttempted && item.kg_ds <= 0 && <p className="text-xs font-medium text-red-600">KG/DS sıfırdan büyük olmalıdır.</p>}
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Alt Toplam KG</Label>
@@ -1416,13 +1470,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Yükleme Tarihi</Label>
+              <Label>Yükleme Tarihi *</Label>
               <Input
                 type="date"
                 value={pickupDate}
                 onChange={(e) => setPickupDate(e.target.value)}
                 className="w-full"
+                aria-invalid={validationAttempted && !pickupDate}
               />
+              {validationAttempted && !pickupDate && <p className="text-xs font-medium text-red-600">Yükleme tarihi seçilmelidir.</p>}
             </div>
             <div className="space-y-2">
               <Label>Tahmini Teslim</Label>
@@ -1492,17 +1548,19 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 onChange={(event) => setRevisionReason(event.target.value)}
                 placeholder="Revizyonun neden gerekli olduğunu açıklayın (en az 10 karakter)"
                 rows={3}
+                aria-invalid={validationAttempted && revisionReason.trim().length < 10}
               />
+              {validationAttempted && revisionReason.trim().length < 10 && <p className="text-xs font-medium text-red-600">En az 10 karakterlik revizyon gerekçesi yazılmalıdır.</p>}
             </div>
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               İptal
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || (isCompletedEdit && revisionReason.trim().length < 10)}
+              disabled={isSubmitting}
             >
               {isSubmitting ? "Kaydediliyor..." : isCompletedEdit ? "Revizyon Talebi Oluştur" : editMode ? "Güncelle" : "Kaydet"}
             </Button>

@@ -1847,6 +1847,29 @@ test("shipment parties distinguish companies from people and learn reusable addr
   assert.match(shipmentService, /party_type,identity_no,source_customer_id/);
 });
 
+test("required form fields are highlighted and the first invalid field is revealed", async () => {
+  const [form, stopCard, input, select, textarea] = await Promise.all([
+    read("src/components/ShipmentForm.tsx"),
+    read("src/components/ShipmentPartyStopCard.tsx"),
+    read("src/components/ui/input.tsx"),
+    read("src/components/ui/select.tsx"),
+    read("src/components/ui/textarea.tsx"),
+  ]);
+
+  assert.match(form, /validationAttempted/);
+  assert.match(form, /formRef\.current\?\.querySelector<HTMLElement>\('\[aria-invalid="true"\]'\)/);
+  assert.match(form, /scrollIntoView\(\{ behavior: "smooth", block: "center" \}\)/);
+  assert.match(form, /Müşteri \(Ödeme Sorumlusu\) seçilmelidir/);
+  assert.match(form, /Faturayı ödeyecek müşteri seçilmelidir/);
+  assert.match(form, /aria-invalid=\{validationAttempted/);
+  assert.match(stopCard, /missingCompanyName/);
+  assert.match(stopCard, /İl bilgisi zorunludur/);
+  assert.match(input, /aria-\[invalid=true\]:border-red-500/);
+  assert.match(input, /user-invalid:border-red-500/);
+  assert.match(select, /aria-\[invalid=true\]:border-red-500/);
+  assert.match(textarea, /aria-\[invalid=true\]:border-red-500/);
+});
+
 test("shipment completion offers the approved driver details in WhatsApp and a branded waybill", async () => {
   const [notification, shipmentForm, waybill, customerWaybill] = await Promise.all([
     read("src/components/ShipmentNotificationDialog.tsx"),

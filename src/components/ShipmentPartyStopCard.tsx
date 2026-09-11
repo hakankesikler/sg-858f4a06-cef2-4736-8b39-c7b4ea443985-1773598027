@@ -18,6 +18,7 @@ interface ShipmentPartyStopCardProps {
   index: number;
   stop: ShipmentRouteStopInput;
   canRemove: boolean;
+  validationAttempted?: boolean;
   partyDirectory: ShipmentPartyDirectoryEntry[];
   onChange: (field: keyof ShipmentRouteStopInput, value: string) => void;
   onApplyDirectoryEntry: (entry: ShipmentPartyDirectoryEntry) => void;
@@ -29,12 +30,17 @@ export function ShipmentPartyStopCard({
   index,
   stop,
   canRemove,
+  validationAttempted = false,
   partyDirectory,
   onChange,
   onApplyDirectoryEntry,
   onRemove,
 }: ShipmentPartyStopCardProps) {
   const inputListId = useId().replace(/:/g, "");
+  const identityDigits = (stop.identity_no || "").replace(/\D/g, "");
+  const invalidIdentity = validationAttempted && Boolean(identityDigits) && identityDigits.length !== (stop.party_type === "individual" ? 11 : 10);
+  const missingCompanyName = validationAttempted && !stop.company_name.trim();
+  const missingCity = validationAttempted && !stop.city.trim();
   const exactMatches = useMemo(() => {
     const normalizedName = normalizePartyName(stop.company_name);
     if (!normalizedName) return [];
@@ -85,7 +91,9 @@ export function ShipmentPartyStopCard({
             onChange={(event) => onChange("identity_no", event.target.value.replace(/\D/g, "").slice(0, stop.party_type === "individual" ? 11 : 10))}
             inputMode="numeric"
             placeholder={stop.party_type === "individual" ? "11 hane · isteğe bağlı" : "10 hane · isteğe bağlı"}
+            aria-invalid={invalidIdentity}
           />
+          {invalidIdentity && <p className="text-xs font-medium text-red-600">{stop.party_type === "individual" ? "T.C. Kimlik No 11 haneli olmalıdır." : "Vergi No 10 haneli olmalıdır."}</p>}
         </div>
         <div className="space-y-1 sm:col-span-2">
           <Label className="text-xs">Firma / Kişi Adı *</Label>
@@ -95,11 +103,13 @@ export function ShipmentPartyStopCard({
             onChange={(event) => handleNameChange(event.target.value)}
             placeholder={stopType === "pickup" ? "Gönderici firma veya kişi" : "Alıcı firma veya kişi"}
             autoComplete="off"
+            aria-invalid={missingCompanyName}
           />
           <datalist id={inputListId}>
             {uniqueNames.map((name) => <option key={name} value={name} />)}
           </datalist>
           <p className="text-[11px] text-slate-500">Kayıtlı cari ve daha önce kullanılan taraflar yazarken önerilir.</p>
+          {missingCompanyName && <p className="text-xs font-medium text-red-600">Firma veya kişi adı zorunludur.</p>}
         </div>
 
         {exactMatches.length > 0 ? (
@@ -132,7 +142,8 @@ export function ShipmentPartyStopCard({
         </div>
         <div className="space-y-1">
           <Label className="text-xs">İl *</Label>
-          <Input value={stop.city} onChange={(event) => onChange("city", event.target.value)} placeholder="İstanbul" />
+          <Input value={stop.city} onChange={(event) => onChange("city", event.target.value)} placeholder="İstanbul" aria-invalid={missingCity} />
+          {missingCity && <p className="text-xs font-medium text-red-600">İl bilgisi zorunludur.</p>}
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Yetkili Kişi</Label>
