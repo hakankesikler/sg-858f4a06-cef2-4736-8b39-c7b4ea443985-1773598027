@@ -737,6 +737,190 @@ export const marketingPages: Record<string, MarketingPageData> = {
     highlights: [], sections: [], faq: [],
     related: ["express-kargo", "express-kargo-hacimsel-agirlik-hesaplama", "yurtdisindan-turkiyeye-express-kargo"],
   },
+  "almanyaya-express-kargo": {
+    slug: "almanyaya-express-kargo",
+    kind: "service",
+    icon: "zap",
+    eyebrow: "Türkiye'den Almanya'ya kapıdan kapıya",
+    title: "Almanya'ya Express Kargo",
+    lead: "Türkiye'nin uygun çıkış adreslerinden Almanya'daki iş yerlerine ve teslim adreslerine dosya, numune, yedek parça ve ticari paket gönderilerinizi tek operasyon üzerinden planlıyoruz.",
+    seoTitle: "Almanya'ya Express Kargo ve Fiyat Teklifi | REX",
+    seoDescription: "Türkiye'den Almanya'ya express kargo, adresten alım, hacimsel ağırlık hesabı ve kapı teslim planlaması. REX Lojistik'ten servis seçeneklerini karşılaştırın.",
+    keywords: ["Almanya'ya kargo", "Almanya express kargo", "Türkiye Almanya kargo", "Almanya'ya paket gönderme", "Almanya ithalat kargo"],
+    highlights: [
+      { title: "Türkiye Geneli Alım", text: "Uygun il ve ilçelerden çıkış adresi bağlantısı" },
+      { title: "Servis Karşılaştırması", text: "Maliyet, planlanan süre ve teslim kapsamı birlikte" },
+      { title: "Tek Operasyon", text: "Alımdan Almanya teslimine kadar REX koordinasyonu" },
+    ],
+    sections: [
+      {
+        title: "Almanya gönderisi doğru posta koduyla başlar",
+        paragraphs: [
+          "Almanya'ya express kargo planında yalnızca ülke adı yeterli değildir. Çıkış ve varış posta kodları, paketin dış ölçüleri, gerçek ağırlığı, açık ürün tanımı ve teslim beklentisi servis seçimini doğrudan etkiler.",
+          "REX Lojistik bu bilgileri aynı kapsamda değerlendirerek uygun global servis alternatiflerini karşılaştırır. Amaç yalnızca en kısa görünen seçeneği değil, teslim hedefini karşılayan en dengeli toplam çözümü bulmaktır.",
+        ],
+        bullets: ["Ticari numune ve doküman", "Makine ve otomotiv yedek parçası", "Kolili ticari ürün", "Almanya'dan Türkiye'ye ters yönlü alım"],
+      },
+      {
+        title: "Evrak ve ürün tanımı beklemeyi azaltır",
+        paragraphs: [
+          "Ticari ürünlerde gönderici ve alıcı bilgilerinin, ürün miktarının, birim ve toplam değerin açık yazılması gerekir. Gönderinin niteliğine göre ticari fatura veya uygun proforma hazırlanır.",
+          "Batarya, sıvı, gıda, kozmetik ve benzeri ürünlerde kabul koşulları ayrıca kontrol edilir. Nihai servis ve transit planı ürün ile posta kodu doğrulandıktan sonra paylaşılır.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Rota bilgisi", text: "Türkiye ve Almanya posta kodları alınır." },
+      { title: "Paket analizi", text: "Ölçü, kilo, içerik ve değer kontrol edilir." },
+      { title: "Servis seçimi", text: "Ekonomik, hızlı ve dengeli alternatifler araştırılır." },
+      { title: "Alım ve takip", text: "Uygun çıkış adresinden alım ve teslim süreci izlenir." },
+    ],
+    faq: [
+      { question: "Almanya'ya express kargo fiyatı nasıl hesaplanır?", answer: "Fiyat; çıkış-varış posta kodu, paket adedi, gerçek veya hacimsel ağırlık, ürün içeriği ve seçilen servis kapsamına göre belirlenir." },
+      { question: "Türkiye'nin başka bir şehrinden alım yapılabilir mi?", answer: "Uygun posta kodu ve alım günü bulunmasına bağlı olarak Türkiye genelinden çıkış bağlantısı planlanabilir." },
+      { question: "Almanya'dan Türkiye'ye paket getirebilir misiniz?", answer: "Uygun çıkış noktalarında tedarikçi veya gönderici adresinden alım ve Türkiye teslimi planlanabilir." },
+      { question: "Kesin teslim süresi ne zaman belli olur?", answer: "Posta kodları, ürün kabulü, hazır olma zamanı ve servis kapasitesi doğrulandıktan sonra planlanan transit süre paylaşılır." },
+    ],
+    related: ["express-kargo", "express-kargo-hacimsel-agirlik-hesaplama", "yurtdisi-kargo-gonderim-rehberi"],
+  },
+  "amerikaya-express-kargo": {
+    slug: "amerikaya-express-kargo",
+    kind: "service",
+    icon: "globe",
+    eyebrow: "Türkiye'den ABD'ye kontrollü gönderim",
+    title: "Amerika'ya Express Kargo",
+    lead: "ABD'ye gönderilecek dosya, numune, yedek parça ve ticari paketler için çıkış adresi, eyalet ve posta kodunu birlikte değerlendiriyor; uygun servis planını tek muhatapla hazırlıyoruz.",
+    seoTitle: "Amerika'ya Express Kargo ve Paket Gönderimi | REX",
+    seoDescription: "Türkiye'den Amerika'ya express kargo ve paket gönderimi. Adresten alım, hacimsel ağırlık, evrak ve ABD posta koduna göre servis planlaması.",
+    keywords: ["Amerika'ya kargo", "ABD express kargo", "Amerika'ya paket gönderme", "Türkiye Amerika kargo fiyatı", "ABD'ye numune gönderme"],
+    highlights: [
+      { title: "Eyalet & Posta Kodu", text: "Varış noktasına göre gerçek servis kapsamı" },
+      { title: "Ürün Ön Kontrolü", text: "İçerik ve evrak bilgilerinin rezervasyon öncesi incelenmesi" },
+      { title: "Kapı Teslim Planı", text: "Uygun rotalarda çıkıştan son adrese bağlantı" },
+    ],
+    sections: [
+      {
+        title: "ABD için ülke adı değil, tam rota belirleyicidir",
+        paragraphs: [
+          "Amerika Birleşik Devletleri'nde servis ve teslim planı eyalet, şehir ve posta koduna göre değişebilir. Bu nedenle teklif hazırlanırken Türkiye'deki alım adresi ile ABD'deki tam teslim noktası birlikte değerlendirilir.",
+          "Paket ölçüleri ve gerçek kilo üzerinden yaklaşık ücretlendirilebilir ağırlık hesaplanır; ürün kabulü, adres kapsamı ve teslim hedefi doğrulandıktan sonra uygun alternatifler sunulur.",
+        ],
+        bullets: ["Doküman ve ticari numune", "Küçük makine parçası", "E-ticaret dışı kurumsal paket", "ABD'den Türkiye'ye tedarikçi alımı"],
+      },
+      {
+        title: "Ürün açıklaması resmi değerlendirmenin temelidir",
+        paragraphs: [
+          "Belirsiz veya yalnızca 'sample' yazan açıklamalar yerine ürünün malzemesi, kullanım amacı, miktarı ve değeri açıkça belirtilmelidir. Alıcı ve gönderici bilgilerinin evraklarla tutarlı olması beklenir.",
+          "Vergi, harç ve resmi ithalat koşulları gönderinin niteliğine ve teslim şekline göre değişebilir. Teklif kapsamı taşıma hizmetini açıklar; resmi işlemler ilgili yetkili taraflarca yürütülür.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Adres doğrulama", text: "Eyalet, şehir ve posta kodu netleştirilir." },
+      { title: "İçerik kontrolü", text: "Ürün tanımı, miktarı, değeri ve belgeleri incelenir." },
+      { title: "Plan karşılaştırma", text: "Teslim önceliğine uyan servis kapsamları araştırılır." },
+      { title: "Gönderi takibi", text: "Alımdan teslim sonucuna kadar hareketler izlenir." },
+    ],
+    faq: [
+      { question: "Amerika'ya kargo fiyatı için hangi bilgiler gerekir?", answer: "Çıkış ve ABD varış posta kodu, koli ölçüleri, gerçek ağırlık, ürün tanımı, miktarı ve değeri gerekir." },
+      { question: "Amerika'nın her eyaletine aynı sürede teslim edilir mi?", answer: "Hayır. Hat, posta kodu, uzak bölge kapsamı ve güncel servis kapasitesi planlanan teslim süresini etkiler." },
+      { question: "ABD'den Türkiye'ye ithalat gönderisi alınabilir mi?", answer: "Uygun alım adreslerinde göndericiden teslim alma ve Türkiye'ye taşıma seçeneği değerlendirilebilir." },
+      { question: "Hacimsel ağırlık neden önemlidir?", answer: "Express kargoda gerçek ağırlık ile paketin kapladığı hacme göre hesaplanan ağırlıktan yüksek olanı ücretlendirmeye referans olabilir." },
+    ],
+    related: ["express-kargo", "yurtdisindan-turkiyeye-express-kargo", "express-kargo-hacimsel-agirlik-hesaplama"],
+  },
+  "ingiltereye-express-kargo": {
+    slug: "ingiltereye-express-kargo",
+    kind: "service",
+    icon: "zap",
+    eyebrow: "Birleşik Krallık yönlü express çözüm",
+    title: "İngiltere'ye Express Kargo",
+    lead: "Birleşik Krallık'taki iş ortaklarınıza ve teslim adreslerine gönderilecek ticari paketleri; posta kodu, ürün kabulü ve teslim hedefi üzerinden planlıyoruz.",
+    seoTitle: "İngiltere'ye Express Kargo ve Fiyat Teklifi | REX",
+    seoDescription: "Türkiye'den İngiltere'ye express kargo, paket ve numune gönderimi. Posta koduna göre servis, hacimsel ağırlık ve evrak planlaması.",
+    keywords: ["İngiltere'ye kargo", "İngiltere express kargo", "Birleşik Krallık paket gönderme", "Türkiye İngiltere kargo", "Londra'ya express kargo"],
+    highlights: [
+      { title: "Posta Kodu Bazlı", text: "Londra ve diğer bölgeler için adres kapsamı kontrolü" },
+      { title: "Çift Yönlü", text: "Türkiye'den gönderim ve İngiltere'den uygun adresten alım" },
+      { title: "Açık Kapsam", text: "Planlanan süre, alım ve teslim detaylarının teklifte görünmesi" },
+    ],
+    sections: [
+      {
+        title: "İngiltere gönderilerinde teslim noktası baştan net olmalı",
+        paragraphs: [
+          "Birleşik Krallık yönlü express gönderilerde varış posta kodu, uzak bölge veya ek teslim koşullarının anlaşılması için temel bilgidir. Çıkış adresi, paket ve hazır olma zamanı da aynı teklifte değerlendirilir.",
+          "REX Lojistik, uygun global servisleri aynı gönderi bilgileriyle karşılaştırır. Böylece karar yalnızca bir taşıma rakamına değil, alımdan teslimata kadar açıklanan toplam kapsama dayanır.",
+        ],
+        bullets: ["Londra ve Birleşik Krallık iş adresleri", "Numune, doküman ve yedek parça", "Planlı tedarikçi alımı", "Takip numarasıyla görünür gönderi"],
+      },
+      {
+        title: "Evrak bilgisi paket bilgisi kadar önemlidir",
+        paragraphs: [
+          "Ticari nitelikteki gönderilerde ürün açıklaması, miktar, değer, gönderici ve alıcı bilgilerinin tutarlı olması gerekir. Belge gereksinimi ürünün ve işlemin niteliğine göre kesinleştirilir.",
+          "Kısıtlı veya özel kabul gerektiren ürünler standart paket gibi değerlendirilmez. Batarya, sıvı, gıda, kozmetik ve medikal ürünler rezervasyon öncesinde ayrıca bildirilmelidir.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Posta kodları", text: "Çıkış ve Birleşik Krallık teslim noktası alınır." },
+      { title: "Ağırlık hesabı", text: "Gerçek ve hacimsel ağırlık karşılaştırılır." },
+      { title: "Kapsam seçimi", text: "Ekonomik, hızlı veya dengeli öncelik belirlenir." },
+      { title: "Teslim takibi", text: "Seçilen hizmetin hareketleri operasyonca izlenir." },
+    ],
+    faq: [
+      { question: "İngiltere'ye express kargo kaç günde gider?", answer: "Planlanan süre çıkış-varış posta kodu, ürün kabulü, servis kapasitesi ve resmi süreçlere göre değişir; teklif aşamasında teyit edilir." },
+      { question: "İngiltere'den ürün aldırabilir miyim?", answer: "Uygun çıkış adreslerinde tedarikçiden alım ve Türkiye teslimi planlanabilir. Gönderici iletişim ve hazır olma bilgileri gerekir." },
+      { question: "Fiyatı en çok ne etkiler?", answer: "Ücretlendirilebilir ağırlık, posta kodları, ürün niteliği, teslim önceliği ve olası ek hizmetler fiyatı etkiler." },
+      { question: "Taşıyıcı seçimini ben mi yapmalıyım?", answer: "Hayır. Teslim hedefinizi paylaşmanız yeterlidir; uygun servis alternatifleri kapsam ve önceliklerinize göre karşılaştırılır." },
+    ],
+    related: ["express-kargo", "turkiyeden-yurtdisina-express-kargo", "yurtdisi-kargo-gonderim-rehberi"],
+  },
+  "cinden-turkiyeye-express-kargo": {
+    slug: "cinden-turkiyeye-express-kargo",
+    kind: "service",
+    icon: "globe",
+    eyebrow: "Çin'deki tedarikçiden Türkiye'ye",
+    title: "Çin'den Türkiye'ye Express Kargo",
+    lead: "Çin'deki uygun tedarikçi adresinden alınacak numune, yedek parça ve ticari paketleri Türkiye'deki teslim noktasına kadar tek operasyon kapsamında planlıyoruz.",
+    seoTitle: "Çin'den Türkiye'ye Express Kargo ve İthalat | REX",
+    seoDescription: "Çin'deki tedarikçiden adresten alım, Türkiye'ye express ithalat gönderisi, paket ölçüsü, evrak ve teslim planlaması için REX Lojistik'ten teklif alın.",
+    keywords: ["Çin'den kargo", "Çin Türkiye express kargo", "Çin'den ürün getirme", "Çin ithalat kargo", "Çin'den numune getirme"],
+    highlights: [
+      { title: "Tedarikçiden Alım", text: "Uygun Çin çıkış adresinden planlı pickup" },
+      { title: "İthalat Yönlü Plan", text: "Çıkış, uçuş ve Türkiye teslim bağlantısı" },
+      { title: "Tek Muhatap", text: "Tedarikçi iletişiminden teslim takibine REX koordinasyonu" },
+    ],
+    sections: [
+      {
+        title: "Çin'deki gönderiyi uzaktan yönetmenin pratik yolu",
+        paragraphs: [
+          "Tedarikçinin açık adresi, yetkili kişisi, telefonu, paket ölçüleri, ağırlığı ve hazır olma tarihi paylaşıldığında uygun alım seçeneği araştırılabilir. Gönderinin Türkiye'deki teslim adresi aynı operasyon planına eklenir.",
+          "REX Lojistik, müşteriyi farklı operasyon tarafları arasında bırakmadan gönderi bilgilerini tek dosyada toplar; alımın gerçekleşmesi ve uluslararası hareketlerin izlenmesi için koordinasyonu yürütür.",
+        ],
+        bullets: ["Üretim numunesi", "Küçük yedek parça", "Ticari paket", "Tedarikçi adresinden uygun alım"],
+      },
+      {
+        title: "İthalat gönderisinde değer ve içerik açık olmalı",
+        paragraphs: [
+          "Tedarikçi faturası, ürünün açık tanımı, miktarı, değeri ve paket bilgileri taşıma planının temelini oluşturur. Eksik veya genel açıklamalar kabul ve resmi işlem aşamalarında ek bilgi talebine yol açabilir.",
+          "REX Lojistik taşıma operasyonunu yönetir. İthalata ilişkin resmi işlemler, vergiler, izinler ve ürün uygunluğu müşteri ile müşterinin yetkili danışmanları tarafından yürütülür.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Tedarikçi bilgisi", text: "Çin çıkış adresi, yetkili ve hazır olma tarihi alınır." },
+      { title: "Paket & evrak", text: "Ölçü, ağırlık, içerik, değer ve fatura kontrol edilir." },
+      { title: "Alım planı", text: "Uygun servis ve tedarikçi alım bağlantısı kurulur." },
+      { title: "Türkiye teslimi", text: "Uluslararası hareket ve son teslim süreci takip edilir." },
+    ],
+    faq: [
+      { question: "Çin'deki tedarikçiden doğrudan alım yapılabilir mi?", answer: "Uygun çıkış adresi, ürün kabulü ve servis bulunmasına bağlı olarak tedarikçiden alım planlanabilir." },
+      { question: "Tedarikçiden hangi bilgileri istemeliyim?", answer: "Açık adres, yetkili kişi, telefon, hazır olma tarihi, koli adedi, ölçüler, brüt ağırlık, ürün tanımı ve ticari fatura bilgileri gerekir." },
+      { question: "Çin'den gelen gönderinin vergileri fiyata dahil mi?", answer: "Vergi ve resmi masraflar ürün ile işlem koşullarına göre değişir. Taşıma teklifinin kapsamı rezervasyondan önce açıkça belirtilir." },
+      { question: "Express mi genel hava kargo mu seçmeliyim?", answer: "Paket ölçüsü, toplam ağırlık, ürün niteliği ve teslim hedefi karşılaştırılarak uygun yöntem belirlenir. Büyük veya paletli yüklerde genel hava kargo daha uygun olabilir." },
+    ],
+    related: ["yurtdisindan-turkiyeye-express-kargo", "hava-kargo-mu-express-kargo-mu", "express-kargo-hacimsel-agirlik-hesaplama"],
+  },
   "depolama": {
     slug: "depolama",
     kind: "service",

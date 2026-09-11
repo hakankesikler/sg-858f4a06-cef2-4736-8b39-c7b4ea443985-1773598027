@@ -1299,12 +1299,18 @@ test("express cargo hub publishes inbound, outbound and planning resources witho
     "turkiyeden-yurtdisina-express-kargo",
     "express-kargo-hacimsel-agirlik-hesaplama",
     "yurtdisi-kargo-gonderim-rehberi",
+    "almanyaya-express-kargo",
+    "amerikaya-express-kargo",
+    "ingiltereye-express-kargo",
+    "cinden-turkiyeye-express-kargo",
   ];
-  const [content, resourcePage, calculator, guide, header, footer, services, sitemap] = await Promise.all([
+  const [content, resourcePage, calculator, guide, planner, expressPage, header, footer, services, sitemap] = await Promise.all([
     read("src/content/marketing-pages.ts"),
     read("src/components/ExpressCargoResourcePage.tsx"),
     read("src/pages/express-kargo-hacimsel-agirlik-hesaplama.tsx"),
     read("src/pages/yurtdisi-kargo-gonderim-rehberi.tsx"),
+    read("src/components/ExpressQuotePlanner.tsx"),
+    read("src/pages/express-kargo.tsx"),
     read("src/components/Header.tsx"),
     read("src/components/Footer.tsx"),
     read("src/components/Services.tsx"),
@@ -1329,6 +1335,14 @@ test("express cargo hub publishes inbound, outbound and planning resources witho
   assert.match(calculator, /Boy × En × Yükseklik × Adet ÷ 5\.000/);
   assert.match(calculator, /aria-live="polite"/);
   assert.match(guide, /Taşıyıcı değil, uygun servis seçilir/);
+  assert.match(expressPage, /ExpressQuotePlanner/);
+  assert.match(planner, /Akıllı express ön analiz/);
+  assert.match(planner, /Ekonomik plan/);
+  assert.match(planner, /Dengeli plan/);
+  assert.match(planner, /Öncelikli plan/);
+  assert.match(planner, /Yaklaşık ücretlendirilebilir/);
+  assert.match(planner, /wa\.me\/905434010755\?text=/);
+  assert.match(planner, /Ön kabul kontrolü gerekli/);
   assert.match(header, /Yurt Dışından Türkiye'ye Express/);
   assert.match(footer, /Express Kargo Desi Hesaplama/);
 });

@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -126,7 +128,7 @@ function getStructuredData(page: MarketingPageData) {
   ];
 }
 
-export function MarketingPage({ page }: { page: MarketingPageData }) {
+export function MarketingPage({ page, children }: { page: MarketingPageData; children?: ReactNode }) {
   const Icon = icons[page.icon];
   const canonicalUrl = `${siteUrl}/${page.slug}`;
   const openQuoteForm = () => window.dispatchEvent(new Event("openQuoteForm"));
@@ -193,6 +195,8 @@ export function MarketingPage({ page }: { page: MarketingPageData }) {
               ))}
             </div>
           </section>
+
+          {children}
 
           <section className="py-16 sm:py-24">
             <div className="mx-auto max-w-5xl space-y-16 px-4 sm:px-6">
