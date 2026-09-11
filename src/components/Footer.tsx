@@ -23,6 +23,9 @@ export function Footer() {
               <li><Link href="/komple-tasimacilik" className="hover:text-orange-300 transition-colors">Komple Taşımacılık</Link></li>
               <li><Link href="/uluslararasi-karayolu-tasimaciligi" className="hover:text-orange-300 transition-colors">Uluslararası Karayolu</Link></li>
               <li><Link href="/hava-kargo" className="hover:text-orange-300 transition-colors">Hava Kargo</Link></li>
+              <li><Link href="/kapidan-kapiya-hava-kargo" className="hover:text-orange-300 transition-colors">Kapıdan Kapıya Hava Kargo</Link></li>
+              <li><Link href="/turkiye-geneli-hava-kargo-alimi" className="hover:text-orange-300 transition-colors">Türkiye Geneli Hava Kargo Alımı</Link></li>
+              <li><Link href="/hava-kargo-hacimsel-agirlik-hesaplama" className="hover:text-orange-300 transition-colors">Hava Kargo Ağırlık Hesaplama</Link></li>
               <li><Link href="/denizyolu-tasimaciligi" className="hover:text-orange-300 transition-colors">Denizyolu Taşımacılığı</Link></li>
               <li><Link href="/denizyolu-parsiyel-tasimacilik" className="hover:text-orange-300 transition-colors">Denizyolu Parsiyel (LCL)</Link></li>
               <li><Link href="/denizyolu-konteyner-tasimaciligi" className="hover:text-orange-300 transition-colors">Konteyner Taşımacılığı (FCL)</Link></li>

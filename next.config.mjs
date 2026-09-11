@@ -62,13 +62,18 @@ const nextConfig = {
   allowedDevOrigins: ["*.daytona.work", "*.softgen.dev"],
   async headers() {
     const r2ConnectSources = getR2ConnectSources();
+    const scriptSources = [
+      "script-src 'self' 'unsafe-inline'",
+      process.env.NODE_ENV === "development" ? "'unsafe-eval'" : "",
+      "https://challenges.cloudflare.com",
+    ].filter(Boolean).join(" ");
     const contentSecurityPolicy = [
       "default-src 'self'",
       "base-uri 'self'",
       "object-src 'none'",
       "frame-ancestors 'none'",
       "form-action 'self'",
-      "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+      scriptSources,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https://fonts.gstatic.com",

@@ -1254,6 +1254,45 @@ test("sea freight content hub publishes LCL, FCL, container and CBM resources", 
   assert.match(calculator, /aria-live="polite"/);
 });
 
+test("air cargo content hub publishes nationwide pickup, comparison and chargeable-weight resources", async () => {
+  const airSlugs = [
+    "uluslararasi-hava-kargo",
+    "kapidan-kapiya-hava-kargo",
+    "turkiye-geneli-hava-kargo-alimi",
+    "hava-kargo-mu-express-kargo-mu",
+    "hava-kargo-hacimsel-agirlik-hesaplama",
+  ];
+  const [content, resourcePage, calculator, comparison, header, footer, sitemap] = await Promise.all([
+    read("src/content/marketing-pages.ts"),
+    read("src/components/AirCargoResourcePage.tsx"),
+    read("src/pages/hava-kargo-hacimsel-agirlik-hesaplama.tsx"),
+    read("src/pages/hava-kargo-mu-express-kargo-mu.tsx"),
+    read("src/components/Header.tsx"),
+    read("src/components/Footer.tsx"),
+    read("public/sitemap.xml"),
+  ]);
+
+  for (const slug of airSlugs) {
+    assert.match(content, new RegExp(`"${slug}"`));
+    assert.match(sitemap, new RegExp(`/${slug}<`));
+  }
+
+  assert.match(content, /Türkiye'nin 81 ilindeki uygun adreslerden/);
+  assert.match(content, /Zaman–Maliyet Dengesi/);
+  assert.match(content, /REX'in işi tam da bu bağlantıları görünür hale getirmektir/);
+  assert.match(resourcePage, /Hava kargo bilgi merkezi/);
+  assert.match(resourcePage, /81 ilden uygun alım/);
+  assert.match(resourcePage, /FAQPage/);
+  assert.match(calculator, /volumeCm3 \/ 6_000/);
+  assert.match(calculator, /chargeableWeight/);
+  assert.match(calculator, /aria-live="polite"/);
+  assert.match(calculator, /6\.000 böleni yaygın bir planlama referansıdır/);
+  assert.match(comparison, /Genel hava kargo/);
+  assert.match(comparison, /Express kargo/);
+  assert.match(header, /Türkiye Geneli Hava Kargo Alımı/);
+  assert.match(footer, /Hava Kargo Ağırlık Hesaplama/);
+});
+
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {
   const [sql, mappingSql, productSyncSql, expenseSql, financeSql, activeSql, reconciliationSql, automaticSyncSql, api, purchaseSyncApi, associateTransactionsApi, mappingApi, associateCreateApi, associateHelper, outboundSyncApi, proceedApi, cancelApi, providerLib, workflow, collection, vercel, service, office, expenseWorkspace, financeWorkspace, accounting, cariForm] = await Promise.all([
     read("supabase/migrations/20260828150000_kolaybi_office_workspace.sql"),
