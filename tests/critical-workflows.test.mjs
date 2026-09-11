@@ -1798,7 +1798,7 @@ test("shipments support multiple pickup and delivery stops with separately price
   assert.match(logistics, /teslim noktası/);
 });
 
-test("shipment completion offers a privacy-safe WhatsApp message and a branded waybill", async () => {
+test("shipment completion offers the approved driver details in WhatsApp and a branded waybill", async () => {
   const [notification, shipmentForm, waybill, customerWaybill] = await Promise.all([
     read("src/components/ShipmentNotificationDialog.tsx"),
     read("src/components/ShipmentForm.tsx"),
@@ -1809,8 +1809,14 @@ test("shipment completion offers a privacy-safe WhatsApp message and a branded w
   assert.match(notification, /REX LOJİSTİK - SEVKİYAT BİLGİSİ/);
   assert.match(notification, /WhatsApp mesajı önizlemesi/);
   assert.match(notification, /Waybill PDF/);
-  assert.doesNotMatch(notification, /driver_tc|T\.C\. Kimlik/);
+  assert.match(notification, /driver_tc/);
+  assert.match(notification, /T\.C\. Kimlik No/);
+  assert.match(notification, /isTir \? "Çekici" : "Plaka"/);
+  assert.match(notification, /isTir && shipment\.trailer_plate/);
+  assert.match(notification, /şemsiye sigortamız kapsamında sigortalı taşındığından/);
+  assert.match(notification, /7342549288/);
   assert.match(shipmentForm, /driver_phone: selectedDriver\?\.phone_1/);
+  assert.match(shipmentForm, /driver_tc: selectedDriver\?\.tc_no/);
   assert.match(shipmentForm, /route_stops: routeStops/);
   assert.match(shipmentForm, /cargo_items: cargoItems/);
   assert.match(waybill, /TASIMA BELGESI \/ WAYBILL/);

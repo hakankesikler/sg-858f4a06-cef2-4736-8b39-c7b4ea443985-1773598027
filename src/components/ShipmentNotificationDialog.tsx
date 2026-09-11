@@ -5,6 +5,7 @@ import { generateWaybill, type WaybillData } from "@/components/WaybillGenerator
 
 export interface ShipmentNotificationData extends WaybillData {
   driver_name?: string;
+  driver_tc?: string;
   driver_phone?: string;
   vehicle_plate?: string;
   trailer_plate?: string;
@@ -26,7 +27,14 @@ const normalizeWhatsAppPhone = (value: string) => {
   return digits;
 };
 
+const isTirVehicle = (vehicleType?: string | null) =>
+  String(vehicleType || "")
+    .trim()
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ı/g, "i") === "tir";
+
 export const formatShipmentNotificationMessage = (shipment: ShipmentNotificationData) => {
+  const isTir = isTirVehicle(shipment.vehicle?.arac_tipi);
   const shipmentLines = [
     `*Sevkiyat:* ${shipment.shipment_code}`,
     shipment.tracking_number ? `*Takip no:* ${shipment.tracking_number}` : null,
@@ -34,9 +42,10 @@ export const formatShipmentNotificationMessage = (shipment: ShipmentNotification
   ].filter(Boolean);
   const assignmentLines = [
     shipment.driver_name ? `*Sürücü:* ${shipment.driver_name}` : null,
+    shipment.driver_tc ? `*T.C. Kimlik No:* ${shipment.driver_tc}` : null,
     shipment.driver_phone ? `*Telefon:* ${shipment.driver_phone}` : null,
-    shipment.vehicle_plate ? `*Çekici:* ${shipment.vehicle_plate}` : null,
-    shipment.trailer_plate ? `*Dorse:* ${shipment.trailer_plate}` : null,
+    shipment.vehicle_plate ? `*${isTir ? "Çekici" : "Plaka"}:* ${shipment.vehicle_plate}` : null,
+    isTir && shipment.trailer_plate ? `*Dorse:* ${shipment.trailer_plate}` : null,
   ].filter(Boolean);
   const trackingLines = shipment.tracking_url
     ? ["*Canlı takip:*", shipment.tracking_url]
@@ -48,6 +57,11 @@ export const formatShipmentNotificationMessage = (shipment: ShipmentNotification
     ...shipmentLines,
     ...(assignmentLines.length ? ["", ...assignmentLines] : []),
     ...(trackingLines.length ? ["", ...trackingLines] : []),
+    "",
+    "*Önemli not:*",
+    "Yük, şemsiye sigortamız kapsamında sigortalı taşındığından irsaliyenin *Taşıyıcı* bölümüne aşağıdaki bilgilerimiz girilmelidir:",
+    "",
+    "*Taşıyıcı:* 7342549288 — REX LOJİSTİK TAŞIMACILIK DEPOLAMA DANIŞMANLIK LİMİTED ŞİRKETİ",
     "",
     "İyi günler dileriz.",
     "*REX Lojistik*",

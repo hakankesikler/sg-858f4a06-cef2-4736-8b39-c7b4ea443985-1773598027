@@ -768,6 +768,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             receiver: primaryDelivery.company_name,
             receiver_district: primaryDelivery.district || "",
             driver_name: selectedDriver?.full_name || "",
+            driver_tc: selectedDriver?.tc_no || "",
             driver_phone: selectedDriver?.phone_1 || "",
             vehicle_plate: selectedVehicle?.cekici_plakasi || "",
             trailer_plate: selectedVehicle?.dorse_plakasi || "",
