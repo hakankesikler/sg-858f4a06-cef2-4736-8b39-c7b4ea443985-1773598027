@@ -1165,6 +1165,40 @@ test("domestic partial page prepares multi-load WhatsApp quotes", async () => {
   assert.match(planner, /Yük kalemleri:/);
 });
 
+test("public service pages prepare service-specific WhatsApp quote summaries", async () => {
+  const routeVariants = {
+    "komple-tasimacilik": "complete",
+    "uluslararasi-karayolu-tasimaciligi": "international-road",
+    "hava-kargo": "air",
+    "kapidan-kapiya-hava-kargo": "air-door",
+    "turkiye-geneli-hava-kargo-alimi": "air-pickup",
+    "denizyolu-tasimaciligi": "sea",
+    "denizyolu-parsiyel-tasimacilik": "sea-lcl",
+    "denizyolu-konteyner-tasimaciligi": "sea-fcl",
+    "yurtdisindan-turkiyeye-express-kargo": "express-import",
+    "turkiyeden-yurtdisina-express-kargo": "express-export",
+    depolama: "storage",
+  };
+  const [planner, ...routes] = await Promise.all([
+    read("src/components/ServiceWhatsAppPlanner.tsx"),
+    ...Object.keys(routeVariants).map((slug) => read(`src/pages/${slug}.tsx`)),
+  ]);
+
+  Object.entries(routeVariants).forEach(([slug, variant], index) => {
+    assert.match(routes[index], /ServiceWhatsAppPlanner/);
+    assert.match(routes[index], new RegExp(`variant="${variant}"`), `${slug} should use its service-specific planner`);
+  });
+  assert.match(planner, /https:\/\/wa\.me\/905434010755\?text=/);
+  assert.match(planner, /Teklif hazırlık durumu/);
+  assert.match(planner, /Uygun operasyonu, tahmini süreyi ve toplam fiyat kapsamını/);
+  assert.match(planner, /Türkiye'nin 81 ilinden alım adresini/);
+  assert.match(planner, /LCL denizyolu parsiyel taşımacılığı/);
+  assert.match(planner, /FCL komple konteyner taşımacılığı/);
+  assert.match(planner, /yurt dışından Türkiye'ye express kargo/);
+  assert.match(planner, /Türkiye'den yurt dışına express kargo/);
+  assert.match(planner, /depolama, elleçleme ve dağıtım/);
+});
+
 test("every public page uses the enlarged REX-only favicon", async () => {
   const [document, notFound] = await Promise.all([
     read("src/pages/_document.tsx"),
