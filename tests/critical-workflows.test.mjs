@@ -1017,6 +1017,12 @@ test("public logistics services have dedicated SEO pages and internal navigation
     assert.match(footer, new RegExp(`/${serviceSlug}`));
     assert.match(services, new RegExp(`/${serviceSlug === "yurtici-parsiyel-tasimacilik" || serviceSlug !== "komple-tasimacilik" ? serviceSlug : "komple-tasimacilik"}`));
   }
+  const footerServiceSection = footer.match(/\{\/\* Hizmetlerimiz \*\/\}([\s\S]*?)\{\/\* Kurumsal \*\/\}/)?.[1];
+  assert.ok(footerServiceSection);
+  assert.deepEqual(
+    [...footerServiceSection.matchAll(/href="\/([^"]+)"/g)].map((match) => match[1]),
+    slugs.slice(0, 7),
+  );
   assert.match(pageTemplate, /"@type": "Service"/);
   assert.match(pageTemplate, /"@type": "BreadcrumbList"/);
   assert.match(pageTemplate, /<h1/);
@@ -1242,7 +1248,8 @@ test("sea freight content hub publishes LCL, FCL, container and CBM resources", 
 
   assert.match(header, /Denizyolu Parsiyel \(LCL\)/);
   assert.match(header, /Konteyner Taşımacılığı \(FCL\)/);
-  assert.match(footer, /CBM Hesaplama/);
+  assert.doesNotMatch(footer, /CBM Hesaplama/);
+  assert.match(content, /related: \["denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi", "lcl-mi-fcl-mi", "cbm-hesaplama"\]/);
   assert.match(resourcePage, /"@type": "Article"/);
   assert.match(resourcePage, /"@type": "FAQPage"/);
   assert.match(content, /Akılcı Maliyet/);
@@ -1290,7 +1297,8 @@ test("air cargo content hub publishes nationwide pickup, comparison and chargeab
   assert.match(comparison, /Genel hava kargo/);
   assert.match(comparison, /Express kargo/);
   assert.match(header, /Türkiye Geneli Hava Kargo Alımı/);
-  assert.match(footer, /Hava Kargo Ağırlık Hesaplama/);
+  assert.doesNotMatch(footer, /Hava Kargo Ağırlık Hesaplama/);
+  assert.match(content, /related: \["kapidan-kapiya-hava-kargo", "turkiye-geneli-hava-kargo-alimi", "hava-kargo-hacimsel-agirlik-hesaplama"\]/);
 });
 
 test("express cargo hub publishes inbound, outbound and planning resources without exposing intermediary integrations", async () => {
@@ -1344,7 +1352,8 @@ test("express cargo hub publishes inbound, outbound and planning resources witho
   assert.match(planner, /wa\.me\/905434010755\?text=/);
   assert.match(planner, /Ön kabul kontrolü gerekli/);
   assert.match(header, /Yurt Dışından Türkiye'ye Express/);
-  assert.match(footer, /Express Kargo Desi Hesaplama/);
+  assert.doesNotMatch(footer, /Express Kargo Desi Hesaplama/);
+  assert.match(content, /related: \["yurtdisindan-turkiyeye-express-kargo", "turkiyeden-yurtdisina-express-kargo", "express-kargo-hacimsel-agirlik-hesaplama", "yurtdisi-kargo-gonderim-rehberi"\]/);
 });
 
 test("KolayBi office connects sales, operations and accounting with durable sync records", async () => {

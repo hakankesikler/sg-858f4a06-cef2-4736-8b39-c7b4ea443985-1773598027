@@ -418,7 +418,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Kapıdan kapıya denizyolu hizmeti alınabilir mi?", answer: "Uygun hatlarda çıkış ve varış kara taşımaları denizyolu operasyonuna eklenerek kapıdan kapıya plan yapılabilir." },
       { question: "Konteyner türünü kim belirler?", answer: "Yükün ölçüsü, ağırlığı, ambalajı, yükleme biçimi ve özel gereksinimleri incelenerek uygun konteyner seçeneği önerilir." },
     ],
-    related: ["denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi", "lcl-mi-fcl-mi"],
+    related: ["denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi", "lcl-mi-fcl-mi", "cbm-hesaplama"],
   },
   "denizyolu-parsiyel-tasimacilik": {
     slug: "denizyolu-parsiyel-tasimacilik",
@@ -617,7 +617,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Varış ülkesindeki vergi ve harçlar fiyata dahil mi?", answer: "Varış ülkesindeki vergi ve harçlar teslim şekline göre alıcıya veya göndericiye ait olabilir. Teklif kapsamı rezervasyon öncesi netleştirilir." },
       { question: "Gönderimi nasıl takip ederim?", answer: "Oluşturulan takip numarasıyla taşıma hareketleri takip edilir; REX Lojistik operasyon ekibi gerektiğinde süreç hakkında destek verir." },
     ],
-    related: ["yurtdisindan-turkiyeye-express-kargo", "turkiyeden-yurtdisina-express-kargo", "express-kargo-hacimsel-agirlik-hesaplama"],
+    related: ["yurtdisindan-turkiyeye-express-kargo", "turkiyeden-yurtdisina-express-kargo", "express-kargo-hacimsel-agirlik-hesaplama", "yurtdisi-kargo-gonderim-rehberi"],
   },
   "yurtdisindan-turkiyeye-express-kargo": {
     slug: "yurtdisindan-turkiyeye-express-kargo",
