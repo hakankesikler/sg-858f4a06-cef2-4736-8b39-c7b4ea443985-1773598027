@@ -2,6 +2,10 @@ import { Button } from "@/components/ui/button";
 import { MapPin, MessageCircle } from "lucide-react";
 
 export function Hero() {
+  const handleQuoteRequest = () => {
+    window.dispatchEvent(new Event("rex:open-quote-form"));
+  };
+
   const handleWhatsApp = () => {
     window.open("https://wa.me/905434010755", "_blank");
   };
@@ -43,15 +47,30 @@ export function Hero() {
             </div>
           </div>
 
+          <p className="mb-3 text-sm font-bold uppercase tracking-[0.18em] text-white/80 sm:text-base">
+            Lojistikte Güvenilir Çözüm
+          </p>
+
           {/* Main Heading - Mobile Optimized */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 sm:mb-8 leading-tight">
-            <span className="text-white">Lojistikte</span>
+            <span className="text-white">Yurtiçi ve Uluslararası</span>{" "}
             <br />
-            <span className="text-accent">Güvenilir Çözüm</span>
+            <span className="text-accent">Lojistik Çözümleri</span>
           </h1>
+
+          <p className="mb-6 max-w-2xl text-lg leading-relaxed text-white/90 sm:mb-8 sm:text-xl">
+            1 paletten komple araca; Türkiye&apos;nin 81 iline ve dünya genelinde karayolu, hava, denizyolu ve express taşımacılık çözümleri.
+          </p>
 
           {/* CTA Buttons - Mobile First */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8 sm:mb-12">
+            <Button
+              size="lg"
+              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 px-8 py-6 text-lg font-semibold text-white shadow-xl transition-all hover:from-orange-600 hover:to-orange-700 hover:shadow-2xl sm:w-auto"
+              onClick={handleQuoteRequest}
+            >
+              Hızlı Teklif Al
+            </Button>
             <Button 
               size="lg"
               variant="outline"

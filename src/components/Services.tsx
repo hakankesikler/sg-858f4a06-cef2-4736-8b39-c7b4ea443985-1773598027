@@ -1,7 +1,7 @@
 "use client";
 
 import { Plane, Ship, Truck, Warehouse, Globe, Box, MapPin, Package } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -23,7 +23,7 @@ const services: Service[] = [
   },
   {
     icon: MapPin,
-    title: "Türkiye Geneli Dağıtım",
+    title: "Yurtiçi Parsiyel Taşımacılık",
     description: "81 ile ve tüm ilçelere 1 palet minimum miktar ile esnek ve hızlı teslimat hizmeti.",
     href: "/yurtici-parsiyel-tasimacilik",
     featured: true,
@@ -31,13 +31,13 @@ const services: Service[] = [
   },
   {
     icon: Plane,
-    title: "Hava Yolu Taşımacılığı",
+    title: "Hava Kargo",
     description: "Acil ve değerli kargolarınız için hızlı ve güvenilir hava yolu taşımacılığı hizmetleri.",
     href: "/hava-kargo",
   },
   {
     icon: Globe,
-    title: "Uluslararası Taşımacılık",
+    title: "Uluslararası Karayolu Taşımacılığı",
     description: "Dünya genelinde kapsamlı lojistik ağımızla güvenilir uluslararası taşımacılık.",
     href: "/uluslararasi-karayolu-tasimaciligi",
   },
@@ -49,7 +49,7 @@ const services: Service[] = [
   },
   {
     icon: Ship,
-    title: "Deniz Yolu Taşımacılığı",
+    title: "Denizyolu Taşımacılığı",
     description: "FCL ve LCL konteyner taşımacılığı, dökme yük ve deniz yolu kargo çözümleri.",
     href: "/denizyolu-tasimaciligi",
   },
@@ -103,9 +103,9 @@ export function Services() {
                     </span>
                   )}
                 </div>
-                <CardTitle className="text-2xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
+                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
                   {service.title}
-                </CardTitle>
+                </h3>
               </CardHeader>
               <CardContent className="space-y-4 p-6">
                 <p className="text-muted-foreground leading-relaxed">

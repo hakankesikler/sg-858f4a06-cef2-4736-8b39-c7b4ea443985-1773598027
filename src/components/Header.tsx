@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, X } from "lucide-react";
@@ -72,6 +72,12 @@ export function Header() {
     setQuoteFormOpen(true);
     closeMobileMenu();
   };
+
+  useEffect(() => {
+    const handleQuoteRequest = () => setQuoteFormOpen(true);
+    window.addEventListener("rex:open-quote-form", handleQuoteRequest);
+    return () => window.removeEventListener("rex:open-quote-form", handleQuoteRequest);
+  }, []);
 
   return (
     <>

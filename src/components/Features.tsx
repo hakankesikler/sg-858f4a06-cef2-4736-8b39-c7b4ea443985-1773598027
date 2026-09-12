@@ -56,7 +56,7 @@ export function Features() {
               Neden REX Lojistik?
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              20+ yıllık sektör deneyimi ile 2022 yılında kurulan REX Lojistik, müşteri memnuniyeti odaklı yaklaşımı ve kaliteli hizmet anlayışıyla güvenilir bir lojistik iş ortağıdır.
+              20+ yıllık sektör deneyiminin üzerine kurulan REX Lojistik, 2022 yılından bu yana müşteri memnuniyeti odaklı yaklaşımı ve kaliteli hizmet anlayışıyla güvenilir bir lojistik iş ortağıdır.
             </p>
 
             <div className="space-y-6">

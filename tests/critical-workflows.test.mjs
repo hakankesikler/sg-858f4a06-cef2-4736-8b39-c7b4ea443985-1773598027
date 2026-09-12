@@ -1221,10 +1221,57 @@ test("the detailed quote form is rendered only from the header", async () => {
 
   assert.match(header, /<QuoteForm\s*\/>/);
   assert.match(header, /onClick=\{openQuoteForm\}>Teklif Al/);
+  assert.match(header, /rex:open-quote-form/);
+  assert.match(hero, /rex:open-quote-form/);
+  assert.match(hero, /Hızlı Teklif Al/);
+  assert.doesNotMatch(hero, /<QuoteForm\s*\/>/);
   [home, hero, marketing, air, express, sea, expressPlanner].forEach((source) => {
     assert.doesNotMatch(source, /<CTA\s*\/>/);
     assert.doesNotMatch(source, /openQuoteForm/);
   });
+});
+
+test("homepage SEO, hero copy and service headings are semantic and focused", async () => {
+  const [home, hero, services, tracking, features, header, footer, seo] = await Promise.all([
+    read("src/pages/index.tsx"),
+    read("src/components/Hero.tsx"),
+    read("src/components/Services.tsx"),
+    read("src/components/TrackingSection.tsx"),
+    read("src/components/Features.tsx"),
+    read("src/components/Header.tsx"),
+    read("src/components/Footer.tsx"),
+    read("src/components/SEO.tsx"),
+  ]);
+
+  assert.match(home, /title="REX Lojistik \| Parsiyel, Komple ve Uluslararası Taşımacılık"/);
+  assert.match(home, /description="REX Lojistik; yurtiçi parsiyel ve komple taşımacılık, uluslararası karayolu, hava kargo, denizyolu ve express lojistik çözümleri sunar\. 1 paletten komple araca, Türkiye geneli ve uluslararası taşımacılık için hızlı teklif alın\."/);
+  assert.match(home, /url="https:\/\/www\.rexlojistik\.com"/);
+  const documentDefaults = seo.slice(seo.indexOf("export function SEOElements"));
+  assert.doesNotMatch(documentDefaults, /<meta name="description"/);
+  assert.match(hero, /<h1[\s\S]*Yurtiçi ve Uluslararası[\s\S]*Lojistik Çözümleri[\s\S]*<\/h1>/);
+  assert.doesNotMatch(hero, /<h1[\s\S]*Lojistikte Güvenilir Çözüm[\s\S]*<\/h1>/);
+  assert.match(hero, /Lojistikte Güvenilir Çözüm/);
+  assert.match(hero, /1 paletten komple araca; Türkiye&apos;nin 81 iline ve dünya genelinde karayolu, hava, denizyolu ve express taşımacılık çözümleri\./);
+
+  const renderedHomepageSources = [home, hero, services, tracking, features, header, footer].join("\n");
+  assert.equal((renderedHomepageSources.match(/<h1\b/g) || []).length, 1);
+  assert.match(services, /<h2[\s\S]*Hizmetlerimiz[\s\S]*<\/h2>/);
+  assert.match(services, /<h3[\s\S]*\{service\.title\}[\s\S]*<\/h3>/);
+  assert.match(features, /20\+ yıllık sektör deneyiminin üzerine kurulan REX Lojistik/);
+
+  const expectedServices = [
+    ["Yurtiçi Parsiyel Taşımacılık", "/yurtici-parsiyel-tasimacilik"],
+    ["Yurtiçi Komple Taşımacılık", "/komple-tasimacilik"],
+    ["Uluslararası Karayolu Taşımacılığı", "/uluslararasi-karayolu-tasimaciligi"],
+    ["Hava Kargo", "/hava-kargo"],
+    ["Denizyolu Taşımacılığı", "/denizyolu-tasimaciligi"],
+    ["Uluslararası Express Kargo", "/express-kargo"],
+    ["Depolama Hizmetleri", "/depolama"],
+  ];
+  for (const [title, href] of expectedServices) {
+    assert.match(services, new RegExp(`title: "${title}"`));
+    assert.match(services, new RegExp(`href: "${href}"`));
+  }
 });
 
 test("every public page uses the enlarged REX-only favicon", async () => {

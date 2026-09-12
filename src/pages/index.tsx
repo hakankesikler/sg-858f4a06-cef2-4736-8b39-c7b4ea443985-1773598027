@@ -10,9 +10,10 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="Rex Lojistik - Türkiye'nin Güvenilir Lojistik Partneri | 0543 401 07 55"
-        description="Rex Lojistik ile kara, hava ve deniz taşımacılığı hizmetleri. Depolama, dağıtım ve uluslararası kargo çözümleri. 7/24 müşteri desteği, hızlı ve güvenli teslimat. İletişim: 0543 401 07 55"
+        title="REX Lojistik | Parsiyel, Komple ve Uluslararası Taşımacılık"
+        description="REX Lojistik; yurtiçi parsiyel ve komple taşımacılık, uluslararası karayolu, hava kargo, denizyolu ve express lojistik çözümleri sunar. 1 paletten komple araca, Türkiye geneli ve uluslararası taşımacılık için hızlı teklif alın."
         image="/og-image.png"
+        url="https://www.rexlojistik.com"
         structuredData={{
           "@context": "https://schema.org",
           "@type": "Organization",

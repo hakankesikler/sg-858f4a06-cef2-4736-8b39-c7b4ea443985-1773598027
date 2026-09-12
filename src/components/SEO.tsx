@@ -81,7 +81,6 @@ export function SEO({
 export function SEOElements() {
   return (
     <>
-      <meta name="description" content="Rex Lojistik ile kara, hava ve deniz taşımacılığı hizmetleri. Depolama, dağıtım ve uluslararası kargo çözümleri. 7/24 müşteri desteği, hızlı ve güvenli teslimat. İletişim: 0543 401 07 55" />
       <meta name="keywords" content="rex lojistik, lojistik firması, kargo şirketi, nakliye, taşımacılık, depolama, dağıtım, hava kargo, deniz kargo, kara taşımacılığı, uluslararası kargo, lojistik çözümleri, hızlı teslimat, güvenli kargo" />
       <meta name="author" content="Rex Lojistik" />
       <meta name="language" content="tr" />
