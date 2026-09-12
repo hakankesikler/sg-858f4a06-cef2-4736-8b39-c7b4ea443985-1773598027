@@ -1139,6 +1139,32 @@ test("minivan express page provides a unique capacity-aware decision flow", asyn
   assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/minivan-express-tasimacilik/);
 });
 
+test("domestic partial page prepares multi-load WhatsApp quotes", async () => {
+  const [route, planner] = await Promise.all([
+    read("src/pages/yurtici-parsiyel-tasimacilik.tsx"),
+    read("src/components/DomesticPartialPlanner.tsx"),
+  ]);
+
+  assert.match(route, /DomesticPartialPlanner/);
+  assert.match(planner, /Gönderici/);
+  assert.match(planner, /Alıcı/);
+  assert.match(planner, /Cinsi \/ ambalajı/);
+  assert.match(planner, /Toplam ağırlık \(kg\)/);
+  assert.match(planner, /Boy \(cm\)/);
+  assert.match(planner, /En \(cm\)/);
+  assert.match(planner, /Yükseklik \(cm\)/);
+  assert.match(planner, /İstif durumu/);
+  assert.match(planner, /İstiflenebilir/);
+  assert.match(planner, /İstiflenemez/);
+  assert.match(planner, /REFERENCE_STACK_HEIGHT_CM = 240/);
+  assert.match(planner, /REFERENCE_TRAILER_WIDTH_METERS = 2\.4/);
+  assert.match(planner, /LDM tahmini araç yeri/);
+  assert.match(planner, /estimateLoadMeters/);
+  assert.match(planner, /Yük Ekle/);
+  assert.match(planner, /Parsiyel teklifini WhatsApp’tan gönder/);
+  assert.match(planner, /Yük kalemleri:/);
+});
+
 test("every public page uses the enlarged REX-only favicon", async () => {
   const [document, notFound] = await Promise.all([
     read("src/pages/_document.tsx"),
