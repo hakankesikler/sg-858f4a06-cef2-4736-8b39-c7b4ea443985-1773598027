@@ -846,7 +846,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
           "İzmir çıkışlı taleplerde İstanbul, Ankara, Bursa ve Kocaeli gibi sanayi merkezlerinin yanında Akdeniz ve İç Anadolu yönleri de öne çıkabilir. Aşağıdaki hatlar, talep edilen güzergâhlara örnektir; hizmet kapsamını sınırlandırmaz.",
           "Bu güzergâhların dışında Türkiye'nin 81 iline ve ilçelere parsiyel taşıma organizasyonu sağlanabilir.",
         ],
-        bullets: ["İzmir → İstanbul", "İzmir → Ankara", "İzmir → Bursa", "İzmir → Kocaeli", "İzmir → Antalya", "İzmir → Konya", "İzmir → Adana", "İzmir → Manisa"],
+        bullets: ["İzmir → İstanbul", "İzmir → Gebze", "İzmir → Ankara", "İzmir → Bursa", "İzmir → Kocaeli", "İzmir → Antalya", "İzmir → Konya", "İzmir → Adana", "İzmir → Manisa"],
       },
       {
         title: "İzmir'in Ticaret ve Üretim Bölgelerinden Adres Bazlı Alım",
@@ -868,6 +868,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
       { anchor: "komple araç", href: "/komple-tasimacilik" },
       { anchor: "İzmir → İstanbul", href: "/izmir-istanbul-parsiyel-tasimacilik" },
+      { anchor: "İzmir → Gebze", href: "/izmir-gebze-parsiyel-tasimacilik" },
     ],
   },
   "izmir-istanbul-parsiyel-tasimacilik": {
@@ -975,6 +976,128 @@ export const marketingPages: Record<string, MarketingPageData> = {
     finalCta: {
       title: "İzmir'den İstanbul'a Göndereceğiniz Yük İçin Teklif Alın",
       text: "Palet veya toplu yükünüzün temel bilgilerini paylaşın; İzmir'deki yükleme adresinden İstanbul'daki teslimat adresine uygun taşıma seçeneğini değerlendirelim.",
+      primaryLabel: "Hızlı Teklif Al",
+      whatsappLabel: "WhatsApp'tan Teklif Al",
+    },
+    related: ["izmir-parsiyel-tasimacilik", "yurtici-parsiyel-tasimacilik", "komple-tasimacilik"],
+    contextualLinks: [
+      { anchor: "İzmir parsiyel taşımacılık", href: "/izmir-parsiyel-tasimacilik" },
+      { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
+      { anchor: "komple taşımacılık", href: "/komple-tasimacilik" },
+    ],
+  },
+  "izmir-gebze-parsiyel-tasimacilik": {
+    slug: "izmir-gebze-parsiyel-tasimacilik",
+    kind: "service",
+    icon: "route",
+    eyebrow: "İzmir üretim ve ticaret bölgelerinden Gebze'ye",
+    title: "İzmir Gebze Parsiyel Taşımacılık",
+    lead: "İzmir'den Gebze'ye 1 paletten başlayan sanayi ve ticari yüklerinizi adresinizden alıyor, Gebze'deki alıcı adresine kadar teslim ediyoruz.",
+    seoTitle: "İzmir Gebze Parsiyel Taşımacılık | REX Lojistik",
+    seoDescription: "İzmir'den Gebze'ye 1 paletten başlayan sanayi ve ticari yüklerinizi adresinizden alıyor, Gebze'de alıcı adresine teslim ediyoruz. Hızlı teklif alın.",
+    keywords: ["İzmir Gebze parsiyel taşımacılık", "İzmir Gebze parsiyel nakliye", "İzmir'den Gebze'ye parsiyel yük", "İzmir Gebze palet taşıma", "İzmir Gebze nakliye"],
+    heroPrimaryCtaLabel: "Hızlı Teklif Al",
+    heroWhatsAppLabel: "WhatsApp'tan Teklif Al",
+    breadcrumbParent: {
+      name: "İzmir Parsiyel Taşımacılık",
+      href: "/izmir-parsiyel-tasimacilik",
+    },
+    highlights: [
+      { title: "1 Paletten Başlayan Taşıma", text: "Komple araç kapasitesine ihtiyaç duymayan yükler için rota odaklı planlama" },
+      { title: "İzmir'de Adresten Alım", text: "Açık yükleme adresi ve saha koşullarına göre organize edilen alım" },
+      { title: "Gebze'de Adrese Teslim", text: "Taşıma planına göre alıcının açık teslimat adresine kadar organizasyon" },
+      { title: "Sanayi + Ticari Yükler", text: "Sevkiyata uygun paletli üretim girdileri, parçalar ve ticari ürünler" },
+      { title: "Yüke Uygun Taşıma Modeli", text: "Palet sayısı, hacim, ağırlık ve istiflenebilirliğe göre değerlendirme" },
+      { title: "Tek Noktadan Operasyon", text: "İzmir'deki alımdan Gebze'deki teslimata REX Lojistik koordinasyonu" },
+    ],
+    sections: [
+      {
+        title: "İzmir'den Gebze'ye Parsiyel Yük Taşıma",
+        paragraphs: [
+          "İzmir ile Gebze arasındaki üretim, tedarik ve ticaret hareketliliğinde her yük komple araç kapasitesine ihtiyaç duymaz. Bir veya birkaç paletlik sevkiyatlarda parsiyel taşımacılık, yük miktarına uygun bir taşıma modeli oluşturulmasına imkân verir.",
+          "REX Lojistik olarak İzmir çıkışlı 1 paletten başlayan yüklerin Gebze'ye taşıma organizasyonunu sağlıyoruz. Yükü İzmir'deki gönderici adresinden alıyor, palet sayısı, ölçüler, ağırlık ve teslimat noktasına göre taşıma planını oluşturuyor ve Gebze'deki alıcı adresine teslimatı organize ediyoruz.",
+          "Bu sayfa Gebze varışlı rota planına odaklanır; diğer varış noktaları için İzmir parsiyel taşımacılık seçeneklerini inceleyebilirsiniz.",
+        ],
+      },
+      {
+        title: "İzmir'in Sanayi ve Ticaret Bölgelerinden Gebze'ye Taşıma",
+        paragraphs: [
+          "İzmir'in sanayi, üretim, depolama ve ticaret bölgelerinden Gebze yönüne farklı büyüklüklerde yük hareketleri oluşmaktadır. Komple araç kapasitesine ihtiyaç duymayan paletli yüklerde parsiyel taşıma, sevkiyat miktarına göre değerlendirilebilecek seçeneklerden biridir.",
+          "Kemalpaşa, Bornova, Işıkkent, Gaziemir, Çiğli, Torbalı, Aliağa, Menemen ve çevresindeki üretim veya ticaret noktalarından çıkacak yükler için açık yükleme adresine göre alım planlaması oluşturulabilir.",
+        ],
+      },
+      {
+        title: "Sanayi Yüklerinin Yanında Ticari Yükler de Taşınabilir",
+        paragraphs: [
+          "İzmir–Gebze hattındaki taşıma ihtiyacı yalnızca sanayi üretimiyle sınırlı değildir. Sevkiyata uygun şekilde ambalajlanmış paletli sanayi ürünleri, üretim girdileri, makine ve ekipman parçaları ile paletli ticari ürünler yük özelliklerine göre değerlendirilebilir.",
+          "Paletli yüklerin yanı sıra güzergâh, koli adedi, toplam hacim, ağırlık ve ambalaj özelliklerine göre koli veya toplu koli gönderileri için de taşıma çözümü oluşturulabilir.",
+          "Gebze dışındaki yurtiçi hatlar için yurtiçi parsiyel taşımacılık hizmet kapsamını inceleyebilirsiniz.",
+        ],
+      },
+      {
+        title: "1 Palet İzmir'den Gebze'ye Gönderilebilir mi?",
+        paragraphs: [
+          "Evet. İzmir çıkışlı Gebze varışlı yüklerde 1 paletten başlayan taşıma organize edilebilir.",
+          "Komple araç kapasitesine ihtiyaç duymayan bir veya birkaç paletlik yüklerde parsiyel taşıma değerlendirilebilir. Palet sayısı, toplam hacim veya ağırlık arttığında ise farklı araç ve nakliye seçenekleri daha uygun hale gelebilir.",
+          "Bu nedenle taşıma modeli yalnızca palet sayısına değil, yükün ölçülerine, ağırlığına, hacmine ve teslimat noktasına göre değerlendirilir.",
+        ],
+      },
+      {
+        title: "İzmir Gebze Parsiyel Nakliye Fiyatı Nasıl Hesaplanır?",
+        paragraphs: [
+          "İzmir–Gebze parsiyel taşıma fiyatı yalnızca kilogram üzerinden belirlenmez. İzmir'deki açık yükleme adresi, Gebze'deki teslimat adresi, palet veya koli adedi, yük ölçüleri, toplam ağırlık ve istiflenebilirlik durumu fiyatlandırmayı etkileyebilir.",
+          "Doğru teklif ve uygun taşıma modelinin belirlenebilmesi için temel yük bilgilerini paylaşmanız yeterlidir.",
+        ],
+        bullets: ["Çıkış adresi", "Teslimat adresi", "Palet / koli adedi", "En × Boy × Yükseklik", "Toplam kg", "İstiflenebilir mi?", "Yük hazır mı / hazır olma tarihi"],
+        cta: { label: "Yük Bilgilerini Gönder – Teklif Al", href: "#izmir-gebze-parsiyel-teklif" },
+      },
+      {
+        title: "İzmir'de Adresten Alım, Gebze'de Adrese Teslim",
+        paragraphs: [
+          "Yükünüzün bir ambar veya nakliye noktasına tarafınızdan götürülmesi zorunlu değildir. Taşıma planına göre yük İzmir'deki gönderici adresinden alınabilir ve Gebze'deki alıcı adresine kadar teslimatı organize edilebilir.",
+          "Açık yükleme ve teslimat adreslerinin teklif aşamasında paylaşılması, hem fiyatlandırmanın hem de taşıma planının doğru oluşturulmasına yardımcı olur.",
+        ],
+      },
+      {
+        title: "İzmir Gebze Parsiyel Taşıma Süreci",
+        paragraphs: [
+          "İzmir'deki yükleme adresinden Gebze'deki teslimat adresine uzanan süreç, beş aşamada planlanır. Her aşamada paylaşılan gerçek yük ve adres bilgileri esas alınır.",
+        ],
+      },
+      {
+        title: "Parsiyel Taşıma mı, Komple Araç mı?",
+        paragraphs: [
+          "Bir veya birkaç paletlik sevkiyatlarda parsiyel taşıma değerlendirilebilecek seçeneklerden biridir. Ancak yük miktarı, palet sayısı, toplam hacim veya ağırlık arttığında araç bazlı taşıma daha uygun hale gelebilir.",
+          "REX Lojistik, verilen yük bilgilerine göre parsiyel taşıma ile komple araç seçeneklerini değerlendirerek sevkiyat için uygun taşıma modelinin oluşturulmasını sağlar. Kapasite ihtiyacı yükseldiğinde komple taşımacılık seçeneği de karşılaştırmaya dahil edilir.",
+        ],
+      },
+      {
+        title: "İzmir–Gebze Hattı Neden Önemli?",
+        paragraphs: [
+          "İzmir'in üretim ve ticaret yapısı ile Gebze'nin yoğun sanayi ve tedarik ağı, iki bölge arasında düzenli yük hareketi oluşmasına neden olur. Özellikle komple araç kapasitesine ulaşmayan paletli sevkiyatlarda yük miktarına uygun taşıma planlaması önem kazanır.",
+          "REX Lojistik, İzmir çıkışlı sanayi ve ticari yüklerin Gebze'deki işletme veya alıcı adreslerine ulaştırılması için yük özelliklerine göre taşıma organizasyonu oluşturur.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Yük Bilgilerinin Alınması", text: "İzmir yükleme adresi, Gebze teslimat adresi, palet/koli adedi, ölçüler ve ağırlık alınır." },
+      { title: "Taşıma Modelinin Belirlenmesi", text: "Yükün miktarı ve özelliklerine göre uygun taşıma modeli değerlendirilir." },
+      { title: "İzmir'de Adresten Alım", text: "Belirlenen gönderici adresinden yük alımı organize edilir." },
+      { title: "İzmir–Gebze Taşıması", text: "Yük, oluşturulan taşıma planına göre Gebze'ye sevk edilir." },
+      { title: "Gebze'de Adrese Teslim", text: "Alıcının açık adresine teslimat organize edilir." },
+    ],
+    faq: [
+      { question: "İzmir'den Gebze'ye 1 palet gönderebilir miyim?", answer: "Evet. İzmir çıkışlı Gebze varışlı yüklerde 1 paletten başlayan taşıma organize edilebilir. Teklif için palet ölçüleri, ağırlık ve yükleme/teslimat adreslerinin paylaşılması yeterlidir." },
+      { question: "İzmir'de yükü adresimden alıyor musunuz?", answer: "Evet. Taşıma planına göre yükün İzmir'deki gönderici adresinden alınması organize edilebilir." },
+      { question: "Gebze'de adrese teslim yapılıyor mu?", answer: "Evet. Taşıma planına göre yükün Gebze'deki alıcı adresine teslim edilmesi organize edilebilir." },
+      { question: "Sanayi yükleri taşınabiliyor mu?", answer: "Sevkiyata uygun şekilde ambalajlanmış paletli sanayi ve ticari yükler, yük özelliklerine göre değerlendirilebilir. Özel taşıma koşulu gerektiren ürünlerde yük detaylarının teklif öncesinde paylaşılması gerekir." },
+      { question: "İzmir Gebze parsiyel nakliye fiyatı ne kadar?", answer: "Fiyat; İzmir'deki yükleme adresi, Gebze'deki teslimat adresi, palet/koli adedi, ölçüler, toplam ağırlık ve yükün taşıma özelliklerine göre değişebilir. Net fiyat için yük bilgilerinin paylaşılması gerekir." },
+      { question: "İzmir'den Gebze'ye koli gönderilebilir mi?", answer: "Güzergâh, koli adedi, toplam hacim, ağırlık ve ambalaj özelliklerine göre koli veya toplu koli gönderileri için taşıma çözümü değerlendirilebilir." },
+      { question: "Palet sayısı arttığında ne olur?", answer: "Palet sayısı veya toplam hacim arttığında parsiyel taşımanın yanında farklı araç veya komple taşıma seçenekleri de değerlendirilebilir. Uygun taşıma modeli yük özelliklerine göre belirlenir." },
+    ],
+    finalCta: {
+      title: "İzmir'den Gebze'ye Göndereceğiniz Yük İçin Teklif Alın",
+      text: "Paletli sanayi veya ticari yükünüzün bilgilerini paylaşın; İzmir'deki yükleme adresinden Gebze'deki teslimat adresine uygun taşıma seçeneğini değerlendirelim.",
       primaryLabel: "Hızlı Teklif Al",
       whatsappLabel: "WhatsApp'tan Teklif Al",
     },
