@@ -1274,6 +1274,76 @@ test("homepage SEO, hero copy and service headings are semantic and focused", as
   }
 });
 
+test("service pages expose crawlable contextual links only to existing internal routes", async () => {
+  const [content, marketingPage] = await Promise.all([
+    read("src/content/marketing-pages.ts"),
+    read("src/components/MarketingPage.tsx"),
+  ]);
+  const expectedLinks = [
+    ["yurtici-parsiyel-tasimacilik", "komple araç", "/komple-tasimacilik"],
+    ["yurtici-parsiyel-tasimacilik", "Depolama bağlantısı", "/depolama"],
+    ["yurtici-parsiyel-tasimacilik", "uluslararası karayolu taşımacılığı", "/uluslararasi-karayolu-tasimaciligi"],
+    ["komple-tasimacilik", "yurtiçi parsiyel taşımacılık", "/yurtici-parsiyel-tasimacilik"],
+    ["komple-tasimacilik", "uluslararası karayolu taşımacılığı", "/uluslararasi-karayolu-tasimaciligi"],
+    ["komple-tasimacilik", "Depolama ihtiyacı", "/depolama"],
+    ["uluslararasi-karayolu-tasimaciligi", "uluslararası parsiyel taşımacılık", "/uluslararasi-karayolu-parsiyel-tasimacilik"],
+    ["uluslararasi-karayolu-tasimaciligi", "komple taşımacılık", "/komple-tasimacilik"],
+    ["uluslararasi-karayolu-tasimaciligi", "minivan express", "/minivan-express-tasimacilik"],
+    ["uluslararasi-karayolu-tasimaciligi", "hava kargo", "/hava-kargo"],
+    ["uluslararasi-karayolu-parsiyel-tasimacilik", "uluslararası karayolu taşımacılığı", "/uluslararasi-karayolu-tasimaciligi"],
+    ["uluslararasi-karayolu-parsiyel-tasimacilik", "minivan express", "/minivan-express-tasimacilik"],
+    ["uluslararasi-karayolu-parsiyel-tasimacilik", "hava kargo", "/hava-kargo"],
+    ["minivan-express-tasimacilik", "uluslararası karayolu taşımacılığı", "/uluslararasi-karayolu-tasimaciligi"],
+    ["minivan-express-tasimacilik", "uluslararası parsiyel taşımacılık", "/uluslararasi-karayolu-parsiyel-tasimacilik"],
+    ["minivan-express-tasimacilik", "hava kargo", "/hava-kargo"],
+    ["hava-kargo", "Türkiye geneli hava kargo alım", "/turkiye-geneli-hava-kargo-alimi"],
+    ["hava-kargo", "kapıdan kapıya hava kargo", "/kapidan-kapiya-hava-kargo"],
+    ["hava-kargo", "uluslararası karayolu taşımacılığı", "/uluslararasi-karayolu-tasimaciligi"],
+    ["hava-kargo", "denizyolu taşımacılığı", "/denizyolu-tasimaciligi"],
+    ["kapidan-kapiya-hava-kargo", "hava kargo hizmetinde", "/hava-kargo"],
+    ["turkiye-geneli-hava-kargo-alimi", "hava kargo hizmeti", "/hava-kargo"],
+    ["denizyolu-tasimaciligi", "LCL parsiyel denizyolu taşımacılığında", "/denizyolu-parsiyel-tasimacilik"],
+    ["denizyolu-tasimaciligi", "FCL komple konteyner taşımacılığında", "/denizyolu-konteyner-tasimaciligi"],
+    ["denizyolu-tasimaciligi", "hava kargo", "/hava-kargo"],
+    ["denizyolu-tasimaciligi", "uluslararası karayolu taşımacılığı", "/uluslararasi-karayolu-tasimaciligi"],
+    ["denizyolu-parsiyel-tasimacilik", "denizyolu taşımacılığı", "/denizyolu-tasimaciligi"],
+    ["denizyolu-parsiyel-tasimacilik", "FCL", "/denizyolu-konteyner-tasimaciligi"],
+    ["denizyolu-konteyner-tasimaciligi", "denizyolu taşımacılığı", "/denizyolu-tasimaciligi"],
+    ["denizyolu-konteyner-tasimaciligi", "LCL", "/denizyolu-parsiyel-tasimacilik"],
+    ["express-kargo", "hava kargo", "/hava-kargo"],
+    ["express-kargo", "minivan express", "/minivan-express-tasimacilik"],
+    ["depolama", "yurtiçi parsiyel taşımacılık", "/yurtici-parsiyel-tasimacilik"],
+    ["depolama", "komple taşımacılık", "/komple-tasimacilik"],
+  ];
+
+  const pageBlock = (slug) => {
+    const start = content.indexOf(`  "${slug}": {`);
+    assert.notEqual(start, -1, `${slug} must exist in marketing content`);
+    const next = content.indexOf("\n  \"", start + 5);
+    return content.slice(start, next === -1 ? content.length : next);
+  };
+
+  for (const [source, anchor, href] of expectedLinks) {
+    const block = pageBlock(source);
+    const copy = block.slice(0, block.indexOf("contextualLinks:"));
+    assert.ok(copy.includes(anchor), `${source} copy must naturally contain ${anchor}`);
+    assert.ok(block.includes(`{ anchor: "${anchor}", href: "${href}" }`), `${source} must link ${anchor} to ${href}`);
+  }
+
+  assert.equal(expectedLinks.length, 34);
+  const contextualRenderer = marketingPage.slice(
+    marketingPage.indexOf("function renderContextualParagraph"),
+    marketingPage.indexOf("export function MarketingPage"),
+  );
+  assert.match(contextualRenderer, /<Link[\s\S]*href=\{nextLink\.link\.href\}/);
+  assert.match(contextualRenderer, /usedTargets\.add\(nextLink\.link\.href\)/);
+  assert.doesNotMatch(contextualRenderer, /rel="nofollow"/);
+  assert.doesNotMatch(contextualRenderer, /target="_blank"/);
+
+  const targetPaths = [...new Set(expectedLinks.map(([, , href]) => href))];
+  await Promise.all(targetPaths.map((href) => read(`src/pages${href}.tsx`)));
+});
+
 test("every public page uses the enlarged REX-only favicon", async () => {
   const [document, notFound] = await Promise.all([
     read("src/pages/_document.tsx"),

@@ -1,5 +1,10 @@
 export type MarketingIcon = "truck" | "route" | "globe" | "plane" | "ship" | "zap" | "warehouse" | "building" | "contact";
 
+export type MarketingContextualLink = {
+  anchor: string;
+  href: string;
+};
+
 export type MarketingPageData = {
   slug: string;
   kind: "service" | "guide" | "about" | "contact";
@@ -15,6 +20,7 @@ export type MarketingPageData = {
   steps?: Array<{ title: string; text: string }>;
   faq: Array<{ question: string; answer: string }>;
   related: string[];
+  contextualLinks?: MarketingContextualLink[];
 };
 
 export const marketingPages: Record<string, MarketingPageData> = {
@@ -46,7 +52,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
         title: "Yurtiçi parsiyel gönderiniz nasıl yönetilir?",
         paragraphs: [
           "Operasyon ekibimiz yük bilgilerini aldıktan sonra uygun araç ve hat planlamasını yapar. Gönderi sisteme kaydedilir, taşıma boyunca durumu izlenir ve teslim sonrasında evrak kaydı tamamlanır.",
-          "İzmir ve Manisa ofislerimizden koordine edilen operasyonlarla Türkiye genelindeki çıkış ve varış noktaları için tek muhatap üzerinden ilerleyebilirsiniz.",
+          "İzmir ve Manisa ofislerimizden koordine edilen operasyonlarla Türkiye genelindeki çıkış ve varış noktaları için tek muhatap üzerinden ilerleyebilirsiniz. Depolama bağlantısı veya uluslararası karayolu taşımacılığı devamı bulunan yükler de aynı operasyon görünürlüğü içinde planlanabilir.",
         ],
       },
     ],
@@ -63,6 +69,11 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Fiyat nasıl hesaplanır?", answer: "Fiyat; çıkış ve varış noktası, palet/koli adedi, ölçü, ağırlık, yük niteliği ve teslimat koşullarına göre hesaplanır." },
     ],
     related: ["gumruk-antrepo-yurtici-transfer", "hafta-sonu-acil-nakliye", "komple-tasimacilik", "depolama"],
+    contextualLinks: [
+      { anchor: "komple araç", href: "/komple-tasimacilik" },
+      { anchor: "Depolama bağlantısı", href: "/depolama" },
+      { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
+    ],
   },
   "gumruk-antrepo-yurtici-transfer": {
     slug: "gumruk-antrepo-yurtici-transfer",
@@ -234,7 +245,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
         title: "Hangi araç ve rota seçilir?",
         paragraphs: [
           "Araç seçimi yalnızca palet adedine göre yapılmaz. Tam kamyon veya tır ihtiyacı belirlenirken yükün toplam kilogramı, hacmi, istiflenebilirliği, yükleme ekipmanı, rampa yapısı ve adres erişim koşulları birlikte değerlendirilir.",
-          "Güzergâh ve teslimat saatleri kesinleştirildikten sonra sevkiyat sisteme alınır. Taşıma başlangıcı, operasyon hareketleri ve teslim evrakı aynı kayıt üzerinden takip edilir.",
+          "Güzergâh ve teslimat saatleri kesinleştirildikten sonra sevkiyat sisteme alınır. Taşıma başlangıcı, operasyon hareketleri ve teslim evrakı aynı kayıt üzerinden takip edilir. Yük hacmi tam aracı gerektirmiyorsa yurtiçi parsiyel taşımacılık, Türkiye dışına devam eden rotalarda uluslararası karayolu taşımacılığı ayrıca değerlendirilir. Depolama ihtiyacı bulunan operasyonlar da taşıma planına bağlanabilir.",
         ],
       },
     ],
@@ -251,6 +262,11 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Teslim evrakına nasıl ulaşılır?", answer: "Teslim tamamlandıktan sonra yüklenen teslim belgesi yetkili müşteri portalı ve ilgili takip ekranı üzerinden görüntülenebilir." },
     ],
     related: ["yurtici-parsiyel-tasimacilik", "depolama", "uluslararasi-karayolu-tasimaciligi"],
+    contextualLinks: [
+      { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
+      { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
+      { anchor: "Depolama ihtiyacı", href: "/depolama" },
+    ],
   },
   "uluslararasi-karayolu-tasimaciligi": {
     slug: "uluslararasi-karayolu-tasimaciligi",
@@ -271,8 +287,8 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Yükünüz hangi karayolu modeline gerçekten ihtiyaç duyuyor?",
         paragraphs: [
-          "Uluslararası karayolunda iyi planlama, doğrudan araç istemekle değil yükün kapladığı alanı ve teslim hedefini doğru okumakla başlar. Birkaç palet için konsolide parsiyel, daha yüksek hacimler için LTL, araca özel program gerektiğinde ise FTL seçenekleri karşılaştırılır.",
-          "REX Lojistik; çıkış ve teslim adresini, palet ölçülerini, brüt ağırlığı, istiflenebilirliği ve hazır olma tarihini aynı tabloda değerlendirir. Böylece yalnızca hızlı görünen değil, kapıdan kapıya toplam süresi ve toplam maliyeti işinize uyan model belirlenir.",
+          "Uluslararası karayolunda iyi planlama, doğrudan araç istemekle değil yükün kapladığı alanı ve teslim hedefini doğru okumakla başlar. Birkaç palet için uluslararası parsiyel taşımacılık, daha yüksek hacimler için LTL, araca özel program gerektiğinde ise komple taşımacılık seçenekleri karşılaştırılır.",
+          "REX Lojistik; çıkış ve teslim adresini, palet ölçülerini, brüt ağırlığı, istiflenebilirliği ve hazır olma tarihini aynı tabloda değerlendirir. Böylece yalnızca hızlı görünen değil, kapıdan kapıya toplam süresi ve toplam maliyeti işinize uyan model belirlenir. Zaman kritik Avrupa yüklerinde minivan express, uçuş bağlantısının belirleyici olduğu gönderilerde hava kargo alternatif taşıma modeli olarak değerlendirilir.",
         ],
         bullets: ["Az hacimli yüklerde parsiyel ve grupaj planı", "Orta hacimde LTL kapasite karşılaştırması", "Yüksek hacim ve özel programda komple araç", "Türkiye–Avrupa çift yönlü kapı bağlantısı"],
       },
@@ -305,6 +321,12 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "REX Lojistik hangi kapsamı yönetir?", answer: "REX; uygun taşıma modelinin seçimini, araç ve rota planını, taşıma evrakı koordinasyonunu ve teslim takibini yönetir. İthalat ve ihracata ilişkin resmî işlemler müşterinin kendi yetkili danışmanları tarafından yürütülür." },
     ],
     related: ["minivan-express-tasimacilik", "uluslararasi-karayolu-parsiyel-tasimacilik", "komple-tasimacilik", "hava-kargo"],
+    contextualLinks: [
+      { anchor: "uluslararası parsiyel taşımacılık", href: "/uluslararasi-karayolu-parsiyel-tasimacilik" },
+      { anchor: "komple taşımacılık", href: "/komple-tasimacilik" },
+      { anchor: "minivan express", href: "/minivan-express-tasimacilik" },
+      { anchor: "hava kargo", href: "/hava-kargo" },
+    ],
   },
   "uluslararasi-karayolu-parsiyel-tasimacilik": {
     slug: "uluslararasi-karayolu-parsiyel-tasimacilik",
@@ -334,7 +356,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
         title: "Avrupa hattında hız, çıkış gününden önce kazanılır",
         paragraphs: [
           "Parsiyel sevkiyatta gecikmeyi azaltmanın en etkili yolu, yük hazır olmadan önce doğru bilgi setini tamamlamaktır. Açık adres, ambalaj ölçüleri, brüt ağırlık, ürün tanımı ve hazır olma günü bilindiğinde uygun konsolidasyon alternatifi daha erken karşılaştırılır.",
-          "REX’in ön planlama yaklaşımı, yalnızca ana taşıma süresine değil; Türkiye içindeki alım, hat çıkışı, aktarma ihtiyacı ve Avrupa’daki son teslim bağlantısına birlikte bakar. Müşterinin gördüğü sonuç, bir aracın hareket süresi değil kapıdan kapıya toplam plandır.",
+          "REX’in ön planlama yaklaşımı, yalnızca ana taşıma süresine değil; Türkiye içindeki alım, hat çıkışı, aktarma ihtiyacı ve Avrupa’daki son teslim bağlantısına birlikte bakar. Müşterinin gördüğü sonuç, bir aracın hareket süresi değil kapıdan kapıya toplam plandır. Acil Avrupa yüklerinde minivan express, uçuş bağlantısının daha uygun olduğu gönderilerde hava kargo seçeneği ayrıca değerlendirilir.",
         ],
       },
       {
@@ -348,7 +370,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
         title: "Tek sefer değil, tekrar edilebilir bir akış",
         paragraphs: [
           "Aynı tedarikçiden veya aynı müşteriye düzenli yükünüz varsa çıkış sıklığı, ortalama palet adedi ve teslim beklentisi kaydedilerek tekrarlanabilir bir operasyon modeli kurulabilir. Her yeni sevkiyatta süreç sıfırdan tarif edilmez; yalnızca değişen yük ve tarih bilgileri güncellenir.",
-          "Yük hacmi büyüdüğünde parsiyel plan LTL veya komple araçla yeniden karşılaştırılır. Amaç tek bir modeli her sevkiyata zorlamak değil, o günkü yük için zaman ve toplam maliyet dengesini korumaktır.",
+          "Yük hacmi büyüdüğünde uluslararası karayolu taşımacılığı kapsamında parsiyel plan LTL veya komple araçla yeniden karşılaştırılır. Amaç tek bir modeli her sevkiyata zorlamak değil, o günkü yük için zaman ve toplam maliyet dengesini korumaktır.",
         ],
       },
     ],
@@ -367,6 +389,11 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Parsiyel mi komple araç mı daha avantajlı?", answer: "Düşük ve orta hacimde parsiyel, yüksek hacim veya araca özel program gerektiğinde komple araç daha uygun olabilir. Karar yalnızca fiyatla değil kapıdan kapıya süre, aktarma ve yük niteliğiyle birlikte verilmelidir." },
     ],
     related: ["minivan-express-tasimacilik", "uluslararasi-karayolu-tasimaciligi", "komple-tasimacilik"],
+    contextualLinks: [
+      { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
+      { anchor: "minivan express", href: "/minivan-express-tasimacilik" },
+      { anchor: "hava kargo", href: "/hava-kargo" },
+    ],
   },
   "minivan-express-tasimacilik": {
     slug: "minivan-express-tasimacilik",
@@ -387,7 +414,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Minivan express ne zaman doğru seçimdir?",
         paragraphs: [
-          "Minivan express; standart parsiyel çıkışını bekleyemeyen, hava kargonun terminal bağlantılarına ihtiyaç duymadan doğrudan adrese ilerlemesi gereken ve komple TIR kapasitesine ihtiyaç duymayan ticari yükler için güçlü bir karayolu modelidir. Araç uygunluk teyidinden sonra sevkiyata ayrılır; alım ve teslim rotası yükün gerçek adreslerine göre kurulur.",
+          "Minivan express; uluslararası parsiyel taşımacılık çıkışını bekleyemeyen, hava kargo terminal bağlantılarına ihtiyaç duymadan doğrudan adrese ilerlemesi gereken ve komple TIR kapasitesine ihtiyaç duymayan ticari yükler için güçlü bir uluslararası karayolu taşımacılığı modelidir. Araç uygunluk teyidinden sonra sevkiyata ayrılır; alım ve teslim rotası yükün gerçek adreslerine göre kurulur.",
           "Bu model özellikle üretim hattını bekleten yedek parça, otomotiv ve makine bileşeni, fuar malzemesi, numune, tekstil, elektronik ve zaman penceresi dar proje yüklerinde değerlendirilir. En hızlı görünen seçeneği değil, kapıdan kapıya toplam süreyi koruyan seçeneği seçmek esastır.",
         ],
         bullets: ["Acil üretim ve bakım parçaları", "Fuar, lansman ve proje malzemeleri", "Paletli veya kolili ticari yükler", "İthalat ve ihracatta çift yönlü taşıma"],
@@ -437,6 +464,11 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Minivan ile hava kargo arasındaki fark nedir?", answer: "Minivan Avrupa hattında yükü doğrudan karayoluyla adrese taşımaya odaklanır. Hava kargoda uçuş, terminal ve kara bağlantıları birlikte planlanır. En uygun model kapıdan kapıya toplam süre ve maliyet karşılaştırmasıyla seçilir." },
     ],
     related: ["uluslararasi-karayolu-tasimaciligi", "uluslararasi-karayolu-parsiyel-tasimacilik", "hava-kargo", "komple-tasimacilik"],
+    contextualLinks: [
+      { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
+      { anchor: "uluslararası parsiyel taşımacılık", href: "/uluslararasi-karayolu-parsiyel-tasimacilik" },
+      { anchor: "hava kargo", href: "/hava-kargo" },
+    ],
   },
   "hava-kargo": {
     slug: "hava-kargo",
@@ -457,7 +489,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Hava kargo İstanbul'dan başlamaz; yükünüzün bulunduğu yerden başlar",
         paragraphs: [
-          "İzmir, Manisa, Bursa, Ankara, Konya, Kayseri, Gaziantep, Antalya veya Türkiye'nin başka bir ilindeki yükünüz için önce uygun adresten alım planlanır. Gönderi, ürün ve uçuş koşullarına göre doğru çıkış havalimanına bağlanır; böylece müşterinin ayrı bir kara taşıması organize etmesine gerek kalmadan hava kargo süreci tek akışta ilerler.",
+          "İzmir, Manisa, Bursa, Ankara, Konya, Kayseri, Gaziantep, Antalya veya Türkiye'nin başka bir ilindeki yükünüz için önce uygun adresten alım planlanır. Gönderi, ürün ve uçuş koşullarına göre doğru çıkış havalimanına bağlanır; böylece müşterinin ayrı bir kara taşıması organize etmesine gerek kalmadan hava kargo süreci tek akışta ilerler. Türkiye geneli hava kargo alım ağımız, uygun gönderilerde kapıdan kapıya hava kargo planının çıkış ayağını oluşturur.",
           "REX Lojistik için hava kargo yalnızca bir uçuş rezervasyonu değildir. Çıkış adresi, kara bağlantısı, havayolu kabulü, uçuş seçeneği, aktarma yapısı ve varış teslimi aynı operasyon masasında değerlendirilir.",
         ],
         bullets: ["Türkiye'nin 81 ilindeki uygun adreslerden planlı alım", "Havalimanından havalimanına taşıma", "Kapıdan havalimanına, havalimanından kapıya veya kapıdan kapıya çözüm", "Numune, yedek parça, paletli ve zaman hassasiyetli ticari yükler"],
@@ -465,7 +497,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Doğru uçuş, yalnızca en kısa görünen uçuş değildir",
         paragraphs: [
-          "Teslim hedefini karşılayan en uygun çözüm; uçuş sıklığı, kapasite, aktarma, kesim saati, çıkış ve varış kara bağlantıları ile birlikte seçilir. Bu yaklaşım, yalnızca hızlı görünen fakat bağlantılarda zaman veya maliyet kaybettiren seçenekleri elemenizi sağlar.",
+          "Teslim hedefini karşılayan en uygun çözüm; uçuş sıklığı, kapasite, aktarma, kesim saati, çıkış ve varış kara bağlantıları ile birlikte seçilir. Bu yaklaşım, yalnızca hızlı görünen fakat bağlantılarda zaman veya maliyet kaybettiren seçenekleri elemenizi sağlar. Yükün rotası ve hacmi uygunsa uluslararası karayolu taşımacılığı veya denizyolu taşımacılığı da alternatif model olarak karşılaştırılabilir.",
           "Fiyatlandırmada gerçek ağırlık ile hacimsel ağırlığın yüksek olanı esas alınabilir. Koli ölçülerinin, brüt ağırlığın, ürün tanımının ve hazır olma tarihinin baştan doğru paylaşılması daha isabetli bir maliyet ve süre karşılaştırması sağlar.",
         ],
       },
@@ -491,6 +523,12 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Teslim süresi ne kadardır?", answer: "Süre uçuş hattı, rezervasyon durumu, aktarma, ülke giriş koşulları ve kapı teslim kapsamına göre değişir; teklif sırasında tahmini transit süre belirtilir." },
     ],
     related: ["kapidan-kapiya-hava-kargo", "turkiye-geneli-hava-kargo-alimi", "hava-kargo-hacimsel-agirlik-hesaplama"],
+    contextualLinks: [
+      { anchor: "Türkiye geneli hava kargo alım", href: "/turkiye-geneli-hava-kargo-alimi" },
+      { anchor: "kapıdan kapıya hava kargo", href: "/kapidan-kapiya-hava-kargo" },
+      { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
+      { anchor: "denizyolu taşımacılığı", href: "/denizyolu-tasimaciligi" },
+    ],
   },
   "uluslararasi-hava-kargo": {
     slug: "uluslararasi-hava-kargo",
@@ -583,6 +621,9 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Kapıdan kapıya teklif için ne paylaşmalıyım?", answer: "Tam çıkış-varış adresleri, koli ölçüleri, brüt ağırlık, ürün tanımı, gönderi değeri ve hazır olma tarihi yeterli bir başlangıç sağlar." },
     ],
     related: ["turkiye-geneli-hava-kargo-alimi", "uluslararasi-hava-kargo", "hava-kargo-hacimsel-agirlik-hesaplama"],
+    contextualLinks: [
+      { anchor: "hava kargo hizmetinde", href: "/hava-kargo" },
+    ],
   },
   "turkiye-geneli-hava-kargo-alimi": {
     slug: "turkiye-geneli-hava-kargo-alimi",
@@ -603,7 +644,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Hava kargo yalnızca havalimanı şehirlerinin hizmeti değildir",
         paragraphs: [
-          "Ürün Manisa'daki bir fabrikada, Konya'daki bir depoda, Kayseri'deki bir üreticide veya Türkiye'nin başka bir noktasında olabilir. REX Lojistik, adres alımını uygun çıkış havalimanına bağlayan kara operasyonunu uçuş takvimine göre planlar.",
+          "Ürün Manisa'daki bir fabrikada, Konya'daki bir depoda, Kayseri'deki bir üreticide veya Türkiye'nin başka bir noktasında olabilir. REX Lojistik, ana hava kargo hizmeti kapsamında adres alımını uygun çıkış havalimanına bağlayan kara operasyonunu uçuş takvimine göre planlar.",
           "Bu sayede müşteri farklı bir nakliyeci bulmak, havalimanı teslim saatini ayrıca takip etmek ve uçuş rezervasyonuyla kara aracını kendi başına eşleştirmek zorunda kalmaz.",
         ],
         bullets: ["Marmara ve Ege sanayi bölgelerinden alım", "İç Anadolu ve Akdeniz üretim merkezlerinden bağlantı", "Karadeniz, Doğu ve Güneydoğu Anadolu çıkışları", "Adres koşuluna göre koli veya paletli ticari yük alımı"],
@@ -629,6 +670,9 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Türkiye içi alım ücreti teklife dahil mi?", answer: "Talep edilen hizmet kapsamına göre kara ön taşıması ve hava navlunu ayrı ve açık kalemlerle veya bütünleşik kapsamla sunulabilir." },
     ],
     related: ["kapidan-kapiya-hava-kargo", "uluslararasi-hava-kargo", "hava-kargo-mu-express-kargo-mu"],
+    contextualLinks: [
+      { anchor: "hava kargo hizmeti", href: "/hava-kargo" },
+    ],
   },
   "hava-kargo-mu-express-kargo-mu": {
     slug: "hava-kargo-mu-express-kargo-mu",
@@ -675,8 +719,8 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "FCL ve LCL denizyolu çözümleri",
         paragraphs: [
-          "FCL taşımada konteyner tek müşterinin yüküne ayrılır. LCL taşımada ise aynı varış yönündeki farklı yükler konteyner kapasitesini paylaşır. Doğru seçim yalnızca hacme değil; ürün niteliğine, yükleme tarihine, liman masraflarına ve teslim hedeflerine göre yapılır.",
-          "REX Lojistik, çıkış limanı ve varış limanı alternatiflerini, gemi programını, konteyner türünü ve kara bağlantılarını birlikte değerlendirir.",
+          "FCL komple konteyner taşımacılığında konteyner tek müşterinin yüküne ayrılır. LCL parsiyel denizyolu taşımacılığında ise aynı varış yönündeki farklı yükler konteyner kapasitesini paylaşır. Doğru seçim yalnızca hacme değil; ürün niteliğine, yükleme tarihine, liman masraflarına ve teslim hedeflerine göre yapılır.",
+          "REX Lojistik, çıkış limanı ve varış limanı alternatiflerini, gemi programını, konteyner türünü ve kara bağlantılarını birlikte değerlendirir. Daha kısa transit hedeflerinde hava kargo, Avrupa kapı bağlantılarında ise uluslararası karayolu taşımacılığı alternatifleri yükün özelliklerine göre ayrıca incelenebilir.",
         ],
         bullets: ["20', 40' ve uygun konteyner alternatifleri", "LCL parsiyel denizyolu organizasyonu", "Liman, depo ve fabrika arası kara bağlantıları", "İthalat ve ihracat evrak koordinasyonu"],
       },
@@ -701,6 +745,12 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Konteyner türünü kim belirler?", answer: "Yükün ölçüsü, ağırlığı, ambalajı, yükleme biçimi ve özel gereksinimleri incelenerek uygun konteyner seçeneği önerilir." },
     ],
     related: ["denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi", "lcl-mi-fcl-mi", "cbm-hesaplama"],
+    contextualLinks: [
+      { anchor: "LCL parsiyel denizyolu taşımacılığında", href: "/denizyolu-parsiyel-tasimacilik" },
+      { anchor: "FCL komple konteyner taşımacılığında", href: "/denizyolu-konteyner-tasimaciligi" },
+      { anchor: "hava kargo", href: "/hava-kargo" },
+      { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
+    ],
   },
   "denizyolu-parsiyel-tasimacilik": {
     slug: "denizyolu-parsiyel-tasimacilik",
@@ -721,7 +771,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "LCL taşımacılık nasıl çalışır?",
         paragraphs: [
-          "LCL, aynı varış yönünde ilerleyen farklı göndericilere ait yüklerin bir konteynerde konsolide edilmesidir. Gönderici komple konteyner yerine kullandığı hacim ve taşıma koşullarına göre planlanan hizmetten yararlanır.",
+          "LCL, aynı varış yönünde ilerleyen farklı göndericilere ait yüklerin bir konteynerde konsolide edilmesidir. Gönderici komple konteyner yerine kullandığı hacim ve taşıma koşullarına göre planlanan hizmetten yararlanır. Bu model, denizyolu taşımacılığı ana hizmetinin düşük hacimli yükler için kullanılan seçeneğidir.",
           "REX Lojistik; yükün koli veya palet adedini, ölçülerini, brüt ağırlığını, çıkış ve teslim adreslerini değerlendirir. Farklı çıkış programları ve liman bağlantıları arasından maliyet ile transit süre dengesini kuran seçenekler tek teklif kapsamında açıklanır.",
         ],
         bullets: ["Paletli ve kolili ticari yükler", "İthalat ve ihracat yönlü LCL organizasyonu", "Depodan limana ve limandan adrese transfer", "Yük ve taşıma evrakı koordinasyonu"],
@@ -754,6 +804,10 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Kapıdan kapıya LCL hizmeti alınabilir mi?", answer: "Uygun hatlarda çıkış ve varış kara taşımaları LCL operasyona eklenerek kapıdan kapıya plan hazırlanabilir." },
     ],
     related: ["cbm-hesaplama", "lcl-mi-fcl-mi", "denizyolu-konteyner-tasimaciligi"],
+    contextualLinks: [
+      { anchor: "denizyolu taşımacılığı", href: "/denizyolu-tasimaciligi" },
+      { anchor: "FCL", href: "/denizyolu-konteyner-tasimaciligi" },
+    ],
   },
   "denizyolu-konteyner-tasimaciligi": {
     slug: "denizyolu-konteyner-tasimaciligi",
@@ -774,8 +828,8 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "FCL konteyner taşımacılığı nedir?",
         paragraphs: [
-          "FCL, bir konteynerin tek göndericinin yüküne ayrıldığı taşıma modelidir. Konteynerin fiziksel olarak tamamen dolması şart değildir; gönderici tahsis edilen konteynerin tamamını kullanır.",
-          "Bu model, yüksek hacimli yüklerde, düzenli ihracat ve ithalat programlarında veya diğer yüklerle konsolide edilmesi tercih edilmeyen ürünlerde değerlendirilir. Konteyner türü; ürün, toplam ağırlık, hacim, yükleme biçimi ve kapı açıklığı dikkate alınarak belirlenir. Doğru ekipman seçimi kullanılmayan kapasiteyi, yeniden elleçlemeyi ve zaman kaybını azaltmaya yardımcı olur.",
+          "FCL, denizyolu taşımacılığı kapsamında bir konteynerin tek göndericinin yüküne ayrıldığı taşıma modelidir. Konteynerin fiziksel olarak tamamen dolması şart değildir; gönderici tahsis edilen konteynerin tamamını kullanır.",
+          "Bu model, yüksek hacimli yüklerde, düzenli ihracat ve ithalat programlarında veya diğer yüklerle konsolide edilmesi tercih edilmeyen ürünlerde değerlendirilir. Daha düşük hacimli yüklerde LCL seçeneğiyle toplam maliyet ve transit planı karşılaştırılabilir. Konteyner türü; ürün, toplam ağırlık, hacim, yükleme biçimi ve kapı açıklığı dikkate alınarak belirlenir. Doğru ekipman seçimi kullanılmayan kapasiteyi, yeniden elleçlemeyi ve zaman kaybını azaltmaya yardımcı olur.",
         ],
         bullets: ["20 DC, 40 DC ve 40 HC seçenekleri", "Reefer, Open Top ve Flat Rack değerlendirmesi", "Liman-liman veya kapı-kapı organizasyon", "İthalat ve ihracat taşıma evrakı koordinasyonu"],
       },
@@ -807,6 +861,10 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Demuraj ve detention nasıl önlenir?", answer: "Serbest sürelerin önceden bilinmesi, evrak ve teslim programının hazırlanması ve konteyner hareketlerinin zamanında tamamlanması riski azaltır; koşullar taşıyıcı ve limana göre değişir." },
     ],
     related: ["konteyner-olculeri", "lcl-mi-fcl-mi", "denizyolu-parsiyel-tasimacilik"],
+    contextualLinks: [
+      { anchor: "denizyolu taşımacılığı", href: "/denizyolu-tasimaciligi" },
+      { anchor: "LCL", href: "/denizyolu-parsiyel-tasimacilik" },
+    ],
   },
   "lcl-mi-fcl-mi": {
     slug: "lcl-mi-fcl-mi",
@@ -874,7 +932,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Uygun global servis nasıl seçilir?",
         paragraphs: [
-          "Gönderiye ve hatta göre DHL Express, FedEx, UPS veya Aramex gibi global taşıyıcıların erişilebilir servis alternatifleri değerlendirilebilir. Nihai seçenek; çıkış-varış posta kodu, ürün kabulü, ölçü-ağırlık, kapasite ve hedef teslim süresine göre belirlenir.",
+          "Gönderiye ve hatta göre DHL Express, FedEx, UPS veya Aramex gibi global taşıyıcıların erişilebilir servis alternatifleri değerlendirilebilir. Nihai seçenek; çıkış-varış posta kodu, ürün kabulü, ölçü-ağırlık, kapasite ve hedef teslim süresine göre belirlenir. Standart express paket sınırlarını aşan paletli yüklerde hava kargo, Avrupa yönündeki zaman kritik ticari yüklerde ise minivan express farklı taşıma modelleri olarak karşılaştırılabilir.",
           "DHL, FedEx, UPS ve Aramex adları ilgili marka sahiplerinin ticari markalarıdır. REX Lojistik bağımsız bir lojistik hizmet sağlayıcısıdır; marka isimlerinin burada anılması ortaklık, yetkili temsilcilik veya marka onayı anlamına gelmez.",
         ],
       },
@@ -900,6 +958,10 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Gönderimi nasıl takip ederim?", answer: "Oluşturulan takip numarasıyla taşıma hareketleri takip edilir; REX Lojistik operasyon ekibi gerektiğinde süreç hakkında destek verir." },
     ],
     related: ["yurtdisindan-turkiyeye-express-kargo", "turkiyeden-yurtdisina-express-kargo", "express-kargo-hacimsel-agirlik-hesaplama", "yurtdisi-kargo-gonderim-rehberi"],
+    contextualLinks: [
+      { anchor: "hava kargo", href: "/hava-kargo" },
+      { anchor: "minivan express", href: "/minivan-express-tasimacilik" },
+    ],
   },
   "yurtdisindan-turkiyeye-express-kargo": {
     slug: "yurtdisindan-turkiyeye-express-kargo",
@@ -1230,7 +1292,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Depo ve taşıma tek operasyonda",
         paragraphs: [
-          "Depolama ile dağıtımın ayrı ayrı yönetilmesi bilgi kaybına ve gecikmeye neden olabilir. Depodan çıkan sevkiyatların taşıma sistemine bağlanması, siparişten teslim evrakına kadar daha görünür bir akış oluşturur.",
+          "Depolama ile dağıtımın ayrı ayrı yönetilmesi bilgi kaybına ve gecikmeye neden olabilir. Depodan çıkan sevkiyatların taşıma sistemine bağlanması, siparişten teslim evrakına kadar daha görünür bir akış oluşturur. Yük hacmine göre yurtiçi parsiyel taşımacılık veya komple taşımacılık seçilerek depo çıkışı doğrudan teslim planına bağlanabilir.",
           "Ürün niteliği, palet ölçüsü, raf veya zemin ihtiyacı, aylık giriş-çıkış hacmi ve katma değerli hizmetler teklifin temelini oluşturur.",
         ],
       },
@@ -1248,6 +1310,10 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Depolama fiyatı nasıl belirlenir?", answer: "Palet veya metrekare ihtiyacı, ürün niteliği, depolama süresi, giriş-çıkış sıklığı, elleçleme ve ek hizmetler fiyatı etkiler." },
     ],
     related: ["yurtici-parsiyel-tasimacilik", "komple-tasimacilik", "express-kargo"],
+    contextualLinks: [
+      { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
+      { anchor: "komple taşımacılık", href: "/komple-tasimacilik" },
+    ],
   },
   "hakkimizda": {
     slug: "hakkimizda",

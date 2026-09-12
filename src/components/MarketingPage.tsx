@@ -23,7 +23,12 @@ import {
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
-import { marketingPages, type MarketingIcon, type MarketingPageData } from "@/content/marketing-pages";
+import {
+  marketingPages,
+  type MarketingContextualLink,
+  type MarketingIcon,
+  type MarketingPageData,
+} from "@/content/marketing-pages";
 
 const siteUrl = "https://www.rexlojistik.com";
 
@@ -127,9 +132,49 @@ function getStructuredData(page: MarketingPageData) {
   ];
 }
 
+function renderContextualParagraph(
+  paragraph: string,
+  links: MarketingContextualLink[] = [],
+  usedTargets: Set<string>,
+) {
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+
+  while (cursor < paragraph.length) {
+    const nextLink = links
+      .filter((link) => !usedTargets.has(link.href))
+      .map((link) => ({ link, index: paragraph.indexOf(link.anchor, cursor) }))
+      .filter((candidate) => candidate.index >= 0)
+      .sort((left, right) => left.index - right.index || right.link.anchor.length - left.link.anchor.length)[0];
+
+    if (!nextLink) break;
+
+    if (nextLink.index > cursor) {
+      nodes.push(paragraph.slice(cursor, nextLink.index));
+    }
+
+    nodes.push(
+      <Link
+        key={`${nextLink.link.href}-${nextLink.index}`}
+        href={nextLink.link.href}
+        className="font-semibold text-orange-700 underline decoration-orange-300 underline-offset-4 transition-colors hover:text-orange-600"
+      >
+        {nextLink.link.anchor}
+      </Link>,
+    );
+    usedTargets.add(nextLink.link.href);
+    cursor = nextLink.index + nextLink.link.anchor.length;
+  }
+
+  if (nodes.length === 0) return paragraph;
+  if (cursor < paragraph.length) nodes.push(paragraph.slice(cursor));
+  return nodes;
+}
+
 export function MarketingPage({ page, children }: { page: MarketingPageData; children?: ReactNode }) {
   const Icon = icons[page.icon];
   const canonicalUrl = `${siteUrl}/${page.slug}`;
+  const usedContextualTargets = new Set<string>();
 
   return (
     <>
@@ -198,7 +243,11 @@ export function MarketingPage({ page, children }: { page: MarketingPageData; chi
                     <h2 className="mt-3 text-3xl font-bold leading-tight text-slate-950">{section.title}</h2>
                   </div>
                   <div className="space-y-5 text-lg leading-8 text-slate-600">
-                    {section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                    {section.paragraphs.map((paragraph) => (
+                      <p key={paragraph}>
+                        {renderContextualParagraph(paragraph, page.contextualLinks, usedContextualTargets)}
+                      </p>
+                    ))}
                     {section.bullets && (
                       <ul className="grid gap-3 pt-2 sm:grid-cols-2">
                         {section.bullets.map((bullet) => (
