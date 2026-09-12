@@ -118,6 +118,14 @@ export function MarketingPage({
               <nav aria-label="Sayfa yolu" className="mb-10 flex items-center gap-2 text-sm text-slate-300">
                 <Link href="/" className="transition-colors hover:text-orange-400">Ana Sayfa</Link>
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                {page.breadcrumbParent ? (
+                  <>
+                    <Link href={page.breadcrumbParent.href} className="transition-colors hover:text-orange-400">
+                      {page.breadcrumbParent.name}
+                    </Link>
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </>
+                ) : null}
                 <span aria-current="page" className="text-white">{page.title}</span>
               </nav>
               <div className="max-w-4xl">
@@ -182,7 +190,7 @@ export function MarketingPage({
                         {section.bullets.map((bullet) => (
                           <li key={bullet} className="flex items-start gap-3 rounded-xl bg-slate-50 p-4 text-base text-slate-800">
                             <CheckCircle2 className="mt-0.5 h-5 w-5 flex-none text-orange-500" aria-hidden="true" />
-                            <span>{bullet}</span>
+                            <span>{renderContextualParagraph(bullet, page.contextualLinks, usedContextualTargets)}</span>
                           </li>
                         ))}
                       </ul>
@@ -210,7 +218,7 @@ export function MarketingPage({
                   <p className="font-semibold text-orange-400">Operasyon akışı</p>
                   <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Gönderiniz nasıl ilerler?</h2>
                 </div>
-                <ol className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+                <ol className={`mt-10 grid gap-5 md:grid-cols-2 ${page.steps.length === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
                   {page.steps.map((step, index) => (
                     <li key={step.title} className="rounded-2xl border border-white/10 bg-white/5 p-6">
                       <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-orange-500 font-bold">{index + 1}</span>
@@ -242,6 +250,32 @@ export function MarketingPage({
               </div>
             </div>
           </section>
+
+          {page.finalCta ? (
+            <section className="px-4 pb-16 sm:px-6 sm:pb-24">
+              <div className="mx-auto max-w-5xl rounded-3xl bg-slate-950 px-6 py-10 text-center text-white shadow-xl shadow-slate-900/10 sm:px-10 sm:py-14">
+                <h2 className="text-3xl font-bold sm:text-4xl">{page.finalCta.title}</h2>
+                <p className="mx-auto mt-4 max-w-3xl text-lg leading-8 text-slate-300">{page.finalCta.text}</p>
+                <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={requestQuote}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 font-bold text-white transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  >
+                    {page.finalCta.primaryLabel} <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  <a
+                    href={`https://wa.me/905434010755?text=${encodeURIComponent(`Merhaba, ${page.title} için teklif almak istiyorum.`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 font-semibold text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  >
+                    <MessageCircle className="h-5 w-5" aria-hidden="true" /> {page.finalCta.whatsappLabel}
+                  </a>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <section className="border-y border-slate-200 bg-slate-50 py-14">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

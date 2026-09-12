@@ -13,6 +13,7 @@ const LOGO_URL = `${SITE_URL}/rex.png`;
 const turkeyOnlyServiceSlugs = new Set([
   "yurtici-parsiyel-tasimacilik",
   "izmir-parsiyel-tasimacilik",
+  "izmir-istanbul-parsiyel-tasimacilik",
   "manisa-parsiyel-tasimacilik",
   "gumruk-antrepo-yurtici-transfer",
   "hafta-sonu-acil-nakliye",
@@ -151,6 +152,9 @@ export function buildMarketingPageStructuredData(page: MarketingPageData): Struc
   const includeLocations = page.kind === "contact";
   const breadcrumbNode = breadcrumb(canonicalUrl, [
     { name: "Ana Sayfa", item: `${SITE_URL}/` },
+    ...(page.breadcrumbParent
+      ? [{ name: page.breadcrumbParent.name, item: `${SITE_URL}${page.breadcrumbParent.href}` }]
+      : []),
     { name: page.title, item: canonicalUrl },
   ]);
   const pageNode: StructuredData = {

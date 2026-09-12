@@ -81,28 +81,33 @@ function estimateLoadMeters(item: LoadItem) {
 
 type DomesticPartialPlannerProps = {
   defaultSenderCity?: string;
+  defaultReceiverCity?: string;
   eyebrow?: string;
   heading?: string;
   description?: string;
   sectionId?: string;
   submitLabel?: string;
   whatsappIntro?: string;
+  routeSummaryLabel?: string;
 };
 
 export function DomesticPartialPlanner({
   defaultSenderCity = "",
+  defaultReceiverCity = "",
   eyebrow = "Yurtiçi parsiyel teklif hazırlama",
   heading = "Farklı yüklerinizi tek formda iletin",
   description = "Gönderici ve alıcı adreslerini girin; ölçüsü veya ağırlığı farklı her yük grubunu ayrı kalem olarak ekleyin. Form, operasyon ekibimize gönderebileceğiniz düzenli bir WhatsApp özeti hazırlar.",
   sectionId = "parsiyel-teklif-formu",
   submitLabel = "Parsiyel teklifini WhatsApp’tan gönder",
   whatsappIntro = "Merhaba, yurtiçi parsiyel taşıma teklifi rica ederim.",
+  routeSummaryLabel = "Türkiye geneli rota planı",
 }: DomesticPartialPlannerProps = {}) {
   const senderDistrictPlaceholder = defaultSenderCity === "Manisa" ? "Örn. Yunusemre" : "Örn. Bornova";
+  const receiverDistrictPlaceholder = defaultReceiverCity === "İstanbul" ? "Örn. Kadıköy veya Esenyurt" : "Örn. Sincan";
   const [senderCity, setSenderCity] = useState(defaultSenderCity);
   const [senderDistrict, setSenderDistrict] = useState("");
   const [senderAddress, setSenderAddress] = useState("");
-  const [receiverCity, setReceiverCity] = useState("");
+  const [receiverCity, setReceiverCity] = useState(defaultReceiverCity);
   const [receiverDistrict, setReceiverDistrict] = useState("");
   const [receiverAddress, setReceiverAddress] = useState("");
   const [readyDate, setReadyDate] = useState("");
@@ -217,7 +222,7 @@ export function DomesticPartialPlanner({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="partial-receiver-district">İlçe <span className="text-orange-600">*</span></Label>
-                  <Input id="partial-receiver-district" required value={receiverDistrict} onChange={(event) => setReceiverDistrict(event.target.value)} placeholder="Örn. Sincan" />
+                  <Input id="partial-receiver-district" required value={receiverDistrict} onChange={(event) => setReceiverDistrict(event.target.value)} placeholder={receiverDistrictPlaceholder} />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="partial-receiver-address">Açık teslimat adresi <span className="text-orange-600">*</span></Label>
@@ -333,7 +338,7 @@ export function DomesticPartialPlanner({
                 <span className="flex items-center gap-2"><Scale className="h-4 w-4 flex-none text-orange-400" /> {displayValue(totalWeight)} kg toplam ağırlık</span>
                 <span className="flex items-center gap-2"><Truck className="h-4 w-4 flex-none text-orange-400" /> {displayValue(totalVolume, 3)} m³ yaklaşık hacim</span>
                 <span className="flex items-center gap-2"><Ruler className="h-4 w-4 flex-none text-orange-400" /> {displayValue(totalLoadMeters, 2)} LDM tahmini araç yeri</span>
-                <span className="flex items-center gap-2"><MapPin className="h-4 w-4 flex-none text-orange-400" /> Türkiye geneli rota planı</span>
+                <span className="flex items-center gap-2"><MapPin className="h-4 w-4 flex-none text-orange-400" /> {routeSummaryLabel}</span>
               </div>
             </div>
 

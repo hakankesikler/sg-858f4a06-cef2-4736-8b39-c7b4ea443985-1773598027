@@ -28,6 +28,13 @@ export type MarketingPageData = {
   contextualLinks?: MarketingContextualLink[];
   heroPrimaryCtaLabel?: string;
   heroWhatsAppLabel?: string;
+  breadcrumbParent?: { name: string; href: string };
+  finalCta?: {
+    title: string;
+    text: string;
+    primaryLabel: string;
+    whatsappLabel: string;
+  };
 };
 
 export const marketingPages: Record<string, MarketingPageData> = {
@@ -860,6 +867,122 @@ export const marketingPages: Record<string, MarketingPageData> = {
     contextualLinks: [
       { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
       { anchor: "komple araç", href: "/komple-tasimacilik" },
+      { anchor: "İzmir → İstanbul", href: "/izmir-istanbul-parsiyel-tasimacilik" },
+    ],
+  },
+  "izmir-istanbul-parsiyel-tasimacilik": {
+    slug: "izmir-istanbul-parsiyel-tasimacilik",
+    kind: "service",
+    icon: "route",
+    eyebrow: "İzmir'den İstanbul'un iki yakasına",
+    title: "İzmir İstanbul Parsiyel Taşımacılık",
+    lead: "İzmir'den İstanbul'a 1 paletten başlayan yüklerinizi adresinizden alıyor, İstanbul Avrupa ve Anadolu Yakası'nda alıcı adresine kadar teslim ediyoruz.",
+    seoTitle: "İzmir İstanbul Parsiyel Taşımacılık | REX Lojistik",
+    seoDescription: "İzmir'den İstanbul'a 1 paletten başlayan parsiyel yüklerinizi adresinizden alıyor, Avrupa ve Anadolu Yakası'nda alıcı adresine teslim ediyoruz. Hızlı teklif alın.",
+    keywords: ["İzmir İstanbul parsiyel taşımacılık", "İzmir İstanbul parsiyel nakliye", "İzmir'den İstanbul'a parsiyel yük", "İzmir İstanbul palet taşıma"],
+    heroPrimaryCtaLabel: "Hızlı Teklif Al",
+    heroWhatsAppLabel: "WhatsApp'tan Teklif Al",
+    breadcrumbParent: {
+      name: "İzmir Parsiyel Taşımacılık",
+      href: "/izmir-parsiyel-tasimacilik",
+    },
+    highlights: [
+      { title: "1 Paletten Başlayan Taşıma", text: "Komple araç kapasitesine ihtiyaç duymayan yükler için rota odaklı planlama" },
+      { title: "İzmir'de Adresten Alım", text: "Açık yükleme adresi ve saha koşullarına göre organize edilen alım" },
+      { title: "İstanbul'da Adrese Teslim", text: "Taşıma planına göre alıcının açık teslimat adresine kadar organizasyon" },
+      { title: "Avrupa + Anadolu Yakası", text: "İstanbul'un iki yakasındaki teslimat noktaları için adres bazlı değerlendirme" },
+      { title: "Yüke Uygun Taşıma Planlaması", text: "Palet sayısı, hacim, ağırlık ve istiflenebilirliğe göre model seçimi" },
+      { title: "Tek Noktadan Operasyon", text: "İzmir'deki alımdan İstanbul'daki teslimata REX Lojistik koordinasyonu" },
+    ],
+    sections: [
+      {
+        title: "İzmir'den İstanbul'a Parsiyel Yük Taşıma",
+        paragraphs: [
+          "İzmir'den İstanbul'a göndereceğiniz yük komple bir aracı doldurmuyorsa parsiyel taşımacılık daha uygun bir taşıma modeli olabilir. REX Lojistik olarak İzmir çıkışlı 1 paletten başlayan yüklerin İstanbul'a taşıma organizasyonunu sağlıyoruz.",
+          "Yükü İzmir'deki gönderici adresinden alıyor, palet sayısı, ölçüler, ağırlık ve teslimat adresine göre taşıma planını oluşturuyoruz. İstanbul'da teslimatı Avrupa veya Anadolu Yakası'ndaki alıcı adresine kadar organize ediyoruz.",
+          "Bu sayfa İstanbul varışlı rota planına odaklanır; diğer varış noktaları için İzmir parsiyel taşımacılık seçeneklerini inceleyebilirsiniz.",
+        ],
+      },
+      {
+        title: "İstanbul Avrupa ve Anadolu Yakası'na Adrese Teslim",
+        paragraphs: [
+          "İstanbul teslimatlarında yalnızca belirli bir aktarma veya teslim noktasına gönderim yapmak zorunda değilsiniz. Taşıma planına göre yükün alıcı adresine kadar teslim edilmesini organize ediyoruz.",
+          "Avrupa ve Anadolu Yakası teslimatlarında yükün ölçüleri, palet sayısı, araç erişimi ve açık teslimat adresi planlamada dikkate alınır. Böylece İzmir'deki yükleme adresinden İstanbul'daki teslimat adresine kadar süreç tek operasyon üzerinden yönetilebilir.",
+        ],
+      },
+      {
+        title: "1 Palet Yük İzmir'den İstanbul'a Gönderilebilir mi?",
+        paragraphs: [
+          "Evet. İzmir çıkışlı İstanbul varışlı taşımalar için 1 paletten başlayan yükler organize edilebilir.",
+          "Parsiyel taşımanın temel avantajı, yükünüz komple araç kapasitesine ihtiyaç duymadığında sevkiyatın yük miktarına uygun bir taşıma modeliyle planlanabilmesidir.",
+          "Palet sayısı ve toplam yük hacmi arttığında ise parsiyel taşımanın yanında yük için daha uygun araç veya nakliye modeli değerlendirilir. Amaç her yükü aynı yöntemle taşımak değil, sevkiyatın özelliklerine uygun çözümü oluşturmaktır.",
+        ],
+      },
+      {
+        title: "Paletli ve Koli Yükler İçin Taşıma Seçenekleri",
+        paragraphs: [
+          "İzmir–İstanbul hattında paletli ticari yükler temel taşıma kapsamındadır. Ürünün taşıma ve ambalaj özelliklerine göre koli gönderileri için de çözüm oluşturulabilir.",
+          "Koli gönderilerinde adet, toplam hacim, ağırlık ve ambalaj yapısı değerlendirilir. Yük miktarı arttığında toplu koli veya paletleme seçeneği taşıma planını daha verimli hale getirebilir.",
+          "İstanbul dışındaki şehir bağlantıları için yurtiçi parsiyel taşımacılık hizmet kapsamını inceleyebilirsiniz.",
+        ],
+      },
+      {
+        title: "İzmir İstanbul Parsiyel Nakliye Fiyatı Nasıl Hesaplanır?",
+        paragraphs: [
+          "İzmir–İstanbul parsiyel taşıma fiyatı yalnızca yükün kilogramına göre belirlenmez. Palet veya koli adedi, yükün ölçüleri, toplam ağırlığı, istiflenebilir olup olmaması, İzmir'deki yükleme adresi ve İstanbul'daki teslimat adresi fiyatlandırmayı etkileyebilir.",
+          "Doğru teklif hazırlayabilmemiz için temel yük bilgilerini iletmeniz yeterlidir.",
+        ],
+        bullets: ["Çıkış adresi", "Teslimat adresi", "Palet / koli adedi", "En × Boy × Yükseklik", "Toplam ağırlık (kg)", "İstiflenebilir mi?", "Yük hazır mı / hazır olma tarihi"],
+        cta: { label: "Yük Bilgilerini Gönder – Teklif Al", href: "#izmir-istanbul-parsiyel-teklif" },
+      },
+      {
+        title: "İzmir'de Adresten Alım Nasıl Çalışır?",
+        paragraphs: [
+          "Teklif ve taşıma planı oluşturulduktan sonra yükün İzmir'deki açık yükleme adresi üzerinden alımı planlanır.",
+          "Yükleme öncesinde palet veya koli adedi, ölçüler, ağırlık, ürünün taşıma şekli ve yükün hazır olduğu zaman bilgisi netleştirilir. Bu bilgiler doğru araç ve taşıma planının oluşturulmasına yardımcı olur.",
+        ],
+      },
+      {
+        title: "İzmir İstanbul Parsiyel Taşıma Süreci",
+        paragraphs: [
+          "İzmir'deki yükleme adresinden İstanbul'daki teslimat adresine uzanan süreç, aşağıdaki beş aşamada planlanır. Her aşamada paylaşılan gerçek yük ve adres bilgileri esas alınır.",
+        ],
+      },
+      {
+        title: "Parsiyel mi, Komple Araç mı?",
+        paragraphs: [
+          "Bir veya birkaç paletlik yüklerde parsiyel taşıma çoğu durumda değerlendirilebilecek ilk seçeneklerden biridir. Ancak palet sayısı, toplam hacim veya ağırlık arttıkça yük için komple ya da farklı araç bazlı taşıma modeli daha uygun hale gelebilir.",
+          "REX Lojistik, verilen yük bilgilerine göre sevkiyat için uygun taşıma modelini değerlendirir. Kapasite ihtiyacı yükseldiğinde komple taşımacılık seçeneği de karşılaştırmaya dahil edilir.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Yük Bilgilerinin Alınması", text: "Çıkış-varış adresi, palet/koli adedi, ölçüler ve ağırlık alınır." },
+      { title: "Taşıma Planının Oluşturulması", text: "Yük miktarı ve özelliklerine uygun taşıma modeli değerlendirilir." },
+      { title: "İzmir'de Adresten Alım", text: "Planlanan yükleme adresinden yükün alımı organize edilir." },
+      { title: "İzmir–İstanbul Taşıması", text: "Yük, belirlenen taşıma planına göre İstanbul'a sevk edilir." },
+      { title: "İstanbul'da Adrese Teslim", text: "Avrupa veya Anadolu Yakası'ndaki teslimat adresine teslim organizasyonu tamamlanır." },
+    ],
+    faq: [
+      { question: "İzmir'den İstanbul'a 1 palet gönderebilir miyim?", answer: "Evet. İzmir çıkışlı İstanbul varışlı yüklerde 1 paletten başlayan parsiyel taşıma organize edilebilir. Teklif için palet ölçüleri, ağırlık ve açık yükleme/teslimat adreslerinin paylaşılması yeterlidir." },
+      { question: "İzmir'de yükü adresimden alıyor musunuz?", answer: "Evet. Taşıma planına göre yükün İzmir'deki gönderici adresinden alınması organize edilebilir." },
+      { question: "İstanbul'da adrese teslim yapılıyor mu?", answer: "Evet. Taşıma planına göre yük İstanbul'daki alıcı adresine kadar teslim edilebilir." },
+      { question: "İstanbul Avrupa Yakası'na teslimat yapılıyor mu?", answer: "Evet. İstanbul Avrupa Yakası için adrese teslim taşıma organizasyonu sağlanabilir." },
+      { question: "İstanbul Anadolu Yakası'na teslimat yapılıyor mu?", answer: "Evet. İstanbul Anadolu Yakası için adrese teslim taşıma organizasyonu sağlanabilir." },
+      { question: "İzmir İstanbul parsiyel taşıma fiyatı ne kadar?", answer: "Fiyat; yükleme ve teslimat adresi, palet/koli adedi, ölçüler, toplam ağırlık ve yükün taşıma özelliklerine göre değişebilir. Net fiyat için yük bilgilerinin paylaşılması gerekir." },
+      { question: "Palet sayısı fazla olursa ne olur?", answer: "Palet sayısı veya toplam hacim arttığında parsiyel taşımanın yanında farklı araç ve nakliye seçenekleri de değerlendirilir. Yüke uygun taşıma modeli yük bilgilerine göre belirlenir." },
+    ],
+    finalCta: {
+      title: "İzmir'den İstanbul'a Göndereceğiniz Yük İçin Teklif Alın",
+      text: "Palet veya toplu yükünüzün temel bilgilerini paylaşın; İzmir'deki yükleme adresinden İstanbul'daki teslimat adresine uygun taşıma seçeneğini değerlendirelim.",
+      primaryLabel: "Hızlı Teklif Al",
+      whatsappLabel: "WhatsApp'tan Teklif Al",
+    },
+    related: ["izmir-parsiyel-tasimacilik", "yurtici-parsiyel-tasimacilik", "komple-tasimacilik"],
+    contextualLinks: [
+      { anchor: "İzmir parsiyel taşımacılık", href: "/izmir-parsiyel-tasimacilik" },
+      { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
+      { anchor: "komple taşımacılık", href: "/komple-tasimacilik" },
     ],
   },
   "manisa-parsiyel-tasimacilik": {
