@@ -1017,6 +1017,11 @@ test("public logistics services have dedicated SEO pages and internal navigation
     assert.match(footer, new RegExp(`/${serviceSlug}`));
     assert.match(services, new RegExp(`/${serviceSlug === "yurtici-parsiyel-tasimacilik" || serviceSlug !== "komple-tasimacilik" ? serviceSlug : "komple-tasimacilik"}`));
   }
+  assert.match(content, /title: "Yurtiçi Komple Taşımacılık"/);
+  assert.match(content, /Tam kamyon yükü veya tam tır yükü/);
+  assert.match(header, /Yurtiçi Komple Taşımacılık/);
+  assert.match(footer, /Yurtiçi Komple Taşımacılık/);
+  assert.match(services, /Tam kamyon ve tam tır yükleri/);
   const footerServiceSection = footer.match(/\{\/\* Hizmetlerimiz \*\/\}([\s\S]*?)\{\/\* Kurumsal \*\/\}/)?.[1];
   assert.ok(footerServiceSection);
   assert.deepEqual(

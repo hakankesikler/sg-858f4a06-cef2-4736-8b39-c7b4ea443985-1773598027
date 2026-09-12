@@ -58,11 +58,11 @@ const airCargoFields: PlannerField[] = [
 
 const plannerConfigs: Record<ServicePlannerVariant, PlannerConfig> = {
   complete: {
-    eyebrow: "Komple araç teklif özeti",
-    title: "Yükünüze uygun aracı WhatsApp üzerinden planlayalım",
-    description: "Rota, yük ve tarih bilgilerini tamamlayın; operasyon ekibimiz araç tipini, kapasiteyi ve teklif kapsamını birlikte değerlendirsin.",
+    eyebrow: "Yurtiçi komple araç teklif özeti",
+    title: "Tam kamyon veya tır yükünüz için uygun aracı planlayalım",
+    description: "Rota, yük ve tarih bilgilerini tamamlayın; operasyon ekibimiz kamyon veya tır seçimini, kapasiteyi ve teklif kapsamını birlikte değerlendirsin.",
     serviceLabel: "yurtiçi komple taşımacılık",
-    buttonLabel: "Komple taşıma teklifini gönder",
+    buttonLabel: "Yurtiçi komple taşıma teklifini gönder",
     note: "Kesin araç tipi, fiyat ve süre; yükleme koşulları ile güncel kapasite teyidinden sonra paylaşılır.",
     fields: [
       { key: "origin", label: "Alım ili / ilçesi", placeholder: "Örn. Manisa / Yunusemre", required: true },

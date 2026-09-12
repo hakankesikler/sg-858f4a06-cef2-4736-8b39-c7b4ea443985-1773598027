@@ -17,8 +17,8 @@ interface Service {
 const services: Service[] = [
   {
     icon: Truck,
-    title: "Kara Yolu Taşımacılığı",
-    description: "Türkiye ve Avrupa genelinde kapıdan kapıya kara yolu taşımacılığı hizmetleri.",
+    title: "Yurtiçi Komple Taşımacılık",
+    description: "Tam kamyon ve tam tır yükleri için Türkiye genelinde araca özel, doğrudan taşıma planı.",
     href: "/komple-tasimacilik",
   },
   {

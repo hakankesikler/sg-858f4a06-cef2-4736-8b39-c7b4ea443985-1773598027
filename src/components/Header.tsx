@@ -23,7 +23,7 @@ const serviceLinks: readonly ServiceLink[] = [
       { href: "/hafta-sonu-acil-nakliye", label: "Hafta Sonu Acil Nakliye" },
     ],
   },
-  { href: "/komple-tasimacilik", label: "Komple Taşımacılık" },
+  { href: "/komple-tasimacilik", label: "Yurtiçi Komple Taşımacılık" },
   { href: "/uluslararasi-karayolu-tasimaciligi", label: "Uluslararası Karayolu" },
   { href: "/uluslararasi-karayolu-parsiyel-tasimacilik", label: "Uluslararası Karayolu Parsiyel" },
   { href: "/minivan-express-tasimacilik", label: "Minivan Express Taşımacılık" },

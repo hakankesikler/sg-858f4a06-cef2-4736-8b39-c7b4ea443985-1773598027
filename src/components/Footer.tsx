@@ -20,7 +20,7 @@ export function Footer() {
             <h3 className="text-lg font-semibold mb-4">HİZMETLERİMİZ</h3>
             <ul className="space-y-2 text-sm">
               <li><Link href="/yurtici-parsiyel-tasimacilik" className="hover:text-orange-300 transition-colors">Yurtiçi Parsiyel</Link></li>
-              <li><Link href="/komple-tasimacilik" className="hover:text-orange-300 transition-colors">Komple Taşımacılık</Link></li>
+              <li><Link href="/komple-tasimacilik" className="hover:text-orange-300 transition-colors">Yurtiçi Komple Taşımacılık</Link></li>
               <li><Link href="/uluslararasi-karayolu-tasimaciligi" className="hover:text-orange-300 transition-colors">Uluslararası Karayolu</Link></li>
               <li><Link href="/hava-kargo" className="hover:text-orange-300 transition-colors">Hava Kargo</Link></li>
               <li><Link href="/denizyolu-tasimaciligi" className="hover:text-orange-300 transition-colors">Denizyolu Taşımacılığı</Link></li>
