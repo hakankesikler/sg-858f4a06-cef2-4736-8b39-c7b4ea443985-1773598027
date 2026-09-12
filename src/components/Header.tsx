@@ -11,6 +11,7 @@ const serviceLinks = [
   { href: "/yurtici-parsiyel-tasimacilik", label: "Yurtiçi Parsiyel Taşımacılık" },
   { href: "/komple-tasimacilik", label: "Komple Taşımacılık" },
   { href: "/uluslararasi-karayolu-tasimaciligi", label: "Uluslararası Karayolu" },
+  { href: "/uluslararasi-karayolu-parsiyel-tasimacilik", label: "Uluslararası Karayolu Parsiyel" },
   { href: "/hava-kargo", label: "Hava Kargo Taşımacılığı" },
   { href: "/kapidan-kapiya-hava-kargo", label: "Kapıdan Kapıya Hava Kargo" },
   { href: "/turkiye-geneli-hava-kargo-alimi", label: "Türkiye Geneli Hava Kargo Alımı" },

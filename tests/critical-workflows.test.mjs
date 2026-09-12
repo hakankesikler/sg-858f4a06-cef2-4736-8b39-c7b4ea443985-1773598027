@@ -1049,6 +1049,30 @@ test("public SEO copy does not market customs-clearance services", async () => {
   assert.doesNotMatch(sitemap, /gizlilik-politikasi|kullanim-kosullari|kvkk-aydinlatma-metni/);
 });
 
+test("international road freight pages form a unique SEO and quote-preparation hub", async () => {
+  const [mainRoute, partialRoute, content, planner, header, sitemap] = await Promise.all([
+    read("src/pages/uluslararasi-karayolu-tasimaciligi.tsx"),
+    read("src/pages/uluslararasi-karayolu-parsiyel-tasimacilik.tsx"),
+    read("src/content/marketing-pages.ts"),
+    read("src/components/RoadFreightPlanner.tsx"),
+    read("src/components/Header.tsx"),
+    read("public/sitemap.xml"),
+  ]);
+
+  assert.match(mainRoute, /marketingPages\["uluslararasi-karayolu-tasimaciligi"\]/);
+  assert.match(partialRoute, /marketingPages\["uluslararasi-karayolu-parsiyel-tasimacilik"\]/);
+  assert.match(partialRoute, /RoadFreightPlanner/);
+  assert.match(content, /title: "Uluslararası Karayolu Parsiyel Taşımacılık"/);
+  assert.match(content, /Parsiyel, LTL ve FTL/);
+  assert.match(content, /Türkiye’den Avrupa’ya ve uygun Avrupa adreslerinden Türkiye’ye/);
+  assert.match(planner, /Rota ve yük uygunluk ön kontrolü/);
+  assert.match(planner, /Teklif hazırlık durumu/);
+  assert.match(planner, /Özeti WhatsApp ile gönder/);
+  assert.match(planner, /Bu araç fiyat veya kesin transit süre üretmez/);
+  assert.match(header, /\/uluslararasi-karayolu-parsiyel-tasimacilik/);
+  assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/uluslararasi-karayolu-parsiyel-tasimacilik/);
+});
+
 test("every public page uses the enlarged REX-only favicon", async () => {
   const [document, notFound] = await Promise.all([
     read("src/pages/_document.tsx"),
