@@ -1200,6 +1200,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { anchor: "Parsiyel taşımacılık hizmetimiz", href: "/yurtici-parsiyel-tasimacilik" },
       { anchor: "komple taşımacılık", href: "/komple-tasimacilik" },
       { anchor: "Manisa → Gebze", href: "/manisa-gebze-parsiyel-tasimacilik" },
+      { anchor: "Manisa → Bursa", href: "/manisa-bursa-parsiyel-tasimacilik" },
     ],
   },
   "manisa-gebze-parsiyel-tasimacilik": {
@@ -1322,6 +1323,129 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { anchor: "Manisa parsiyel taşımacılık", href: "/manisa-parsiyel-tasimacilik" },
       { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
       { anchor: "komple taşıma", href: "/komple-tasimacilik" },
+    ],
+  },
+  "manisa-bursa-parsiyel-tasimacilik": {
+    slug: "manisa-bursa-parsiyel-tasimacilik",
+    kind: "service",
+    icon: "route",
+    eyebrow: "Manisa üretim ve ticaret bölgelerinden Bursa'ya",
+    title: "Manisa Bursa Parsiyel Taşımacılık",
+    lead: "Manisa'dan Bursa'ya 1 paletten başlayan sanayi ve ticari yüklerinizi adresinizden alıyor, Bursa'daki alıcı adresine kadar teslim ediyoruz.",
+    seoTitle: "Manisa Bursa Parsiyel Taşımacılık | REX Lojistik",
+    seoDescription: "Manisa'dan Bursa'ya 1 paletten başlayan sanayi ve ticari yüklerinizi adresinizden alıyor, Bursa'da alıcı adresine teslim ediyoruz. Hızlı teklif alın.",
+    keywords: ["Manisa Bursa parsiyel taşımacılık", "Manisa Bursa parsiyel nakliye", "Manisa'dan Bursa'ya parsiyel yük", "Manisa Bursa palet taşıma", "Manisa Bursa nakliye", "Manisa'dan Bursa'ya yük gönderme"],
+    heroPrimaryCtaLabel: "Hızlı Teklif Al",
+    heroWhatsAppLabel: "WhatsApp'tan Teklif Al",
+    breadcrumbParent: {
+      name: "Manisa Parsiyel Taşımacılık",
+      href: "/manisa-parsiyel-tasimacilik",
+    },
+    highlights: [
+      { title: "1 Paletten Başlayan Taşıma", text: "Komple araç kapasitesine ihtiyaç duymayan yükler için rota odaklı planlama" },
+      { title: "Manisa'da Adresten Alım", text: "Açık yükleme adresi ve saha koşullarına göre organize edilen alım" },
+      { title: "Bursa'da Adrese Teslim", text: "Taşıma planına göre alıcının açık teslimat adresine kadar organizasyon" },
+      { title: "Sanayi + Ticari Yükler", text: "Sevkiyata uygun paletli üretim girdileri, parçalar ve ticari ürünler" },
+      { title: "Yüke Uygun Taşıma Modeli", text: "Palet sayısı, hacim, ağırlık ve istiflenebilirliğe göre değerlendirme" },
+      { title: "Tek Noktadan Operasyon", text: "Manisa'daki alımdan Bursa'daki teslimata REX Lojistik koordinasyonu" },
+    ],
+    sections: [
+      {
+        title: "Manisa'dan Bursa'ya Parsiyel Yük Taşıma",
+        paragraphs: [
+          "Manisa ve Bursa, üretim ve sanayi faaliyetlerinin yoğun olduğu iki önemli bölgedir. Bu iki şehir arasındaki sevkiyatlarda her yük komple araç kapasitesine ihtiyaç duymaz. Bir veya birkaç paletlik sanayi ve ticari yüklerde parsiyel taşımacılık, yük miktarına uygun taşıma planı oluşturulmasına imkân verir.",
+          "REX Lojistik olarak Manisa çıkışlı 1 paletten başlayan yüklerin Bursa'ya taşıma organizasyonunu sağlıyoruz. Yükü Manisa'daki gönderici adresinden alıyor, palet sayısı, ölçüler, ağırlık ve Bursa'daki teslimat noktasına göre taşıma planını oluşturuyoruz.",
+          "Bu sayfa Bursa varışlı rota planına odaklanır; diğer varış noktaları için Manisa parsiyel taşımacılık seçeneklerini inceleyebilirsiniz.",
+        ],
+      },
+      {
+        title: "Manisa–Bursa Sanayi ve Üretim Hattında Parsiyel Taşıma",
+        paragraphs: [
+          "Manisa'daki üretici ve tedarikçiler ile Bursa'daki sanayi ve ticaret işletmeleri arasında farklı ölçekte sevkiyat ihtiyaçları oluşabilir. Komple araç kapasitesine ulaşmayan paletli yüklerde parsiyel taşıma, sevkiyat miktarına göre değerlendirilebilecek taşıma seçeneklerinden biridir.",
+          "Manisa OSB, Muradiye, Yunusemre, Şehzadeler, Turgutlu, Akhisar ve çevresindeki üretim veya ticaret noktalarından çıkacak yükler için açık yükleme adresine göre alım planlaması oluşturulabilir.",
+          "Bursa varışında Nilüfer, Osmangazi, Yıldırım, İnegöl veya Gemlik yönündeki teslimatlar, açık adres ve yük özellikleri esas alınarak taşıma planına dahil edilebilir.",
+        ],
+      },
+      {
+        title: "Bursa'ya Hangi Sanayi ve Ticari Yükler Gönderilebilir?",
+        paragraphs: [
+          "Sevkiyata uygun şekilde ambalajlanmış paletli sanayi ve ticari ürünler Manisa–Bursa hattında yük özelliklerine göre değerlendirilebilir. Üretim girdileri, makine ve ekipman parçaları, ambalajlı sanayi ürünleri ve paletli ticari ürünler bu kapsamdaki yük gruplarına örnek olabilir.",
+          "Bursa'nın otomotiv ve makine üretimiyle güçlü ilişkisi nedeniyle üretici ve tedarikçilerden gelen parça ve malzeme sevkiyatlarında da parsiyel taşıma ihtiyacı oluşabilir. Ancak her yükün taşıma koşulları ayrı değerlendirilmelidir.",
+          "Paletli yüklerin yanında güzergâh, koli adedi, toplam hacim, ağırlık ve ambalaj özelliklerine göre koli veya toplu koli gönderileri için de taşıma çözümü değerlendirilebilir. Diğer hatlar için yurtiçi parsiyel taşımacılık hizmet kapsamını inceleyebilirsiniz.",
+        ],
+      },
+      {
+        title: "1 Palet Manisa'dan Bursa'ya Gönderilebilir mi?",
+        paragraphs: [
+          "Evet. Manisa çıkışlı Bursa varışlı yüklerde 1 paletten başlayan taşıma organize edilebilir.",
+          "Bir veya birkaç paletlik yüklerde parsiyel taşıma değerlendirilebilirken, palet sayısı ve toplam yük hacmi arttığında farklı araç veya nakliye modelleri daha uygun hale gelebilir.",
+          "Bu nedenle taşıma modeli yükün palet sayısı, ölçüleri, toplam ağırlığı, hacmi ve teslimat noktasına göre değerlendirilir.",
+        ],
+      },
+      {
+        title: "Manisa Bursa Parsiyel Nakliye Fiyatı Nasıl Hesaplanır?",
+        paragraphs: [
+          "Manisa–Bursa parsiyel taşıma fiyatı yalnızca kilogram üzerinden belirlenmez. Manisa'daki açık yükleme adresi, Bursa'daki teslimat adresi, palet veya koli adedi, yük ölçüleri, toplam ağırlık ve istiflenebilirlik durumu fiyatlandırmayı etkileyebilir.",
+          "Doğru teklif ve taşıma modelinin belirlenebilmesi için temel yük bilgilerini paylaşmanız yeterlidir.",
+        ],
+        bullets: ["Çıkış adresi", "Teslimat adresi", "Palet / koli adedi", "En × Boy × Yükseklik", "Toplam kg", "İstiflenebilir mi?", "Yük hazır mı / hazır olma tarihi"],
+        cta: { label: "Yük Bilgilerini Gönder – Teklif Al", href: "#manisa-bursa-parsiyel-teklif" },
+      },
+      {
+        title: "Manisa'da Adresten Alım, Bursa'da Adrese Teslim",
+        paragraphs: [
+          "Yükün gönderici tarafından bir ambar veya nakliye noktasına bırakılması zorunlu değildir. Taşıma planına göre yükün Manisa'daki gönderici adresinden alınması ve Bursa'daki alıcı adresine teslim edilmesi organize edilebilir.",
+          "Açık yükleme ve teslimat adreslerinin teklif aşamasında paylaşılması, taşıma planının ve fiyatlandırmanın doğru oluşturulmasına yardımcı olur.",
+        ],
+      },
+      {
+        title: "Manisa Bursa Parsiyel Taşıma Süreci",
+        paragraphs: [
+          "Manisa'daki yükleme adresinden Bursa'daki teslimat adresine uzanan süreç, beş aşamada planlanır. Her aşamada paylaşılan gerçek yük ve adres bilgileri esas alınır.",
+        ],
+      },
+      {
+        title: "Palet Sayısı Arttığında Parsiyel mi, Komple Araç mı?",
+        paragraphs: [
+          "Yük miktarı arttığında parsiyel taşıma her sevkiyat için en uygun seçenek olmayabilir. Palet sayısı, toplam hacim, ağırlık ve yükün kapladığı araç kapasitesine göre araç bazlı veya komple taşıma seçeneği değerlendirilebilir.",
+          "REX Lojistik, verilen yük bilgilerine göre parsiyel ve komple taşıma seçeneklerini değerlendirerek sevkiyata uygun taşıma modelinin oluşturulmasını sağlar. Kapasite ihtiyacı yükseldiğinde komple taşımacılık seçeneği de karşılaştırmaya dahil edilir.",
+        ],
+      },
+      {
+        title: "Manisa–Bursa Hattı Neden Önemli?",
+        paragraphs: [
+          "Manisa ve Bursa'nın güçlü üretim altyapısı, iki şehir arasında sanayi ürünleri, tedarik malzemeleri ve ticari yüklerin hareketine zemin oluşturur. Özellikle komple araç kapasitesine ulaşmayan sevkiyatlarda yük miktarına uygun taşıma planlaması önem kazanır.",
+          "REX Lojistik, Manisa'daki yükleme adresinden Bursa'daki teslimat adresine kadar sanayi ve ticari yükler için uygun taşıma organizasyonunu oluşturur.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Yük Bilgilerinin Alınması", text: "Manisa yükleme adresi, Bursa teslimat adresi, palet/koli adedi, ölçüler ve ağırlık alınır." },
+      { title: "Taşıma Modelinin Belirlenmesi", text: "Yük miktarı, hacmi ve özelliklerine göre uygun taşıma modeli değerlendirilir." },
+      { title: "Manisa'da Adresten Alım", text: "Belirlenen gönderici adresinden yük alımı organize edilir." },
+      { title: "Manisa–Bursa Taşıması", text: "Yük oluşturulan taşıma planına göre Bursa'ya sevk edilir." },
+      { title: "Bursa'da Adrese Teslim", text: "Yükün alıcı adresine teslimatı organize edilir." },
+    ],
+    faq: [
+      { question: "Manisa'dan Bursa'ya 1 palet gönderebilir miyim?", answer: "Evet. Manisa çıkışlı Bursa varışlı yüklerde 1 paletten başlayan taşıma organize edilebilir. Teklif için palet ölçüleri, ağırlık ve açık yükleme/teslimat adreslerinin paylaşılması yeterlidir." },
+      { question: "Manisa'da yükü adresimden alıyor musunuz?", answer: "Evet. Taşıma planına göre yükün Manisa'daki gönderici adresinden alınması organize edilebilir." },
+      { question: "Bursa'da adrese teslim yapılıyor mu?", answer: "Evet. Taşıma planına göre yükün Bursa'daki alıcı adresine teslim edilmesi organize edilebilir." },
+      { question: "Sanayi yükleri taşınabiliyor mu?", answer: "Sevkiyata uygun şekilde ambalajlanmış paletli sanayi ve ticari yükler, yük özelliklerine göre değerlendirilebilir. Özel taşıma koşulu gerektiren ürünlerde yük detaylarının teklif öncesinde paylaşılması gerekir." },
+      { question: "Manisa Bursa parsiyel nakliye fiyatı ne kadar?", answer: "Fiyat; Manisa'daki yükleme adresi, Bursa'daki teslimat adresi, palet/koli adedi, ölçüler, toplam ağırlık ve yükün taşıma özelliklerine göre değişebilir. Net teklif için yük bilgilerinin paylaşılması gerekir." },
+      { question: "Manisa'dan Bursa'ya koli gönderebilir miyim?", answer: "Güzergâh, koli adedi, toplam hacim, ağırlık ve ambalaj özelliklerine göre koli veya toplu koli gönderileri için taşıma çözümü değerlendirilebilir." },
+      { question: "Palet sayısı arttığında ne olur?", answer: "Palet sayısı veya toplam hacim arttığında parsiyel taşımanın yanında farklı araç veya komple taşıma seçenekleri de değerlendirilebilir. Uygun taşıma modeli yük özelliklerine göre belirlenir." },
+    ],
+    finalCta: {
+      title: "Manisa'dan Bursa'ya Göndereceğiniz Yük İçin Teklif Alın",
+      text: "Paletli sanayi veya ticari yükünüzün bilgilerini paylaşın; Manisa'daki yükleme adresinden Bursa'daki teslimat adresine uygun taşıma seçeneğini değerlendirelim.",
+      primaryLabel: "Hızlı Teklif Al",
+      whatsappLabel: "WhatsApp'tan Teklif Al",
+    },
+    related: ["manisa-parsiyel-tasimacilik", "yurtici-parsiyel-tasimacilik", "komple-tasimacilik"],
+    contextualLinks: [
+      { anchor: "Manisa parsiyel taşımacılık", href: "/manisa-parsiyel-tasimacilik" },
+      { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
+      { anchor: "komple taşımacılık", href: "/komple-tasimacilik" },
     ],
   },
   "denizyolu-parsiyel-tasimacilik": {
