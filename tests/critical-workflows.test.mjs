@@ -1418,6 +1418,8 @@ test("sea freight content hub publishes LCL, FCL, container and CBM resources", 
 
   assert.match(header, /Denizyolu Parsiyel \(LCL\)/);
   assert.match(header, /Konteyner Taşımacılığı \(FCL\)/);
+  assert.match(header, /label: "Denizyolu Taşımacılığı",\s+children:/);
+  assert.match(header, /aria-expanded=\{expandedMobileService === item\.href\}/);
   assert.doesNotMatch(footer, /CBM Hesaplama/);
   assert.match(content, /related: \["denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi", "lcl-mi-fcl-mi", "cbm-hesaplama"\]/);
   assert.match(resourcePage, /"@type": "Article"/);

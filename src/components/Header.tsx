@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { QuoteForm } from "@/components/QuoteForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-const serviceLinks = [
+type ServiceLink = {
+  href: string;
+  label: string;
+  children?: readonly ServiceLink[];
+};
+
+const serviceLinks: readonly ServiceLink[] = [
   { href: "/yurtici-parsiyel-tasimacilik", label: "Yurtiçi Parsiyel Taşımacılık" },
   { href: "/gumruk-antrepo-yurtici-transfer", label: "Antrepo ve Liman Transferi" },
   { href: "/hafta-sonu-acil-nakliye", label: "Hafta Sonu Acil Nakliye" },
@@ -19,9 +25,14 @@ const serviceLinks = [
   { href: "/hava-kargo", label: "Hava Kargo Taşımacılığı" },
   { href: "/kapidan-kapiya-hava-kargo", label: "Kapıdan Kapıya Hava Kargo" },
   { href: "/turkiye-geneli-hava-kargo-alimi", label: "Türkiye Geneli Hava Kargo Alımı" },
-  { href: "/denizyolu-tasimaciligi", label: "Denizyolu Taşımacılığı" },
-  { href: "/denizyolu-parsiyel-tasimacilik", label: "Denizyolu Parsiyel (LCL)" },
-  { href: "/denizyolu-konteyner-tasimaciligi", label: "Konteyner Taşımacılığı (FCL)" },
+  {
+    href: "/denizyolu-tasimaciligi",
+    label: "Denizyolu Taşımacılığı",
+    children: [
+      { href: "/denizyolu-parsiyel-tasimacilik", label: "Denizyolu Parsiyel (LCL)" },
+      { href: "/denizyolu-konteyner-tasimaciligi", label: "Konteyner Taşımacılığı (FCL)" },
+    ],
+  },
   { href: "/express-kargo", label: "Uluslararası Express Kargo" },
   { href: "/yurtdisindan-turkiyeye-express-kargo", label: "Yurt Dışından Türkiye'ye Express" },
   { href: "/turkiyeden-yurtdisina-express-kargo", label: "Türkiye'den Yurt Dışına Express" },
@@ -30,9 +41,13 @@ const serviceLinks = [
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedMobileService, setExpandedMobileService] = useState<string | null>(null);
   const [quoteFormOpen, setQuoteFormOpen] = useState(false);
 
-  const closeMobileMenu = () => setMobileMenuOpen(false);
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+    setExpandedMobileService(null);
+  };
   const openQuoteForm = () => {
     setQuoteFormOpen(true);
     closeMobileMenu();
@@ -52,8 +67,20 @@ export function Header() {
                 <Link href="/#hizmetler" className="flex items-center gap-1 py-7 font-medium text-gray-700 transition-colors hover:text-orange-500">
                   Hizmetler <ChevronDown className="h-4 w-4" aria-hidden="true" />
                 </Link>
-                <div className="invisible absolute left-1/2 top-full grid w-[680px] -translate-x-1/2 -translate-y-2 grid-cols-2 rounded-2xl border border-slate-200 bg-white p-2 opacity-0 shadow-2xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                  {serviceLinks.map((item) => (
+                <div className="invisible absolute left-0 top-full grid w-[680px] -translate-y-2 grid-cols-2 rounded-2xl border border-slate-200 bg-white p-2 opacity-0 shadow-2xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                  {serviceLinks.map((item) => item.children ? (
+                    <div key={item.href} className="col-span-2 grid grid-cols-3 gap-1 rounded-xl border border-orange-100 bg-orange-50/60 p-1">
+                      <Link href={item.href} className="flex items-center justify-between rounded-lg px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-white hover:text-orange-600">
+                        {item.label}
+                        <ChevronDown className="h-4 w-4 -rotate-90 text-orange-500" aria-hidden="true" />
+                      </Link>
+                      {item.children.map((child) => (
+                        <Link key={child.href} href={child.href} className="block rounded-lg bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:text-orange-600 hover:shadow-sm">
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
                     <Link key={item.href} href={item.href} className="block rounded-xl px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-orange-50 hover:text-orange-600">
                       {item.label}
                     </Link>
@@ -100,7 +127,35 @@ export function Header() {
           <nav aria-label="Mobil menü" className="flex-1 overflow-y-auto p-5">
             <p className="px-4 pb-2 text-xs font-bold uppercase tracking-wider text-slate-400">Hizmetler</p>
             <ul className="space-y-1">
-              {serviceLinks.map((item) => (
+              {serviceLinks.map((item) => item.children ? (
+                <li key={item.href} className="rounded-xl border border-orange-100 bg-orange-50/50">
+                  <div className="flex items-center">
+                    <Link href={item.href} onClick={closeMobileMenu} className="min-w-0 flex-1 rounded-l-xl px-4 py-2.5 text-sm font-semibold text-gray-800 transition-colors hover:bg-orange-50 hover:text-orange-600">
+                      {item.label}
+                    </Link>
+                    <button
+                      type="button"
+                      aria-expanded={expandedMobileService === item.href}
+                      aria-label={`${item.label} alt menüsünü ${expandedMobileService === item.href ? "kapat" : "aç"}`}
+                      onClick={() => setExpandedMobileService((current) => current === item.href ? null : item.href)}
+                      className="rounded-r-xl p-3 text-orange-600 transition hover:bg-orange-100"
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${expandedMobileService === item.href ? "rotate-180" : ""}`} aria-hidden="true" />
+                    </button>
+                  </div>
+                  {expandedMobileService === item.href && (
+                    <ul className="space-y-1 border-t border-orange-100 p-2">
+                      {item.children.map((child) => (
+                        <li key={child.href}>
+                          <Link href={child.href} onClick={closeMobileMenu} className="block rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:text-orange-600">
+                            {child.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ) : (
                 <li key={item.href}><Link href={item.href} onClick={closeMobileMenu} className="block rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-orange-50 hover:text-orange-600">{item.label}</Link></li>
               ))}
             </ul>
