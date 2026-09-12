@@ -32,9 +32,14 @@ const serviceLinks: readonly ServiceLink[] = [
       { href: "/minivan-express-tasimacilik", label: "Minivan Express Taşımacılık" },
     ],
   },
-  { href: "/hava-kargo", label: "Hava Kargo Taşımacılığı" },
-  { href: "/kapidan-kapiya-hava-kargo", label: "Kapıdan Kapıya Hava Kargo" },
-  { href: "/turkiye-geneli-hava-kargo-alimi", label: "Türkiye Geneli Hava Kargo Alımı" },
+  {
+    href: "/hava-kargo",
+    label: "Hava Kargo Taşımacılığı",
+    children: [
+      { href: "/kapidan-kapiya-hava-kargo", label: "Kapıdan Kapıya Hava Kargo" },
+      { href: "/turkiye-geneli-hava-kargo-alimi", label: "Türkiye Geneli Hava Kargo Alımı" },
+    ],
+  },
   {
     href: "/denizyolu-tasimaciligi",
     label: "Denizyolu Taşımacılığı",

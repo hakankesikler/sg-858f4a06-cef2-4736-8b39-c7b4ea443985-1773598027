@@ -1476,7 +1476,9 @@ test("air cargo content hub publishes nationwide pickup, comparison and chargeab
   assert.match(calculator, /6\.000 böleni yaygın bir planlama referansıdır/);
   assert.match(comparison, /Genel hava kargo/);
   assert.match(comparison, /Express kargo/);
+  assert.match(header, /Kapıdan Kapıya Hava Kargo/);
   assert.match(header, /Türkiye Geneli Hava Kargo Alımı/);
+  assert.match(header, /label: "Hava Kargo Taşımacılığı",\s+children:/);
   assert.doesNotMatch(footer, /Hava Kargo Ağırlık Hesaplama/);
   assert.match(content, /related: \["kapidan-kapiya-hava-kargo", "turkiye-geneli-hava-kargo-alimi", "hava-kargo-hacimsel-agirlik-hesaplama"\]/);
 });
