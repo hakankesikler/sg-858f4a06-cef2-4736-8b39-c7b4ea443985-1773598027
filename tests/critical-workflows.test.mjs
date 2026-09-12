@@ -1117,6 +1117,8 @@ test("international road freight pages form a unique SEO and quote-preparation h
   assert.match(planner, /Özeti WhatsApp ile gönder/);
   assert.match(planner, /Bu araç fiyat veya kesin transit süre üretmez/);
   assert.match(header, /\/uluslararasi-karayolu-parsiyel-tasimacilik/);
+  assert.match(header, /\/minivan-express-tasimacilik/);
+  assert.match(header, /label: "Uluslararası Karayolu",\s+children:/);
   assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/uluslararasi-karayolu-parsiyel-tasimacilik/);
 });
 
