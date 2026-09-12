@@ -29,8 +29,7 @@ import {
   type MarketingIcon,
   type MarketingPageData,
 } from "@/content/marketing-pages";
-
-const siteUrl = "https://www.rexlojistik.com";
+import { buildMarketingPageStructuredData, SITE_URL } from "@/lib/structured-data";
 
 const icons: Record<MarketingIcon, LucideIcon> = {
   truck: Truck,
@@ -43,94 +42,6 @@ const icons: Record<MarketingIcon, LucideIcon> = {
   building: Building2,
   contact: Phone,
 };
-
-function getStructuredData(page: MarketingPageData) {
-  const url = `${siteUrl}/${page.slug}`;
-  const organization = {
-    "@type": "Organization",
-    "@id": `${siteUrl}/#organization`,
-    name: "REX Lojistik",
-    legalName: "REX Lojistik Taşımacılık Depolama Danışmanlık Limited Şirketi",
-    url: siteUrl,
-    logo: `${siteUrl}/rex.png?v=2`,
-    email: "info@rexlojistik.com",
-    telephone: "+90 543 401 07 55",
-  };
-  const breadcrumb = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: siteUrl },
-      { "@type": "ListItem", position: 2, name: page.title, item: url },
-    ],
-  };
-
-  if (page.kind === "service") {
-    return [
-      breadcrumb,
-      {
-        "@context": "https://schema.org",
-        "@type": "Service",
-        name: page.title,
-        description: page.seoDescription,
-        url,
-        provider: organization,
-        areaServed: { "@type": "Country", name: "Türkiye" },
-        serviceType: page.title,
-      },
-    ];
-  }
-
-  if (page.kind === "contact") {
-    return [
-      breadcrumb,
-      {
-        "@context": "https://schema.org",
-        ...organization,
-        contactPoint: {
-          "@type": "ContactPoint",
-          telephone: "+90 543 401 07 55",
-          contactType: "customer service",
-          availableLanguage: "Turkish",
-        },
-        address: [
-          {
-            "@type": "PostalAddress",
-            streetAddress: "Adalet Mahallesi Manas Bulvarı Folkart Towers A Kule No:47/B K:26 D:2601",
-            addressLocality: "Bayraklı",
-            addressRegion: "İzmir",
-            postalCode: "35630",
-            addressCountry: "TR",
-          },
-          {
-            "@type": "PostalAddress",
-            streetAddress: "Muradiye Mahallesi Manolya Sokak No:228/1 A Blok No:28",
-            addressLocality: "Yunusemre",
-            addressRegion: "Manisa",
-            postalCode: "45140",
-            addressCountry: "TR",
-          },
-        ],
-      },
-    ];
-  }
-
-  return [
-    breadcrumb,
-    {
-      "@context": "https://schema.org",
-      ...organization,
-      description: page.seoDescription,
-      foundingDate: "2022",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: "Bayraklı",
-        addressRegion: "İzmir",
-        addressCountry: "TR",
-      },
-    },
-  ];
-}
 
 function renderContextualParagraph(
   paragraph: string,
@@ -173,7 +84,7 @@ function renderContextualParagraph(
 
 export function MarketingPage({ page, children }: { page: MarketingPageData; children?: ReactNode }) {
   const Icon = icons[page.icon];
-  const canonicalUrl = `${siteUrl}/${page.slug}`;
+  const canonicalUrl = `${SITE_URL}/${page.slug}`;
   const usedContextualTargets = new Set<string>();
 
   return (
@@ -183,7 +94,7 @@ export function MarketingPage({ page, children }: { page: MarketingPageData; chi
         description={page.seoDescription}
         keywords={page.keywords}
         url={canonicalUrl}
-        structuredData={getStructuredData(page)}
+        structuredData={buildMarketingPageStructuredData(page)}
       />
       <div className="min-h-screen bg-white">
         <Header />

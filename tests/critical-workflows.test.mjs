@@ -994,9 +994,10 @@ test("public logistics services have dedicated SEO pages and internal navigation
     "hakkimizda",
     "iletisim",
   ];
-  const [content, pageTemplate, seo, header, footer, services, sitemap, robots] = await Promise.all([
+  const [content, pageTemplate, structuredData, seo, header, footer, services, sitemap, robots] = await Promise.all([
     read("src/content/marketing-pages.ts"),
     read("src/components/MarketingPage.tsx"),
+    read("src/lib/structured-data.ts"),
     read("src/components/SEO.tsx"),
     read("src/components/Header.tsx"),
     read("src/components/Footer.tsx"),
@@ -1028,8 +1029,14 @@ test("public logistics services have dedicated SEO pages and internal navigation
     [...footerServiceSection.matchAll(/href="\/([^"]+)"/g)].map((match) => match[1]),
     slugs.slice(0, 7),
   );
-  assert.match(pageTemplate, /"@type": "Service"/);
-  assert.match(pageTemplate, /"@type": "BreadcrumbList"/);
+  assert.match(pageTemplate, /buildMarketingPageStructuredData/);
+  for (const schemaType of ["Organization", "LocalBusiness", "WebSite", "WebPage", "Service", "BreadcrumbList"]) {
+    assert.match(structuredData, new RegExp(`"@type": "${schemaType}"`));
+  }
+  assert.match(structuredData, /const ORGANIZATION_ID = `\$\{SITE_URL\}\/\#organization`/);
+  assert.match(structuredData, /const WEBSITE_ID = `\$\{SITE_URL\}\/\#website`/);
+  assert.match(structuredData, /provider: \{ "@id": ORGANIZATION_ID \}/);
+  assert.doesNotMatch(structuredData, /"@type": "(?:FAQPage|AggregateRating|Review|Offer|AggregateOffer)"/);
   assert.match(pageTemplate, /<h1/);
   assert.match(pageTemplate, /<details/);
   assert.match(seo, /application\/ld\+json/);
@@ -1527,9 +1534,10 @@ test("sea freight content hub publishes LCL, FCL, container and CBM resources", 
     "konteyner-olculeri",
     "cbm-hesaplama",
   ];
-  const [content, resourcePage, header, footer, sitemap, calculator] = await Promise.all([
+  const [content, resourcePage, structuredData, header, footer, sitemap, calculator] = await Promise.all([
     read("src/content/marketing-pages.ts"),
     read("src/components/SeaFreightResourcePage.tsx"),
+    read("src/lib/structured-data.ts"),
     read("src/components/Header.tsx"),
     read("src/components/Footer.tsx"),
     read("public/sitemap.xml"),
@@ -1547,8 +1555,9 @@ test("sea freight content hub publishes LCL, FCL, container and CBM resources", 
   assert.match(header, /aria-expanded=\{expandedMobileService === item\.href\}/);
   assert.doesNotMatch(footer, /CBM Hesaplama/);
   assert.match(content, /related: \["denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi", "lcl-mi-fcl-mi", "cbm-hesaplama"\]/);
-  assert.match(resourcePage, /"@type": "Article"/);
-  assert.match(resourcePage, /"@type": "FAQPage"/);
+  assert.match(resourcePage, /buildResourcePageStructuredData/);
+  assert.match(structuredData, /"@type": "Article"/);
+  assert.doesNotMatch(structuredData, /"@type": "FAQPage"/);
   assert.match(content, /Akılcı Maliyet/);
   assert.match(content, /Planlı Transit/);
   assert.match(content, /Maliyet Kontrolü/);
@@ -1566,9 +1575,10 @@ test("air cargo content hub publishes nationwide pickup, comparison and chargeab
     "hava-kargo-mu-express-kargo-mu",
     "hava-kargo-hacimsel-agirlik-hesaplama",
   ];
-  const [content, resourcePage, calculator, comparison, header, footer, sitemap] = await Promise.all([
+  const [content, resourcePage, structuredData, calculator, comparison, header, footer, sitemap] = await Promise.all([
     read("src/content/marketing-pages.ts"),
     read("src/components/AirCargoResourcePage.tsx"),
+    read("src/lib/structured-data.ts"),
     read("src/pages/hava-kargo-hacimsel-agirlik-hesaplama.tsx"),
     read("src/pages/hava-kargo-mu-express-kargo-mu.tsx"),
     read("src/components/Header.tsx"),
@@ -1586,7 +1596,8 @@ test("air cargo content hub publishes nationwide pickup, comparison and chargeab
   assert.match(content, /REX'in işi tam da bu bağlantıları görünür hale getirmektir/);
   assert.match(resourcePage, /Hava kargo bilgi merkezi/);
   assert.match(resourcePage, /81 ilden uygun alım/);
-  assert.match(resourcePage, /FAQPage/);
+  assert.match(resourcePage, /buildResourcePageStructuredData/);
+  assert.doesNotMatch(structuredData, /"@type": "FAQPage"/);
   assert.match(calculator, /volumeCm3 \/ 6_000/);
   assert.match(calculator, /chargeableWeight/);
   assert.match(calculator, /aria-live="polite"/);
@@ -1611,9 +1622,10 @@ test("express cargo hub publishes inbound, outbound and planning resources witho
     "ingiltereye-express-kargo",
     "cinden-turkiyeye-express-kargo",
   ];
-  const [content, resourcePage, calculator, guide, planner, expressPage, header, footer, services, sitemap] = await Promise.all([
+  const [content, resourcePage, structuredData, calculator, guide, planner, expressPage, header, footer, services, sitemap] = await Promise.all([
     read("src/content/marketing-pages.ts"),
     read("src/components/ExpressCargoResourcePage.tsx"),
+    read("src/lib/structured-data.ts"),
     read("src/pages/express-kargo-hacimsel-agirlik-hesaplama.tsx"),
     read("src/pages/yurtdisi-kargo-gonderim-rehberi.tsx"),
     read("src/components/ExpressQuotePlanner.tsx"),
@@ -1637,7 +1649,8 @@ test("express cargo hub publishes inbound, outbound and planning resources witho
   assert.doesNotMatch(publicExpressCopy, /QuickShipper|Navlungo/i);
   assert.match(resourcePage, /Express kargo bilgi merkezi/);
   assert.match(resourcePage, /Dünyadan Türkiye'ye/);
-  assert.match(resourcePage, /FAQPage/);
+  assert.match(resourcePage, /buildResourcePageStructuredData/);
+  assert.doesNotMatch(structuredData, /"@type": "FAQPage"/);
   assert.match(calculator, /volumeCm3 \/ 5_000/);
   assert.match(calculator, /Boy × En × Yükseklik × Adet ÷ 5\.000/);
   assert.match(calculator, /aria-live="polite"/);

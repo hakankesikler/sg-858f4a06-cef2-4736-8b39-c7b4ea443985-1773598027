@@ -7,8 +7,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
 import { marketingPages, type MarketingPageData } from "@/content/marketing-pages";
-
-const siteUrl = "https://www.rexlojistik.com";
+import { buildResourcePageStructuredData, SITE_URL } from "@/lib/structured-data";
 
 type SeaFreightResourcePageProps = {
   page: MarketingPageData;
@@ -17,52 +16,8 @@ type SeaFreightResourcePageProps = {
   children: ReactNode;
 };
 
-function getStructuredData(page: MarketingPageData, faq: SeaFreightResourcePageProps["faq"]) {
-  const url = `${siteUrl}/${page.slug}`;
-  const schemas: Record<string, unknown>[] = [
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: siteUrl },
-        { "@type": "ListItem", position: 2, name: "Denizyolu Taşımacılığı", item: `${siteUrl}/denizyolu-tasimaciligi` },
-        { "@type": "ListItem", position: 3, name: page.title, item: url },
-      ],
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      headline: page.title,
-      description: page.seoDescription,
-      url,
-      inLanguage: "tr-TR",
-      dateModified: "2026-09-12",
-      author: { "@type": "Organization", name: "REX Lojistik", url: siteUrl },
-      publisher: {
-        "@type": "Organization",
-        name: "REX Lojistik",
-        logo: { "@type": "ImageObject", url: `${siteUrl}/rex.png?v=2` },
-      },
-    },
-  ];
-
-  if (faq?.length) {
-    schemas.push({
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: faq.map((item) => ({
-        "@type": "Question",
-        name: item.question,
-        acceptedAnswer: { "@type": "Answer", text: item.answer },
-      })),
-    });
-  }
-
-  return schemas;
-}
-
 export function SeaFreightResourcePage({ page, readingTime = "6 dakika", faq, children }: SeaFreightResourcePageProps) {
-  const canonicalUrl = `${siteUrl}/${page.slug}`;
+  const canonicalUrl = `${SITE_URL}/${page.slug}`;
 
   return (
     <>
@@ -71,7 +26,12 @@ export function SeaFreightResourcePage({ page, readingTime = "6 dakika", faq, ch
         description={page.seoDescription}
         keywords={page.keywords}
         url={canonicalUrl}
-        structuredData={getStructuredData(page, faq)}
+        structuredData={buildResourcePageStructuredData({
+          page,
+          parentName: "Denizyolu Taşımacılığı",
+          parentPath: "/denizyolu-tasimaciligi",
+          dateModified: "2026-09-12",
+        })}
       />
       <div className="min-h-screen bg-white">
         <Header />

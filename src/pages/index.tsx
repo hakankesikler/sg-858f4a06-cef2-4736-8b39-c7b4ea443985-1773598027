@@ -5,6 +5,7 @@ import { Services } from "@/components/Services";
 import { TrackingSection } from "@/components/TrackingSection";
 import { Features } from "@/components/Features";
 import { Footer } from "@/components/Footer";
+import { buildHomeStructuredData } from "@/lib/structured-data";
 
 export default function Home() {
   return (
@@ -14,17 +15,10 @@ export default function Home() {
         description="REX Lojistik; yurtiçi parsiyel ve komple taşımacılık, uluslararası karayolu, hava kargo, denizyolu ve express lojistik çözümleri sunar. 1 paletten komple araca, Türkiye geneli ve uluslararası taşımacılık için hızlı teklif alın."
         image="/og-image.png"
         url="https://www.rexlojistik.com"
-        structuredData={{
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          "@id": "https://www.rexlojistik.com/#organization",
-          name: "REX Lojistik",
-          legalName: "REX Lojistik Taşımacılık Depolama Danışmanlık Limited Şirketi",
-          url: "https://www.rexlojistik.com",
-          logo: "https://www.rexlojistik.com/rex.png?v=2",
-          email: "info@rexlojistik.com",
-          telephone: "+90 543 401 07 55",
-        }}
+        structuredData={buildHomeStructuredData({
+          name: "REX Lojistik | Parsiyel, Komple ve Uluslararası Taşımacılık",
+          description: "REX Lojistik; yurtiçi parsiyel ve komple taşımacılık, uluslararası karayolu, hava kargo, denizyolu ve express lojistik çözümleri sunar. 1 paletten komple araca, Türkiye geneli ve uluslararası taşımacılık için hızlı teklif alın.",
+        })}
       />
       <div className="min-h-screen">
         <Header />
