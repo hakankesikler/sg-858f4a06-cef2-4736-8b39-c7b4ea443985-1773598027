@@ -869,6 +869,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { anchor: "komple araç", href: "/komple-tasimacilik" },
       { anchor: "İzmir → İstanbul", href: "/izmir-istanbul-parsiyel-tasimacilik" },
       { anchor: "İzmir → Gebze", href: "/izmir-gebze-parsiyel-tasimacilik" },
+      { anchor: "İzmir → Bursa", href: "/izmir-bursa-parsiyel-tasimacilik" },
     ],
   },
   "izmir-istanbul-parsiyel-tasimacilik": {
@@ -1098,6 +1099,129 @@ export const marketingPages: Record<string, MarketingPageData> = {
     finalCta: {
       title: "İzmir'den Gebze'ye Göndereceğiniz Yük İçin Teklif Alın",
       text: "Paletli sanayi veya ticari yükünüzün bilgilerini paylaşın; İzmir'deki yükleme adresinden Gebze'deki teslimat adresine uygun taşıma seçeneğini değerlendirelim.",
+      primaryLabel: "Hızlı Teklif Al",
+      whatsappLabel: "WhatsApp'tan Teklif Al",
+    },
+    related: ["izmir-parsiyel-tasimacilik", "yurtici-parsiyel-tasimacilik", "komple-tasimacilik"],
+    contextualLinks: [
+      { anchor: "İzmir parsiyel taşımacılık", href: "/izmir-parsiyel-tasimacilik" },
+      { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
+      { anchor: "komple taşımacılık", href: "/komple-tasimacilik" },
+    ],
+  },
+  "izmir-bursa-parsiyel-tasimacilik": {
+    slug: "izmir-bursa-parsiyel-tasimacilik",
+    kind: "service",
+    icon: "route",
+    eyebrow: "İzmir'in sanayi ve ticaret bölgelerinden Bursa'ya",
+    title: "İzmir Bursa Parsiyel Taşımacılık",
+    lead: "İzmir'den Bursa'ya 1 paletten başlayan sanayi ve ticari yüklerinizi adresinizden alıyor, Bursa'daki alıcı adresine kadar teslim ediyoruz.",
+    seoTitle: "İzmir Bursa Parsiyel Taşımacılık | REX Lojistik",
+    seoDescription: "İzmir'den Bursa'ya 1 paletten başlayan sanayi ve ticari yüklerinizi adresinizden alıyor, Bursa'da alıcı adresine teslim ediyoruz. Hızlı teklif alın.",
+    keywords: ["İzmir Bursa parsiyel taşımacılık", "İzmir Bursa parsiyel nakliye", "İzmir'den Bursa'ya parsiyel yük", "İzmir Bursa palet taşıma", "İzmir Bursa nakliye"],
+    heroPrimaryCtaLabel: "Hızlı Teklif Al",
+    heroWhatsAppLabel: "WhatsApp'tan Teklif Al",
+    breadcrumbParent: {
+      name: "İzmir Parsiyel Taşımacılık",
+      href: "/izmir-parsiyel-tasimacilik",
+    },
+    highlights: [
+      { title: "1 Paletten Başlayan Taşıma", text: "Komple araç kapasitesine ihtiyaç duymayan yükler için rota odaklı planlama" },
+      { title: "İzmir'de Adresten Alım", text: "Açık yükleme adresi ve saha koşullarına göre organize edilen alım" },
+      { title: "Bursa'da Adrese Teslim", text: "Taşıma planına göre alıcının açık teslimat adresine kadar organizasyon" },
+      { title: "Sanayi + Ticari Yükler", text: "Sevkiyata uygun paletli üretim girdileri, parçalar ve ticari ürünler" },
+      { title: "Yüke Uygun Taşıma Modeli", text: "Palet sayısı, hacim, ağırlık ve istiflenebilirliğe göre değerlendirme" },
+      { title: "Tek Noktadan Operasyon", text: "İzmir'deki alımdan Bursa'daki teslimata REX Lojistik koordinasyonu" },
+    ],
+    sections: [
+      {
+        title: "İzmir'den Bursa'ya Parsiyel Yük Taşıma",
+        paragraphs: [
+          "İzmir ve Bursa arasındaki üretim, tedarik ve ticaret hareketliliğinde her sevkiyat komple araç kapasitesine ihtiyaç duymaz. Bir veya birkaç paletlik sanayi ve ticari yüklerde parsiyel taşımacılık, yük miktarına uygun bir taşıma modeli oluşturulmasına imkân verir.",
+          "REX Lojistik olarak İzmir çıkışlı 1 paletten başlayan yüklerin Bursa'ya taşıma organizasyonunu sağlıyoruz. Yükü İzmir'deki gönderici adresinden alıyor, palet sayısı, ölçüler, ağırlık ve Bursa'daki teslimat noktasına göre taşıma planını oluşturuyoruz.",
+          "Bu sayfa Bursa varışlı rota planına odaklanır; diğer varış noktaları için İzmir parsiyel taşımacılık seçeneklerini inceleyebilirsiniz.",
+        ],
+      },
+      {
+        title: "Kemalpaşa, Işıkkent, Torbalı ve Çiğli'den Bursa'ya Yük Taşıma",
+        paragraphs: [
+          "İzmir'in üretim, sanayi ve ticaret bölgelerinden Bursa yönüne farklı büyüklüklerde sevkiyat ihtiyaçları oluşabilir. Kemalpaşa, Işıkkent, Torbalı ve Çiğli gibi üretim ve ticaret yoğunluğu bulunan bölgelerden çıkacak paletli yüklerde, komple araç kapasitesine ihtiyaç duyulmuyorsa parsiyel taşıma değerlendirilebilir.",
+          "Yükün açık adresi, palet sayısı, ölçüleri ve ağırlığı paylaşıldığında adresten alım ve Bursa'daki teslimat noktasına uygun taşıma planlaması oluşturulabilir.",
+          "Bursa merkezinin yanı sıra Nilüfer, Osmangazi, İnegöl veya Gemlik gibi farklı teslimat noktalarında açık adres bilgisi taşıma planının oluşturulmasında dikkate alınır.",
+        ],
+      },
+      {
+        title: "İzmir–Bursa Hattında Sanayi ve Ticari Yükler",
+        paragraphs: [
+          "İzmir–Bursa hattındaki taşıma ihtiyacı yalnızca tek bir sektöre bağlı değildir. Sevkiyata uygun şekilde ambalajlanmış üretim girdileri, makine ve ekipman parçaları, paletli sanayi ürünleri ve genel ticari yükler yük özelliklerine göre değerlendirilebilir.",
+          "Bursa'nın otomotiv, makine ve üretim ekosistemi nedeniyle tedarik amaçlı parça ve malzeme sevkiyatlarında da parsiyel taşıma ihtiyacı oluşabilir. Bununla birlikte her ürünün taşıma koşulları ayrı değerlendirilmelidir.",
+          "Paletli yüklerin yanında güzergâh, koli adedi, toplam hacim, ağırlık ve ambalaj özelliklerine göre koli veya toplu koli gönderileri için de taşıma çözümü değerlendirilebilir. Diğer hatlar için yurtiçi parsiyel taşımacılık hizmet kapsamını inceleyebilirsiniz.",
+        ],
+      },
+      {
+        title: "1 Palet İzmir'den Bursa'ya Gönderilebilir mi?",
+        paragraphs: [
+          "Evet. İzmir çıkışlı Bursa varışlı yüklerde 1 paletten başlayan taşıma organize edilebilir.",
+          "Bir veya birkaç paletlik sevkiyatlarda parsiyel taşıma değerlendirilebilir. Palet sayısı, toplam hacim veya ağırlık arttığında ise farklı araç ve nakliye modelleri daha uygun hale gelebilir.",
+          "Bu nedenle taşıma modeli yalnızca palet adedine değil, yükün ölçülerine, toplam ağırlığına, hacmine ve teslimat noktasına göre değerlendirilir.",
+        ],
+      },
+      {
+        title: "İzmir Bursa Parsiyel Nakliye Fiyatı Nasıl Hesaplanır?",
+        paragraphs: [
+          "İzmir–Bursa parsiyel taşıma fiyatı yalnızca kilogram üzerinden belirlenmez. İzmir'deki açık yükleme adresi, Bursa'daki teslimat adresi, palet veya koli adedi, yük ölçüleri, toplam ağırlık ve istiflenebilirlik durumu fiyatlandırmayı etkileyebilir.",
+          "Doğru teklif ve taşıma modelinin belirlenebilmesi için yükün temel bilgilerini paylaşmanız yeterlidir.",
+        ],
+        bullets: ["Çıkış adresi", "Teslimat adresi", "Palet / koli adedi", "En × Boy × Yükseklik", "Toplam kg", "İstiflenebilir mi?", "Yük hazır mı / hazır olma tarihi"],
+        cta: { label: "Yük Bilgilerini Gönder – Teklif Al", href: "#izmir-bursa-parsiyel-teklif" },
+      },
+      {
+        title: "İzmir'de Adresten Alım, Bursa'da Adrese Teslim",
+        paragraphs: [
+          "Yükünüzün bir ambar veya nakliye noktasına tarafınızdan bırakılması zorunlu değildir. Taşıma planına göre yük İzmir'deki gönderici adresinden alınabilir ve Bursa'daki alıcı adresine kadar teslimatı organize edilebilir.",
+          "Açık yükleme ve teslimat adreslerinin teklif aşamasında paylaşılması, fiyatlandırmanın ve taşıma planının doğru oluşturulmasına yardımcı olur.",
+        ],
+      },
+      {
+        title: "İzmir Bursa Parsiyel Taşıma Süreci",
+        paragraphs: [
+          "İzmir'deki yükleme adresinden Bursa'daki teslimat adresine uzanan süreç, beş aşamada planlanır. Her aşamada paylaşılan gerçek yük ve adres bilgileri esas alınır.",
+        ],
+      },
+      {
+        title: "Palet Sayısı Arttığında Parsiyel mi, Komple Araç mı?",
+        paragraphs: [
+          "Bir veya birkaç paletlik yüklerde parsiyel taşıma değerlendirilebilecek seçeneklerden biridir. Ancak palet sayısı, toplam hacim, ağırlık veya yükün kapladığı araç kapasitesi arttığında araç bazlı taşıma daha uygun hale gelebilir.",
+          "REX Lojistik, verilen yük bilgilerine göre parsiyel ve komple taşıma seçeneklerini değerlendirerek sevkiyata uygun taşıma modelinin oluşturulmasını sağlar. Kapasite ihtiyacı yükseldiğinde komple taşımacılık seçeneği de karşılaştırmaya dahil edilir.",
+        ],
+      },
+      {
+        title: "İzmir–Bursa Hattı Neden Önemli?",
+        paragraphs: [
+          "İzmir'in sanayi ve ticaret altyapısı ile Bursa'nın güçlü üretim ekosistemi, iki şehir arasında sanayi ürünleri, tedarik malzemeleri ve ticari yüklerin hareketine zemin oluşturur.",
+          "Özellikle komple araç kapasitesine ulaşmayan sevkiyatlarda yük miktarına uygun taşıma modelinin seçilmesi önem kazanır. REX Lojistik, İzmir'deki yükleme adresinden Bursa'daki teslimat adresine kadar yük özelliklerine uygun taşıma organizasyonunu oluşturur.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Yük Bilgilerinin Alınması", text: "İzmir yükleme adresi, Bursa teslimat adresi, palet/koli adedi, ölçüler ve ağırlık alınır." },
+      { title: "Taşıma Modelinin Belirlenmesi", text: "Yük miktarı, hacmi ve özelliklerine göre uygun taşıma modeli değerlendirilir." },
+      { title: "İzmir'de Adresten Alım", text: "Belirlenen gönderici adresinden yük alımı organize edilir." },
+      { title: "İzmir–Bursa Taşıması", text: "Yük, oluşturulan taşıma planına göre Bursa'ya sevk edilir." },
+      { title: "Bursa'da Adrese Teslim", text: "Yükün alıcı adresine teslimatı organize edilir." },
+    ],
+    faq: [
+      { question: "İzmir'den Bursa'ya 1 palet gönderebilir miyim?", answer: "Evet. İzmir çıkışlı Bursa varışlı yüklerde 1 paletten başlayan taşıma organize edilebilir. Teklif için palet ölçüleri, ağırlık ve açık yükleme/teslimat adreslerinin paylaşılması yeterlidir." },
+      { question: "İzmir'de yükü adresimden alıyor musunuz?", answer: "Evet. Taşıma planına göre yükün İzmir'deki gönderici adresinden alınması organize edilebilir." },
+      { question: "Bursa'da adrese teslim yapılıyor mu?", answer: "Evet. Taşıma planına göre yükün Bursa'daki alıcı adresine teslim edilmesi organize edilebilir." },
+      { question: "Sanayi yükleri taşınabiliyor mu?", answer: "Sevkiyata uygun şekilde ambalajlanmış paletli sanayi ve ticari yükler, yük özelliklerine göre değerlendirilebilir. Özel taşıma koşulu gerektiren ürünlerde yük detaylarının teklif öncesinde paylaşılması gerekir." },
+      { question: "İzmir Bursa parsiyel nakliye fiyatı ne kadar?", answer: "Fiyat; İzmir'deki yükleme adresi, Bursa'daki teslimat adresi, palet/koli adedi, ölçüler, toplam ağırlık ve yükün taşıma özelliklerine göre değişebilir. Net teklif için yük bilgilerinin paylaşılması gerekir." },
+      { question: "İzmir'den Bursa'ya koli gönderebilir miyim?", answer: "Güzergâh, koli adedi, toplam hacim, ağırlık ve ambalaj özelliklerine göre koli veya toplu koli gönderileri için taşıma çözümü değerlendirilebilir." },
+      { question: "Palet sayısı arttığında ne olur?", answer: "Palet sayısı veya toplam hacim arttığında parsiyel taşımanın yanında farklı araç veya komple taşıma seçenekleri de değerlendirilebilir. Uygun taşıma modeli yük özelliklerine göre belirlenir." },
+    ],
+    finalCta: {
+      title: "İzmir'den Bursa'ya Göndereceğiniz Yük İçin Teklif Alın",
+      text: "Paletli sanayi veya ticari yükünüzün bilgilerini paylaşın; İzmir'deki yükleme adresinden Bursa'daki teslimat adresine uygun taşıma seçeneğini değerlendirelim.",
       primaryLabel: "Hızlı Teklif Al",
       whatsappLabel: "WhatsApp'tan Teklif Al",
     },

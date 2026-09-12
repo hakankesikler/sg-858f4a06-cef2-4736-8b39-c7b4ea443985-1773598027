@@ -15,6 +15,7 @@ const turkeyOnlyServiceSlugs = new Set([
   "izmir-parsiyel-tasimacilik",
   "izmir-istanbul-parsiyel-tasimacilik",
   "izmir-gebze-parsiyel-tasimacilik",
+  "izmir-bursa-parsiyel-tasimacilik",
   "manisa-parsiyel-tasimacilik",
   "manisa-gebze-parsiyel-tasimacilik",
   "manisa-bursa-parsiyel-tasimacilik",

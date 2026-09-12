@@ -1309,7 +1309,7 @@ test("Izmir-Gebze route acceptance: industrial intent, correct province/district
     read("src/lib/structured-data.ts"),
   ]);
   const routeStart = content.indexOf('"izmir-gebze-parsiyel-tasimacilik":');
-  const routeEnd = content.indexOf('"manisa-parsiyel-tasimacilik":', routeStart);
+  const routeEnd = content.indexOf('"izmir-bursa-parsiyel-tasimacilik":', routeStart);
   const routeContent = content.slice(routeStart, routeEnd);
   const sectionsContent = routeContent.slice(routeContent.indexOf("sections: ["), routeContent.indexOf("steps: ["));
   const stepsContent = routeContent.slice(routeContent.indexOf("steps: ["), routeContent.indexOf("faq: ["));
@@ -1420,6 +1420,68 @@ test("Manisa-Gebze route acceptance: industrial intent, correct province/distric
     "source-visible route data must not disclose carriers, suppliers, buying prices, or the fulfillment model",
   );
   assert.doesNotMatch(routeContent, /\bADR\b|tehlikeli madde|soğuk zincir|ilaç|canlı hayvan|özel izinli|gabari dışı|yanıcı|patlayıcı/i);
+});
+
+test("Izmir-Bursa route acceptance: industrial corridor intent, city defaults, and private operations", async () => {
+  const [route, content, marketingPage, planner, sitemap, structuredData] = await Promise.all([
+    read("src/pages/izmir-bursa-parsiyel-tasimacilik.tsx"),
+    read("src/content/marketing-pages.ts"),
+    read("src/components/MarketingPage.tsx"),
+    read("src/components/DomesticPartialPlanner.tsx"),
+    read("public/sitemap.xml"),
+    read("src/lib/structured-data.ts"),
+  ]);
+  const routeStart = content.indexOf('"izmir-bursa-parsiyel-tasimacilik":');
+  const routeEnd = content.indexOf('"manisa-parsiyel-tasimacilik":', routeStart);
+  const routeContent = content.slice(routeStart, routeEnd);
+  const sectionsContent = routeContent.slice(routeContent.indexOf("sections: ["), routeContent.indexOf("steps: ["));
+  const stepsContent = routeContent.slice(routeContent.indexOf("steps: ["), routeContent.indexOf("faq: ["));
+  const sitemapMatches = sitemap.match(/https:\/\/www\.rexlojistik\.com\/izmir-bursa-parsiyel-tasimacilik/g) ?? [];
+
+  assert.ok(routeStart >= 0 && routeEnd > routeStart, "route content should exist as an isolated marketing entry");
+  assert.match(routeContent, /seoTitle: "İzmir Bursa Parsiyel Taşımacılık \| REX Lojistik"/);
+  assert.match(routeContent, /seoDescription: "İzmir'den Bursa'ya 1 paletten başlayan sanayi ve ticari yüklerinizi adresinizden alıyor, Bursa'da alıcı adresine teslim ediyoruz\. Hızlı teklif alın\."/);
+  assert.match(routeContent, /title: "İzmir Bursa Parsiyel Taşımacılık"/);
+  assert.match(routeContent, /breadcrumbParent:[\s\S]*href: "\/izmir-parsiyel-tasimacilik"/);
+  assert.match(routeContent, /Kemalpaşa, Işıkkent, Torbalı ve Çiğli'den Bursa'ya Yük Taşıma/);
+  assert.match(routeContent, /İzmir–Bursa Hattında Sanayi ve Ticari Yükler/);
+  assert.match(routeContent, /1 Palet İzmir'den Bursa'ya Gönderilebilir mi\?/);
+  assert.match(routeContent, /İzmir Bursa Parsiyel Nakliye Fiyatı Nasıl Hesaplanır\?/);
+  assert.match(routeContent, /İzmir–Bursa Hattı Neden Önemli\?/);
+  assert.equal((sectionsContent.match(/title: "/g) ?? []).length, 9, "all nine route-specific sections should be present");
+  assert.equal((stepsContent.match(/title: "/g) ?? []).length, 5, "all five process steps should be present");
+  assert.equal((routeContent.match(/question:/g) ?? []).length, 7, "all seven visible FAQ items should be present");
+  assert.match(routeContent, /href: "\/izmir-parsiyel-tasimacilik"/);
+  assert.match(routeContent, /href: "\/yurtici-parsiyel-tasimacilik"/);
+  assert.match(routeContent, /href: "\/komple-tasimacilik"/);
+  assert.match(content, /anchor: "İzmir → Bursa", href: "\/izmir-bursa-parsiyel-tasimacilik"/);
+
+  assert.match(route, /defaultSenderCity="İzmir"/);
+  assert.match(route, /defaultReceiverCity="Bursa"/);
+  assert.doesNotMatch(route, /defaultReceiverDistrict=/);
+  assert.match(route, /sectionId="izmir-bursa-parsiyel-teklif"/);
+  assert.match(route, /Yük Bilgilerini Gönder – Teklif Al/);
+  assert.match(route, /routeSummaryLabel="İzmir → Bursa rota planı"/);
+  assert.match(planner, /Açık yükleme adresi/);
+  assert.match(planner, /Açık teslimat adresi/);
+  assert.match(planner, /Palet \/ koli adedi/);
+  assert.match(planner, /Toplam ağırlık \(kg\)/);
+  assert.match(planner, /İstiflenebilirlik/);
+  assert.match(planner, /Yük hazır olma tarihi/);
+  assert.match(planner, /sm:grid-cols-2/);
+  assert.match(marketingPage, /mt-9 flex flex-col gap-3 sm:flex-row/);
+  assert.match(marketingPage, /mt-8 flex flex-col justify-center gap-3 sm:flex-row/);
+  assert.match(marketingPage, /rex:open-quote-form/);
+
+  assert.equal(sitemapMatches.length, 1, "canonical route should appear in sitemap exactly once");
+  assert.match(structuredData, /"izmir-bursa-parsiyel-tasimacilik"/);
+  assert.match(structuredData, /page\.breadcrumbParent/);
+  assert.doesNotMatch(
+    `${routeContent}\n${route}\n${structuredData}`,
+    /FedEx|UPS|DHL|Aramex|QuickShipper|Navlungo|alt taşıyıcı|anlaşmalı kargo|nakliye komisyoncu|araç tedarik|alış fiyat|ticari anlaşma|hangi hattın hangi firma|arka plandaki tedarik modeli|özmal araç|özmal filo|kendi filomuz|Bursa şubesi|Bursa deposu|kendi aktarma merkezi/i,
+    "source-visible route data must not disclose carriers, suppliers, buying prices, or the fulfillment model",
+  );
+  assert.doesNotMatch(routeContent, /otomotiv lojistiği uzmanı|OEM lojistik sağlayıcısı|just-in-time|üretim hattı besleme/i);
 });
 
 test("Manisa-Bursa route acceptance: industrial corridor intent, city defaults, and private operations", async () => {
