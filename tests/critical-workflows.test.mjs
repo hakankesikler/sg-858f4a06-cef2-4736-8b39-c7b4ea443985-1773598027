@@ -1199,6 +1199,26 @@ test("public service pages prepare service-specific WhatsApp quote summaries", a
   assert.match(planner, /depolama, elleçleme ve dağıtım/);
 });
 
+test("the detailed quote form is rendered only from the header", async () => {
+  const [header, home, hero, marketing, air, express, sea, expressPlanner] = await Promise.all([
+    read("src/components/Header.tsx"),
+    read("src/pages/index.tsx"),
+    read("src/components/Hero.tsx"),
+    read("src/components/MarketingPage.tsx"),
+    read("src/components/AirCargoResourcePage.tsx"),
+    read("src/components/ExpressCargoResourcePage.tsx"),
+    read("src/components/SeaFreightResourcePage.tsx"),
+    read("src/components/ExpressQuotePlanner.tsx"),
+  ]);
+
+  assert.match(header, /<QuoteForm\s*\/>/);
+  assert.match(header, /onClick=\{openQuoteForm\}>Teklif Al/);
+  [home, hero, marketing, air, express, sea, expressPlanner].forEach((source) => {
+    assert.doesNotMatch(source, /<CTA\s*\/>/);
+    assert.doesNotMatch(source, /openQuoteForm/);
+  });
+});
+
 test("every public page uses the enlarged REX-only favicon", async () => {
   const [document, notFound] = await Promise.all([
     read("src/pages/_document.tsx"),

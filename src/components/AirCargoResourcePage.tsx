@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, ChevronRight, MessageCircle, Plane, Route } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { CTA } from "@/components/CTA";
 import { SEO } from "@/components/SEO";
 import { marketingPages, type MarketingPageData } from "@/content/marketing-pages";
 
@@ -72,7 +71,6 @@ const airCargoLinks = [
 
 export function AirCargoResourcePage({ page, readingTime = "6 dakika", faq, children }: AirCargoResourcePageProps) {
   const canonicalUrl = `${siteUrl}/${page.slug}`;
-  const openQuoteForm = () => window.dispatchEvent(new Event("openQuoteForm"));
 
   return (
     <>
@@ -168,9 +166,6 @@ export function AirCargoResourcePage({ page, readingTime = "6 dakika", faq, chil
                   <h2 className="mt-2 text-2xl font-bold text-slate-950">İlgili hava kargo sayfaları</h2>
                   <p className="mt-2 max-w-2xl text-slate-600">Adres, ölçü ve teslim hedefini paylaşın; uygulanabilir uçuş seçeneklerini toplam kapsamlarıyla karşılaştıralım.</p>
                 </div>
-                <button type="button" onClick={openQuoteForm} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-orange-600">
-                  Uygun uçuş seçeneğini bulun <ArrowRight className="h-5 w-5" aria-hidden="true" />
-                </button>
               </div>
               <div className="mt-7 grid gap-4 md:grid-cols-3">
                 {page.related.map((slug) => {
@@ -190,7 +185,6 @@ export function AirCargoResourcePage({ page, readingTime = "6 dakika", faq, chil
             </div>
           </section>
 
-          <CTA />
         </main>
         <Footer />
       </div>

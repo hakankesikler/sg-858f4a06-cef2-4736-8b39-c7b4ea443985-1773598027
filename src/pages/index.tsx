@@ -4,7 +4,6 @@ import { Hero } from "@/components/Hero";
 import { Services } from "@/components/Services";
 import { TrackingSection } from "@/components/TrackingSection";
 import { Features } from "@/components/Features";
-import { CTA } from "@/components/CTA";
 import { Footer } from "@/components/Footer";
 
 export default function Home() {
@@ -33,7 +32,6 @@ export default function Home() {
           <Services />
           <TrackingSection />
           <Features />
-          <CTA />
         </main>
         <Footer />
       </div>

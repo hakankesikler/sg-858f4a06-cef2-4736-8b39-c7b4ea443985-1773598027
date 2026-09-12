@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { CTA } from "@/components/CTA";
 import { SEO } from "@/components/SEO";
 import { marketingPages, type MarketingIcon, type MarketingPageData } from "@/content/marketing-pages";
 
@@ -131,7 +130,6 @@ function getStructuredData(page: MarketingPageData) {
 export function MarketingPage({ page, children }: { page: MarketingPageData; children?: ReactNode }) {
   const Icon = icons[page.icon];
   const canonicalUrl = `${siteUrl}/${page.slug}`;
-  const openQuoteForm = () => window.dispatchEvent(new Event("openQuoteForm"));
 
   return (
     <>
@@ -165,13 +163,6 @@ export function MarketingPage({ page, children }: { page: MarketingPageData; chi
                 <h1 className="max-w-4xl text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">{page.title}</h1>
                 <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200 sm:text-xl">{page.lead}</p>
                 <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={openQuoteForm}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 font-semibold text-white shadow-lg shadow-orange-950/30 transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  >
-                    Teklif Al <ArrowRight className="h-5 w-5" aria-hidden="true" />
-                  </button>
                   <a
                     href="https://wa.me/905434010755"
                     target="_blank"
@@ -287,7 +278,6 @@ export function MarketingPage({ page, children }: { page: MarketingPageData; chi
             </div>
           </section>
 
-          <CTA />
         </main>
         <Footer />
       </div>

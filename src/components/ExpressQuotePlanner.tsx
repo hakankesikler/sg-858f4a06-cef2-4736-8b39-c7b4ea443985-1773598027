@@ -15,7 +15,6 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -142,7 +141,6 @@ export function ExpressQuotePlanner() {
   ].filter(Boolean).join("\n");
 
   const whatsappHref = `https://wa.me/905434010755?text=${encodeURIComponent(whatsappText)}`;
-  const openQuoteForm = () => window.dispatchEvent(new Event("openQuoteForm"));
 
   return (
     <section id="express-teklif-planlayici" aria-labelledby="planner-heading" className="border-y border-slate-200 bg-slate-50 py-16 sm:py-20">
@@ -316,9 +314,6 @@ export function ExpressQuotePlanner() {
               >
                 <MessageCircle className="h-5 w-5" aria-hidden="true" /> Özeti WhatsApp'tan gönder
               </a>
-              <Button type="button" onClick={openQuoteForm} className="min-h-12 gap-2 bg-slate-950 px-6 hover:bg-orange-600">
-                Detaylı teklif formunu aç <ArrowRight className="h-5 w-5" aria-hidden="true" />
-              </Button>
             </div>
             {!hasCalculation ? <p className="mt-3 text-sm text-slate-500">WhatsApp özeti için paket ölçülerini ve ağırlığını girin.</p> : null}
           </div>

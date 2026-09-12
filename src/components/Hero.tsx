@@ -1,14 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MapPin, MessageCircle } from "lucide-react";
+import { MapPin, MessageCircle } from "lucide-react";
 
 export function Hero() {
   const handleWhatsApp = () => {
     window.open("https://wa.me/905434010755", "_blank");
-  };
-
-  const handleQuoteClick = () => {
-    const event = new CustomEvent("openQuoteForm");
-    window.dispatchEvent(event);
   };
 
   return (
@@ -57,15 +52,6 @@ export function Hero() {
 
           {/* CTA Buttons - Mobile First */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8 sm:mb-12">
-            <Button 
-              size="lg" 
-              className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold px-8 py-6 text-lg shadow-xl hover:shadow-2xl transition-all"
-              onClick={handleQuoteClick}
-            >
-              Hemen Teklif Al
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            
             <Button 
               size="lg"
               variant="outline"
