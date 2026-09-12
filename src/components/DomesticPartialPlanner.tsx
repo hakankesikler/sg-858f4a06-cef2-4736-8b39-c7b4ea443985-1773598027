@@ -82,6 +82,7 @@ function estimateLoadMeters(item: LoadItem) {
 type DomesticPartialPlannerProps = {
   defaultSenderCity?: string;
   defaultReceiverCity?: string;
+  defaultReceiverDistrict?: string;
   eyebrow?: string;
   heading?: string;
   description?: string;
@@ -94,6 +95,7 @@ type DomesticPartialPlannerProps = {
 export function DomesticPartialPlanner({
   defaultSenderCity = "",
   defaultReceiverCity = "",
+  defaultReceiverDistrict = "",
   eyebrow = "Yurtiçi parsiyel teklif hazırlama",
   heading = "Farklı yüklerinizi tek formda iletin",
   description = "Gönderici ve alıcı adreslerini girin; ölçüsü veya ağırlığı farklı her yük grubunu ayrı kalem olarak ekleyin. Form, operasyon ekibimize gönderebileceğiniz düzenli bir WhatsApp özeti hazırlar.",
@@ -108,7 +110,7 @@ export function DomesticPartialPlanner({
   const [senderDistrict, setSenderDistrict] = useState("");
   const [senderAddress, setSenderAddress] = useState("");
   const [receiverCity, setReceiverCity] = useState(defaultReceiverCity);
-  const [receiverDistrict, setReceiverDistrict] = useState("");
+  const [receiverDistrict, setReceiverDistrict] = useState(defaultReceiverDistrict);
   const [receiverAddress, setReceiverAddress] = useState("");
   const [readyDate, setReadyDate] = useState("");
   const [note, setNote] = useState("");

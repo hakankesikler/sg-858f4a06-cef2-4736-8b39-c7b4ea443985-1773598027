@@ -1299,6 +1299,68 @@ test("Commit 6 acceptance: Izmir-Istanbul route is indexable, private by design,
   );
 });
 
+test("Manisa-Gebze route acceptance: industrial intent, correct province/district defaults, and private operations", async () => {
+  const [route, content, marketingPage, planner, sitemap, structuredData] = await Promise.all([
+    read("src/pages/manisa-gebze-parsiyel-tasimacilik.tsx"),
+    read("src/content/marketing-pages.ts"),
+    read("src/components/MarketingPage.tsx"),
+    read("src/components/DomesticPartialPlanner.tsx"),
+    read("public/sitemap.xml"),
+    read("src/lib/structured-data.ts"),
+  ]);
+  const routeStart = content.indexOf('"manisa-gebze-parsiyel-tasimacilik":');
+  const routeEnd = content.indexOf('"denizyolu-parsiyel-tasimacilik":', routeStart);
+  const routeContent = content.slice(routeStart, routeEnd);
+  const sectionsContent = routeContent.slice(routeContent.indexOf("sections: ["), routeContent.indexOf("steps: ["));
+  const stepsContent = routeContent.slice(routeContent.indexOf("steps: ["), routeContent.indexOf("faq: ["));
+  const sitemapMatches = sitemap.match(/https:\/\/www\.rexlojistik\.com\/manisa-gebze-parsiyel-tasimacilik/g) ?? [];
+
+  assert.ok(routeStart >= 0 && routeEnd > routeStart, "route content should exist as an isolated marketing entry");
+  assert.match(routeContent, /seoTitle: "Manisa Gebze Parsiyel Taşımacılık \| REX Lojistik"/);
+  assert.match(routeContent, /seoDescription: "Manisa'dan Gebze'ye 1 paletten başlayan sanayi ve ticari yüklerinizi adresinizden alıyor, Gebze'de alıcı adresine teslim ediyoruz\. Hızlı teklif alın\."/);
+  assert.match(routeContent, /title: "Manisa Gebze Parsiyel Taşımacılık"/);
+  assert.match(routeContent, /breadcrumbParent:[\s\S]*href: "\/manisa-parsiyel-tasimacilik"/);
+  assert.match(routeContent, /Manisa Sanayisinden Gebze'ye Taşıma Çözümleri/);
+  assert.match(routeContent, /Hangi Sanayi ve Ticari Yükler Taşınabilir\?/);
+  assert.match(routeContent, /1 Palet Manisa'dan Gebze'ye Gönderilebilir mi\?/);
+  assert.match(routeContent, /Manisa Gebze Parsiyel Nakliye Fiyatı Nasıl Hesaplanır\?/);
+  assert.match(routeContent, /Gebze Neden Önemli Bir Teslimat Noktası\?/);
+  assert.equal((sectionsContent.match(/title: "/g) ?? []).length, 9, "all nine route-specific sections should be present");
+  assert.equal((stepsContent.match(/title: "/g) ?? []).length, 5, "all five process steps should be present");
+  assert.equal((routeContent.match(/question:/g) ?? []).length, 7, "all seven visible FAQ items should be present");
+  assert.match(routeContent, /href: "\/manisa-parsiyel-tasimacilik"/);
+  assert.match(routeContent, /href: "\/yurtici-parsiyel-tasimacilik"/);
+  assert.match(routeContent, /href: "\/komple-tasimacilik"/);
+  assert.match(content, /anchor: "Manisa → Gebze", href: "\/manisa-gebze-parsiyel-tasimacilik"/);
+
+  assert.match(route, /defaultSenderCity="Manisa"/);
+  assert.match(route, /defaultReceiverCity="Kocaeli"/);
+  assert.match(route, /defaultReceiverDistrict="Gebze"/);
+  assert.match(route, /sectionId="manisa-gebze-parsiyel-teklif"/);
+  assert.match(route, /Yük Bilgilerini Gönder – Teklif Al/);
+  assert.match(route, /routeSummaryLabel="Manisa → Gebze rota planı"/);
+  assert.match(planner, /Açık yükleme adresi/);
+  assert.match(planner, /Açık teslimat adresi/);
+  assert.match(planner, /Palet \/ koli adedi/);
+  assert.match(planner, /Toplam ağırlık \(kg\)/);
+  assert.match(planner, /İstiflenebilirlik/);
+  assert.match(planner, /Yük hazır olma tarihi/);
+  assert.match(planner, /sm:grid-cols-2/);
+  assert.match(marketingPage, /mt-9 flex flex-col gap-3 sm:flex-row/);
+  assert.match(marketingPage, /mt-8 flex flex-col justify-center gap-3 sm:flex-row/);
+  assert.match(marketingPage, /rex:open-quote-form/);
+
+  assert.equal(sitemapMatches.length, 1, "canonical route should appear in sitemap exactly once");
+  assert.match(structuredData, /"manisa-gebze-parsiyel-tasimacilik"/);
+  assert.match(structuredData, /page\.breadcrumbParent/);
+  assert.doesNotMatch(
+    `${routeContent}\n${route}\n${structuredData}`,
+    /FedEx|UPS|DHL|Aramex|QuickShipper|Navlungo|alt taşıyıcı|anlaşmalı kargo|nakliye komisyoncu|araç tedarik kayna|alış fiyat|hangi hattın hangi firma|arka plandaki ticari model|özmal araç|kendi filomuz|Gebze şubesi|Gebze deposu/i,
+    "source-visible route data must not disclose carriers, suppliers, buying prices, or the fulfillment model",
+  );
+  assert.doesNotMatch(routeContent, /\bADR\b|tehlikeli madde|soğuk zincir|ilaç|canlı hayvan|özel izinli|gabari dışı|yanıcı|patlayıcı/i);
+});
+
 test("public service pages prepare service-specific WhatsApp quote summaries", async () => {
   const routeVariants = {
     "komple-tasimacilik": "complete",

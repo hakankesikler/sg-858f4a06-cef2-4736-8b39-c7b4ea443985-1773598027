@@ -1055,7 +1055,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
           "Manisa'nın üretim noktalarından Marmara, İç Anadolu, Ege ve Akdeniz yönlerine farklı hacimlerde sevkiyat talepleri oluşabilir. Aşağıdaki hatlar doğal rota örnekleridir; hizmet alanını yalnızca bu şehirlerle sınırlandırmaz.",
           "Bu güzergâhların dışında Türkiye'nin 81 iline ve ilçelere taşıma organizasyonu sağlanabilir.",
         ],
-        bullets: ["Manisa → İstanbul", "Manisa → Ankara", "Manisa → Bursa", "Manisa → Kocaeli", "Manisa → İzmir", "Manisa → Konya", "Manisa → Adana", "Manisa → Antalya"],
+        bullets: ["Manisa → Gebze", "Manisa → İstanbul", "Manisa → Ankara", "Manisa → Bursa", "Manisa → Kocaeli", "Manisa → İzmir", "Manisa → Konya", "Manisa → Adana", "Manisa → Antalya"],
       },
       {
         title: "Adresten Alım ve Adrese Teslim",
@@ -1076,6 +1076,129 @@ export const marketingPages: Record<string, MarketingPageData> = {
     contextualLinks: [
       { anchor: "Parsiyel taşımacılık hizmetimiz", href: "/yurtici-parsiyel-tasimacilik" },
       { anchor: "komple taşımacılık", href: "/komple-tasimacilik" },
+      { anchor: "Manisa → Gebze", href: "/manisa-gebze-parsiyel-tasimacilik" },
+    ],
+  },
+  "manisa-gebze-parsiyel-tasimacilik": {
+    slug: "manisa-gebze-parsiyel-tasimacilik",
+    kind: "service",
+    icon: "route",
+    eyebrow: "Manisa sanayisinden Gebze'ye",
+    title: "Manisa Gebze Parsiyel Taşımacılık",
+    lead: "Manisa'dan Gebze'ye 1 paletten başlayan sanayi ve ticari yüklerinizi adresinizden alıyor, Gebze'deki alıcı adresine kadar teslim ediyoruz.",
+    seoTitle: "Manisa Gebze Parsiyel Taşımacılık | REX Lojistik",
+    seoDescription: "Manisa'dan Gebze'ye 1 paletten başlayan sanayi ve ticari yüklerinizi adresinizden alıyor, Gebze'de alıcı adresine teslim ediyoruz. Hızlı teklif alın.",
+    keywords: ["Manisa Gebze parsiyel taşımacılık", "Manisa Gebze parsiyel nakliye", "Manisa'dan Gebze'ye parsiyel yük", "Manisa Gebze palet taşıma", "Manisa Gebze nakliye"],
+    heroPrimaryCtaLabel: "Hızlı Teklif Al",
+    heroWhatsAppLabel: "WhatsApp'tan Teklif Al",
+    breadcrumbParent: {
+      name: "Manisa Parsiyel Taşımacılık",
+      href: "/manisa-parsiyel-tasimacilik",
+    },
+    highlights: [
+      { title: "1 Paletten Başlayan Taşıma", text: "Komple araç kapasitesine ihtiyaç duymayan yükler için rota odaklı planlama" },
+      { title: "Manisa'da Adresten Alım", text: "Açık yükleme adresi ve saha koşullarına göre organize edilen alım" },
+      { title: "Gebze'de Adrese Teslim", text: "Taşıma planına göre alıcının açık teslimat adresine kadar organizasyon" },
+      { title: "Sanayi + Ticari Yükler", text: "Sevkiyata uygun paletli üretim girdileri, parçalar ve ticari ürünler" },
+      { title: "Yüke Uygun Taşıma Modeli", text: "Palet sayısı, hacim, ağırlık ve istiflenebilirliğe göre değerlendirme" },
+      { title: "Tek Noktadan Operasyon", text: "Manisa'daki alımdan Gebze'deki teslimata REX Lojistik koordinasyonu" },
+    ],
+    sections: [
+      {
+        title: "Manisa'dan Gebze'ye Parsiyel Yük Taşıma",
+        paragraphs: [
+          "Manisa ile Gebze arasındaki sanayi ve ticaret hareketliliğinde her sevkiyat komple araç kapasitesine ihtiyaç duymaz. Bir veya birkaç paletlik üretim ve ticari yüklerde parsiyel taşımacılık, yük miktarına uygun bir taşıma modeli oluşturulmasına imkân verir.",
+          "REX Lojistik olarak Manisa çıkışlı 1 paletten başlayan yüklerin Gebze'ye taşıma organizasyonunu sağlıyoruz. Yükü Manisa'daki gönderici adresinden alıyor, palet sayısı, ölçüler, ağırlık ve teslimat noktasına göre taşıma planını oluşturuyor ve Gebze'deki alıcı adresine teslimatı organize ediyoruz.",
+          "Bu sayfa Gebze varışlı rota planına odaklanır; diğer varış noktaları için Manisa parsiyel taşımacılık seçeneklerini inceleyebilirsiniz.",
+        ],
+      },
+      {
+        title: "Manisa Sanayisinden Gebze'ye Taşıma Çözümleri",
+        paragraphs: [
+          "Manisa'nın üretim ve sanayi yapısı ile Gebze'nin güçlü sanayi ve ticaret ağı arasında farklı ölçekte düzenli yük hareketleri oluşmaktadır. Komple araç gerektirmeyen paletli sevkiyatlarda parsiyel taşıma, üretici ve tedarikçiler için değerlendirilebilecek taşıma modellerinden biridir.",
+          "Manisa OSB, Muradiye, Yunusemre, Şehzadeler, Turgutlu, Akhisar ve çevresindeki üretim veya ticaret noktalarından çıkacak yükler için yükleme adresine göre alım planlaması oluşturulabilir.",
+        ],
+      },
+      {
+        title: "Hangi Sanayi ve Ticari Yükler Taşınabilir?",
+        paragraphs: [
+          "Manisa–Gebze parsiyel taşıma çözümü, sevkiyata uygun şekilde ambalajlanmış paletli sanayi ve ticari yüklerde kullanılabilir. Üretim girdileri, ambalajlı ticari ürünler, makine ve ekipman parçaları ile farklı paletli ürün grupları yük özelliklerine göre değerlendirilebilir.",
+          "Paletli yüklerin yanı sıra güzergâh, ambalaj, adet, hacim ve ağırlığa göre koli veya toplu koli gönderileri için de taşıma çözümü oluşturulabilir.",
+          "Gebze dışındaki yurtiçi hatlar için yurtiçi parsiyel taşımacılık hizmet kapsamını inceleyebilirsiniz.",
+        ],
+      },
+      {
+        title: "1 Palet Manisa'dan Gebze'ye Gönderilebilir mi?",
+        paragraphs: [
+          "Evet. Manisa çıkışlı Gebze varışlı yüklerde 1 paletten başlayan taşıma organize edilebilir.",
+          "Bir veya birkaç paletlik yüklerde parsiyel taşıma değerlendirilebilirken palet sayısı, toplam hacim veya ağırlık arttığında farklı araç ve nakliye seçenekleri daha uygun hale gelebilir.",
+          "Bu nedenle taşıma modeli yalnızca palet adedine değil, yükün tamamının özelliklerine göre değerlendirilir.",
+        ],
+      },
+      {
+        title: "Manisa Gebze Parsiyel Nakliye Fiyatı Nasıl Hesaplanır?",
+        paragraphs: [
+          "Manisa–Gebze parsiyel taşıma fiyatı yalnızca kilogram üzerinden hesaplanmaz. Manisa'daki açık yükleme adresi, Gebze'deki teslimat adresi, palet veya koli adedi, yükün ölçüleri, toplam ağırlığı ve istiflenebilirlik durumu fiyatlandırmayı etkileyebilir.",
+          "Doğru taşıma seçeneği ve fiyat için yükün temel bilgilerini paylaşmanız yeterlidir.",
+        ],
+        bullets: ["Çıkış adresi", "Teslimat adresi", "Palet / koli adedi", "En × Boy × Yükseklik", "Toplam kg", "İstiflenebilir mi?", "Yük hazır mı / hazır olma tarihi"],
+        cta: { label: "Yük Bilgilerini Gönder – Teklif Al", href: "#manisa-gebze-parsiyel-teklif" },
+      },
+      {
+        title: "Manisa'da Adresten Alım, Gebze'de Adrese Teslim",
+        paragraphs: [
+          "Yükün bir nakliye noktasına gönderici tarafından bırakılması zorunlu değildir. Taşıma planına göre yükün Manisa'daki gönderici adresinden alınması ve Gebze'deki alıcı adresine teslim edilmesi organize edilebilir.",
+          "Yükleme ve teslimat adreslerinin açık olarak paylaşılması, taşıma planının ve fiyatlandırmanın doğru oluşturulmasına yardımcı olur.",
+        ],
+      },
+      {
+        title: "Manisa Gebze Parsiyel Taşıma Süreci",
+        paragraphs: [
+          "Manisa'daki yükleme adresinden Gebze'deki teslimat adresine uzanan süreç, beş aşamada planlanır. Her aşamada paylaşılan gerçek yük ve adres bilgileri esas alınır.",
+        ],
+      },
+      {
+        title: "Palet Sayısı Arttığında Hangi Taşıma Modeli Kullanılır?",
+        paragraphs: [
+          "Yük miktarı arttığında parsiyel taşıma her zaman en uygun seçenek olmayabilir. Palet sayısı, toplam hacim, ağırlık ve yükün kapladığı araç kapasitesine göre farklı araç veya komple taşıma seçenekleri değerlendirilebilir.",
+          "REX Lojistik, yük bilgilerine göre parsiyel ve araç bazlı alternatifleri değerlendirerek sevkiyata uygun taşıma modelinin oluşturulmasını sağlar.",
+        ],
+      },
+      {
+        title: "Gebze Neden Önemli Bir Teslimat Noktası?",
+        paragraphs: [
+          "Gebze, Kocaeli'nin sanayi ve ticaret yoğunluğu yüksek bölgelerinden biridir. Üretici, tedarikçi ve sanayi işletmelerinin yoğunluğu nedeniyle Manisa çıkışlı paletli ve ticari yüklerde önemli teslimat noktalarından biri olarak öne çıkar.",
+          "REX Lojistik, Manisa çıkışlı yüklerin Gebze'deki işletme veya alıcı adreslerine ulaştırılması için yük özelliklerine uygun taşıma planlaması oluşturur.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Yük Bilgilerinin Alınması", text: "Manisa yükleme adresi, Gebze teslimat adresi, palet/koli adedi, ölçüler ve ağırlık alınır." },
+      { title: "Uygun Taşıma Modelinin Belirlenmesi", text: "Yük miktarı, hacmi ve özelliklerine göre parsiyel veya uygun alternatif taşıma modeli değerlendirilir." },
+      { title: "Manisa'da Adresten Alım", text: "Belirlenen gönderici adresinden yük alımı organize edilir." },
+      { title: "Manisa–Gebze Taşıması", text: "Yük belirlenen taşıma planına göre Gebze'ye sevk edilir." },
+      { title: "Gebze'de Adrese Teslim", text: "Yükün alıcı adresine teslimatı organize edilir." },
+    ],
+    faq: [
+      { question: "Manisa'dan Gebze'ye 1 palet gönderebilir miyim?", answer: "Evet. Manisa çıkışlı Gebze varışlı yüklerde 1 paletten başlayan taşıma organize edilebilir. Teklif için palet ölçüleri, ağırlık ve yükleme/teslimat adreslerinin paylaşılması yeterlidir." },
+      { question: "Manisa'da yükü adresimden alıyor musunuz?", answer: "Evet. Taşıma planına göre yükün Manisa'daki gönderici adresinden alınması organize edilebilir." },
+      { question: "Gebze'de adrese teslim yapılıyor mu?", answer: "Evet. Taşıma planına göre yükün Gebze'deki alıcı adresine teslim edilmesi organize edilebilir." },
+      { question: "Sanayi yükleri taşınabiliyor mu?", answer: "Sevkiyata uygun şekilde ambalajlanmış paletli sanayi ve ticari yükler, yük özelliklerine göre değerlendirilebilir. Özel taşıma koşulu gerektiren ürünlerde yük detaylarının teklif öncesinde paylaşılması gerekir." },
+      { question: "Manisa Gebze parsiyel taşıma fiyatı ne kadar?", answer: "Fiyat; yükleme ve teslimat adresi, palet/koli adedi, ölçüler, toplam ağırlık ve yükün taşıma özelliklerine göre değişebilir. Net teklif için yük bilgilerinin paylaşılması gerekir." },
+      { question: "Palet sayısı fazla olduğunda parsiyel taşıma yapılır mı?", answer: "Palet sayısı ve toplam hacim arttığında parsiyel taşımanın yanında farklı araç veya komple taşıma seçenekleri de değerlendirilebilir. Uygun model yükün özelliklerine göre belirlenir." },
+      { question: "Manisa'dan Gebze'ye koli gönderebilir miyim?", answer: "Güzergâh, koli adedi, toplam hacim, ağırlık ve ambalaj özelliklerine göre koli veya toplu koli gönderileri için taşıma çözümü değerlendirilebilir." },
+    ],
+    finalCta: {
+      title: "Manisa'dan Gebze'ye Göndereceğiniz Yük İçin Teklif Alın",
+      text: "Paletli sanayi veya ticari yükünüzün bilgilerini paylaşın; Manisa'daki yükleme adresinden Gebze'deki teslimat adresine uygun taşıma seçeneğini değerlendirelim.",
+      primaryLabel: "Hızlı Teklif Al",
+      whatsappLabel: "WhatsApp'tan Teklif Al",
+    },
+    related: ["manisa-parsiyel-tasimacilik", "yurtici-parsiyel-tasimacilik", "komple-tasimacilik"],
+    contextualLinks: [
+      { anchor: "Manisa parsiyel taşımacılık", href: "/manisa-parsiyel-tasimacilik" },
+      { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
+      { anchor: "komple taşıma", href: "/komple-tasimacilik" },
     ],
   },
   "denizyolu-parsiyel-tasimacilik": {
