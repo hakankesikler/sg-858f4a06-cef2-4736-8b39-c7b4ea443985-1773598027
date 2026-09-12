@@ -79,11 +79,32 @@ function estimateLoadMeters(item: LoadItem) {
   return (requiredFloorPlaces * lengthMeters * widthMeters) / REFERENCE_TRAILER_WIDTH_METERS;
 }
 
-export function DomesticPartialPlanner() {
-  const [senderCity, setSenderCity] = useState("");
+type DomesticPartialPlannerProps = {
+  defaultSenderCity?: string;
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
+  sectionId?: string;
+  submitLabel?: string;
+  whatsappIntro?: string;
+};
+
+export function DomesticPartialPlanner({
+  defaultSenderCity = "",
+  eyebrow = "Yurtiçi parsiyel teklif hazırlama",
+  heading = "Farklı yüklerinizi tek formda iletin",
+  description = "Gönderici ve alıcı adreslerini girin; ölçüsü veya ağırlığı farklı her yük grubunu ayrı kalem olarak ekleyin. Form, operasyon ekibimize gönderebileceğiniz düzenli bir WhatsApp özeti hazırlar.",
+  sectionId = "parsiyel-teklif-formu",
+  submitLabel = "Parsiyel teklifini WhatsApp’tan gönder",
+  whatsappIntro = "Merhaba, yurtiçi parsiyel taşıma teklifi rica ederim.",
+}: DomesticPartialPlannerProps = {}) {
+  const senderDistrictPlaceholder = defaultSenderCity === "Manisa" ? "Örn. Yunusemre" : "Örn. Bornova";
+  const [senderCity, setSenderCity] = useState(defaultSenderCity);
   const [senderDistrict, setSenderDistrict] = useState("");
+  const [senderAddress, setSenderAddress] = useState("");
   const [receiverCity, setReceiverCity] = useState("");
   const [receiverDistrict, setReceiverDistrict] = useState("");
+  const [receiverAddress, setReceiverAddress] = useState("");
   const [readyDate, setReadyDate] = useState("");
   const [note, setNote] = useState("");
   const [loads, setLoads] = useState<LoadItem[]>([emptyLoad(1)]);
@@ -121,9 +142,12 @@ export function DomesticPartialPlanner() {
   const requiredDetails = [
     { label: "Gönderici il", complete: senderCity.trim().length > 1 },
     { label: "Gönderici ilçe", complete: senderDistrict.trim().length > 1 },
+    { label: "Açık yükleme adresi", complete: senderAddress.trim().length > 5 },
     { label: "Alıcı il", complete: receiverCity.trim().length > 1 },
     { label: "Alıcı ilçe", complete: receiverDistrict.trim().length > 1 },
+    { label: "Açık teslimat adresi", complete: receiverAddress.trim().length > 5 },
     { label: "En az bir eksiksiz yük kalemi", complete: completeLoads.length > 0 },
+    { label: "Yükün hazır olma tarihi", complete: Boolean(readyDate) },
   ];
   const completedCount = requiredDetails.filter((item) => item.complete).length;
   const completion = Math.round((completedCount / requiredDetails.length) * 100);
@@ -138,9 +162,11 @@ export function DomesticPartialPlanner() {
   });
 
   const whatsappText = [
-    "Merhaba, yurtiçi parsiyel taşıma teklifi rica ederim.",
+    whatsappIntro,
     `Gönderici: ${senderDistrict || "İlçe belirtilecek"} / ${senderCity || "İl belirtilecek"}`,
+    `Yükleme adresi: ${senderAddress || "Açık adres belirtilecek"}`,
     `Alıcı: ${receiverDistrict || "İlçe belirtilecek"} / ${receiverCity || "İl belirtilecek"}`,
+    `Teslimat adresi: ${receiverAddress || "Açık adres belirtilecek"}`,
     `Yük hazır olma tarihi: ${readyDate || "Belirtilecek"}`,
     "",
     "Yük kalemleri:",
@@ -151,16 +177,17 @@ export function DomesticPartialPlanner() {
   ].join("\n");
 
   return (
-    <section aria-labelledby="domestic-partial-planner-heading" className="bg-slate-50 py-16 sm:py-20">
+    <section id={sectionId} aria-labelledby={`${sectionId}-heading`} className="scroll-mt-28 bg-slate-50 py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="font-semibold text-orange-600">Yurtiçi parsiyel teklif hazırlama</p>
-          <h2 id="domestic-partial-planner-heading" className="mt-2 text-3xl font-bold text-slate-950 sm:text-4xl">
-            Farklı yüklerinizi tek formda iletin
+          <p className="font-semibold text-orange-600">{eyebrow}</p>
+          <h2 id={`${sectionId}-heading`} className="mt-2 text-3xl font-bold text-slate-950 sm:text-4xl">
+            {heading}
           </h2>
           <p className="mt-4 text-lg leading-8 text-slate-600">
-            Gönderici ve alıcı konumlarını girin; ölçüsü veya ağırlığı farklı her yük grubunu ayrı kalem olarak ekleyin. Form, operasyon ekibimize gönderebileceğiniz düzenli bir WhatsApp özeti hazırlar.
+            {description}
           </p>
+          <p className="mt-3 text-sm font-semibold text-slate-500"><span className="text-orange-600">*</span> işaretli alanlar doğru teklif hazırlığı için gereklidir.</p>
         </div>
 
         <div className="mt-10 grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5 lg:grid-cols-[1.45fr_0.75fr]">
@@ -169,24 +196,32 @@ export function DomesticPartialPlanner() {
               <fieldset className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 sm:col-span-2">
                 <legend className="px-2 font-bold text-slate-950">Gönderici</legend>
                 <div className="space-y-2">
-                  <Label htmlFor="partial-sender-city">İl</Label>
-                  <Input id="partial-sender-city" value={senderCity} onChange={(event) => setSenderCity(event.target.value)} placeholder="Örn. İzmir" />
+                  <Label htmlFor="partial-sender-city">İl <span className="text-orange-600">*</span></Label>
+                  <Input id="partial-sender-city" required value={senderCity} onChange={(event) => setSenderCity(event.target.value)} placeholder="Örn. İzmir" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="partial-sender-district">İlçe</Label>
-                  <Input id="partial-sender-district" value={senderDistrict} onChange={(event) => setSenderDistrict(event.target.value)} placeholder="Örn. Bornova" />
+                  <Label htmlFor="partial-sender-district">İlçe <span className="text-orange-600">*</span></Label>
+                  <Input id="partial-sender-district" required value={senderDistrict} onChange={(event) => setSenderDistrict(event.target.value)} placeholder={senderDistrictPlaceholder} />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="partial-sender-address">Açık yükleme adresi <span className="text-orange-600">*</span></Label>
+                  <Input id="partial-sender-address" required value={senderAddress} onChange={(event) => setSenderAddress(event.target.value)} placeholder="Mahalle, cadde/sokak, bina ve saha bilgisi" />
                 </div>
               </fieldset>
 
               <fieldset className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 sm:col-span-2">
                 <legend className="px-2 font-bold text-slate-950">Alıcı</legend>
                 <div className="space-y-2">
-                  <Label htmlFor="partial-receiver-city">İl</Label>
-                  <Input id="partial-receiver-city" value={receiverCity} onChange={(event) => setReceiverCity(event.target.value)} placeholder="Örn. Ankara" />
+                  <Label htmlFor="partial-receiver-city">İl <span className="text-orange-600">*</span></Label>
+                  <Input id="partial-receiver-city" required value={receiverCity} onChange={(event) => setReceiverCity(event.target.value)} placeholder="Örn. Ankara" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="partial-receiver-district">İlçe</Label>
-                  <Input id="partial-receiver-district" value={receiverDistrict} onChange={(event) => setReceiverDistrict(event.target.value)} placeholder="Örn. Sincan" />
+                  <Label htmlFor="partial-receiver-district">İlçe <span className="text-orange-600">*</span></Label>
+                  <Input id="partial-receiver-district" required value={receiverDistrict} onChange={(event) => setReceiverDistrict(event.target.value)} placeholder="Örn. Sincan" />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="partial-receiver-address">Açık teslimat adresi <span className="text-orange-600">*</span></Label>
+                  <Input id="partial-receiver-address" required value={receiverAddress} onChange={(event) => setReceiverAddress(event.target.value)} placeholder="Mahalle, cadde/sokak, bina ve teslimat noktası" />
                 </div>
               </fieldset>
             </div>
@@ -207,34 +242,35 @@ export function DomesticPartialPlanner() {
                   <legend className="px-2 font-bold text-slate-900">{index + 1}. yük kalemi</legend>
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     <div className="space-y-2">
-                      <Label htmlFor={`partial-load-${item.id}-quantity`}>Adet</Label>
-                      <Input id={`partial-load-${item.id}-quantity`} type="number" min="1" step="1" inputMode="numeric" value={item.quantity} onChange={(event) => updateLoad(item.id, "quantity", event.target.value)} placeholder="Örn. 2" />
+                      <Label htmlFor={`partial-load-${item.id}-quantity`}>Palet / koli adedi <span className="text-orange-600">*</span></Label>
+                      <Input id={`partial-load-${item.id}-quantity`} required type="number" min="1" step="1" inputMode="numeric" value={item.quantity} onChange={(event) => updateLoad(item.id, "quantity", event.target.value)} placeholder="Örn. 2" />
                     </div>
                     <div className="space-y-2 sm:col-span-1 xl:col-span-2">
-                      <Label htmlFor={`partial-load-${item.id}-kind`}>Cinsi / ambalajı</Label>
-                      <Input id={`partial-load-${item.id}-kind`} value={item.kind} onChange={(event) => updateLoad(item.id, "kind", event.target.value)} placeholder="Örn. Euro palet, koli, makine" />
+                      <Label htmlFor={`partial-load-${item.id}-kind`}>Yük cinsi / ambalajı <span className="text-orange-600">*</span></Label>
+                      <Input id={`partial-load-${item.id}-kind`} required value={item.kind} onChange={(event) => updateLoad(item.id, "kind", event.target.value)} placeholder="Örn. Euro palet üzerinde makine parçası" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`partial-load-${item.id}-weight`}>Toplam ağırlık (kg)</Label>
-                      <Input id={`partial-load-${item.id}-weight`} type="number" min="0" step="0.1" inputMode="decimal" value={item.weight} onChange={(event) => updateLoad(item.id, "weight", event.target.value)} placeholder="Örn. 450" />
+                      <Label htmlFor={`partial-load-${item.id}-weight`}>Toplam ağırlık (kg) <span className="text-orange-600">*</span></Label>
+                      <Input id={`partial-load-${item.id}-weight`} required type="number" min="0" step="0.1" inputMode="decimal" value={item.weight} onChange={(event) => updateLoad(item.id, "weight", event.target.value)} placeholder="Örn. 450" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`partial-load-${item.id}-length`}>Boy (cm)</Label>
-                      <Input id={`partial-load-${item.id}-length`} type="number" min="0" step="0.1" inputMode="decimal" value={item.length} onChange={(event) => updateLoad(item.id, "length", event.target.value)} placeholder="Örn. 120" />
+                      <Label htmlFor={`partial-load-${item.id}-length`}>Boy (cm) <span className="text-orange-600">*</span></Label>
+                      <Input id={`partial-load-${item.id}-length`} required type="number" min="0" step="0.1" inputMode="decimal" value={item.length} onChange={(event) => updateLoad(item.id, "length", event.target.value)} placeholder="Örn. 120" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`partial-load-${item.id}-width`}>En (cm)</Label>
-                      <Input id={`partial-load-${item.id}-width`} type="number" min="0" step="0.1" inputMode="decimal" value={item.width} onChange={(event) => updateLoad(item.id, "width", event.target.value)} placeholder="Örn. 80" />
+                      <Label htmlFor={`partial-load-${item.id}-width`}>En (cm) <span className="text-orange-600">*</span></Label>
+                      <Input id={`partial-load-${item.id}-width`} required type="number" min="0" step="0.1" inputMode="decimal" value={item.width} onChange={(event) => updateLoad(item.id, "width", event.target.value)} placeholder="Örn. 80" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`partial-load-${item.id}-height`}>Yükseklik (cm)</Label>
-                      <Input id={`partial-load-${item.id}-height`} type="number" min="0" step="0.1" inputMode="decimal" value={item.height} onChange={(event) => updateLoad(item.id, "height", event.target.value)} placeholder="Örn. 150" />
+                      <Label htmlFor={`partial-load-${item.id}-height`}>Yükseklik (cm) <span className="text-orange-600">*</span></Label>
+                      <Input id={`partial-load-${item.id}-height`} required type="number" min="0" step="0.1" inputMode="decimal" value={item.height} onChange={(event) => updateLoad(item.id, "height", event.target.value)} placeholder="Örn. 150" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`partial-load-${item.id}-stackability`}>İstif durumu</Label>
+                      <Label htmlFor={`partial-load-${item.id}-stackability`}>İstiflenebilirlik <span className="text-orange-600">*</span></Label>
                       <select
                         id={`partial-load-${item.id}-stackability`}
                         value={item.stackability}
+                        required
                         onChange={(event) => updateLoad(item.id, "stackability", event.target.value)}
                         className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                       >
@@ -257,8 +293,8 @@ export function DomesticPartialPlanner() {
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="partial-ready-date">Yük hazır olma tarihi</Label>
-                <Input id="partial-ready-date" type="date" value={readyDate} onChange={(event) => setReadyDate(event.target.value)} />
+                <Label htmlFor="partial-ready-date">Yük hazır olma tarihi <span className="text-orange-600">*</span></Label>
+                <Input id="partial-ready-date" required type="date" value={readyDate} onChange={(event) => setReadyDate(event.target.value)} />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="partial-note">Ek bilgi / teslimat notu</Label>
@@ -302,7 +338,7 @@ export function DomesticPartialPlanner() {
             </div>
 
             <a href={`https://wa.me/905434010755?text=${encodeURIComponent(whatsappText)}`} target="_blank" rel="noreferrer" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3.5 font-bold text-white transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
-              <MessageCircle className="h-5 w-5" aria-hidden="true" /> Parsiyel teklifini WhatsApp’tan gönder
+              <MessageCircle className="h-5 w-5" aria-hidden="true" /> {submitLabel}
             </a>
             <p className="mt-3 text-xs leading-5 text-slate-400">
               Fiziksel hacim dış ölçü ve adetten hesaplanır. Tahmini araç yeri; 2,40 m araç genişliği ve istiflenebilir yüklerde 240 cm referans iç yükseklik kullanılarak LDM cinsinden hesaplanır. Yük dayanımı, araç tipi ve gerçek yerleşim teyidi sonucu değiştirebilir.

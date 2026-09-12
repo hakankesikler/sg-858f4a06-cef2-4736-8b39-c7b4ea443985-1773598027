@@ -12,6 +12,8 @@ const LOGO_URL = `${SITE_URL}/rex.png`;
 
 const turkeyOnlyServiceSlugs = new Set([
   "yurtici-parsiyel-tasimacilik",
+  "izmir-parsiyel-tasimacilik",
+  "manisa-parsiyel-tasimacilik",
   "gumruk-antrepo-yurtici-transfer",
   "hafta-sonu-acil-nakliye",
   "komple-tasimacilik",

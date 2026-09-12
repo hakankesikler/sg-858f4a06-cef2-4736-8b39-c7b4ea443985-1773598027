@@ -16,11 +16,18 @@ export type MarketingPageData = {
   seoDescription: string;
   keywords: string[];
   highlights: Array<{ title: string; text: string }>;
-  sections: Array<{ title: string; paragraphs: string[]; bullets?: string[] }>;
+  sections: Array<{
+    title: string;
+    paragraphs: string[];
+    bullets?: string[];
+    cta?: { label: string; href: string };
+  }>;
   steps?: Array<{ title: string; text: string }>;
   faq: Array<{ question: string; answer: string }>;
   related: string[];
   contextualLinks?: MarketingContextualLink[];
+  heroPrimaryCtaLabel?: string;
+  heroWhatsAppLabel?: string;
 };
 
 export const marketingPages: Record<string, MarketingPageData> = {
@@ -55,6 +62,13 @@ export const marketingPages: Record<string, MarketingPageData> = {
           "İzmir ve Manisa ofislerimizden koordine edilen operasyonlarla Türkiye genelindeki çıkış ve varış noktaları için tek muhatap üzerinden ilerleyebilirsiniz. Depolama bağlantısı veya uluslararası karayolu taşımacılığı devamı bulunan yükler de aynı operasyon görünürlüğü içinde planlanabilir.",
         ],
       },
+      {
+        title: "İzmir ve Manisa çıkışlı parsiyel planlama",
+        paragraphs: [
+          "İzmir parsiyel taşımacılık ihtiyaçlarında 1 paletten başlayan yükler için adres bazlı alım ve Türkiye geneline teslimat planı oluşturulabilir.",
+          "Manisa parsiyel taşımacılık ihtiyaçlarında ise üretim ve ticaret bölgelerinden çıkacak paletli yükler, varış adresi ve yük özellikleri birlikte değerlendirilerek organize edilir.",
+        ],
+      },
     ],
     steps: [
       { title: "Yük bilgisi", text: "Çıkış, varış, ölçü, ağırlık ve teslim beklentisi alınır." },
@@ -73,6 +87,8 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { anchor: "komple araç", href: "/komple-tasimacilik" },
       { anchor: "Depolama bağlantısı", href: "/depolama" },
       { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
+      { anchor: "İzmir parsiyel taşımacılık", href: "/izmir-parsiyel-tasimacilik" },
+      { anchor: "Manisa parsiyel taşımacılık", href: "/manisa-parsiyel-tasimacilik" },
     ],
   },
   "gumruk-antrepo-yurtici-transfer": {
@@ -750,6 +766,193 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { anchor: "FCL komple konteyner taşımacılığında", href: "/denizyolu-konteyner-tasimaciligi" },
       { anchor: "hava kargo", href: "/hava-kargo" },
       { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
+      { anchor: "İzmir parsiyel taşımacılık", href: "/izmir-parsiyel-tasimacilik" },
+      { anchor: "Manisa parsiyel taşımacılık", href: "/manisa-parsiyel-tasimacilik" },
+    ],
+  },
+  "izmir-parsiyel-tasimacilik": {
+    slug: "izmir-parsiyel-tasimacilik",
+    kind: "service",
+    icon: "route",
+    eyebrow: "İzmir çıkışlı Türkiye geneli dağıtım",
+    title: "İzmir Parsiyel Taşımacılık",
+    lead: "İzmir'den 1 paletten başlayan yüklerinizi adresinizden alıyor, Türkiye'nin 81 iline ve ilçelere alıcı adresine kadar teslim ediyoruz.",
+    seoTitle: "İzmir Parsiyel Taşımacılık | 1 Paletten Türkiye Geneli | REX Lojistik",
+    seoDescription: "İzmir'den 1 paletten başlayan parsiyel yüklerinizi adresinizden alıyor, Türkiye'nin 81 iline ve ilçelere adrese teslim ediyoruz. REX Lojistik'ten hızlı teklif alın.",
+    keywords: ["İzmir parsiyel taşımacılık", "İzmir parsiyel nakliye", "İzmir palet taşımacılığı", "İzmir Türkiye geneli nakliye"],
+    heroPrimaryCtaLabel: "Hızlı Teklif Al",
+    heroWhatsAppLabel: "WhatsApp'tan Teklif Al",
+    highlights: [
+      { title: "1 Paletten Başlayan Taşıma", text: "Komple araç gerektirmeyen İzmir çıkışlı ticari yükler için esnek planlama" },
+      { title: "Adresten Adrese Organizasyon", text: "Gönderici adresinden alım ve ilçe dahil alıcı adresine teslimat" },
+      { title: "81 İle Ulaşım", text: "Yük özelliklerine ve güzergâha göre Türkiye geneli taşıma çözümü" },
+    ],
+    sections: [
+      {
+        title: "İzmir'den Türkiye Geneline Parsiyel Taşımacılık",
+        paragraphs: [
+          "Komple bir aracı doldurmayan yükler için parsiyel taşımacılık, aynı güzergâhtaki farklı yüklerin planlı şekilde taşınmasına imkân verir. REX Lojistik olarak İzmir çıkışlı 1 paletten başlayan yükler için Türkiye genelinde parsiyel taşıma organizasyonu sağlıyoruz.",
+          "Yükünüzü gönderici adresinden alıyor, taşıma planını yükün palet sayısı, ölçüleri, ağırlığı ve teslimat noktasına göre oluşturuyoruz. Teslimatı yalnızca il merkezlerine değil, uygun dağıtım planlamasıyla ilçelerdeki alıcı adreslerine kadar organize ediyoruz.",
+        ],
+      },
+      {
+        title: "İzmir Parsiyel Hizmetinin Avantajları",
+        paragraphs: [
+          "İzmir çıkışlı yurtiçi parsiyel taşımacılık hizmetimiz, yükünüzün gerçek kapasite ihtiyacına göre planlanır ve süreç tek operasyon noktası üzerinden takip edilir.",
+        ],
+        bullets: [
+          "1 paletten başlayan taşıma",
+          "Adresten yük alımı",
+          "Alıcı adresine teslimat",
+          "Türkiye'nin 81 iline ulaşım",
+          "İlçelere teslimat organizasyonu",
+          "Yüke uygun taşıma planlaması",
+          "Tek noktadan operasyon takibi",
+        ],
+      },
+      {
+        title: "Hangi Yükler İçin Parsiyel Taşıma Kullanılabilir?",
+        paragraphs: [
+          "Parsiyel taşıma özellikle komple araç kapasitesine ihtiyaç duymayan ticari yüklerde avantaj sağlar. Paletli ürünler, ambalajlı ticari yükler ve sevkiyata uygun farklı yük grupları için yükün özelliklerine göre taşıma planı oluşturulabilir.",
+          "Paletli yüklerin yanı sıra, güzergâh ve yük özelliklerine göre koli ve toplu koli gönderileri için de taşıma çözümü sunulabilir. Palet sayısı veya toplam yük hacmi arttığında ise yük için daha uygun araç ve nakliye modeli değerlendirilir.",
+        ],
+      },
+      {
+        title: "İzmir Parsiyel Nakliye Fiyatı Nasıl Belirlenir?",
+        paragraphs: [
+          "Parsiyel taşıma fiyatı yalnızca kilogram üzerinden belirlenmez. Çıkış ve teslimat noktası, palet veya koli adedi, yükün ölçüleri, toplam ağırlığı, istiflenebilir olup olmaması ve yükün hazır olma tarihi fiyatlandırmayı etkileyebilir.",
+          "Bu nedenle doğru teklif için yük bilgilerini paylaşmanız yeterlidir.",
+        ],
+        bullets: ["Çıkış adresi", "Teslimat adresi", "Palet / koli adedi", "En × Boy × Yükseklik", "Toplam kg", "İstiflenebilirlik", "Yükün hazır olma tarihi"],
+        cta: { label: "Yük Bilgilerini Gönder – Teklif Al", href: "#izmir-parsiyel-teklif" },
+      },
+      {
+        title: "İzmir'de Adresten Alım, Türkiye Genelinde Adrese Teslim",
+        paragraphs: [
+          "Yükünüzü belirlenen İzmir çıkış adresinden alarak taşıma sürecini planlıyoruz. Varış noktasında teslimat, taşıma planına göre alıcının adresine kadar organize edilir.",
+          "Türkiye'nin 81 iline taşıma çözümü sunarken yalnızca il merkezleriyle sınırlı kalmıyor; ilçelere yapılacak teslimatları da güzergâh ve dağıtım planına dahil ediyoruz.",
+        ],
+      },
+      {
+        title: "İzmir'den Sık Talep Edilen Parsiyel Güzergâhlar",
+        paragraphs: [
+          "İzmir çıkışlı taleplerde İstanbul, Ankara, Bursa ve Kocaeli gibi sanayi merkezlerinin yanında Akdeniz ve İç Anadolu yönleri de öne çıkabilir. Aşağıdaki hatlar, talep edilen güzergâhlara örnektir; hizmet kapsamını sınırlandırmaz.",
+          "Bu güzergâhların dışında Türkiye'nin 81 iline ve ilçelere parsiyel taşıma organizasyonu sağlanabilir.",
+        ],
+        bullets: ["İzmir → İstanbul", "İzmir → Ankara", "İzmir → Bursa", "İzmir → Kocaeli", "İzmir → Antalya", "İzmir → Konya", "İzmir → Adana", "İzmir → Manisa"],
+      },
+      {
+        title: "İzmir'in Ticaret ve Üretim Bölgelerinden Adres Bazlı Alım",
+        paragraphs: [
+          "Bornova, Kemalpaşa, Gaziemir, Çiğli, Torbalı, Aliağa, Menemen ve Menderes gibi İzmir'in ticaret ve üretim bölgelerinden yapılacak yüklemeler için adres bazlı taşıma planlaması oluşturulabilir.",
+          "Alım planı; açık yükleme adresi, saha kabul koşulları, yükün hazır olma zamanı ve araç erişimi değerlendirilerek netleştirilir. Böylece çözüm, yalnızca il adına değil gerçek operasyon noktasına göre hazırlanır.",
+        ],
+      },
+    ],
+    faq: [
+      { question: "İzmir'den 1 palet yük gönderebilir miyim?", answer: "Evet. İzmir çıkışlı 1 paletten başlayan, sevkiyata uygun paletli ticari yükler için parsiyel taşıma planlanabilir. Uygunluk; ölçü, ağırlık, yük niteliği ve teslimat adresi birlikte değerlendirilerek teyit edilir." },
+      { question: "İzmir'de yük gönderici adresinden alınır mı?", answer: "Evet. Açık adres, yükün hazır olma zamanı ve saha koşulları paylaşıldığında gönderici adresinden alım planı oluşturulabilir." },
+      { question: "İzmir'den ilçelere teslimat yapılabilir mi?", answer: "Türkiye'nin 81 iline ek olarak ilçelerdeki alıcı adreslerine teslimat organize edilebilir. Teslimat planı güzergâh, yük özellikleri ve adres erişimine göre belirlenir." },
+      { question: "İzmir parsiyel nakliye fiyatı için hangi bilgiler gerekir?", answer: "Çıkış ve teslimat adresleri, palet veya koli adedi, her yük grubunun ölçüleri, toplam ağırlık, istiflenebilirlik ve hazır olma tarihi doğru teklif için gereklidir." },
+      { question: "Palet dışında koli gönderisi kabul edilir mi?", answer: "Paletli yükler temel hizmet kapsamındadır. Güzergâh ve yük özelliklerine göre koli ve toplu koli gönderileri için de taşıma çözümü değerlendirilebilir." },
+    ],
+    related: ["yurtici-parsiyel-tasimacilik", "komple-tasimacilik", "manisa-parsiyel-tasimacilik"],
+    contextualLinks: [
+      { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
+      { anchor: "komple araç", href: "/komple-tasimacilik" },
+    ],
+  },
+  "manisa-parsiyel-tasimacilik": {
+    slug: "manisa-parsiyel-tasimacilik",
+    kind: "service",
+    icon: "route",
+    eyebrow: "Manisa üretim bölgelerinden Türkiye geneline",
+    title: "Manisa Parsiyel Taşımacılık",
+    lead: "Manisa'dan 1 paletten başlayan parsiyel yüklerinizi adresinizden alıyor, Türkiye'nin 81 iline ve ilçelere alıcı adresine kadar teslim ediyoruz.",
+    seoTitle: "Manisa Parsiyel Taşımacılık | 1 Paletten Türkiye Geneli | REX Lojistik",
+    seoDescription: "Manisa'dan 1 paletten başlayan parsiyel yüklerinizi adresinizden alıyor, Türkiye'nin 81 iline ve ilçelere adrese teslim ediyoruz. REX Lojistik'ten hızlı teklif alın.",
+    keywords: ["Manisa parsiyel taşımacılık", "Manisa parsiyel nakliye", "Manisa palet taşımacılığı", "Manisa Türkiye geneli nakliye"],
+    heroPrimaryCtaLabel: "Hızlı Teklif Al",
+    heroWhatsAppLabel: "WhatsApp'tan Teklif Al",
+    highlights: [
+      { title: "Manisa'da Adresten Alım", text: "Üretim ve ticaret noktalarından açık yükleme adresine göre planlama" },
+      { title: "Esnek Kapasite Seçimi", text: "Bir paletten daha yüksek hacimlere kadar yüke uygun taşıma modeli" },
+      { title: "81 İl ve İlçeler", text: "Türkiye genelindeki alıcı adreslerine kontrollü teslimat organizasyonu" },
+    ],
+    sections: [
+      {
+        title: "Manisa'dan Türkiye Geneline Parsiyel Taşımacılık",
+        paragraphs: [
+          "Manisa'nın üretim ve sanayi yapısında her sevkiyat komple araç gerektirmez. Bir veya birkaç paletlik yüklerde parsiyel taşıma, kullanılmayan araç kapasitesi için komple araç maliyetine katlanmadan taşıma planlanmasına imkân verir.",
+          "REX Lojistik olarak Manisa çıkışlı 1 paletten başlayan yüklerin adresinizden alınmasını ve Türkiye genelinde alıcı adresine teslim edilmesini organize ediyoruz. Taşıma modeli yükün palet sayısı, ölçüleri, ağırlığı, güzergâhı ve teslimat noktasına göre belirlenir.",
+        ],
+      },
+      {
+        title: "Manisa Parsiyel Hizmetinin Avantajları",
+        paragraphs: [
+          "Manisa çıkışlı parsiyel taşımacılık hizmetimiz, sanayi ve ticaret yüklerinin gerçek kapasite ihtiyacına göre esnek biçimde organize edilmesini sağlar.",
+        ],
+        bullets: [
+          "1 paletten başlayan taşıma",
+          "Manisa'da adresten alım",
+          "Türkiye genelinde adrese teslim",
+          "81 il ve ilçelere ulaşım",
+          "Palet sayısına göre uygun taşıma modeli",
+          "Parsiyel ve gerektiğinde araç bazlı çözüm",
+          "Tek noktadan operasyon takibi",
+        ],
+      },
+      {
+        title: "Manisa'nın Sanayi ve Üretim Bölgelerinden Yük Alımı",
+        paragraphs: [
+          "Manisa merkez ve çevresindeki üretim, sanayi ve ticaret noktalarından yapılacak sevkiyatlarda yükleme adresine göre alım planlaması oluşturulabilir.",
+          "Manisa OSB, Yunusemre, Şehzadeler, Muradiye, Turgutlu, Akhisar ve Salihli gibi üretim ve ticaret yoğunluğu bulunan bölgelerden çıkacak paletli yükler için Türkiye geneline taşıma organizasyonu sağlanabilir.",
+          "Planlama, bölgede fiziksel bir şube veya depo iddiasına değil; bildirilen açık adres, saha koşulları ve yükün hazır olma zamanına dayanır.",
+        ],
+      },
+      {
+        title: "Paletli ve Toplu Yükler İçin Esnek Taşıma Planlaması",
+        paragraphs: [
+          "Bir paletlik yük ile daha yüksek palet adetlerindeki sevkiyatların taşıma ihtiyacı aynı olmayabilir. Bu nedenle taşıma modelini yalnızca 'parsiyel' etiketiyle sınırlandırmıyor; palet sayısı ve toplam hacim arttığında yük için uygun nakliye modelini değerlendiriyoruz.",
+          "Paletli yükler temel hizmet kapsamındadır. Güzergâh ve yük özelliklerine göre koli veya toplu koli gönderileri için de çözüm oluşturulabilir. Kapasite arttığında komple taşımacılık alternatifi de yükün gerçek ihtiyacına göre karşılaştırılabilir.",
+        ],
+      },
+      {
+        title: "Manisa Parsiyel Nakliye Fiyatı Nasıl Hesaplanır?",
+        paragraphs: [
+          "Manisa çıkışlı parsiyel yüklerde fiyat; yükleme ve teslimat adresi, palet/koli adedi, ölçüler, toplam ağırlık, istiflenebilirlik ve yükün hazır olma tarihine göre değerlendirilir.",
+          "Yük bilgilerini ilettiğinizde sevkiyat için uygun taşıma modeli belirlenerek teklif hazırlanabilir.",
+        ],
+        bullets: ["Çıkış adresi", "Teslimat adresi", "Palet / koli adedi", "En × Boy × Yükseklik", "Toplam kg", "İstiflenebilirlik", "Hazır olma tarihi"],
+        cta: { label: "Yük Bilgilerini Gönder – Teklif Al", href: "#manisa-parsiyel-teklif" },
+      },
+      {
+        title: "Manisa'dan Sık Talep Edilen Parsiyel Güzergâhlar",
+        paragraphs: [
+          "Manisa'nın üretim noktalarından Marmara, İç Anadolu, Ege ve Akdeniz yönlerine farklı hacimlerde sevkiyat talepleri oluşabilir. Aşağıdaki hatlar doğal rota örnekleridir; hizmet alanını yalnızca bu şehirlerle sınırlandırmaz.",
+          "Bu güzergâhların dışında Türkiye'nin 81 iline ve ilçelere taşıma organizasyonu sağlanabilir.",
+        ],
+        bullets: ["Manisa → İstanbul", "Manisa → Ankara", "Manisa → Bursa", "Manisa → Kocaeli", "Manisa → İzmir", "Manisa → Konya", "Manisa → Adana", "Manisa → Antalya"],
+      },
+      {
+        title: "Adresten Alım ve Adrese Teslim",
+        paragraphs: [
+          "Parsiyel yükünüzün bir aktarma veya ambar noktasına sizin tarafınızdan götürülmesi zorunlu değildir. Uygun taşıma planlaması kapsamında yük Manisa'daki gönderici adresinden alınabilir ve varış noktasında alıcının adresine kadar teslimat organize edilebilir.",
+          "Bu yapı özellikle düzenli sevkiyat yapan üretici, tedarikçi ve işletmeler için taşıma sürecinin tek noktadan yönetilmesini kolaylaştırır. Parsiyel taşımacılık hizmetimiz, adres ve yük bilgileri netleştirildikten sonra Türkiye geneline göre planlanır.",
+        ],
+      },
+    ],
+    faq: [
+      { question: "Manisa'dan 1 palet yük gönderebilir miyim?", answer: "Evet. Manisa çıkışlı 1 paletten başlayan sevkiyata uygun paletli ticari yükler için parsiyel taşıma organize edilebilir. Yük ölçüleri, ağırlık, nitelik ve teslimat adresi teklif öncesinde değerlendirilir." },
+      { question: "Manisa OSB ve çevresinden adresten alım yapılabilir mi?", answer: "Manisa OSB, Yunusemre, Şehzadeler, Muradiye ve çevredeki üretim noktalarında açık adres ile saha koşulları paylaşıldığında adresten alım planlanabilir." },
+      { question: "Palet sayısı arttığında yine parsiyel taşıma mı kullanılır?", answer: "Her zaman değil. Palet sayısı, hacim ve ağırlık arttığında parsiyel seçenek ile uygun araç bazlı çözüm karşılaştırılarak sevkiyata uygun model belirlenir." },
+      { question: "Manisa parsiyel nakliye fiyatı nasıl hesaplanır?", answer: "Fiyat; yükleme ve teslimat adresi, palet veya koli adedi, ölçüler, toplam ağırlık, istiflenebilirlik ve hazır olma tarihine göre hazırlanır." },
+      { question: "Manisa'dan Türkiye'nin ilçelerine teslimat yapılabilir mi?", answer: "Evet. Türkiye'nin 81 iline ve ilçelerdeki alıcı adreslerine teslimat organize edilebilir. Kesin plan güzergâh, adres erişimi ve yük özelliklerine göre paylaşılır." },
+    ],
+    related: ["yurtici-parsiyel-tasimacilik", "komple-tasimacilik", "izmir-parsiyel-tasimacilik"],
+    contextualLinks: [
+      { anchor: "Parsiyel taşımacılık hizmetimiz", href: "/yurtici-parsiyel-tasimacilik" },
+      { anchor: "komple taşımacılık", href: "/komple-tasimacilik" },
     ],
   },
   "denizyolu-parsiyel-tasimacilik": {

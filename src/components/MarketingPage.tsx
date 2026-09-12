@@ -82,10 +82,19 @@ function renderContextualParagraph(
   return nodes;
 }
 
-export function MarketingPage({ page, children }: { page: MarketingPageData; children?: ReactNode }) {
+export function MarketingPage({
+  page,
+  children,
+  childrenPlacement = "before-sections",
+}: {
+  page: MarketingPageData;
+  children?: ReactNode;
+  childrenPlacement?: "before-sections" | "after-sections";
+}) {
   const Icon = icons[page.icon];
   const canonicalUrl = `${SITE_URL}/${page.slug}`;
   const usedContextualTargets = new Set<string>();
+  const requestQuote = () => window.dispatchEvent(new CustomEvent("rex:open-quote-form"));
 
   return (
     <>
@@ -119,13 +128,22 @@ export function MarketingPage({ page, children }: { page: MarketingPageData; chi
                 <h1 className="max-w-4xl text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">{page.title}</h1>
                 <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200 sm:text-xl">{page.lead}</p>
                 <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                  {page.heroPrimaryCtaLabel ? (
+                    <button
+                      type="button"
+                      onClick={requestQuote}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 font-bold text-white transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                    >
+                      {page.heroPrimaryCtaLabel} <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  ) : null}
                   <a
-                    href="https://wa.me/905434010755"
+                    href={`https://wa.me/905434010755?text=${encodeURIComponent(`Merhaba, ${page.title} için teklif almak istiyorum.`)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 font-semibold text-white transition hover:bg-white/20"
                   >
-                    <MessageCircle className="h-5 w-5" aria-hidden="true" /> WhatsApp
+                    <MessageCircle className="h-5 w-5" aria-hidden="true" /> {page.heroWhatsAppLabel || "WhatsApp"}
                   </a>
                 </div>
               </div>
@@ -143,7 +161,7 @@ export function MarketingPage({ page, children }: { page: MarketingPageData; chi
             </div>
           </section>
 
-          {children}
+          {childrenPlacement === "before-sections" ? children : null}
 
           <section className="py-16 sm:py-24">
             <div className="mx-auto max-w-5xl space-y-16 px-4 sm:px-6">
@@ -169,11 +187,21 @@ export function MarketingPage({ page, children }: { page: MarketingPageData; chi
                         ))}
                       </ul>
                     )}
+                    {section.cta ? (
+                      <a
+                        href={section.cta.href}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3.5 text-base font-bold text-white transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                      >
+                        {section.cta.label} <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                      </a>
+                    ) : null}
                   </div>
                 </article>
               ))}
             </div>
           </section>
+
+          {childrenPlacement === "after-sections" ? children : null}
 
           {page.steps && (
             <section className="bg-slate-950 py-16 text-white sm:py-20">

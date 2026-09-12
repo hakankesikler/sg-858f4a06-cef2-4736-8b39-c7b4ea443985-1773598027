@@ -1191,7 +1191,7 @@ test("domestic partial page prepares multi-load WhatsApp quotes", async () => {
   assert.match(route, /DomesticPartialPlanner/);
   assert.match(planner, /Gönderici/);
   assert.match(planner, /Alıcı/);
-  assert.match(planner, /Cinsi \/ ambalajı/);
+  assert.match(planner, /Yük cinsi \/ ambalajı/);
   assert.match(planner, /Toplam ağırlık \(kg\)/);
   assert.match(planner, /Boy \(cm\)/);
   assert.match(planner, /En \(cm\)/);
@@ -1206,6 +1206,41 @@ test("domestic partial page prepares multi-load WhatsApp quotes", async () => {
   assert.match(planner, /Yük Ekle/);
   assert.match(planner, /Parsiyel teklifini WhatsApp’tan gönder/);
   assert.match(planner, /Yük kalemleri:/);
+});
+
+test("Izmir and Manisa partial landing pages are distinct, crawlable, and quote-ready", async () => {
+  const [izmirRoute, manisaRoute, mainRoute, content, planner, sitemap, structuredData] = await Promise.all([
+    read("src/pages/izmir-parsiyel-tasimacilik.tsx"),
+    read("src/pages/manisa-parsiyel-tasimacilik.tsx"),
+    read("src/pages/yurtici-parsiyel-tasimacilik.tsx"),
+    read("src/content/marketing-pages.ts"),
+    read("src/components/DomesticPartialPlanner.tsx"),
+    read("public/sitemap.xml"),
+    read("src/lib/structured-data.ts"),
+  ]);
+
+  assert.match(izmirRoute, /defaultSenderCity="İzmir"/);
+  assert.match(izmirRoute, /sectionId="izmir-parsiyel-teklif"/);
+  assert.match(manisaRoute, /defaultSenderCity="Manisa"/);
+  assert.match(manisaRoute, /sectionId="manisa-parsiyel-teklif"/);
+  assert.match(mainRoute, /DomesticPartialPlanner/);
+  assert.match(content, /İzmir Parsiyel Taşımacılık \| 1 Paletten Türkiye Geneli \| REX Lojistik/);
+  assert.match(content, /Manisa Parsiyel Taşımacılık \| 1 Paletten Türkiye Geneli \| REX Lojistik/);
+  assert.match(content, /Bornova, Kemalpaşa, Gaziemir, Çiğli, Torbalı, Aliağa, Menemen ve Menderes/);
+  assert.match(content, /Manisa OSB, Yunusemre, Şehzadeler, Muradiye, Turgutlu, Akhisar ve Salihli/);
+  assert.match(content, /href: "\/izmir-parsiyel-tasimacilik"/);
+  assert.match(content, /href: "\/manisa-parsiyel-tasimacilik"/);
+  assert.match(content, /Yük Bilgilerini Gönder – Teklif Al/);
+  assert.match(planner, /Açık yükleme adresi/);
+  assert.match(planner, /Açık teslimat adresi/);
+  assert.match(planner, /Palet \/ koli adedi/);
+  assert.match(planner, /Yük hazır olma tarihi/);
+  assert.match(planner, /required/);
+  assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/izmir-parsiyel-tasimacilik/);
+  assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/manisa-parsiyel-tasimacilik/);
+  assert.match(structuredData, /"izmir-parsiyel-tasimacilik"/);
+  assert.match(structuredData, /"manisa-parsiyel-tasimacilik"/);
+  assert.doesNotMatch(`${content}\n${izmirRoute}\n${manisaRoute}`, /özmal araç|kendi depolarımız|kendi şubelerimiz|tedarikçi adı|alış fiyat/i);
 });
 
 test("public service pages prepare service-specific WhatsApp quote summaries", async () => {
