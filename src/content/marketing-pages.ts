@@ -68,18 +68,33 @@ export const marketingPages: Record<string, MarketingPageData> = {
     slug: "gumruk-antrepo-yurtici-transfer",
     kind: "service",
     icon: "warehouse",
-    eyebrow: "İstanbul çıkışlı Türkiye geneli bağlantı",
-    title: "Gümrük Sahası ve Antrepodan Yurtiçi Hızlı Transfer",
-    lead: "İthalat yükünüz teslim alınabilir hâle geldiğinde Ambarlı, Muratbey–Çatalca, Erenköy ve çevre antrepolardan alıyor; başta İzmir, Manisa ve Ankara olmak üzere Türkiye genelindeki adreslere kontrollü bir taşıma planı kuruyoruz.",
-    seoTitle: "Antrepodan Yük Alma ve Yurtiçi Transfer | REX",
-    seoDescription: "Ambarlı, Çatalca-Muratbey, Büyükçekmece ve Erenköy antrepolarından İzmir, Manisa, Ankara ve Türkiye geneline hızlı yük transferi. REX'ten teklif alın.",
-    keywords: ["antrepodan yük alma", "gümrükten yük alma nakliye", "Ambarlı limanı nakliye", "Çatalca antrepo nakliye", "Muratbey gümrük nakliye", "Erenköy gümrük nakliye", "Büyükçekmece antrepo nakliye", "İstanbul İzmir yük transferi"],
+    eyebrow: "İhracat ve ithalatta çift yönlü yurtiçi bağlantı",
+    title: "Liman, Antrepo ve İhracat Depolarına Çift Yönlü Transfer",
+    lead: "İzmir ve Manisa başta olmak üzere Ankara ve Türkiye’nin diğer illerinden İstanbul’daki ihracat depolarına, konsolidasyon merkezlerine, liman ve antrepolara yük taşıyor; ithalatta ise aynı ağı liman veya antrepodan nihai adrese ters yönde işletiyoruz.",
+    seoTitle: "İhracat Deposuna ve Antrepodan Çift Yönlü Nakliye | REX",
+    seoDescription: "İzmir, Manisa, Ankara ve Türkiye genelinden İstanbul ihracat depoları, liman ve antrepolara taşıma; antrepodan Türkiye geneline ithalat yükü transferi.",
+    keywords: ["İstanbul ihracat deposuna nakliye", "İzmir ihracat deposu nakliye", "Manisa İstanbul ihracat yükü", "Ankara ihracat deposuna taşıma", "antrepoya yük teslimi", "antrepodan yük alma", "gümrükten yük alma nakliye", "Ambarlı limanı nakliye", "Çatalca antrepo nakliye", "Muratbey gümrük nakliye", "Erenköy gümrük nakliye", "Türkiye İstanbul ihracat yükü transferi"],
     highlights: [
-      { title: "Doğru Sahadan Alım", text: "Liman, gümrük sahası veya antrepo giriş şartlarına göre araç ve randevu planı" },
-      { title: "Ege ve Ankara Önceliği", text: "İzmir, Manisa ve Ankara başta olmak üzere Türkiye geneli varış organizasyonu" },
-      { title: "Tek Operasyon Kaydı", text: "Alım teyidinden teslim evrakına kadar izlenebilir sevkiyat akışı" },
+      { title: "İhracat Deposuna Besleme", text: "İzmir, Manisa ve Ankara’dan İstanbul’daki depo, liman ve antrepolara zamanında teslim" },
+      { title: "İthalat Yükünü Sahadan Alım", text: "Serbest kalan yükün liman veya antrepodan Türkiye genelindeki adrese transferi" },
+      { title: "Çift Yönlü Tek Operasyon", text: "Doğru saha, referans ve son kabul saatine göre izlenebilir sevkiyat akışı" },
     ],
     sections: [
+      {
+        title: "İzmir, Manisa ve Ankara’dan İstanbul ihracat depolarına",
+        paragraphs: [
+          "İhracat yükünüzün yolculuğu İstanbul’da değil, üretim veya yükleme adresinde başlar. İzmir ve Manisa’daki fabrika, organize sanayi bölgesi ve depolardan; Ankara ve Türkiye’nin diğer illerindeki çıkış noktalarından alınan paletli ya da kolili yükleri İstanbul Avrupa yakasındaki uluslararası nakliye depolarına, konsolidasyon merkezlerine, limanlara ve bildirilen antrepolara planlı şekilde ulaştırıyoruz.",
+          "Parsiyel ihracat beslemesinde amaç yalnızca İstanbul’a varmak değildir. Yükün doğru firma deposuna, doğru rezervasyon veya dosya numarasıyla ve ana hat aracının son kabul saatinden önce teslim edilmesi gerekir. REX; çıkış adresi, yük hazır olma zamanı, depo kabul penceresi ve araç kapasitesini aynı planda buluşturur.",
+        ],
+        bullets: ["İzmir ve Manisa’dan İstanbul Avrupa yakası ihracat depolarına", "Ankara ve diğer illerden liman, antrepo ve konsolidasyon merkezlerine", "Paletli ve kolili parsiyel ihracat yükü beslemesi", "Depo referansı ve son kabul saatine göre teslim"],
+      },
+      {
+        title: "İhracat yükünde doğru depo ve son kabul saati",
+        paragraphs: [
+          "İstanbul–Avrupa yönünde çalışan uluslararası nakliye firmalarının depoları farklı bölgelerde ve farklı kabul kurallarıyla çalışabilir. Bu nedenle depo unvanı, açık adres, yük referansı, rezervasyon veya dosya numarası, etiket bilgisi, yetkili kişi ve son kabul saati araç çıkmadan önce teyit edilir.",
+          "Yükün hafta içi standart hatta mı, doğrudan araçla mı yoksa zaman kritik hızlı transferle mi taşınacağı; hacim, kilogram, hazır olma saati ve bağlantı aracının kapanışına göre belirlenir. Böylece ihracat yükü şehirlerarası transferde görünmez bir bekleme noktasına takılmaz.",
+        ],
+      },
       {
         title: "İstanbul’da hangi gümrük ve antrepo bölgelerinden yük alınır?",
         paragraphs: [
@@ -103,17 +118,10 @@ export const marketingPages: Record<string, MarketingPageData> = {
         ],
         bullets: ["Antrepodan fabrikaya doğrudan sevk", "Liman çıkışlı palet ve kolili ticari yük", "Parsiyel, komple veya acil araç karşılaştırması", "Teslim alan ve teslim evrakı kaydı"],
       },
-      {
-        title: "İhracat depolarına ters yönlü besleme",
-        paragraphs: [
-          "Aynı ağ ters yönde de çalışır. İzmir, Manisa, Ankara ve Türkiye’nin farklı şehirlerinden alınan ihracat yükleri; İstanbul Avrupa yakasındaki uluslararası nakliye depolarına, konsolidasyon merkezlerine veya bildirilen antrepo adresine planlı şekilde ulaştırılabilir.",
-          "Parsiyel ihracat yükünde kritik nokta yalnızca İstanbul’a varmak değil, ana hat aracının yük kabul kapanışından önce doğru depo ve referansa teslim etmektir. Depo adı, açık adres, rezervasyon veya dosya numarası, son kabul saati ve yükün etiket bilgisi teklif aşamasında paylaşılırsa plan daha sağlıklı kurulur.",
-        ],
-      },
     ],
     steps: [
-      { title: "Sahayı doğrulama", text: "Antrepo/liman adı, açık adres, referans ve araç kabul koşulları alınır." },
-      { title: "Hazır olma teyidi", text: "Yetkili taraflardan yükün teslim alınabilir olduğu ve zaman penceresi teyit edilir." },
+      { title: "Yönü ve sahayı doğrulama", text: "İhracat veya ithalat yönü; depo, antrepo ya da liman adresi ve referansı alınır." },
+      { title: "Zaman penceresi", text: "Yükün hazır olma zamanı ile sahanın araç kabul veya son teslim saati teyit edilir." },
       { title: "Araç ve rota", text: "Hacim, ağırlık ve teslim önceliğine göre uygun taşıma modeli planlanır." },
       { title: "Teslim kaydı", text: "Yük varış adresine ulaştırılır, teslim bilgisi ve evrakı kayda alınır." },
     ],
@@ -123,6 +131,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Ambarlı veya Çatalca’dan aynı gün yük alınabilir mi?", answer: "Yükün serbest ve teslim edilebilir durumda olması, saha randevusu, araç kabul saati ve uygun araç bulunması hâlinde aynı gün alım değerlendirilebilir. Kesin plan saha ve operasyon teyidinden sonra verilir." },
       { question: "Büyükçekmece Gümrüğü ayrı bir gümrük müdürlüğü mü?", answer: "İstanbul Bölge Müdürlüğünün güncel bağlantı idareleri listesinde Büyükçekmece adıyla ayrı bir gümrük müdürlüğü yer almıyor. Sektörde bu ifade çoğunlukla Ambarlı, Beylikdüzü, Esenyurt ve Büyükçekmece çevresindeki liman/antrepo koridorunu tarif etmek için kullanılıyor." },
       { question: "İhracat yükünü İstanbul’daki nakliye deposuna teslim eder misiniz?", answer: "Evet. Açık depo adresi, yük referansı, son kabul saati ve teslim şartları verildiğinde Türkiye’nin uygun çıkış noktalarından İstanbul’daki ihracat/konsolidasyon deposuna taşıma planlanabilir." },
+      { question: "İzmir veya Manisa’dan İstanbul’daki ihracat deposuna parsiyel yük taşınır mı?", answer: "Evet. Yükün ölçüsü, ağırlığı, hazır olma zamanı ve İstanbul’daki deponun son kabul saati birlikte değerlendirilerek parsiyel, doğrudan veya hızlı transfer seçeneklerinden uygun olanı planlanır." },
     ],
     related: ["hafta-sonu-acil-nakliye", "yurtici-parsiyel-tasimacilik", "uluslararasi-karayolu-parsiyel-tasimacilik", "komple-tasimacilik"],
   },

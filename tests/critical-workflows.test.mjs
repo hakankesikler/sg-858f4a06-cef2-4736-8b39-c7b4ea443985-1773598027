@@ -1044,7 +1044,7 @@ test("public SEO copy keeps customs operations outside REX's service claim", asy
     read("src/pages/kullanim-kosullari.tsx"),
     read("public/sitemap.xml"),
   ]);
-  assert.match(content, /Gümrük Sahası ve Antrepodan Yurtiçi Hızlı Transfer/);
+  assert.match(content, /Liman, Antrepo ve İhracat Depolarına Çift Yönlü Transfer/);
   assert.match(content, /REX Lojistik’in bu hizmetteki görevi gümrük müşavirliği veya ithalat işlemi yürütmek değildir/);
   assert.match(content, /eşya teslim alınabilir hâle geldikten sonraki araç, alım, yurtiçi taşıma ve teslim koordinasyonunu sağlar/);
   assert.doesNotMatch(content, /gümrükleme hizmeti (sunuyoruz|veriyoruz)/i);
@@ -1069,9 +1069,15 @@ test("customs-area and weekend transfer pages provide truthful searchable decisi
   assert.match(weekendRoute, /RapidTransferPlanner variant="weekend"/);
   assert.match(content, /Ambarlı Limanı ve çevresindeki Beylikdüzü–Esenyurt–Büyükçekmece antrepo hattı/);
   assert.match(content, /Muratbey Gümrük Müdürlüğü ile Çatalca–Hadımköy/);
+  assert.match(content, /İzmir, Manisa ve Ankara’dan İstanbul ihracat depolarına/);
+  assert.match(content, /ana hat aracının son kabul saatinden önce teslim edilmesi gerekir/);
   assert.match(content, /cuma alım–cumartesi teslim seçeneğini operasyon uygunluğuna göre değerlendiriyoruz/);
   assert.match(content, /Bu hizmet sabit ve koşulsuz bir teslim garantisi değildir/);
-  assert.match(planner, /5 bilgide operasyon ön kontrolü/);
+  assert.match(planner, /Çift yönlü operasyon ön kontrolü/);
+  assert.match(planner, /type CustomsDirection = "export" \| "import"/);
+  assert.match(planner, /İhracat yönü/);
+  assert.match(planner, /İthalat yönü/);
+  assert.match(planner, /İstanbul Avrupa yakası ihracat deposu/);
   assert.match(planner, /Operasyon özetini WhatsApp’tan gönder/);
   assert.match(header, /\/gumruk-antrepo-yurtici-transfer/);
   assert.match(header, /\/hafta-sonu-acil-nakliye/);
