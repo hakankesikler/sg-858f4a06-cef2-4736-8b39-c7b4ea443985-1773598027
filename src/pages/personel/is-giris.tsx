@@ -8,7 +8,7 @@ export default function IsGirisPage() {
 
   return (
     <>
-      <SEO title="Yeni İş Girişi | REX Portal" description="Yeni taşıma işi oluştur" />
+      <SEO title="Yeni İş Girişi | REX Portal" description="Yeni taşıma işi oluştur" noIndex />
       <main className="min-h-screen bg-slate-100" />
       <IsGirisForm isOpen onClose={close} />
     </>

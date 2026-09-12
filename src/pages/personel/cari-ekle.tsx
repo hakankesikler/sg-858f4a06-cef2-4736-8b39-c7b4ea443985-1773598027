@@ -12,6 +12,7 @@ export default function CariEklePage() {
       <SEO
         title="Yeni Cari Ekle - Rex Lojistik"
         description="Yeni cari hesabı ekleyin"
+        noIndex
       />
 
       <div className="min-h-screen bg-gray-50">

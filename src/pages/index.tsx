@@ -14,7 +14,7 @@ export default function Home() {
         title="REX Lojistik | Parsiyel, Komple ve Uluslararası Taşımacılık"
         description="REX Lojistik; yurtiçi parsiyel ve komple taşımacılık, uluslararası karayolu, hava kargo, denizyolu ve express lojistik çözümleri sunar. 1 paletten komple araca, Türkiye geneli ve uluslararası taşımacılık için hızlı teklif alın."
         image="/og-image.png"
-        url="https://www.rexlojistik.com"
+        url="https://www.rexlojistik.com/"
         structuredData={buildHomeStructuredData({
           name: "REX Lojistik | Parsiyel, Komple ve Uluslararası Taşımacılık",
           description: "REX Lojistik; yurtiçi parsiyel ve komple taşımacılık, uluslararası karayolu, hava kargo, denizyolu ve express lojistik çözümleri sunar. 1 paletten komple araca, Türkiye geneli ve uluslararası taşımacılık için hızlı teklif alın.",

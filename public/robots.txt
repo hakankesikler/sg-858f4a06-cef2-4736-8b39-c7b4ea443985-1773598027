@@ -1,22 +1,5 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
-
-# Disallow old template pages and legacy content
-Disallow: /freight-forwarding
-Disallow: /air-freight
-Disallow: /ocean-freight
-Disallow: /services/
-Disallow: /about/
-Disallow: /contact/
-Disallow: /transpress
-Disallow: /fraser-freight
-
-# Keep private portals and service endpoints out of search results
-Disallow: /login
-Disallow: /personel/
-Disallow: /musteri/
 Disallow: /api/
 
-# Sitemaps
 Sitemap: https://www.rexlojistik.com/sitemap.xml

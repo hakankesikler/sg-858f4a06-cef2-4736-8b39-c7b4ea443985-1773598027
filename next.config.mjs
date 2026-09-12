@@ -87,9 +87,7 @@ const nextConfig = {
       "upgrade-insecure-requests",
     ].join("; ");
 
-    return [{
-      source: "/(.*)",
-      headers: [
+    const securityHeaders = [
         { key: "Content-Security-Policy", value: contentSecurityPolicy },
         { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
         { key: "X-Content-Type-Options", value: "nosniff" },
@@ -98,8 +96,23 @@ const nextConfig = {
         { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
         { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
         { key: "X-XSS-Protection", value: "0" },
-      ],
-    }];
+      ];
+    const noIndexHeaders = [
+      { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+    ];
+
+    return [
+      { source: "/(.*)", headers: securityHeaders },
+      { source: "/api/:path*", headers: noIndexHeaders },
+      { source: "/login", headers: noIndexHeaders },
+      { source: "/rexgen", headers: noIndexHeaders },
+      { source: "/sifre-yenile", headers: noIndexHeaders },
+      { source: "/musteri-giris", headers: noIndexHeaders },
+      { source: "/musteri-kayit", headers: noIndexHeaders },
+      { source: "/musteri/:path*", headers: noIndexHeaders },
+      { source: "/personel/:path*", headers: noIndexHeaders },
+      { source: "/takip/:path*", headers: noIndexHeaders },
+    ];
   },
 };
 

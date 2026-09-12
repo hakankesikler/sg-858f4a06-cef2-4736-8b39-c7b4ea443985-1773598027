@@ -994,7 +994,7 @@ test("public logistics services have dedicated SEO pages and internal navigation
     "hakkimizda",
     "iletisim",
   ];
-  const [content, pageTemplate, structuredData, seo, header, footer, services, sitemap, robots] = await Promise.all([
+  const [content, pageTemplate, structuredData, seo, header, footer, services, sitemap, robots, nextConfig] = await Promise.all([
     read("src/content/marketing-pages.ts"),
     read("src/components/MarketingPage.tsx"),
     read("src/lib/structured-data.ts"),
@@ -1004,6 +1004,7 @@ test("public logistics services have dedicated SEO pages and internal navigation
     read("src/components/Services.tsx"),
     read("public/sitemap.xml"),
     read("public/robots.txt"),
+    read("next.config.mjs"),
   ]);
 
   for (const slug of slugs) {
@@ -1044,8 +1045,35 @@ test("public logistics services have dedicated SEO pages and internal navigation
   assert.match(footer, /href="\/login"[\s\S]*REX TYS/);
   assert.doesNotMatch(footer, /Personel Girişi/);
   assert.doesNotMatch(footer, /href="\/musteri-giris"[\s\S]*Müşteri Portalı/);
-  assert.match(robots, /Disallow: \/personel\//);
+  assert.match(robots, /Disallow: \/api\//);
+  assert.doesNotMatch(robots, /Disallow: \/(?:login|personel|musteri|takip)/);
+  assert.match(nextConfig, /key: "X-Robots-Tag", value: "noindex, nofollow, noarchive"/);
+  assert.match(nextConfig, /source: "\/personel\/:path\*", headers: noIndexHeaders/);
+  assert.match(nextConfig, /source: "\/takip\/:path\*", headers: noIndexHeaders/);
   assert.doesNotMatch(sitemap, /\/login<\/loc>/);
+  assert.doesNotMatch(sitemap, /<(?:lastmod|changefreq|priority)>/);
+
+  const registeredSlugs = [...content.matchAll(/^  (?:(?:"([^"]+)")|([A-Za-z0-9_-]+)): \{$/gm)]
+    .map((match) => match[1] || match[2])
+    .sort();
+  const sitemapUrls = [...sitemap.matchAll(/<loc>https:\/\/www\.rexlojistik\.com(\/[^<]*)<\/loc>/g)]
+    .map((match) => match[1])
+    .sort();
+  assert.deepEqual(sitemapUrls, ["/", ...registeredSlugs.map((slug) => `/${slug}`)].sort());
+});
+
+test("private and utility routes emit explicit noindex directives", async () => {
+  const [seo, profile, jobEntry, customerEntry, rexgen] = await Promise.all([
+    read("src/components/SEO.tsx"),
+    read("src/pages/personel/profil.tsx"),
+    read("src/pages/personel/is-giris.tsx"),
+    read("src/pages/personel/cari-ekle.tsx"),
+    read("src/pages/rexgen.tsx"),
+  ]);
+
+  for (const route of [profile, jobEntry, customerEntry, rexgen]) assert.match(route, /noIndex/);
+  assert.match(seo, /noIndex \? "noindex, nofollow" : "index, follow"/);
+  assert.match(seo, /\{url && <link rel="canonical" href=\{url\} \/>\}/);
 });
 
 test("public SEO copy keeps customs operations outside REX's service claim", async () => {
@@ -1252,7 +1280,7 @@ test("homepage SEO, hero copy and service headings are semantic and focused", as
 
   assert.match(home, /title="REX Lojistik \| Parsiyel, Komple ve Uluslararası Taşımacılık"/);
   assert.match(home, /description="REX Lojistik; yurtiçi parsiyel ve komple taşımacılık, uluslararası karayolu, hava kargo, denizyolu ve express lojistik çözümleri sunar\. 1 paletten komple araca, Türkiye geneli ve uluslararası taşımacılık için hızlı teklif alın\."/);
-  assert.match(home, /url="https:\/\/www\.rexlojistik\.com"/);
+  assert.match(home, /url="https:\/\/www\.rexlojistik\.com\/"/);
   const documentDefaults = seo.slice(seo.indexOf("export function SEOElements"));
   assert.doesNotMatch(documentDefaults, /<meta name="description"/);
   assert.match(hero, /<h1[\s\S]*Yurtiçi ve Uluslararası[\s\S]*Lojistik Çözümleri[\s\S]*<\/h1>/);

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 
 export default function RexGen() {
   const router = useRouter();
@@ -21,11 +22,14 @@ export default function RexGen() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-600">Yönlendiriliyor...</p>
+    <>
+      <SEO title="REX Portal Yönlendirme" description="REX Lojistik güvenli portal yönlendirmesi." noIndex />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Yönlendiriliyor...</p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

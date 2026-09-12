@@ -280,7 +280,7 @@ export default function PersonelProfil() {
 
   return (
     <>
-      <SEO title="Rex Portal - Dashboard" description="Rex Lojistik güvenli personel yönetim paneli" />
+      <SEO title="Rex Portal - Dashboard" description="Rex Lojistik güvenli personel yönetim paneli" noIndex />
       <SidebarProvider defaultOpen={false}>
         <div className="rex-portal-canvas flex min-h-screen w-full bg-[#f5f7fb]">
           <aside className={`fixed lg:sticky top-0 left-0 z-40 h-screen bg-[linear-gradient(180deg,#10213e_0%,#0b1830_100%)] text-white shadow-[12px_0_36px_rgba(16,33,62,0.16)] transform transition-all duration-300 overflow-hidden group flex flex-col border-t-4 border-[#e96d25] ${sidebarOpen ? "translate-x-0 w-72" : "-translate-x-full lg:translate-x-0 w-72 lg:w-[80px] lg:hover:w-72"}`}>

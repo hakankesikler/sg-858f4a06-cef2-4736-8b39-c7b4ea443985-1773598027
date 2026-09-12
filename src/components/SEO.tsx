@@ -14,7 +14,7 @@ export function SEO({
   title = "Rex Lojistik - Türkiye'nin Güvenilir Lojistik Partneri",
   description = "Rex Lojistik ile kara, hava ve deniz taşımacılığı hizmetleri. Depolama, dağıtım ve uluslararası kargo çözümleri. 7/24 müşteri desteği, hızlı ve güvenli teslimat. İletişim: 0543 401 07 55",
   image = "/og-image.png",
-  url = "https://www.rexlojistik.com",
+  url,
   noIndex = false,
   keywords,
   structuredData,
@@ -50,7 +50,7 @@ export function SEO({
       <meta property="og:image:alt" content="REX Lojistik" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:url" content={url} />
+      {url && <meta property="og:url" content={url} />}
       
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
@@ -59,7 +59,7 @@ export function SEO({
       <meta name="twitter:image" content={absoluteImage} />
       
       {/* Canonical */}
-      <link rel="canonical" href={url} />
+      {url && <link rel="canonical" href={url} />}
       
       {/* Additional SEO */}
       <meta name="theme-color" content="#D84315" />
