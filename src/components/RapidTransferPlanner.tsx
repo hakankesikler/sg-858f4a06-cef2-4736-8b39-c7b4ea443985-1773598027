@@ -14,8 +14,8 @@ const fieldClassName = "mt-2 h-11 w-full rounded-md border border-slate-300 bg-w
 export function RapidTransferPlanner({ variant }: { variant: PlannerVariant }) {
   const isWeekend = variant === "weekend";
   const [customsDirection, setCustomsDirection] = useState<CustomsDirection>("export");
-  const [pickup, setPickup] = useState(isWeekend ? "İstanbul" : "İzmir / Manisa");
-  const [destination, setDestination] = useState(isWeekend ? "İzmir" : "İstanbul Avrupa yakası ihracat deposu");
+  const [pickup, setPickup] = useState("İzmir / Manisa");
+  const [destination, setDestination] = useState(isWeekend ? "İstanbul / Türkiye geneli" : "İstanbul Avrupa yakası ihracat deposu");
   const [load, setLoad] = useState("");
   const [readyAt, setReadyAt] = useState("");
   const [deadline, setDeadline] = useState("");
@@ -52,7 +52,7 @@ export function RapidTransferPlanner({ variant }: { variant: PlannerVariant }) {
   };
 
   const message = [
-    `Merhaba, ${isWeekend ? "hafta sonu acil nakliye" : customsDirection === "export" ? "ihracat deposuna yurtiçi transfer" : "antrepo/liman çıkışlı ithalat transferi"} teklifi rica ederim.`,
+    `Merhaba, ${isWeekend ? "İzmir/Manisa çıkışlı ertesi gün hedefli acil nakliye" : customsDirection === "export" ? "ihracat deposuna yurtiçi transfer" : "antrepo/liman çıkışlı ithalat transferi"} teklifi rica ederim.`,
     ...(!isWeekend ? [`Taşıma yönü: ${customsDirection === "export" ? "Türkiye'den İstanbul ihracat deposu / liman / antrepo" : "İstanbul liman / antrepodan Türkiye geneline"}`] : []),
     `Alım: ${pickup || "Belirtilmedi"}`,
     `Teslim: ${destination || "Belirtilmedi"}`,
@@ -69,12 +69,14 @@ export function RapidTransferPlanner({ variant }: { variant: PlannerVariant }) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1.35fr_0.65fr]">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <p className="font-semibold text-orange-600">Çift yönlü operasyon ön kontrolü</p>
+            <p className="font-semibold text-orange-600">{isWeekend ? "İzmir ve Manisa çıkışlı hızlı plan" : "Çift yönlü operasyon ön kontrolü"}</p>
             <h2 id="rapid-transfer-planner-heading" className="mt-2 text-3xl font-bold text-slate-950 sm:text-4xl">
-              {isWeekend ? "Cumartesi teslim hedefinizi birlikte kontrol edelim" : "İhracat veya ithalat transfer planınızı hazırlayın"}
+              {isWeekend ? "Ertesi gün teslim hedefinizi birlikte kontrol edelim" : "İhracat veya ithalat transfer planınızı hazırlayın"}
             </h2>
             <p className="mt-4 max-w-3xl leading-7 text-slate-600">
-              Sabit süre veya fiyat vaadi vermeden önce yükün gerçekten hazır olduğunu, iki adresin çalışma saatlerini ve uygun araç kapasitesini doğrularız.
+              {isWeekend
+                ? "İzmir ve Manisa’dan Türkiye geneline acil sevkiyatta yükün hazır olma saatini, alıcının kabul penceresini ve uygun araç kapasitesini birlikte doğrularız."
+                : "Sabit süre veya fiyat vaadi vermeden önce yükün gerçekten hazır olduğunu, iki adresin çalışma saatlerini ve uygun araç kapasitesini doğrularız."}
             </p>
 
             {!isWeekend && (
@@ -112,7 +114,7 @@ export function RapidTransferPlanner({ variant }: { variant: PlannerVariant }) {
                     className="mt-2 h-11"
                     value={pickup}
                     onChange={(event) => setPickup(event.target.value)}
-                    placeholder={isWeekend ? "Örn. Esenyurt / İstanbul" : "Örn. Kemalpaşa / İzmir veya Yunusemre / Manisa"}
+                    placeholder="Örn. Kemalpaşa / İzmir veya Yunusemre / Manisa"
                   />
                 ) : (
                   <select id={`${variant}-pickup`} value={pickup} onChange={(event) => setPickup(event.target.value)} className={fieldClassName}>
@@ -161,7 +163,11 @@ export function RapidTransferPlanner({ variant }: { variant: PlannerVariant }) {
 
             <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700">
               <input type="checkbox" checked={contactConfirmed} onChange={(event) => setContactConfirmed(event.target.checked)} className="mt-1 h-4 w-4 accent-orange-500" />
-              <span>Alım ve teslim noktalarının belirtilen saatlerde açık olduğunu; ihracat yükünde depo referansı ve son kabul saatini yetkililerden teyit edebileceğimi biliyorum.</span>
+              <span>
+                {isWeekend
+                  ? "Alım noktasında yükün hazır olduğunu ve teslim adresinin hedeflenen saatte yük kabul edeceğini yetkililerden teyit edebileceğimi biliyorum."
+                  : "Alım ve teslim noktalarının belirtilen saatlerde açık olduğunu; ihracat yükünde depo referansı ve son kabul saatini yetkililerden teyit edebileceğimi biliyorum."}
+              </span>
             </label>
 
             <div aria-live="polite" className={`mt-6 rounded-2xl border p-5 ${result.missing.length === 0 ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
@@ -182,13 +188,21 @@ export function RapidTransferPlanner({ variant }: { variant: PlannerVariant }) {
           <aside className="space-y-5">
             <div className="rounded-3xl bg-slate-950 p-7 text-white">
               <Warehouse className="h-9 w-9 text-orange-400" />
-              <h2 className="mt-5 text-2xl font-bold">Araçtan önce bilgi sahaya girer</h2>
-              <p className="mt-3 leading-7 text-slate-300">Açık adres, referans, çalışma saati ve yükleme koşulu teyit edilmeden yola çıkan araç hız değil bekleme üretir.</p>
+              <h2 className="mt-5 text-2xl font-bold">{isWeekend ? "Ertesi gün hedefi doğru bilgiyle başlar" : "Araçtan önce bilgi sahaya girer"}</h2>
+              <p className="mt-3 leading-7 text-slate-300">
+                {isWeekend
+                  ? "Hazır olma saati, açık adres ve alıcı kabulü netleştiğinde İzmir ve Manisa çıkışlı acil rota hızla planlanır."
+                  : "Açık adres, referans, çalışma saati ve yükleme koşulu teyit edilmeden yola çıkan araç hız değil bekleme üretir."}
+              </p>
             </div>
             <div className="rounded-3xl border border-slate-200 bg-white p-7">
               <ShieldCheck className="h-9 w-9 text-emerald-600" />
-              <h2 className="mt-5 text-2xl font-bold text-slate-950">Yetki sınırı açık</h2>
-              <p className="mt-3 leading-7 text-slate-600">REX taşıma ve teslimat koordinasyonunu yönetir. Gümrükleme, teslim emri ve resmî işlemler yetkili müşaviriniz ve ilgili taraflarca tamamlanır.</p>
+              <h2 className="mt-5 text-2xl font-bold text-slate-950">{isWeekend ? "Türkiye geneli rota değerlendirmesi" : "Yetki sınırı açık"}</h2>
+              <p className="mt-3 leading-7 text-slate-600">
+                {isWeekend
+                  ? "İstanbul ve Ankara başta olmak üzere Türkiye’nin uygun varış noktaları için süre, kapasite ve teslim koşullarını birlikte değerlendiririz."
+                  : "REX taşıma ve teslimat koordinasyonunu yönetir. Gümrükleme, teslim emri ve resmî işlemler yetkili müşaviriniz ve ilgili taraflarca tamamlanır."}
+              </p>
             </div>
           </aside>
         </div>

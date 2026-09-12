@@ -1071,6 +1071,8 @@ test("customs-area and weekend transfer pages provide truthful searchable decisi
   assert.match(content, /Muratbey Gümrük Müdürlüğü ile Çatalca–Hadımköy/);
   assert.match(content, /İzmir, Manisa ve Ankara’dan İstanbul ihracat depolarına/);
   assert.match(content, /ana hat aracının son kabul saatinden önce teslim edilmesi gerekir/);
+  assert.match(content, /İzmir ve Manisa Çıkışlı Ertesi Gün Acil Nakliye/);
+  assert.match(content, /İzmir ve Manisa’dan ertesi gün Türkiye geneli teslimat/);
   assert.match(content, /cuma alım–cumartesi teslim seçeneğini operasyon uygunluğuna göre değerlendiriyoruz/);
   assert.match(content, /Bu hizmet sabit ve koşulsuz bir teslim garantisi değildir/);
   assert.match(planner, /Çift yönlü operasyon ön kontrolü/);
@@ -1078,6 +1080,8 @@ test("customs-area and weekend transfer pages provide truthful searchable decisi
   assert.match(planner, /İhracat yönü/);
   assert.match(planner, /İthalat yönü/);
   assert.match(planner, /İstanbul Avrupa yakası ihracat deposu/);
+  assert.match(planner, /İzmir\/Manisa çıkışlı ertesi gün hedefli acil nakliye/);
+  assert.match(planner, /İstanbul \/ Türkiye geneli/);
   assert.match(planner, /Operasyon özetini WhatsApp’tan gönder/);
   assert.match(header, /\/gumruk-antrepo-yurtici-transfer/);
   assert.match(header, /\/hafta-sonu-acil-nakliye/);

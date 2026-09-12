@@ -139,18 +139,26 @@ export const marketingPages: Record<string, MarketingPageData> = {
     slug: "hafta-sonu-acil-nakliye",
     kind: "service",
     icon: "zap",
-    eyebrow: "Mesai bittiğinde duran değil, doğru planlanan yükler",
-    title: "Hafta Sonu Acil Nakliye ve Cuma–Cumartesi Teslimat",
-    lead: "Hafta içi ambar çıkışına yetişmeyen zaman kritik ticari yükleri; uygun araç, açık teslimat adresi ve teyitli zaman penceresiyle planlıyoruz. Özellikle İstanbul’dan İzmir ve Manisa’ya cuma alım–cumartesi teslim seçeneğini operasyon uygunluğuna göre değerlendiriyoruz.",
-    seoTitle: "Hafta Sonu Acil Nakliye İstanbul İzmir Manisa | REX",
-    seoDescription: "Cuma alım cumartesi teslim, hafta sonu acil nakliye ve İstanbul-İzmir-Manisa hızlı yük transferi. Uygunluk teyidiyle REX'ten hızlı taşıma planı alın.",
-    keywords: ["hafta sonu acil nakliye", "cuma alım cumartesi teslim", "İstanbul İzmir acil nakliye", "İstanbul Manisa hafta sonu nakliye", "cumartesi yük teslimatı", "acil parsiyel yük", "hafta sonu ambar alternatifi", "ekspres yurtiçi nakliye"],
+    eyebrow: "İzmir ve Manisa çıkışlı Türkiye geneli acil taşıma",
+    title: "İzmir ve Manisa Çıkışlı Ertesi Gün Acil Nakliye",
+    lead: "REX’in İzmir ve Manisa operasyon gücüyle zaman kritik ticari yükleri Türkiye genelindeki teslim noktalarına planlıyoruz. Özellikle cuma günü hazır olan gönderilerde ertesi gün teslim hedefini; uygun araç, teyitli adres ve gerçek zaman penceresiyle önceliklendiriyoruz.",
+    seoTitle: "İzmir ve Manisa Ertesi Gün Acil Nakliye | REX",
+    seoDescription: "İzmir ve Manisa’dan Türkiye geneline ertesi gün teslim hedefli acil nakliye. Cuma alım, cumartesi teslim ve zaman kritik ticari yük çözümleri.",
+    keywords: ["İzmir acil nakliye", "Manisa acil nakliye", "İzmir ertesi gün teslimat", "Manisa ertesi gün nakliye", "İzmir İstanbul acil nakliye", "Manisa İstanbul acil nakliye", "Türkiye geneli acil nakliye", "cuma alım cumartesi teslim", "cumartesi yük teslimatı", "acil parsiyel yük", "ekspres yurtiçi nakliye"],
     highlights: [
-      { title: "Cuma Planı", text: "Kapanış saatinden önce alınan hazır yük için gerçekçi hafta sonu rota kontrolü" },
-      { title: "Ege Hattı Deneyimi", text: "İstanbul’dan İzmir ve Manisa varışlı zaman kritik ticari yük organizasyonu" },
-      { title: "Açık ve Teyitli Teslim", text: "Cumartesi yük kabul eden alıcı, depo veya fabrika ile zaman penceresi doğrulaması" },
+      { title: "İzmir ve Manisa Önceliği", text: "Ege’deki çıkış noktalarından hızlı araç ve rota organizasyonu" },
+      { title: "Ertesi Gün Teslim Hedefi", text: "Hazır yük ve açık alıcı teyidiyle bir sonraki gün teslimat planı" },
+      { title: "Türkiye Geneli Erişim", text: "İstanbul ve Ankara başta olmak üzere uygun rotalarda şehirler arası acil transfer" },
     ],
     sections: [
+      {
+        title: "İzmir ve Manisa’dan ertesi gün Türkiye geneli teslimat",
+        paragraphs: [
+          "İzmir ve Manisa’daki üretim tesisleri, organize sanayi bölgeleri, depolar ve tedarikçiler için acil taşıma yalnızca bir araç bulma işi değildir. Yükün hazır olma saati, şehirler arası mesafe, uygun araç kapasitesi ve alıcının kabul penceresi birlikte planlandığında zaman kritik gönderi ertesi gün teslim hedefine göre yola çıkarılabilir.",
+          "Özellikle İzmir ve Manisa’dan İstanbul, Ankara, Bursa, Kocaeli, Eskişehir ve diğer uygun varış noktalarına cuma alım–cumartesi teslim seçeneğini operasyon uygunluğuna göre değerlendiriyoruz. Aynı yaklaşım haftanın diğer günlerinde de üretimi, montajı, müşteri teslimini veya ihracat bağlantısını bekleten yükler için uygulanır.",
+        ],
+        bullets: ["İzmir ve Manisa’dan İstanbul’a acil yük", "Ege’den Ankara ve İç Anadolu’ya hızlı transfer", "Üretim, bakım ve montajı bekleyen kritik parça", "İhracat deposu veya ana hat çıkışına yetişecek yük"],
+      },
       {
         title: "Hafta içi maliyet, hafta sonu fayda odaklı karar",
         paragraphs: [
@@ -160,9 +168,9 @@ export const marketingPages: Record<string, MarketingPageData> = {
         bullets: ["Üretimi bekleten yedek parça ve sarf malzemesi", "Ambar çıkışına yetişmeyen paletli ticari yük", "Cumartesi açık fabrika, depo ve şube teslimatı", "İhracat deposunun son kabulüne yetişecek besleme"],
       },
       {
-        title: "Cuma İstanbul’dan alım, cumartesi İzmir veya Manisa teslim",
+        title: "İstanbul ve Türkiye’nin diğer illerinden acil taşıma",
         paragraphs: [
-          "İstanbul Avrupa veya Anadolu yakasında cuma günü hazır olan uygun yükler için İzmir ve Manisa yönünde doğrudan ya da kontrollü hızlı transfer planlanabilir. Alım saati, aracın sahaya giriş koşulu, cuma trafiği, yükleme süresi ve cumartesi varış adresinin kabul penceresi birlikte doğrulanır.",
+          "İzmir ve Manisa önceliğimizin yanında İstanbul, Ankara ve Türkiye’nin diğer illerindeki çıkış noktalarından da acil taşıma planlıyoruz. İstanbul’dan İzmir veya Manisa’ya, Ankara’dan Ege’ye ya da şehirler arasında farklı yönlerde doğrudan ve kontrollü hızlı transfer seçenekleri değerlendirilebilir.",
           "Bu hizmet sabit ve koşulsuz bir teslim garantisi değildir. Yükün zamanında hazır olmaması, resmî veya özel saha çıkışının gecikmesi, yol-hava koşulları ya da alıcının kapalı olması planı etkileyebilir. Operasyon teyidi verildiğinde paylaşacağımız süre, gerçek adres ve zaman penceresine dayanır.",
         ],
       },
@@ -178,7 +186,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
         title: "Tek seferlik acilden düzenli hızlı hatta",
         paragraphs: [
           "Aynı depolar, tedarikçiler veya şehirler arasında tekrar eden acil talepler; adres, irtibat ve kabul saatleri kaydedilerek daha hızlı planlanabilir. Böylece her cuma aynı operasyon yeniden tarif edilmez, yalnızca o haftanın yük ve zaman bilgisi güncellenir.",
-          "İstanbul–İzmir–Manisa odağının yanında Ankara ve Türkiye’nin diğer illeri için de çift yönlü hızlı transfer değerlendirilir. Uygun çözüm; mesafe, hazır olma saati, yük hacmi, hafta sonu kabulü ve mevcut araç kapasitesine göre belirlenir.",
+          "İzmir ve Manisa merkezli operasyonun yanında İstanbul, Ankara ve Türkiye’nin diğer illeri için de çift yönlü hızlı transfer değerlendirilir. Uygun çözüm; mesafe, hazır olma saati, yük hacmi, hafta sonu kabulü ve mevcut araç kapasitesine göre belirlenir.",
         ],
       },
     ],
@@ -189,11 +197,12 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { title: "Canlı operasyon", text: "Araç hareketi izlenir; teslim alan bilgisi ve evrakı kayda alınır." },
     ],
     faq: [
-      { question: "Cuma alınan yük cumartesi teslim edilir mi?", answer: "İstanbul–İzmir ve İstanbul–Manisa başta olmak üzere; yükün hazır olma saati, adresler, araç uygunluğu, yol koşulları ve alıcının cumartesi kabulü teyit edilirse planlanabilir. Kesin taahhüt operasyon onayından sonra paylaşılır." },
+      { question: "İzmir veya Manisa’dan alınan yük ertesi gün teslim edilir mi?", answer: "Yükün hazır olma saati, çıkış ve varış adresleri, araç uygunluğu, yol koşulları ve alıcının kabul penceresi uygunsa ertesi gün teslim hedefiyle planlanabilir. Kesin süre ve operasyon taahhüdü yük bilgileri doğrulandıktan sonra paylaşılır." },
+      { question: "Cuma alınan yük cumartesi teslim edilir mi?", answer: "İzmir ve Manisa çıkışları öncelikli olmak üzere; yükün cuma günü zamanında hazır olması, uygun araç bulunması ve alıcının cumartesi kabulü teyit edilirse planlanabilir. Kesin taahhüt operasyon onayından sonra paylaşılır." },
       { question: "Hafta sonu parsiyel taşıma yapılır mı?", answer: "Standart parsiyel/ambar çıkışları hafta sonu sınırlı olabilir. Yük ve rota uygunsa mevcut hızlı hat, ekspres araç veya doğrudan taşıma seçenekleri karşılaştırılır." },
       { question: "Cumartesi teslimat için alıcının açık olması gerekir mi?", answer: "Evet. Teslim adresi, yetkili kişi, telefon ve kabul saatinin önceden teyit edilmesi gerekir. Teyitsiz adrese hafta sonu araç yönlendirilmesi bekleme ve ikinci teslimat maliyeti doğurabilir." },
       { question: "Hafta sonu acil nakliye fiyatı nasıl belirlenir?", answer: "Rota, yük ölçüsü ve ağırlığı, araç türü, alım saati, teslim penceresi, saha bekleme riski ve dönüş kapasitesine göre belirlenir. Yalnızca kilometre değil, tüm operasyon koşulları değerlendirilir." },
-      { question: "İzmir veya Manisa’dan İstanbul’a ters yönlü yük alınır mı?", answer: "Evet. Uygun yük, adres, tarih ve araç koşullarında İzmir/Manisa çıkışlı İstanbul varışlı veya İstanbul’daki ihracat depolarına teslim edilecek yükler de planlanabilir." },
+      { question: "İstanbul çıkışlı acil yük de taşıyor musunuz?", answer: "Evet. İzmir ve Manisa operasyon odağımızın yanında İstanbul, Ankara ve Türkiye’nin diğer illerinden uygun varış noktalarına acil taşıma planlanabilir." },
     ],
     related: ["gumruk-antrepo-yurtici-transfer", "yurtici-parsiyel-tasimacilik", "komple-tasimacilik", "minivan-express-tasimacilik"],
   },
