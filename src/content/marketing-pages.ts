@@ -62,7 +62,131 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Parsiyel gönderiyi nasıl takip ederim?", answer: "Oluşturulan takip numarasıyla web sitesindeki kargo takip alanından güncel sevkiyat durumunu görüntüleyebilirsiniz." },
       { question: "Fiyat nasıl hesaplanır?", answer: "Fiyat; çıkış ve varış noktası, palet/koli adedi, ölçü, ağırlık, yük niteliği ve teslimat koşullarına göre hesaplanır." },
     ],
-    related: ["komple-tasimacilik", "express-kargo", "depolama"],
+    related: ["gumruk-antrepo-yurtici-transfer", "hafta-sonu-acil-nakliye", "komple-tasimacilik", "depolama"],
+  },
+  "gumruk-antrepo-yurtici-transfer": {
+    slug: "gumruk-antrepo-yurtici-transfer",
+    kind: "service",
+    icon: "warehouse",
+    eyebrow: "İstanbul çıkışlı Türkiye geneli bağlantı",
+    title: "Gümrük Sahası ve Antrepodan Yurtiçi Hızlı Transfer",
+    lead: "İthalat yükünüz teslim alınabilir hâle geldiğinde Ambarlı, Muratbey–Çatalca, Erenköy ve çevre antrepolardan alıyor; başta İzmir, Manisa ve Ankara olmak üzere Türkiye genelindeki adreslere kontrollü bir taşıma planı kuruyoruz.",
+    seoTitle: "Antrepodan Yük Alma ve Yurtiçi Transfer | REX",
+    seoDescription: "Ambarlı, Çatalca-Muratbey, Büyükçekmece ve Erenköy antrepolarından İzmir, Manisa, Ankara ve Türkiye geneline hızlı yük transferi. REX'ten teklif alın.",
+    keywords: ["antrepodan yük alma", "gümrükten yük alma nakliye", "Ambarlı limanı nakliye", "Çatalca antrepo nakliye", "Muratbey gümrük nakliye", "Erenköy gümrük nakliye", "Büyükçekmece antrepo nakliye", "İstanbul İzmir yük transferi"],
+    highlights: [
+      { title: "Doğru Sahadan Alım", text: "Liman, gümrük sahası veya antrepo giriş şartlarına göre araç ve randevu planı" },
+      { title: "Ege ve Ankara Önceliği", text: "İzmir, Manisa ve Ankara başta olmak üzere Türkiye geneli varış organizasyonu" },
+      { title: "Tek Operasyon Kaydı", text: "Alım teyidinden teslim evrakına kadar izlenebilir sevkiyat akışı" },
+    ],
+    sections: [
+      {
+        title: "İstanbul’da hangi gümrük ve antrepo bölgelerinden yük alınır?",
+        paragraphs: [
+          "İstanbul’daki ithalat yükleri taşıma türüne ve bağlı bulunduğu idareye göre farklı sahalara iner. Deniz yolu yüklerinde Ambarlı Limanı ve çevresindeki Beylikdüzü–Esenyurt–Büyükçekmece antrepo hattı; karayolu yüklerinde Muratbey Gümrük Müdürlüğü ile Çatalca–Hadımköy çevresindeki antrepolar; Anadolu yakasında ise Erenköy Gümrük Müdürlüğüne bağlı sahalar öne çıkar.",
+          "Büyükçekmece ve Çatalca ifadeleri çoğu zaman sahayı tarif eden coğrafi adlardır. Doğru araç gönderimi için yalnızca bölge adı değil; antrepo unvanı, açık adres, yük referansı, teslim emri durumu ve araç kabul saati birlikte teyit edilmelidir. Hava, posta veya farklı liman hareketlerinde İstanbul Havalimanı, AHL Kargo, Haydarpaşa ya da Pendik bağlantısı ayrıca değerlendirilir.",
+        ],
+        bullets: ["Ambarlı Limanı ve Ambarlı bağlantılı antrepolar", "Muratbey–Çatalca ve Hadımköy depo hattı", "Erenköy bağlantılı Anadolu yakası antrepoları", "Beylikdüzü, Esenyurt ve Büyükçekmece depo koridoru"],
+      },
+      {
+        title: "Gümrük işlemi değil, serbest kalan yükün profesyonel transferi",
+        paragraphs: [
+          "REX Lojistik’in bu hizmetteki görevi gümrük müşavirliği veya ithalat işlemi yürütmek değildir. Eşyanın yetkili müşaviriniz ve ilgili işletme tarafından teslim edilebilir duruma getirilmesinden sonra; araç girişini, yük alımını, yurtiçi rotayı ve son teslimatı koordine ederiz.",
+          "Araç sahaya gelmeden önce teslim emri, ordino veya işletmenin talep ettiği belge setinin hazır olması; gümrük ve antrepo mesaisinin, randevunun, yükleme ekipmanının ve varsa araç/sürücü bildirimlerinin yetkili taraflarca tamamlanması gerekir. Bu ön kontrol, boş beklemeyi ve ikinci araç hareketi riskini azaltır.",
+        ],
+      },
+      {
+        title: "İstanbul’dan İzmir, Manisa, Ankara ve Türkiye geneline",
+        paragraphs: [
+          "İthalat yükünün limandan veya antrepodan çıkması işin sonu değil, yurtiçi tedarik zincirinin başlangıcıdır. Paletli ürün, makine parçası, üretim girdisi veya kolili ticari yük; varış adresinin kabul saatine ve teslim önceliğine göre parsiyel, komple araç ya da zaman kritik doğrudan transfer modeliyle eşleştirilir.",
+          "İzmir ve Manisa’daki operasyon varlığımız, İstanbul–Ege hattındaki depo, fabrika ve müşteri teslimatlarını yakından yönetmemizi sağlar. Ankara ve diğer iller için de yükün hacmi, ağırlığı, hazır olma saati ve teslim penceresi üzerinden uygulanabilir plan kurulur.",
+        ],
+        bullets: ["Antrepodan fabrikaya doğrudan sevk", "Liman çıkışlı palet ve kolili ticari yük", "Parsiyel, komple veya acil araç karşılaştırması", "Teslim alan ve teslim evrakı kaydı"],
+      },
+      {
+        title: "İhracat depolarına ters yönlü besleme",
+        paragraphs: [
+          "Aynı ağ ters yönde de çalışır. İzmir, Manisa, Ankara ve Türkiye’nin farklı şehirlerinden alınan ihracat yükleri; İstanbul Avrupa yakasındaki uluslararası nakliye depolarına, konsolidasyon merkezlerine veya bildirilen antrepo adresine planlı şekilde ulaştırılabilir.",
+          "Parsiyel ihracat yükünde kritik nokta yalnızca İstanbul’a varmak değil, ana hat aracının yük kabul kapanışından önce doğru depo ve referansa teslim etmektir. Depo adı, açık adres, rezervasyon veya dosya numarası, son kabul saati ve yükün etiket bilgisi teklif aşamasında paylaşılırsa plan daha sağlıklı kurulur.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Sahayı doğrulama", text: "Antrepo/liman adı, açık adres, referans ve araç kabul koşulları alınır." },
+      { title: "Hazır olma teyidi", text: "Yetkili taraflardan yükün teslim alınabilir olduğu ve zaman penceresi teyit edilir." },
+      { title: "Araç ve rota", text: "Hacim, ağırlık ve teslim önceliğine göre uygun taşıma modeli planlanır." },
+      { title: "Teslim kaydı", text: "Yük varış adresine ulaştırılır, teslim bilgisi ve evrakı kayda alınır." },
+    ],
+    faq: [
+      { question: "Antrepodan yük alabilmek için hangi bilgiler gerekir?", answer: "Antrepo veya saha unvanı, açık adres, yük/konşimento referansı, yetkili kişi, yükün teslim edilebilirlik teyidi, araç kabul saati, palet-koli adedi, ölçü, brüt ağırlık ve varış adresi gerekir." },
+      { question: "REX Lojistik gümrükleme işlemi yapıyor mu?", answer: "Hayır. Gümrükleme ve resmî ithalat/ihracat işlemleri müşterinin yetkili gümrük müşaviri ve ilgili taraflarca yürütülür. REX, eşya teslim alınabilir hâle geldikten sonraki araç, alım, yurtiçi taşıma ve teslim koordinasyonunu sağlar." },
+      { question: "Ambarlı veya Çatalca’dan aynı gün yük alınabilir mi?", answer: "Yükün serbest ve teslim edilebilir durumda olması, saha randevusu, araç kabul saati ve uygun araç bulunması hâlinde aynı gün alım değerlendirilebilir. Kesin plan saha ve operasyon teyidinden sonra verilir." },
+      { question: "Büyükçekmece Gümrüğü ayrı bir gümrük müdürlüğü mü?", answer: "İstanbul Bölge Müdürlüğünün güncel bağlantı idareleri listesinde Büyükçekmece adıyla ayrı bir gümrük müdürlüğü yer almıyor. Sektörde bu ifade çoğunlukla Ambarlı, Beylikdüzü, Esenyurt ve Büyükçekmece çevresindeki liman/antrepo koridorunu tarif etmek için kullanılıyor." },
+      { question: "İhracat yükünü İstanbul’daki nakliye deposuna teslim eder misiniz?", answer: "Evet. Açık depo adresi, yük referansı, son kabul saati ve teslim şartları verildiğinde Türkiye’nin uygun çıkış noktalarından İstanbul’daki ihracat/konsolidasyon deposuna taşıma planlanabilir." },
+    ],
+    related: ["hafta-sonu-acil-nakliye", "yurtici-parsiyel-tasimacilik", "uluslararasi-karayolu-parsiyel-tasimacilik", "komple-tasimacilik"],
+  },
+  "hafta-sonu-acil-nakliye": {
+    slug: "hafta-sonu-acil-nakliye",
+    kind: "service",
+    icon: "zap",
+    eyebrow: "Mesai bittiğinde duran değil, doğru planlanan yükler",
+    title: "Hafta Sonu Acil Nakliye ve Cuma–Cumartesi Teslimat",
+    lead: "Hafta içi ambar çıkışına yetişmeyen zaman kritik ticari yükleri; uygun araç, açık teslimat adresi ve teyitli zaman penceresiyle planlıyoruz. Özellikle İstanbul’dan İzmir ve Manisa’ya cuma alım–cumartesi teslim seçeneğini operasyon uygunluğuna göre değerlendiriyoruz.",
+    seoTitle: "Hafta Sonu Acil Nakliye İstanbul İzmir Manisa | REX",
+    seoDescription: "Cuma alım cumartesi teslim, hafta sonu acil nakliye ve İstanbul-İzmir-Manisa hızlı yük transferi. Uygunluk teyidiyle REX'ten hızlı taşıma planı alın.",
+    keywords: ["hafta sonu acil nakliye", "cuma alım cumartesi teslim", "İstanbul İzmir acil nakliye", "İstanbul Manisa hafta sonu nakliye", "cumartesi yük teslimatı", "acil parsiyel yük", "hafta sonu ambar alternatifi", "ekspres yurtiçi nakliye"],
+    highlights: [
+      { title: "Cuma Planı", text: "Kapanış saatinden önce alınan hazır yük için gerçekçi hafta sonu rota kontrolü" },
+      { title: "Ege Hattı Deneyimi", text: "İstanbul’dan İzmir ve Manisa varışlı zaman kritik ticari yük organizasyonu" },
+      { title: "Açık ve Teyitli Teslim", text: "Cumartesi yük kabul eden alıcı, depo veya fabrika ile zaman penceresi doğrulaması" },
+    ],
+    sections: [
+      {
+        title: "Hafta içi maliyet, hafta sonu fayda odaklı karar",
+        paragraphs: [
+          "Planlı ve teslim tarihi esnek yüklerde standart ambar veya parsiyel çıkış çoğu zaman maliyet avantajı sağlar. Ancak üretim parçası, müşteri taahhüdü, montaj programı ya da ihracat deposu kapanışı bekleyemiyorsa karar yalnızca kilometre fiyatına göre verilemez; gecikmenin işletmeye maliyeti de hesaba katılır.",
+          "REX, acil talebi otomatik olarak en büyük araca yönlendirmez. Yükün hacmini, ağırlığını, hazır olma saatini, teslim adresinin cumartesi kabul durumunu ve alternatif çıkışları karşılaştırır. Amaç, gereken hızı gereksiz kapasite maliyeti oluşturmadan sağlamaktır.",
+        ],
+        bullets: ["Üretimi bekleten yedek parça ve sarf malzemesi", "Ambar çıkışına yetişmeyen paletli ticari yük", "Cumartesi açık fabrika, depo ve şube teslimatı", "İhracat deposunun son kabulüne yetişecek besleme"],
+      },
+      {
+        title: "Cuma İstanbul’dan alım, cumartesi İzmir veya Manisa teslim",
+        paragraphs: [
+          "İstanbul Avrupa veya Anadolu yakasında cuma günü hazır olan uygun yükler için İzmir ve Manisa yönünde doğrudan ya da kontrollü hızlı transfer planlanabilir. Alım saati, aracın sahaya giriş koşulu, cuma trafiği, yükleme süresi ve cumartesi varış adresinin kabul penceresi birlikte doğrulanır.",
+          "Bu hizmet sabit ve koşulsuz bir teslim garantisi değildir. Yükün zamanında hazır olmaması, resmî veya özel saha çıkışının gecikmesi, yol-hava koşulları ya da alıcının kapalı olması planı etkileyebilir. Operasyon teyidi verildiğinde paylaşacağımız süre, gerçek adres ve zaman penceresine dayanır.",
+        ],
+      },
+      {
+        title: "Hafta sonu acil taşımanın kontrol listesi",
+        paragraphs: [
+          "Hızlı taşımanın kalitesi, aracın hızlı hareket etmesinden önce doğru bilginin hızlı toplanmasına bağlıdır. Açık alım ve teslim adresi, saha yetkilisi, telefon, yükün ambalajı, adet ve ölçüler, toplam brüt ağırlık, yükleme ekipmanı ve en geç teslim zamanı tek mesajda paylaşılmalıdır.",
+          "Antrepo, liman veya ihracat deposu bağlantısı varsa mesai, randevu ve belge durumu ayrıca teyit edilir. REX bu alanlardaki resmî işlemleri yürütmez; hazır ve teslim edilebilir yükün taşıma organizasyonunu yönetir.",
+        ],
+        bullets: ["Yük hazır olma saati", "Alım ve teslim yetkilisinin telefonu", "Ölçü, adet, kilogram ve istif bilgisi", "Cumartesi kabul teyidi ve son teslim saati"],
+      },
+      {
+        title: "Tek seferlik acilden düzenli hızlı hatta",
+        paragraphs: [
+          "Aynı depolar, tedarikçiler veya şehirler arasında tekrar eden acil talepler; adres, irtibat ve kabul saatleri kaydedilerek daha hızlı planlanabilir. Böylece her cuma aynı operasyon yeniden tarif edilmez, yalnızca o haftanın yük ve zaman bilgisi güncellenir.",
+          "İstanbul–İzmir–Manisa odağının yanında Ankara ve Türkiye’nin diğer illeri için de çift yönlü hızlı transfer değerlendirilir. Uygun çözüm; mesafe, hazır olma saati, yük hacmi, hafta sonu kabulü ve mevcut araç kapasitesine göre belirlenir.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Acil ihtiyacı tanımlama", text: "Hazır olma ve en geç teslim zamanı, adres ve yük bilgisi alınır." },
+      { title: "Açık kapı teyidi", text: "Alım ve teslim noktalarının cuma/cumartesi çalışma ve kabul durumu doğrulanır." },
+      { title: "Hız–maliyet seçimi", text: "Uygun parsiyel bağlantı, doğrudan araç veya ekspres çözüm karşılaştırılır." },
+      { title: "Canlı operasyon", text: "Araç hareketi izlenir; teslim alan bilgisi ve evrakı kayda alınır." },
+    ],
+    faq: [
+      { question: "Cuma alınan yük cumartesi teslim edilir mi?", answer: "İstanbul–İzmir ve İstanbul–Manisa başta olmak üzere; yükün hazır olma saati, adresler, araç uygunluğu, yol koşulları ve alıcının cumartesi kabulü teyit edilirse planlanabilir. Kesin taahhüt operasyon onayından sonra paylaşılır." },
+      { question: "Hafta sonu parsiyel taşıma yapılır mı?", answer: "Standart parsiyel/ambar çıkışları hafta sonu sınırlı olabilir. Yük ve rota uygunsa mevcut hızlı hat, ekspres araç veya doğrudan taşıma seçenekleri karşılaştırılır." },
+      { question: "Cumartesi teslimat için alıcının açık olması gerekir mi?", answer: "Evet. Teslim adresi, yetkili kişi, telefon ve kabul saatinin önceden teyit edilmesi gerekir. Teyitsiz adrese hafta sonu araç yönlendirilmesi bekleme ve ikinci teslimat maliyeti doğurabilir." },
+      { question: "Hafta sonu acil nakliye fiyatı nasıl belirlenir?", answer: "Rota, yük ölçüsü ve ağırlığı, araç türü, alım saati, teslim penceresi, saha bekleme riski ve dönüş kapasitesine göre belirlenir. Yalnızca kilometre değil, tüm operasyon koşulları değerlendirilir." },
+      { question: "İzmir veya Manisa’dan İstanbul’a ters yönlü yük alınır mı?", answer: "Evet. Uygun yük, adres, tarih ve araç koşullarında İzmir/Manisa çıkışlı İstanbul varışlı veya İstanbul’daki ihracat depolarına teslim edilecek yükler de planlanabilir." },
+    ],
+    related: ["gumruk-antrepo-yurtici-transfer", "yurtici-parsiyel-tasimacilik", "komple-tasimacilik", "minivan-express-tasimacilik"],
   },
   "komple-tasimacilik": {
     slug: "komple-tasimacilik",

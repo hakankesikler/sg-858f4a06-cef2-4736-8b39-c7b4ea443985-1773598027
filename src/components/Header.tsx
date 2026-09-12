@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 const serviceLinks = [
   { href: "/yurtici-parsiyel-tasimacilik", label: "Yurtiçi Parsiyel Taşımacılık" },
+  { href: "/gumruk-antrepo-yurtici-transfer", label: "Antrepo ve Liman Transferi" },
+  { href: "/hafta-sonu-acil-nakliye", label: "Hafta Sonu Acil Nakliye" },
   { href: "/komple-tasimacilik", label: "Komple Taşımacılık" },
   { href: "/uluslararasi-karayolu-tasimaciligi", label: "Uluslararası Karayolu" },
   { href: "/uluslararasi-karayolu-parsiyel-tasimacilik", label: "Uluslararası Karayolu Parsiyel" },

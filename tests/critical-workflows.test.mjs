@@ -1036,7 +1036,7 @@ test("public logistics services have dedicated SEO pages and internal navigation
   assert.doesNotMatch(sitemap, /\/login<\/loc>/);
 });
 
-test("public SEO copy does not market customs-clearance services", async () => {
+test("public SEO copy keeps customs operations outside REX's service claim", async () => {
   const [content, privacy, kvkk, terms, sitemap] = await Promise.all([
     read("src/content/marketing-pages.ts"),
     read("src/pages/gizlilik-politikasi.tsx"),
@@ -1044,9 +1044,40 @@ test("public SEO copy does not market customs-clearance services", async () => {
     read("src/pages/kullanim-kosullari.tsx"),
     read("public/sitemap.xml"),
   ]);
-  assert.doesNotMatch(content, /gümrük/i);
+  assert.match(content, /Gümrük Sahası ve Antrepodan Yurtiçi Hızlı Transfer/);
+  assert.match(content, /REX Lojistik’in bu hizmetteki görevi gümrük müşavirliği veya ithalat işlemi yürütmek değildir/);
+  assert.match(content, /eşya teslim alınabilir hâle geldikten sonraki araç, alım, yurtiçi taşıma ve teslim koordinasyonunu sağlar/);
+  assert.doesNotMatch(content, /gümrükleme hizmeti (sunuyoruz|veriyoruz)/i);
   for (const legalPage of [privacy, kvkk, terms]) assert.match(legalPage, /noIndex/);
   assert.doesNotMatch(sitemap, /gizlilik-politikasi|kullanim-kosullari|kvkk-aydinlatma-metni/);
+});
+
+test("customs-area and weekend transfer pages provide truthful searchable decision paths", async () => {
+  const [customsRoute, weekendRoute, content, planner, header, footer, sitemap] = await Promise.all([
+    read("src/pages/gumruk-antrepo-yurtici-transfer.tsx"),
+    read("src/pages/hafta-sonu-acil-nakliye.tsx"),
+    read("src/content/marketing-pages.ts"),
+    read("src/components/RapidTransferPlanner.tsx"),
+    read("src/components/Header.tsx"),
+    read("src/components/Footer.tsx"),
+    read("public/sitemap.xml"),
+  ]);
+
+  assert.match(customsRoute, /marketingPages\["gumruk-antrepo-yurtici-transfer"\]/);
+  assert.match(customsRoute, /RapidTransferPlanner variant="customs"/);
+  assert.match(weekendRoute, /marketingPages\["hafta-sonu-acil-nakliye"\]/);
+  assert.match(weekendRoute, /RapidTransferPlanner variant="weekend"/);
+  assert.match(content, /Ambarlı Limanı ve çevresindeki Beylikdüzü–Esenyurt–Büyükçekmece antrepo hattı/);
+  assert.match(content, /Muratbey Gümrük Müdürlüğü ile Çatalca–Hadımköy/);
+  assert.match(content, /cuma alım–cumartesi teslim seçeneğini operasyon uygunluğuna göre değerlendiriyoruz/);
+  assert.match(content, /Bu hizmet sabit ve koşulsuz bir teslim garantisi değildir/);
+  assert.match(planner, /5 bilgide operasyon ön kontrolü/);
+  assert.match(planner, /Operasyon özetini WhatsApp’tan gönder/);
+  assert.match(header, /\/gumruk-antrepo-yurtici-transfer/);
+  assert.match(header, /\/hafta-sonu-acil-nakliye/);
+  assert.doesNotMatch(footer, /gumruk-antrepo-yurtici-transfer|hafta-sonu-acil-nakliye/);
+  assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/gumruk-antrepo-yurtici-transfer/);
+  assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/hafta-sonu-acil-nakliye/);
 });
 
 test("international road freight pages form a unique SEO and quote-preparation hub", async () => {
