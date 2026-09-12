@@ -116,7 +116,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
     icon: "globe",
     eyebrow: "Türkiye–Avrupa karayolu ağı",
     title: "Uluslararası Karayolu Taşımacılığı",
-    lead: "Türkiye ile Avrupa arasındaki ticari yüklerinizi; parsiyel, komple araç ve zaman hassasiyetli seçenekleri aynı plan içinde karşılaştırarak yönetiyoruz. Doğru kapasiteyi seçer, gereksiz bekleme ve araç maliyetini daha teklif aşamasında ayıklarız.",
+    lead: "Türkiye ile Avrupa arasındaki ticari yüklerinizi; parsiyel, komple araç ve zaman kritik minivan express seçeneklerini aynı plan içinde karşılaştırarak yönetiyoruz. Doğru kapasiteyi seçer, gereksiz bekleme ve araç maliyetini daha teklif aşamasında ayıklarız.",
     seoTitle: "Uluslararası Karayolu Taşımacılığı | REX Lojistik",
     seoDescription: "Türkiye Avrupa uluslararası karayolu taşımacılığı; parsiyel LTL, komple FTL ve kapıdan kapıya operasyon seçenekleri. REX Lojistik'ten karşılaştırmalı teklif alın.",
     keywords: ["uluslararası karayolu taşımacılığı", "Türkiye Avrupa nakliye", "Avrupa karayolu taşımacılığı", "ihracat taşımacılığı", "ithalat taşımacılığı", "uluslararası parsiyel", "LTL FTL taşımacılık"],
@@ -162,7 +162,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Uluslararası karayolu fiyatı nasıl hesaplanır?", answer: "Fiyat; rota, kullanılan araç alanı, toplam ağırlık, yükleme ve teslim kapsamı, ürün niteliği, hazır olma tarihi ve özel gereksinimlere göre hesaplanır." },
       { question: "REX Lojistik hangi kapsamı yönetir?", answer: "REX; uygun taşıma modelinin seçimini, araç ve rota planını, taşıma evrakı koordinasyonunu ve teslim takibini yönetir. İthalat ve ihracata ilişkin resmî işlemler müşterinin kendi yetkili danışmanları tarafından yürütülür." },
     ],
-    related: ["uluslararasi-karayolu-parsiyel-tasimacilik", "komple-tasimacilik", "hava-kargo"],
+    related: ["minivan-express-tasimacilik", "uluslararasi-karayolu-parsiyel-tasimacilik", "komple-tasimacilik", "hava-kargo"],
   },
   "uluslararasi-karayolu-parsiyel-tasimacilik": {
     slug: "uluslararasi-karayolu-parsiyel-tasimacilik",
@@ -224,7 +224,77 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { question: "Avrupa’dan Türkiye’ye parsiyel yük alınır mı?", answer: "Uygun Avrupa adreslerinden Türkiye’ye parsiyel yük alımı organize edilebilir. Ülke, posta kodu, ürün ve kapasite bilgileriyle hat uygunluğu kontrol edilir." },
       { question: "Parsiyel mi komple araç mı daha avantajlı?", answer: "Düşük ve orta hacimde parsiyel, yüksek hacim veya araca özel program gerektiğinde komple araç daha uygun olabilir. Karar yalnızca fiyatla değil kapıdan kapıya süre, aktarma ve yük niteliğiyle birlikte verilmelidir." },
     ],
-    related: ["uluslararasi-karayolu-tasimaciligi", "komple-tasimacilik", "denizyolu-parsiyel-tasimacilik"],
+    related: ["minivan-express-tasimacilik", "uluslararasi-karayolu-tasimaciligi", "komple-tasimacilik"],
+  },
+  "minivan-express-tasimacilik": {
+    slug: "minivan-express-tasimacilik",
+    kind: "service",
+    icon: "zap",
+    eyebrow: "Türkiye–Avrupa zaman kritik karayolu",
+    title: "Türkiye–Avrupa Minivan Express Taşımacılık",
+    lead: "Üretimin, montajın veya teslim programının bekleyemediği düşük ve orta hacimli ticari yükler için araca özel, doğrudan ve çift yönlü minivan taşımacılığı planlıyoruz. Yükünüz hazırsa rota da hazır olsun.",
+    seoTitle: "Minivan Express Taşımacılık Türkiye Avrupa | REX",
+    seoDescription: "Türkiye Avrupa minivan express taşımacılık: zaman kritik ticari yükler için çift yönlü, araca özel ve kapıdan kapıya rota planı. REX'ten teklif alın.",
+    keywords: ["minivan express taşımacılık", "Türkiye Avrupa minivan", "Avrupa minivan nakliye", "express minivan", "speedy van taşımacılık", "acil karayolu taşımacılığı", "kapıdan kapıya minivan", "Avrupa ekspres nakliye"],
+    highlights: [
+      { title: "Yükünüze Ayrılmış Araç", text: "Konsolidasyon çıkışını beklemeden, uygunluk teyidi sonrası sevkiyata özel plan" },
+      { title: "Çift Yönlü Avrupa Hattı", text: "Türkiye’den Avrupa’ya, Avrupa’dan Türkiye’ye ve uygun Avrupa içi rotalar" },
+      { title: "Kesintisiz Operasyon Bilgisi", text: "Alım adresinden teslim teyidine kadar tek operasyon kaydı ve tek muhatap" },
+    ],
+    sections: [
+      {
+        title: "Minivan express ne zaman doğru seçimdir?",
+        paragraphs: [
+          "Minivan express; standart parsiyel çıkışını bekleyemeyen, hava kargonun terminal bağlantılarına ihtiyaç duymadan doğrudan adrese ilerlemesi gereken ve komple TIR kapasitesine ihtiyaç duymayan ticari yükler için güçlü bir karayolu modelidir. Araç uygunluk teyidinden sonra sevkiyata ayrılır; alım ve teslim rotası yükün gerçek adreslerine göre kurulur.",
+          "Bu model özellikle üretim hattını bekleten yedek parça, otomotiv ve makine bileşeni, fuar malzemesi, numune, tekstil, elektronik ve zaman penceresi dar proje yüklerinde değerlendirilir. En hızlı görünen seçeneği değil, kapıdan kapıya toplam süreyi koruyan seçeneği seçmek esastır.",
+        ],
+        bullets: ["Acil üretim ve bakım parçaları", "Fuar, lansman ve proje malzemeleri", "Paletli veya kolili ticari yükler", "İthalat ve ihracatta çift yönlü taşıma"],
+      },
+      {
+        title: "Hız, aracın yola çıkmasından önce kazanılır",
+        paragraphs: [
+          "Minivan operasyonunda hız yalnızca aracın sürüş süresi değildir. Açık alım ve teslim adresi, posta kodu, ürün tanımı, ambalajın dış ölçüleri, toplam brüt ağırlık, hazır olma saati ve teslim beklentisi aynı anda netleştiğinde doğru araç daha erken eşleştirilir.",
+          "REX Lojistik rota, kapasite, sürücü planı ve resmî süreçlerin hazır olma durumunu tek tabloda değerlendirir. Böylece yola çıkmaya hazır olmayan bir yük için gerçekçi olmayan süre sözü vermek yerine, operasyonun tamamını hızlandıran eksikler önceden görülür.",
+        ],
+      },
+      {
+        title: "Referans kapasite: kilogram tek başına yeterli değildir",
+        paragraphs: [
+          "Minivan ve panelvanlarda sık karşılaşılan referans aralık 1.300 kg, 15–17 m³ ve 6–7 Euro palete kadar olabilir. Ancak kapı ölçüsü, iç yükseklik, palet yerleşimi, ağırlık dağılımı, sabitleme ihtiyacı ve seçilen aracın ruhsat kapasitesi kesin kabulü değiştirir.",
+          "Bu nedenle sayfadaki ön kontrol yalnızca ilk eşleştirmeyi yapar. Operasyon ekibi ölçüleri aracın gerçek kapasitesiyle doğrular; sınırı aşan yüklerde tenteli minivan, parsiyel, hava kargo veya daha büyük araca özel seçenek aynı teslim hedefi üzerinden karşılaştırılır.",
+        ],
+      },
+      {
+        title: "Aktarma yerine doğrudan rota, belirsizlik yerine görünürlük",
+        paragraphs: [
+          "Uygun dedike minivan planında yük, gereksiz depo beklemesi ve tekrar elleçleme ihtiyacı azaltılarak alım adresinden teslim adresine aynı taşıma planı içinde ilerler. Bu yapı, hassas ve zaman kritik yüklerde temas noktalarını azaltmaya yardımcı olur.",
+          "Sevkiyat oluşturulduğunda operasyon kaydı, sürücü ve araç bilgileri, rota hareketleri ve teslim teyidi REX TYS üzerinden izlenebilir. Müşterinin ihtiyacı yalnızca hızlı bir araç değil; nerede olduğu bilinen, sorumlusu belli ve teslimi doğrulanabilen bir süreçtir.",
+        ],
+      },
+      {
+        title: "Minivan mı, hava kargo mu, parsiyel mi?",
+        paragraphs: [
+          "Türkiye–Avrupa hattında zaman kritik ve düşük/orta hacimli yük için minivan; kıtalar arası veya uçuş bağlantısının belirleyici olduğu küçük yük için hava kargo; teslim tarihi esnek ve maliyet odağı yüksek yük için parsiyel seçenek öne çıkabilir.",
+          "REX tek bir taşıma modelini her yüke zorlamaz. Rota, hacim, ağırlık, hazır olma zamanı ve teslim hedefi birlikte okunur; hız ile toplam maliyet arasındaki en dengeli seçenek teklif aşamasında görünür hale getirilir.",
+        ],
+      },
+    ],
+    steps: [
+      { title: "Acil ihtiyacı tanıma", text: "Yükün neden zaman kritik olduğu, hazır olma saati ve son teslim hedefi alınır." },
+      { title: "Kapasite ve rota", text: "Dış ölçüler, brüt ağırlık, adres ve araç erişim koşulları doğrulanır." },
+      { title: "Araç ve çıkış teyidi", text: "Uygun araç ile planlanan alım zamanı kesinleştirilerek operasyon başlatılır." },
+      { title: "Takip ve teslim", text: "Rota hareketleri izlenir, teslim bilgisi ve evrakı aynı kayıtta tamamlanır." },
+    ],
+    faq: [
+      { question: "Minivan express taşımacılık nedir?", answer: "Zaman kritik ve komple TIR kapasitesi gerektirmeyen ticari yüklerin, uygunluk teyidinden sonra sevkiyata ayrılan minivan veya panelvanla doğrudan karayolu rotasında taşınmasıdır." },
+      { question: "Türkiye’den hangi Avrupa ülkelerine minivan gönderilebilir?", answer: "Almanya, Benelüks, Fransa, İtalya, Avusturya, İsviçre, Orta Avrupa ve Balkanlar başta olmak üzere uygun Avrupa rotaları değerlendirilebilir. Kesin kapsam alım ve teslim posta kodlarıyla teyit edilir." },
+      { question: "Avrupa’dan Türkiye’ye minivan yük alınır mı?", answer: "Evet, uygun ülke, adres, ürün ve araç koşullarında Avrupa çıkışlı Türkiye varışlı ithalat yükleri için de minivan planlanabilir." },
+      { question: "Minivan kaç palet ve kaç kilogram taşır?", answer: "Sık kullanılan araçlarda 6–7 Euro palet, yaklaşık 15–17 m³ ve 1.300 kg referans alınabilir. Kesin kapasite araç tipi, palet ölçüsü, ağırlık dağılımı ve ruhsat değerine göre değişir." },
+      { question: "Minivan express kaç günde teslim edilir?", answer: "Tahmini süre gerçek alım ve teslim adresi, yükün hazır olma saati, resmî süreçler, sınır geçişleri ve sürüş planına göre belirlenir. Sabit ülke süresi yerine rota teyidinden sonra gerçekçi kapıdan kapıya tahmin paylaşılır." },
+      { question: "Minivan express fiyatı nasıl hesaplanır?", answer: "Fiyat; alım ve teslim adresleri, toplam mesafe, yükün hacim ve ağırlığı, araç tipi, hazır olma zamanı, teslim önceliği ve özel taşıma gereksinimlerine göre hesaplanır." },
+      { question: "Minivan ile hava kargo arasındaki fark nedir?", answer: "Minivan Avrupa hattında yükü doğrudan karayoluyla adrese taşımaya odaklanır. Hava kargoda uçuş, terminal ve kara bağlantıları birlikte planlanır. En uygun model kapıdan kapıya toplam süre ve maliyet karşılaştırmasıyla seçilir." },
+    ],
+    related: ["uluslararasi-karayolu-tasimaciligi", "uluslararasi-karayolu-parsiyel-tasimacilik", "hava-kargo", "komple-tasimacilik"],
   },
   "hava-kargo": {
     slug: "hava-kargo",

@@ -1073,6 +1073,31 @@ test("international road freight pages form a unique SEO and quote-preparation h
   assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/uluslararasi-karayolu-parsiyel-tasimacilik/);
 });
 
+test("minivan express page provides a unique capacity-aware decision flow", async () => {
+  const [route, content, planner, header, footer, sitemap] = await Promise.all([
+    read("src/pages/minivan-express-tasimacilik.tsx"),
+    read("src/content/marketing-pages.ts"),
+    read("src/components/MinivanExpressPlanner.tsx"),
+    read("src/components/Header.tsx"),
+    read("src/components/Footer.tsx"),
+    read("public/sitemap.xml"),
+  ]);
+
+  assert.match(route, /marketingPages\["minivan-express-tasimacilik"\]/);
+  assert.match(route, /MinivanExpressPlanner/);
+  assert.match(content, /title: "Türkiye–Avrupa Minivan Express Taşımacılık"/);
+  assert.match(content, /Minivan mı, hava kargo mu, parsiyel mi\?/);
+  assert.match(content, /1\.300 kg, 15–17 m³ ve 6–7 Euro palet/);
+  assert.match(content, /Kesin olmayan genel süre vaadi|rota teyidinden sonra gerçekçi kapıdan kapıya tahmin/);
+  assert.match(planner, /Minivan uygunluk ve teklif ön kontrolü/);
+  assert.match(planner, /Dedike minivan için güçlü aday/);
+  assert.match(planner, /Minivan teklifini gönder/);
+  assert.match(planner, /Sonuç ön değerlendirmedir/);
+  assert.match(header, /\/minivan-express-tasimacilik/);
+  assert.doesNotMatch(footer, /\/minivan-express-tasimacilik/);
+  assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/minivan-express-tasimacilik/);
+});
+
 test("every public page uses the enlarged REX-only favicon", async () => {
   const [document, notFound] = await Promise.all([
     read("src/pages/_document.tsx"),

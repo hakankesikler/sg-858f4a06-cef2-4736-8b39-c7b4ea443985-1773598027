@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ const serviceLinks = [
   { href: "/komple-tasimacilik", label: "Komple Taşımacılık" },
   { href: "/uluslararasi-karayolu-tasimaciligi", label: "Uluslararası Karayolu" },
   { href: "/uluslararasi-karayolu-parsiyel-tasimacilik", label: "Uluslararası Karayolu Parsiyel" },
+  { href: "/minivan-express-tasimacilik", label: "Minivan Express Taşımacılık" },
   { href: "/hava-kargo", label: "Hava Kargo Taşımacılığı" },
   { href: "/kapidan-kapiya-hava-kargo", label: "Kapıdan Kapıya Hava Kargo" },
   { href: "/turkiye-geneli-hava-kargo-alimi", label: "Türkiye Geneli Hava Kargo Alımı" },
@@ -46,7 +48,7 @@ export function Header() {
         <div className="w-full px-4 sm:px-6">
           <div className="flex items-center justify-between gap-4 py-2">
             <Link href="/" aria-label="REX Lojistik ana sayfa" className="flex-shrink-0">
-              <img src="/rex.png?v=2" alt="REX Lojistik" className="h-[57px] w-auto object-contain sm:h-[77px]" />
+              <Image src="/rex.png" alt="REX Lojistik" width={180} height={77} priority className="h-[57px] w-auto object-contain sm:h-[77px]" />
             </Link>
 
             <nav aria-label="Ana menü" className="hidden items-center gap-5 lg:flex lg:gap-8">
@@ -95,7 +97,7 @@ export function Header() {
       <div className={`fixed bottom-0 right-0 top-0 z-50 w-80 max-w-[85vw] transform bg-white transition-transform duration-300 ease-in-out lg:hidden ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-gray-200 p-4">
-            <Link href="/" onClick={closeMobileMenu} aria-label="REX Lojistik ana sayfa"><img src="/rex.png?v=2" alt="REX Lojistik" className="h-10 w-auto object-contain" /></Link>
+            <Link href="/" onClick={closeMobileMenu} aria-label="REX Lojistik ana sayfa"><Image src="/rex.png" alt="REX Lojistik" width={94} height={40} className="h-10 w-auto object-contain" /></Link>
             <button onClick={closeMobileMenu} className="p-2 text-gray-700 hover:text-orange-500" aria-label="Menüyü kapat"><X className="h-6 w-6" /></button>
           </div>
 
