@@ -33,9 +33,14 @@ const serviceLinks: readonly ServiceLink[] = [
       { href: "/denizyolu-konteyner-tasimaciligi", label: "Konteyner Taşımacılığı (FCL)" },
     ],
   },
-  { href: "/express-kargo", label: "Uluslararası Express Kargo" },
-  { href: "/yurtdisindan-turkiyeye-express-kargo", label: "Yurt Dışından Türkiye'ye Express" },
-  { href: "/turkiyeden-yurtdisina-express-kargo", label: "Türkiye'den Yurt Dışına Express" },
+  {
+    href: "/express-kargo",
+    label: "Uluslararası Express Kargo",
+    children: [
+      { href: "/turkiyeden-yurtdisina-express-kargo", label: "Türkiye'den Yurt Dışına Express" },
+      { href: "/yurtdisindan-turkiyeye-express-kargo", label: "Yurt Dışından Türkiye'ye Express" },
+    ],
+  },
   { href: "/depolama", label: "Depolama Hizmetleri" },
 ];
 

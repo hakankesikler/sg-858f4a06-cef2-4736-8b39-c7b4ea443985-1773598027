@@ -1524,6 +1524,8 @@ test("express cargo hub publishes inbound, outbound and planning resources witho
   assert.match(planner, /wa\.me\/905434010755\?text=/);
   assert.match(planner, /Ön kabul kontrolü gerekli/);
   assert.match(header, /Yurt Dışından Türkiye'ye Express/);
+  assert.match(header, /Türkiye'den Yurt Dışına Express/);
+  assert.match(header, /label: "Uluslararası Express Kargo",\s+children:/);
   assert.doesNotMatch(footer, /Express Kargo Desi Hesaplama/);
   assert.match(content, /related: \["yurtdisindan-turkiyeye-express-kargo", "turkiyeden-yurtdisina-express-kargo", "express-kargo-hacimsel-agirlik-hesaplama", "yurtdisi-kargo-gonderim-rehberi"\]/);
 });
