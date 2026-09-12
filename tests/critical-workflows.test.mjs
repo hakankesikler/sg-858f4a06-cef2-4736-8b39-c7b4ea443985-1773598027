@@ -1085,6 +1085,7 @@ test("customs-area and weekend transfer pages provide truthful searchable decisi
   assert.match(planner, /Operasyon özetini WhatsApp’tan gönder/);
   assert.match(header, /\/gumruk-antrepo-yurtici-transfer/);
   assert.match(header, /\/hafta-sonu-acil-nakliye/);
+  assert.match(header, /label: "Yurtiçi Parsiyel Taşımacılık",\s+children:/);
   assert.doesNotMatch(footer, /gumruk-antrepo-yurtici-transfer|hafta-sonu-acil-nakliye/);
   assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/gumruk-antrepo-yurtici-transfer/);
   assert.match(sitemap, /https:\/\/www\.rexlojistik\.com\/hafta-sonu-acil-nakliye/);
