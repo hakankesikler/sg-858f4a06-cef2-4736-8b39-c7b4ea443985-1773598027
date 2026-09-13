@@ -27,14 +27,14 @@ export function Hero() {
   });
 
   return (
-    <section className="relative isolate flex min-h-[700px] items-center overflow-hidden pt-20 sm:min-h-[660px] sm:pt-24 lg:min-h-[640px]">
-      <picture className="absolute inset-0 -z-20">
+    <section className="relative isolate flex min-h-[700px] items-center overflow-hidden pt-20 sm:min-h-[660px] sm:pt-24 lg:min-h-[640px] 2xl:min-h-[calc(40vw+6rem)]">
+      <picture className="absolute inset-x-0 bottom-0 top-20 -z-20 sm:top-24">
         <source media="(max-width: 639px)" srcSet={mobileImageProps.srcSet} sizes="100vw" />
         <img
           {...desktopImageProps}
           alt={HERO_ALT}
           fetchPriority="high"
-          className="h-full w-full object-cover object-center sm:object-[center_center]"
+          className="h-full w-full object-cover object-top"
         />
       </picture>
 
