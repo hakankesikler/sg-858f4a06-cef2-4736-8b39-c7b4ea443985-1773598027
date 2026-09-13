@@ -1,102 +1,102 @@
 import { Button } from "@/components/ui/button";
-import { MapPin, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { getImageProps } from "next/image";
+
+const HERO_ALT = "REX Lojistik yurtiçi ve uluslararası taşımacılık çözümleri";
 
 export function Hero() {
   const handleQuoteRequest = () => {
     window.dispatchEvent(new Event("rex:open-quote-form"));
   };
 
-  const handleWhatsApp = () => {
-    window.open("https://wa.me/905434010755", "_blank");
-  };
+  const { props: desktopImageProps } = getImageProps({
+    src: "/rex-homepage-hero-desktop.webp",
+    alt: HERO_ALT,
+    width: 1983,
+    height: 793,
+    quality: 84,
+    sizes: "100vw",
+  });
+  const { props: mobileImageProps } = getImageProps({
+    src: "/rex-homepage-hero-mobile.webp",
+    alt: HERO_ALT,
+    width: 900,
+    height: 1599,
+    quality: 82,
+    sizes: "100vw",
+  });
 
   return (
-    <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden pt-20 sm:pt-24">
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src="/hero-warehouse.jpg" 
-          alt="Lojistik Depo" 
-          className="w-full h-full object-cover"
+    <section className="relative isolate flex min-h-[700px] items-center overflow-hidden pt-20 sm:min-h-[660px] sm:pt-24 lg:min-h-[640px]">
+      <picture className="absolute inset-0 -z-20">
+        <source media="(max-width: 639px)" srcSet={mobileImageProps.srcSet} sizes="100vw" />
+        <img
+          {...desktopImageProps}
+          alt={HERO_ALT}
+          fetchPriority="high"
+          className="h-full w-full object-cover object-center sm:object-[center_center]"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/85 to-slate-900/70"></div>
-      </div>
+      </picture>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-8">
-        <div className="max-w-3xl">
-          {/* Delivery Badge - Mobile Optimized */}
-          <div className="inline-block animate-badge-slide-in mb-6 sm:mb-8 max-w-full">
-            <div className="relative group">
-              {/* Glow effect backdrop */}
-              <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-orange-500/20 to-orange-600/20 rounded-2xl sm:rounded-[40px] blur-xl opacity-75 group-hover:opacity-100 transition-opacity animate-badge-glow" />
-              
-              {/* Main badge */}
-              <div className="relative flex items-center gap-2 sm:gap-4 px-4 py-3 sm:px-8 sm:py-4 bg-gradient-to-br from-amber-900/40 via-orange-900/30 to-amber-900/40 backdrop-blur-sm rounded-2xl sm:rounded-[40px] border border-orange-500/30 shadow-2xl group-hover:scale-105 transition-transform duration-300">
-                {/* Icon container */}
-                <div className="flex-shrink-0 w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
-                  <MapPin className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                </div>
-                
-                {/* Text - Responsive */}
-                <span className="text-sm sm:text-base md:text-lg font-semibold text-white">
-                  <span className="hidden sm:inline">81 İle ve İlçelerine 1 Paletten Başlayan Teslimat</span>
-                  <span className="sm:hidden">81 İle 1 Palet Teslimat</span>
-                </span>
-              </div>
-            </div>
-          </div>
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/90 via-slate-950/65 to-slate-950/35 sm:bg-gradient-to-r sm:from-white/95 sm:via-white/[0.78] sm:to-transparent"
+      />
 
-          <p className="mb-3 text-sm font-bold uppercase tracking-[0.18em] text-white/80 sm:text-base">
-            Lojistikte Güvenilir Çözüm
+      <div className="container relative z-10 mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        <div className="max-w-[590px] text-white sm:text-slate-950">
+          <p className="mb-2 text-sm font-extrabold uppercase tracking-[0.22em] text-orange-400 sm:text-orange-600">
+            REX Lojistik
           </p>
 
-          {/* Main Heading - Mobile Optimized */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 sm:mb-8 leading-tight">
-            <span className="text-white">Yurtiçi ve Uluslararası</span>{" "}
-            <br />
-            <span className="text-accent">Lojistik Çözümleri</span>
+          <h1 className="mb-4 text-base font-semibold leading-snug text-white/90 sm:text-lg sm:text-slate-800">
+            Yurtiçi ve Uluslararası Lojistik Çözümleri
           </h1>
 
-          <p className="mb-6 max-w-2xl text-lg leading-relaxed text-white/90 sm:mb-8 sm:text-xl">
-            1 paletten komple araca; Türkiye&apos;nin 81 iline ve dünya genelinde karayolu, hava, denizyolu ve express taşımacılık çözümleri.
+          <p className="text-[2.75rem] font-black leading-[1.02] tracking-[-0.035em] text-white drop-shadow-sm sm:text-6xl sm:text-slate-950 lg:text-7xl">
+            Yükünüz Varsa,
+            <br />
+            <span className="text-orange-400 sm:text-orange-600">Bir Yolu Var.</span>
           </p>
 
-          {/* CTA Buttons - Mobile First */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-8 sm:mb-12">
+          <p className="mt-5 max-w-xl text-base font-medium leading-relaxed text-white/95 sm:mt-6 sm:text-lg sm:text-slate-800 lg:text-xl">
+            Yurtiçi ve uluslararası taşımacılıkta, 1 paletten komple araca kadar yükünüze uygun lojistik çözümü planlıyoruz.
+          </p>
+
+          <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:gap-4">
             <Button
               size="lg"
-              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 px-8 py-6 text-lg font-semibold text-white shadow-xl transition-all hover:from-orange-600 hover:to-orange-700 hover:shadow-2xl sm:w-auto"
+              className="min-h-12 w-full bg-gradient-to-r from-orange-500 to-orange-600 px-7 text-base font-bold text-white shadow-xl transition-all hover:from-orange-600 hover:to-orange-700 hover:shadow-2xl sm:w-auto sm:text-lg"
               onClick={handleQuoteRequest}
             >
               Hızlı Teklif Al
             </Button>
-            <Button 
+            <Button
+              asChild
               size="lg"
               variant="outline"
-              className="w-full sm:w-auto bg-white/10 border-2 border-white/30 hover:bg-white/20 text-white font-semibold px-8 py-6 text-lg backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all"
-              onClick={handleWhatsApp}
+              className="min-h-12 w-full border-2 border-white/60 bg-slate-950/45 px-7 text-base font-bold text-white shadow-xl backdrop-blur-sm transition-all hover:bg-slate-950/60 hover:text-white sm:w-auto sm:border-slate-900/25 sm:bg-white/75 sm:text-lg sm:text-slate-950 sm:hover:bg-white sm:hover:text-slate-950"
             >
-              <MessageCircle className="mr-2 h-5 w-5" />
-              WhatsApp İletişim
+              <a href="https://wa.me/905434010755" target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="mr-2 h-5 w-5" aria-hidden="true" />
+                WhatsApp&apos;tan Sor
+              </a>
             </Button>
           </div>
 
-          {/* Stats - Compact on Mobile */}
-          <div className="grid grid-cols-3 gap-4 sm:gap-6 max-w-3xl">
-            <div className="text-center sm:text-left">
-              <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-1 sm:mb-2">20+</div>
-              <div className="text-xs sm:text-sm md:text-base text-white/90">Yıl Deneyim</div>
-            </div>
-            <div className="text-center sm:text-left">
-              <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-1 sm:mb-2">1</div>
-              <div className="text-xs sm:text-sm md:text-base text-white/90">Paletten Başlayan</div>
-            </div>
-            <div className="text-center sm:text-left">
-              <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-1 sm:mb-2">81</div>
-              <div className="text-xs sm:text-sm md:text-base text-white/90">İl Kapsama</div>
-            </div>
-          </div>
+          <ul className="mt-6 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-white/30 pt-5 text-sm font-semibold text-white/95 sm:mt-8 sm:flex sm:flex-wrap sm:gap-x-3 sm:border-slate-900/15 sm:text-slate-800">
+            {[
+              "Adresten Alım",
+              "Adrese Teslim",
+              "Türkiye Geneli",
+              "Uluslararası Taşıma",
+            ].map((benefit) => (
+              <li key={benefit} className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 flex-none rounded-full bg-orange-500" aria-hidden="true" />
+                {benefit}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

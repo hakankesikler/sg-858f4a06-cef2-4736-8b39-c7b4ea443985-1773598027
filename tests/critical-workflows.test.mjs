@@ -1621,10 +1621,20 @@ test("homepage SEO, hero copy and service headings are semantic and focused", as
   assert.match(home, /url="https:\/\/www\.rexlojistik\.com\/"/);
   const documentDefaults = seo.slice(seo.indexOf("export function SEOElements"));
   assert.doesNotMatch(documentDefaults, /<meta name="description"/);
-  assert.match(hero, /<h1[\s\S]*Yurtiçi ve Uluslararası[\s\S]*Lojistik Çözümleri[\s\S]*<\/h1>/);
+  assert.match(hero, /<h1[\s\S]*Yurtiçi ve Uluslararası Lojistik Çözümleri[\s\S]*<\/h1>/);
   assert.doesNotMatch(hero, /<h1[\s\S]*Lojistikte Güvenilir Çözüm[\s\S]*<\/h1>/);
-  assert.match(hero, /Lojistikte Güvenilir Çözüm/);
-  assert.match(hero, /1 paletten komple araca; Türkiye&apos;nin 81 iline ve dünya genelinde karayolu, hava, denizyolu ve express taşımacılık çözümleri\./);
+  assert.match(hero, /Yükünüz Varsa,/);
+  assert.match(hero, /Bir Yolu Var\./);
+  assert.match(hero, /Yurtiçi ve uluslararası taşımacılıkta, 1 paletten komple araca kadar yükünüze uygun lojistik çözümü planlıyoruz\./);
+  assert.match(hero, /WhatsApp&apos;tan Sor/);
+  assert.match(hero, /href="https:\/\/wa\.me\/905434010755"/);
+  assert.match(hero, /Adresten Alım/);
+  assert.match(hero, /Adrese Teslim/);
+  assert.match(hero, /Türkiye Geneli/);
+  assert.match(hero, /Uluslararası Taşıma/);
+  assert.match(hero, /rex-homepage-hero-desktop\.webp/);
+  assert.match(hero, /rex-homepage-hero-mobile\.webp/);
+  assert.match(hero, /fetchPriority="high"/);
 
   const renderedHomepageSources = [home, hero, services, tracking, features, header, footer].join("\n");
   assert.equal((renderedHomepageSources.match(/<h1\b/g) || []).length, 1);
@@ -1737,7 +1747,7 @@ test("public homepage protects customer confidentiality and avoids unverifiable 
   assert.doesNotMatch(home, /Testimonials|referanslar/);
   assert.doesNotMatch(hero, /50K\+|Müşteri\s*</);
   assert.doesNotMatch(cta, /100%|Müşteri Memnuniyeti/);
-  assert.match(hero, /Paletten Başlayan/);
+  assert.match(hero, /1 paletten komple araca/);
   assert.match(cta, /81[\s\S]*İl Kapsama/);
   assert.match(cta, /fiyat teklifimizi hazırlayıp sizinle paylaşalım/);
   assert.doesNotMatch(cta, /fiyat teklifi alalım/);
