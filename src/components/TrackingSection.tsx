@@ -166,7 +166,7 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
           <div className="text-center mb-10">
             <h2 className="font-heading font-bold text-4xl text-navy mb-4">Gönderinizi Takip Edin</h2>
             <p className="text-muted-foreground text-lg">
-              REX takip numarası veya FedEx, UPS, DHL ve Aramex AWB numarasıyla gönderinizin güncel durumunu görüntüleyin.
+              REX takip numaranız veya desteklenen taşıyıcılara ait AWB numaranızla gönderinizin güncel durumunu görüntüleyin.
             </p>
           </div>
 
@@ -188,6 +188,10 @@ export function TrackingSection({ initialTrackingNumber = "", autoSearch = false
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Sorgula"}
                 </Button>
               </form>
+
+              <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground">
+                Desteklenen taşıyıcılar: FedEx • UPS • DHL • TNT • Aramex
+              </p>
 
               {error && <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 

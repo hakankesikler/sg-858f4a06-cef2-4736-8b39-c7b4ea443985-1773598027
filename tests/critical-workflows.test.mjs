@@ -2333,7 +2333,9 @@ test("international express cargo supports QuickShipper AWB tracking and mandato
   assert.match(form, /QuickShipper Gönderi No/);
   assert.match(form, /Entegratör AWB Numarası/);
   assert.match(form, /formData\.service_mode === "road"/);
-  assert.match(tracking, /REX takip numarası veya FedEx, UPS, DHL ve Aramex AWB/);
+  assert.match(tracking, /REX takip numaranız veya desteklenen taşıyıcılara ait AWB numaranızla gönderinizin güncel durumunu görüntüleyin\./);
+  assert.match(tracking, /Desteklenen taşıyıcılar: FedEx • UPS • DHL • TNT • Aramex/);
+  assert.doesNotMatch(tracking, /partnerimiz|iş ortağımız|yetkili acente|resmî temsilci/i);
   assert.match(tracking, /Taşıyıcıda Canlı Takip/);
   assert.doesNotMatch(tracking, /QuickShipper Gönderi No/);
   assert.match(publicService, /\^\[A-Z0-9-\]\{6,40\}\$/);
