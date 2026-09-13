@@ -18,13 +18,13 @@ const services: Service[] = [
   {
     icon: Truck,
     title: "Yurtiçi Komple Taşımacılık",
-    description: "Tam kamyon ve tam tır yükleri için Türkiye genelinde araca özel, doğrudan taşıma planı.",
+    description: "Türkiye genelinde komple araç gerektiren ticari ve sanayi yükleri için adresten adrese taşıma çözümleri.",
     href: "/komple-tasimacilik",
   },
   {
     icon: MapPin,
     title: "Yurtiçi Parsiyel Taşımacılık",
-    description: "81 ile ve tüm ilçelere 1 palet minimum miktar ile esnek ve hızlı teslimat hizmeti.",
+    description: "1 paletten başlayan parsiyel yüklerde Türkiye'nin 81 iline ve ilçelere adresten adrese taşıma çözümleri.",
     href: "/yurtici-parsiyel-tasimacilik",
     featured: true,
     badge: "Türkiye Geneli",
@@ -32,25 +32,25 @@ const services: Service[] = [
   {
     icon: Plane,
     title: "Hava Kargo",
-    description: "Acil ve değerli kargolarınız için hızlı ve güvenilir hava yolu taşımacılığı hizmetleri.",
+    description: "Uluslararası gönderiler için yükün ölçüsü, ağırlığı, çıkış ve varış noktasına uygun hava kargo çözümleri.",
     href: "/hava-kargo",
   },
   {
     icon: Globe,
     title: "Uluslararası Karayolu Taşımacılığı",
-    description: "Dünya genelinde kapsamlı lojistik ağımızla güvenilir uluslararası taşımacılık.",
+    description: "Türkiye ile Avrupa arasında parsiyel ve komple yükler için planlı, adresten adrese karayolu taşıma çözümleri.",
     href: "/uluslararasi-karayolu-tasimaciligi",
   },
   {
     icon: Package,
     title: "Uluslararası Express Kargo",
-    description: "Türkiye'den 220'den fazla ülke ve bölgeye gönderim; yurt dışındaki uygun adresten Türkiye'ye paket alımı.",
+    description: "220'den fazla ülke ve bölgeye uluslararası express gönderim ve yurtdışından Türkiye'ye adresten alım çözümleri.",
     href: "/express-kargo",
   },
   {
     icon: Ship,
     title: "Denizyolu Taşımacılığı",
-    description: "FCL ve LCL konteyner taşımacılığı, dökme yük ve deniz yolu kargo çözümleri.",
+    description: "Uluslararası yüklerde LCL parsiyel ve FCL komple konteyner taşımacılığı çözümleri.",
     href: "/denizyolu-tasimaciligi",
   },
   {

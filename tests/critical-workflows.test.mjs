@@ -1023,7 +1023,7 @@ test("public logistics services have dedicated SEO pages and internal navigation
   assert.match(content, /Tam kamyon yükü veya tam tır yükü/);
   assert.match(header, /Yurtiçi Komple Taşımacılık/);
   assert.match(footer, /Yurtiçi Komple Taşımacılık/);
-  assert.match(services, /Tam kamyon ve tam tır yükleri/);
+  assert.match(services, /Türkiye genelinde komple araç gerektiren ticari ve sanayi yükleri için adresten adrese taşıma çözümleri/);
   const footerServiceSection = footer.match(/\{\/\* Hizmetlerimiz \*\/\}([\s\S]*?)\{\/\* Kurumsal \*\/\}/)?.[1];
   assert.ok(footerServiceSection);
   assert.deepEqual(
@@ -1664,6 +1664,21 @@ test("homepage SEO, hero copy and service headings are semantic and focused", as
     assert.match(services, new RegExp(`title: "${title}"`));
     assert.match(services, new RegExp(`href: "${href}"`));
   }
+
+  const verifiedHomepageServiceDescriptions = [
+    "Türkiye genelinde komple araç gerektiren ticari ve sanayi yükleri için adresten adrese taşıma çözümleri.",
+    "1 paletten başlayan parsiyel yüklerde Türkiye'nin 81 iline ve ilçelere adresten adrese taşıma çözümleri.",
+    "Uluslararası gönderiler için yükün ölçüsü, ağırlığı, çıkış ve varış noktasına uygun hava kargo çözümleri.",
+    "Türkiye ile Avrupa arasında parsiyel ve komple yükler için planlı, adresten adrese karayolu taşıma çözümleri.",
+    "220'den fazla ülke ve bölgeye uluslararası express gönderim ve yurtdışından Türkiye'ye adresten alım çözümleri.",
+    "Uluslararası yüklerde LCL parsiyel ve FCL komple konteyner taşımacılığı çözümleri.",
+  ];
+  for (const description of verifiedHomepageServiceDescriptions) {
+    assert.match(services, new RegExp(description.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+  assert.doesNotMatch(services, /Dünya genelinde kapsamlı lojistik ağımız|dökme yük/);
+  assert.match(services, /description: "Esnek depolama, stok takibi ve dağıtıma bağlı operasyon çözümleri\."/);
+  assert.match(services, /description: "Profesyonel paketleme, etiketleme ve yük elleçleme hizmetleri\."/);
 });
 
 test("service pages expose crawlable contextual links only to existing internal routes", async () => {
