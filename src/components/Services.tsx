@@ -56,13 +56,13 @@ const services: Service[] = [
   {
     icon: Warehouse,
     title: "Depolama Hizmetleri",
-    description: "Esnek depolama, stok takibi ve dağıtıma bağlı operasyon çözümleri.",
+    description: "Yüklerin depolanması, stok takibi, elleçlenmesi ve sevkiyata hazırlanmasına yönelik esnek lojistik çözümleri.",
     href: "/depolama",
   },
   {
     icon: Box,
     title: "Paketleme ve Elleçleme",
-    description: "Profesyonel paketleme, etiketleme ve yük elleçleme hizmetleri.",
+    description: "Yüklerin paketlenmesi, etiketlenmesi, paletlenmesi ve sevkiyata hazırlanmasına yönelik operasyon çözümleri.",
     href: "/depolama",
   },
 ];

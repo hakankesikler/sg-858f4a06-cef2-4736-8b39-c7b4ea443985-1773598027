@@ -1677,8 +1677,8 @@ test("homepage SEO, hero copy and service headings are semantic and focused", as
     assert.match(services, new RegExp(description.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
   assert.doesNotMatch(services, /Dünya genelinde kapsamlı lojistik ağımız|dökme yük/);
-  assert.match(services, /description: "Esnek depolama, stok takibi ve dağıtıma bağlı operasyon çözümleri\."/);
-  assert.match(services, /description: "Profesyonel paketleme, etiketleme ve yük elleçleme hizmetleri\."/);
+  assert.match(services, /description: "Yüklerin depolanması, stok takibi, elleçlenmesi ve sevkiyata hazırlanmasına yönelik esnek lojistik çözümleri\."/);
+  assert.match(services, /description: "Yüklerin paketlenmesi, etiketlenmesi, paletlenmesi ve sevkiyata hazırlanmasına yönelik operasyon çözümleri\."/);
 });
 
 test("service pages expose crawlable contextual links only to existing internal routes", async () => {
