@@ -1640,6 +1640,15 @@ test("homepage SEO, hero copy and service headings are semantic and focused", as
   assert.equal((renderedHomepageSources.match(/<h1\b/g) || []).length, 1);
   assert.match(services, /<h2[\s\S]*Hizmetlerimiz[\s\S]*<\/h2>/);
   assert.match(services, /<h3[\s\S]*\{service\.title\}[\s\S]*<\/h3>/);
+  assert.match(services, /Lojistik Çözümleri/);
+  assert.match(services, /Yurtiçi ve uluslararası taşımacılık ihtiyaçlarınıza uygun lojistik çözümlerini tek noktadan planlıyoruz\./);
+  assert.match(services, /grid-cols-1[\s\S]*md:grid-cols-2[\s\S]*lg:grid-cols-3/);
+  assert.match(services, /focus-visible:ring-2/);
+  assert.match(services, /motion-reduce:transition-none/);
+  assert.match(services, /motion-safe:hover:-translate-y-1/);
+  assert.match(services, /Detayları İncele/);
+  assert.equal((services.match(/title: "/g) || []).length, 8);
+  assert.doesNotMatch(services, /target="_blank"|rel="nofollow"/);
   assert.match(features, /20\+ yıllık sektör deneyiminin üzerine kurulan REX Lojistik/);
 
   const expectedServices = [
