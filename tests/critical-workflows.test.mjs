@@ -2871,6 +2871,26 @@ test("financial dashboard calculates daily monthly and annual performance from c
   assert.match(profile, /canViewFinancialDashboard && <FinancialPerformanceDashboard/);
 });
 
+test("financial dashboard safely combines verified 2026 history with live TMS data", async () => {
+  const [sql, dashboard] = await Promise.all([
+    read("supabase/migrations/20260915120000_import_2026_financial_actuals.sql"),
+    read("src/components/dashboard/FinancialPerformanceDashboard.tsx"),
+  ]);
+
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.management_financial_actuals/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.management_financial_cutovers/);
+  assert.match(sql, /DATE '2026-01-01',[\s\S]*DATE '2026-09-09'/);
+  assert.match(sql, /'2026-09-08', 'day', 'TRY', 13500\.00, 6472\.50/);
+  assert.doesNotMatch(sql, /'2026-09-09', 'day', 'TRY'/);
+  assert.match(sql, /FROM public\.shipments s\s+CROSS JOIN cutover c/);
+  assert.match(sql, /FROM legacy_source\s+WHERE granularity = 'day'/);
+  assert.match(sql, /verified_excel_history_and_live_shipments_excluding_vat/);
+  assert.match(sql, /legacyMonthlySummaryCount/);
+  assert.match(sql, /liveCutoverDate/);
+  assert.match(dashboard, /Ocak–Haziran doğrulanmış aylık Excel özeti/);
+  assert.match(dashboard, /Kesim tarihi çift sayımı önler/);
+});
+
 test("security-definer RPCs use a reviewed access matrix and server-only KolayBi workers", async () => {
   const [sql, kolaybi, statusEndpoint] = await Promise.all([
     read("supabase/migrations/20260909201711_tighten_function_access_matrix.sql"),

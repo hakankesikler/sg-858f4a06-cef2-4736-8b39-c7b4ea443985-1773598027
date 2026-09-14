@@ -86,6 +86,9 @@ type FinancialDashboardData = {
     missingRevenueCount: number;
     missingCostCount: number;
     currencyMismatchCount: number;
+    legacyMonthlySummaryCount?: number;
+    importedDailyRecordCount?: number;
+    liveCutoverDate?: string;
   };
   monthly: MonthlyRow[];
   daily: DailyRow[];
@@ -257,6 +260,14 @@ export function FinancialPerformanceDashboard({ canManageTargets }: { canManageT
   const dataIssueCount = data
     ? data.dataQuality.missingRevenueCount + data.dataQuality.missingCostCount + data.dataQuality.currencyMismatchCount
     : 0;
+  const usesVerifiedHistory = data?.basis === "verified_excel_history_and_live_shipments_excluding_vat";
+  const selectedMonthHasMonthlyOnlyHistory = Boolean(
+    usesVerifiedHistory
+      && data?.dataQuality.legacyMonthlySummaryCount
+      && year === 2026
+      && currency === "TRY"
+      && month <= 6,
+  );
 
   const visibleDailyRows = useMemo(() => {
     if (!data) return [];
@@ -349,7 +360,7 @@ export function FinancialPerformanceDashboard({ canManageTargets }: { canManageT
       {data && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-            <MetricCard title={`${monthNames[month - 1]} Cirosu`} value={money(data.monthActual.revenue, currency)} helper={`${data.monthActual.shipmentCount || 0} işten otomatik hesaplandı`} icon={<CircleDollarSign className="h-5 w-5" />} accent="border-t-[#2d69a5]" />
+            <MetricCard title={`${monthNames[month - 1]} Cirosu`} value={money(data.monthActual.revenue, currency)} helper={selectedMonthHasMonthlyOnlyHistory ? "Doğrulanmış aylık Excel özetinden aktarıldı" : `${data.monthActual.shipmentCount || 0} kayıt üzerinden hesaplandı`} icon={<CircleDollarSign className="h-5 w-5" />} accent="border-t-[#2d69a5]" />
             <MetricCard title="Doğrudan Maliyet" value={money(data.monthActual.directCost, currency)} helper="Sevkiyatlara kayıtlı taşıma maliyeti" icon={<WalletCards className="h-5 w-5" />} accent="border-t-rose-400" />
             <MetricCard title="Brüt Kâr" value={money(data.monthActual.grossProfit, currency)} helper="Ciro − doğrudan maliyet" icon={<TrendingUp className="h-5 w-5" />} accent={data.monthActual.grossProfit >= 0 ? "border-t-emerald-500" : "border-t-red-500"} />
             <MetricCard title="Brüt Kâr Marjı" value={percent(data.monthActual.grossMargin || 0)} helper={`Maliyet üstü oran ${percent(data.monthActual.costMarkup || 0)}`} icon={<Target className="h-5 w-5" />} accent="border-t-cyan-500" />
@@ -377,7 +388,7 @@ export function FinancialPerformanceDashboard({ canManageTargets }: { canManageT
                 <div className="rounded-2xl bg-blue-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Yıllık ciro</p><p className="mt-2 text-xl font-bold text-[#10213e]">{money(data.yearActual.revenue, currency)}</p><p className="mt-1 text-xs text-slate-600">{yearRevenueChange === null ? "Geçen yıl veri yok" : `Geçen yıla göre ${signedPercent(yearRevenueChange)}`}</p></div>
                 <div className="rounded-2xl bg-emerald-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Yıllık brüt kâr</p><p className="mt-2 text-xl font-bold text-[#10213e]">{money(data.yearActual.grossProfit, currency)}</p><p className="mt-1 text-xs text-slate-600">{yearProfitChange === null ? "Geçen yıl veri yok" : `Geçen yıla göre ${signedPercent(yearProfitChange)}`}</p></div>
                 <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Yıllık marj</p><p className="mt-2 text-xl font-bold text-[#10213e]">{percent(data.yearActual.grossMargin || 0)}</p><p className="mt-1 text-xs text-slate-500">Brüt kâr / ciro</p></div>
-                <div className="rounded-2xl bg-orange-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-orange-700">Yıllık iş sayısı</p><p className="mt-2 text-xl font-bold text-[#10213e]">{data.yearActual.shipmentCount || 0}</p><p className="mt-1 text-xs text-slate-500">İptal olmayan sevkiyatlar</p></div>
+                <div className="rounded-2xl bg-orange-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-orange-700">Yıllık iş sayısı</p><p className="mt-2 text-xl font-bold text-[#10213e]">{data.yearActual.shipmentCount || 0}</p><p className="mt-1 text-xs text-slate-500">{data.dataQuality.legacyMonthlySummaryCount ? "Temmuzdan itibaren kayıtlı işler" : "İptal olmayan sevkiyatlar"}</p></div>
               </div>
             </Card>
           </div>
@@ -441,7 +452,7 @@ export function FinancialPerformanceDashboard({ canManageTargets }: { canManageT
             </div>
           </Card>
 
-          <p className="flex items-center gap-2 text-xs text-slate-500"><CalendarDays className="h-4 w-4" /> Ciro ve doğrudan maliyet sevkiyatın yükleme tarihine; genel gider muhasebe kayıt tarihine yazılır. İptal işler hesaba katılmaz.</p>
+          <p className="flex items-start gap-2 text-xs text-slate-500"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0" /> {usesVerifiedHistory ? "2026 TRY gerçekleşenleri: Ocak–Haziran doğrulanmış aylık Excel özeti, Temmuz–8 Eylül günlük Excel kayıtları, 9 Eylül sonrası canlı TMS. Kesim tarihi çift sayımı önler." : "Ciro ve doğrudan maliyet sevkiyatın yükleme tarihine; genel gider muhasebe kayıt tarihine yazılır. İptal işler hesaba katılmaz."}</p>
         </>
       )}
 
