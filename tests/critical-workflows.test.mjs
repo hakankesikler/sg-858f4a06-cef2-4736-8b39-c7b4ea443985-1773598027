@@ -2669,6 +2669,16 @@ test("shipments support multiple pickup and delivery stops with separately price
   assert.match(logistics, /teslim noktası/);
 });
 
+test("shipment table keeps navigation controls within the working viewport", async () => {
+  const logistics = await read("src/components/modules/LogisticsModule.tsx");
+
+  assert.match(logistics, /max-h-\[70vh\].*overflow-auto/);
+  assert.match(logistics, /aria-label="Sevkiyat tablosu"/);
+  assert.match(logistics, /<thead className="sticky top-0/);
+  assert.match(logistics, /<th className="sticky left-0[^>]*>YÜKLEME<\/th>/);
+  assert.match(logistics, /<td className="sticky left-0[^>]*group-hover:bg-gray-50">/);
+});
+
 test("shipment parties distinguish companies from people and learn reusable addresses", async () => {
   const [migration, form, stopCard, routeService, shipmentService] = await Promise.all([
     read("supabase/migrations/20260911120000_learn_shipment_parties.sql"),

@@ -572,11 +572,16 @@ export function LogisticsModule() {
           </div>
 
           <Card>
-            <div className="overflow-x-auto">
+            <div
+              className="max-h-[70vh] min-h-[360px] overflow-auto overscroll-contain [scrollbar-gutter:stable] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+              role="region"
+              aria-label="Sevkiyat tablosu"
+              tabIndex={0}
+            >
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="sticky top-0 z-20 bg-gray-50 shadow-sm">
                   <tr>
-                    <th className="p-4 text-left text-sm font-semibold">YÜKLEME</th>
+                    <th className="sticky left-0 z-30 border-r border-slate-200 bg-gray-50 p-4 text-left text-sm font-semibold shadow-[2px_0_4px_rgba(15,23,42,0.08)]">YÜKLEME</th>
                     <th className="p-4 text-left text-sm font-semibold">GÖNDERİCİ</th>
                     <th className="p-4 text-left text-sm font-semibold">ALICI</th>
                     <th className="p-4 text-left text-sm font-semibold">GÖNDERİCİ İL</th>
@@ -590,7 +595,7 @@ export function LogisticsModule() {
                     <th className="p-4 text-left text-sm font-semibold">İŞLEMLER</th>
                   </tr>
                   <tr>
-                    <th className="p-2"><div className="h-8"></div></th>
+                    <th className="sticky left-0 z-30 border-r border-slate-200 bg-gray-50 p-2 shadow-[2px_0_4px_rgba(15,23,42,0.08)]"><div className="h-8"></div></th>
                     <th className="p-2">
                       <input
                         type="text"
@@ -670,8 +675,8 @@ export function LogisticsModule() {
                 </thead>
                 <tbody>
                   {filteredShipments.map((shipment) => (
-                    <tr key={shipment.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4">
+                    <tr key={shipment.id} className="group border-b hover:bg-gray-50">
+                      <td className="sticky left-0 z-10 border-r border-slate-200 bg-white p-4 shadow-[2px_0_4px_rgba(15,23,42,0.08)] group-hover:bg-gray-50">
                         <div>{shipment.pickup_date ? format(new Date(shipment.pickup_date), "dd MMM yyyy", { locale: tr }) : "-"}</div>
                         {shipment.tracking_number && <div className="mt-1 font-mono text-[11px] text-blue-700">{shipment.tracking_number}</div>}
                         {shipment.service_mode === "international_express" && <div className="mt-1 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-800">ULUSLARARASI EXPRESS</div>}
