@@ -14,6 +14,7 @@ import { AnalyticsModule } from "@/components/modules/AnalyticsModule";
 import { ReportsModule } from "@/components/modules/ReportsModule";
 import { IntegrationsModule } from "@/components/modules/IntegrationsModule";
 import { SettingsModule } from "@/components/modules/SettingsModule";
+import { FinancialPerformanceDashboard } from "@/components/dashboard/FinancialPerformanceDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { AppRole, PortalModule, canAccessModule, getCurrentUserAccess, roleLabels } from "@/lib/access-control";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
@@ -188,6 +189,8 @@ export default function PersonelProfil() {
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Kullanıcı";
   const canManageCustomers = hasPermission(permissions, "crm.customers", "manage");
   const canManageWorkOrders = hasPermission(permissions, "sales.work_orders", "manage");
+  const canViewFinancialDashboard = hasPermission(permissions, "reports.accounting", "view");
+  const canManageFinancialTargets = hasPermission(permissions, "reports.accounting", "manage");
 
   const renderDashboard = () => (
     <div className="space-y-7">
@@ -237,6 +240,8 @@ export default function PersonelProfil() {
           <p className="mt-1 text-xs text-cyan-700">{stats.totalShipments} sevkiyat üzerinden</p>
         </Card>
       </div>
+
+      {canViewFinancialDashboard && <FinancialPerformanceDashboard canManageTargets={canManageFinancialTargets} />}
 
       {(canManageCustomers || canManageWorkOrders) && (
         <div className="rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm md:p-6">

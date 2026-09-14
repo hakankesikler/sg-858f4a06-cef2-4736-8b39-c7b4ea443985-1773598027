@@ -2840,6 +2840,37 @@ test("paid KolayBi purchase history stays out of the review queue and the inbox 
   assert.match(inbox, /Sonraki/);
 });
 
+test("financial dashboard calculates daily monthly and annual performance from completed work", async () => {
+  const [sql, dashboard, profile] = await Promise.all([
+    read("supabase/migrations/20260915090000_financial_performance_dashboard.sql"),
+    read("src/components/dashboard/FinancialPerformanceDashboard.tsx"),
+    read("src/pages/personel/profil.tsx"),
+  ]);
+
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.management_financial_targets/);
+  assert.match(sql, /UNIQUE \(target_year, target_month, currency\)/);
+  assert.match(sql, /2026,12, 'TRY', 1490400,\s+968760/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_financial_dashboard/);
+  assert.match(sql, /rex_has_permission\('reports\.accounting', 'view'\)/);
+  assert.match(sql, /coalesce\(s\.pickup_date, \(s\.created_at AT TIME ZONE 'Europe\/Istanbul'\)::date\)/);
+  assert.match(sql, /s\.satis_tutar/);
+  assert.match(sql, /s\.cost/);
+  assert.match(sql, /public\.expenses/);
+  assert.match(sql, /NOT IN \('iptal','cancelled','canceled'\)/);
+  assert.match(sql, /<= \(now\(\) AT TIME ZONE 'Europe\/Istanbul'\)::date/);
+  assert.match(sql, /currency_mismatch_count/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_save_financial_targets/);
+  assert.match(sql, /rex_has_permission\('reports\.accounting', 'manage'\)/);
+  assert.match(dashboard, /Finansal Performans/);
+  assert.match(dashboard, /Günlük Performansı/);
+  assert.match(dashboard, /Aylık Gerçekleşen Bütçe/);
+  assert.match(dashboard, /Brüt Kâr Marjı/);
+  assert.match(dashboard, /Net Faaliyet Sonucu/);
+  assert.match(dashboard, /Hedefleri Düzenle/);
+  assert.match(profile, /canViewFinancialDashboard = hasPermission\(permissions, "reports\.accounting", "view"\)/);
+  assert.match(profile, /canViewFinancialDashboard && <FinancialPerformanceDashboard/);
+});
+
 test("security-definer RPCs use a reviewed access matrix and server-only KolayBi workers", async () => {
   const [sql, kolaybi, statusEndpoint] = await Promise.all([
     read("supabase/migrations/20260909201711_tighten_function_access_matrix.sql"),
