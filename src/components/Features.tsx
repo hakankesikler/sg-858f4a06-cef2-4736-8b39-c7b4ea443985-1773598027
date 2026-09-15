@@ -1,35 +1,35 @@
-import { CheckCircle2, Clock, Shield, Users, Award, Headphones, MapPin } from "lucide-react";
+import { CheckCircle2, Shield, Award, MapPin, Globe2, Route, Warehouse, Truck } from "lucide-react";
 
 const features = [
   {
-    icon: Clock,
-    title: "Zamanında Teslimat",
-    description: "Profesyonel ekibimizle tüm gönderileriniz belirlenen sürede eksiksiz teslim edilir.",
-  },
-  {
     icon: Shield,
-    title: "Güvenli Taşımacılık",
-    description: "Yükleriniz tam kapsamlı sigorta güvencesi altında ve profesyonel ekibimizle taşınır.",
+    title: "1.000.000 € FFL Sorumluluk Teminatı",
+    description: "Taşıma organizasyonundan doğan sorumluluklarımız, poliçe şartları ve limitleri kapsamında 1.000.000 €'ya kadar FFL sigorta teminatı altındadır.",
   },
   {
     icon: MapPin,
-    title: "1 Paletten Başlayan Teslimat",
-    description: "Türkiye'nin 81 ili ve tüm ilçelerine minimum 1 palet ile esnek teslimat imkanı.",
+    title: "1 Paletten Başlayan Parsiyel Taşıma",
+    description: "1 paletten başlayan parsiyel yükler için Türkiye'nin 81 iline ve ilçelere taşıma çözümleri.",
   },
   {
-    icon: MapPin,
-    title: "81 İlde Depolama",
-    description: "Türkiye'nin her ilinde depolama ve stok yönetimi hizmetleri.",
+    icon: Truck,
+    title: "Adresten Adrese Organizasyon",
+    description: "Yükün gönderici adresinden alınmasından alıcı adresine teslimine kadar taşıma sürecinin organizasyonu.",
   },
   {
-    icon: Users,
-    title: "Uzman Kadro",
-    description: "Deneyimli ve sertifikalı lojistik uzmanlarımızla kesintisiz hizmet.",
+    icon: Globe2,
+    title: "Yurtiçi ve Uluslararası Çözümler",
+    description: "Karayolu, hava kargo, denizyolu ve express gönderi ihtiyaçlarına uygun taşıma seçenekleri.",
   },
   {
-    icon: Headphones,
-    title: "7/24 Müşteri Desteği",
-    description: "Her zaman yanınızdayız. Tüm sorularınız için kesintisiz destek hizmeti.",
+    icon: Route,
+    title: "Yüke Uygun Taşıma Planlaması",
+    description: "Palet sayısı, ölçü, ağırlık, güzergâh ve teslimat noktasına göre uygun taşıma modelinin planlanması.",
+  },
+  {
+    icon: Warehouse,
+    title: "Depolama ve Operasyon Çözümleri",
+    description: "Depolama, stok takibi, elleçleme ve sevkiyata hazırlık ihtiyaçlarına yönelik operasyon çözümleri.",
   },
 ];
 
@@ -110,8 +110,8 @@ export function Features() {
                   <div className="mt-2 h-1 w-0 group-hover:w-full bg-orange-500 rounded-full transition-all duration-500"></div>
                 </div>
                 <div className="group">
-                  <div className="text-5xl font-heading font-bold text-orange-500 mb-1">81</div>
-                  <div className="text-sm text-blue-100 font-medium">İlde Depolama</div>
+                  <div className="text-5xl font-heading font-bold text-orange-500 mb-1">81 İl</div>
+                  <div className="text-sm text-blue-100 font-medium">Yurtiçi Teslimat Kapsamı</div>
                   <div className="mt-2 h-1 w-0 group-hover:w-full bg-orange-500 rounded-full transition-all duration-500"></div>
                 </div>
               </div>
