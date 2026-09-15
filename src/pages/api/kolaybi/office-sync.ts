@@ -299,7 +299,101 @@ async function writeBatches(
 }
 
 function invoiceHeader(item: any) {
-  return item?.header || item?.document?.header || {};
+  return item?.header || item?.commercial_doc?.header || item?.invoice?.header || item?.document?.header || {};
+}
+
+function isoDate(value: any) {
+  const candidate = text(value).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return null;
+  const parsed = new Date(`${candidate}T00:00:00.000Z`);
+  return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== candidate ? null : candidate;
+}
+
+function detailData(json: any) {
+  const candidate = json?.data?.data ?? json?.data ?? json;
+  if (Array.isArray(candidate)) return candidate[0] || {};
+  return candidate && typeof candidate === "object" ? candidate : {};
+}
+
+function generalExpenseDocument(item: any) {
+  const candidate = item?._general_expense_detail || item || {};
+  const nested = candidate?.commercial_doc || candidate?.invoice || candidate?.document;
+  return nested && typeof nested === "object" ? { ...candidate, ...nested } : candidate;
+}
+
+function generalExpenseHeader(item: any) {
+  const document = generalExpenseDocument(item);
+  return document?.header || item?.header || {};
+}
+
+function generalExpenseIssueDate(item: any) {
+  const document = generalExpenseDocument(item);
+  const header = generalExpenseHeader(item);
+  return isoDate(
+    header?.issue_date || document?.issue_date || document?.invoice_date ||
+    item?.issue_date || item?.invoice_date,
+  );
+}
+
+function generalExpenseReportingClassification(categoryName: any) {
+  const category = text(categoryName).toLocaleLowerCase("tr-TR");
+  if (category === "finansal") return "financing";
+  if (category === "demirbaş") return "capital_expenditure";
+  return "operating_expense";
+}
+
+async function verifiedGeneralExpenseIds(admin: any, providerEnvironment: "test" | "live") {
+  const verified = new Set<number>();
+  for (let from = 0; from < 20_000; from += 1_000) {
+    const { data, error } = await admin.from("expenses")
+      .select("kolaybi_document_id")
+      .eq("source", "kolaybi")
+      .eq("provider_environment", providerEnvironment)
+      .eq("reporting_date_status", "verified")
+      .not("kolaybi_document_id", "is", null)
+      .range(from, from + 999);
+    if (error) throw error;
+    (data || []).forEach((row: any) => verified.add(Number(row.kolaybi_document_id)));
+    if ((data || []).length < 1_000) break;
+  }
+  return verified;
+}
+
+async function hydrateGeneralExpenseDetails(input: {
+  admin: any;
+  baseUrl: string;
+  headers: Record<string, string>;
+  providerEnvironment: "test" | "live";
+  records: any[];
+}) {
+  const verified = await verifiedGeneralExpenseIds(input.admin, input.providerEnvironment);
+  const hydrated = new Array(input.records.length);
+  const stats = { requested: 0, resolved: 0, unresolved: 0 };
+  await processWithConcurrency(input.records.map((record, index) => ({ record, index })), 8, async ({ record, index }) => {
+    const documentId = Number(record?.commercial_doc_id || record?.document_id || record?.id || 0);
+    if (generalExpenseIssueDate(record) || verified.has(documentId)) {
+      hydrated[index] = record;
+      return;
+    }
+    stats.requested += 1;
+    try {
+      const detailJson = await providerRequest(`${input.baseUrl}/invoices/${documentId}`, {
+        method: "GET",
+        headers: input.headers,
+      });
+      const merged = { ...record, _general_expense_detail: detailData(detailJson) };
+      hydrated[index] = merged;
+      if (generalExpenseIssueDate(merged)) stats.resolved += 1;
+      else stats.unresolved += 1;
+    } catch (error: any) {
+      stats.unresolved += 1;
+      hydrated[index] = {
+        ...record,
+        _general_expense_detail_error: String(error?.message || error).slice(0, 300),
+      };
+    }
+  });
+  return { records: hydrated, stats };
 }
 
 function invoiceEDocument(item: any) {
@@ -581,15 +675,23 @@ function safePayload(resource: Resource, item: any) {
     return { id: item?.id, name: item?.name, description: item?.description };
   }
   if (resource === "general_expenses") {
+    const document = generalExpenseDocument(item);
+    const header = generalExpenseHeader(item);
     return {
-      commercial_doc_id: item?.commercial_doc_id, currency: item?.currency,
-      tracking_currency: item?.tracking_currency, commercial_doc_type: item?.commercial_doc_type,
-      commercial_doc_status: item?.commercial_doc_status,
-      financial_action_type_id: item?.financial_action_type_id,
-      e_document_status: item?.e_document_status, header: item?.header,
-      total: item?.total, payment_plan: item?.payment_plan,
-      projects: Array.isArray(item?.projects) ? item.projects.slice(0, 20) : [],
-      tags: Array.isArray(item?.tags) ? item.tags.slice(0, 20) : [],
+      commercial_doc_id: item?.commercial_doc_id || document?.commercial_doc_id || document?.id,
+      currency: document?.currency || item?.currency,
+      tracking_currency: document?.tracking_currency || item?.tracking_currency,
+      commercial_doc_type: document?.commercial_doc_type || item?.commercial_doc_type,
+      commercial_doc_status: document?.commercial_doc_status || item?.commercial_doc_status,
+      financial_action_type_id: document?.financial_action_type_id || item?.financial_action_type_id,
+      e_document_status: document?.e_document_status || item?.e_document_status,
+      header,
+      total: document?.total || item?.total,
+      payment_plan: document?.payment_plan || item?.payment_plan,
+      projects: Array.isArray(document?.projects || item?.projects) ? (document?.projects || item.projects).slice(0, 20) : [],
+      tags: Array.isArray(document?.tags || item?.tags) ? (document?.tags || item.tags).slice(0, 20) : [],
+      detail_date_verified: Boolean(generalExpenseIssueDate(item)),
+      detail_error: item?._general_expense_detail_error || null,
     };
   }
   return {
@@ -655,12 +757,13 @@ function normalized(resource: Resource, item: any) {
     return { externalId, displayName: text(item?.name) || `Gider Tipi ${externalId}`, code: text(item?.id), taxIdentity: "", currency: null, amount: 0, payload };
   }
   if (resource === "general_expenses") {
-    const header = item?.header || {};
-    const totals = item?.total || {};
+    const document = generalExpenseDocument(item);
+    const header = generalExpenseHeader(item);
+    const totals = document?.total || item?.total || {};
     return {
       externalId,
       displayName: text(header?.serial_no || `Genel Gider ${externalId}`),
-      code: text(header?.serial_no), taxIdentity: "", currency: currency(item?.currency),
+      code: text(header?.serial_no), taxIdentity: "", currency: currency(document?.currency || item?.currency),
       amount: number(totals?.grand_total ?? totals?.total_amount), payload,
     };
   }
@@ -1017,10 +1120,11 @@ async function findLocal(
   if (resource === "general_expenses") {
     const documentId = Number(row.externalId);
     if (!Number.isSafeInteger(documentId) || documentId <= 0) throw new ProviderError("KolayBi genel gider kimliği geçerli değil.");
-    const header = item?.header || {};
-    const totals = item?.total || {};
-    const payment = item?.payment_plan || {};
-    const typeExternalId = Number(item?.financial_action_type_id || 0);
+    const document = generalExpenseDocument(item);
+    const header = generalExpenseHeader(item);
+    const totals = document?.total || item?.total || {};
+    const payment = document?.payment_plan || item?.payment_plan || {};
+    const typeExternalId = Number(document?.financial_action_type_id || item?.financial_action_type_id || 0);
     const { data: typeMapping } = typeExternalId > 0
       ? await admin.from("expense_type_provider_mappings").select("expense_type_id,expense_types(category_id,name,expense_categories(name))")
         .eq("provider", "kolaybi").eq("provider_environment", providerEnvironment)
@@ -1030,43 +1134,66 @@ async function findLocal(
     const joinedCategory = Array.isArray(joinedType?.expense_categories) ? joinedType.expense_categories[0] : joinedType?.expense_categories;
     const remaining = number(payment?.total_remaining);
     const paid = number(payment?.total_paid);
-    const providerStatus = text(item?.commercial_doc_status?.value || item?.commercial_doc_status?.key || item?.commercial_doc_status);
+    const rawProviderStatus = document?.commercial_doc_status || item?.commercial_doc_status;
+    const providerStatus = text(rawProviderStatus?.value || rawProviderStatus?.key || rawProviderStatus);
     const loweredStatus = providerStatus.toLowerCase();
     const status = loweredStatus.includes("cancel") ? "İptal"
       : loweredStatus.includes("draft") ? "Taslak"
         : remaining <= 0 ? "Ödendi" : paid > 0 ? "Kısmi Ödendi" : "Bekliyor";
-    const issueDate = text(header?.issue_date).slice(0, 10) || new Date().toISOString().slice(0, 10);
-    const dueDate = text(header?.due_date).slice(0, 10) || null;
+    const issueDate = generalExpenseIssueDate(item);
+    const dueDate = isoDate(header?.due_date || document?.due_date);
     const subtotal = number(totals?.subtotal ?? totals?.total_amount ?? totals?.grand_total);
     const totalVat = number(totals?.total_vat);
+    const categoryName = text(joinedCategory?.name) || "Kategorisiz";
+    const { data: existingExpense, error: existingExpenseError } = await admin.from("expenses")
+      .select("id,expense_date,provider_issue_date,reporting_date_status")
+      .eq("source", "kolaybi").eq("provider_environment", providerEnvironment)
+      .eq("kolaybi_document_id", documentId).maybeSingle();
+    if (existingExpenseError) throw existingExpenseError;
+    const preservedIssueDate = existingExpense?.reporting_date_status === "verified"
+      ? isoDate(existingExpense.provider_issue_date || existingExpense.expense_date)
+      : null;
+    const verifiedIssueDate = issueDate || preservedIssueDate;
     const expenseData = {
       expense_no: `KB-${providerEnvironment.toUpperCase()}-${documentId}`,
-      category: text(joinedCategory?.name) || "Kategorisiz",
+      category: categoryName,
       category_id: joinedType?.category_id || null, type_id: typeMapping?.expense_type_id || null,
       description: text(header?.description) || text(joinedType?.name) || `KolayBi genel gider ${documentId}`,
-      amount: subtotal, tax: totalVat, expense_date: issueDate, due_date: dueDate,
+      amount: subtotal, tax: totalVat, expense_date: verifiedIssueDate, due_date: dueDate,
       vendor: text(header?.associate?.full_name) || null, invoice_no: text(header?.serial_no) || null,
       status, source: "kolaybi", provider_environment: providerEnvironment,
       kolaybi_document_id: documentId,
       kolaybi_financial_action_type_id: typeExternalId || null,
       provider_document_no: text(header?.serial_no) || null, provider_status: providerStatus || null,
-      e_document_status: text(item?.e_document_status) || null,
+      e_document_status: text(document?.e_document_status || item?.e_document_status) || null,
       payment_status: text(payment?.payment_status_value) || null,
-      currency: currency(item?.currency), balance: remaining,
+      currency: currency(document?.currency || item?.currency), balance: remaining,
       provider_total: number(totals?.grand_total ?? totals?.total_amount), last_synced_at: new Date().toISOString(),
+      provider_issue_date: verifiedIssueDate,
+      reporting_date_status: verifiedIssueDate ? "verified" : "unverified",
+      reporting_classification: generalExpenseReportingClassification(categoryName),
       updated_at: new Date().toISOString(),
     };
-    const { data: existingExpense } = await admin.from("expenses").select("id")
-      .eq("source", "kolaybi").eq("provider_environment", providerEnvironment)
-      .eq("kolaybi_document_id", documentId).maybeSingle();
     if (existingExpense?.id) {
       const { error } = await admin.from("expenses").update(expenseData).eq("id", existingExpense.id);
       if (error) throw error;
-      return { type: "general_expense", id: existingExpense.id };
+      return verifiedIssueDate
+        ? { type: "general_expense", id: existingExpense.id }
+        : {
+            type: "general_expense", id: existingExpense.id, matchStatus: "review_required",
+            eventType: "review_required",
+            summary: "KolayBi gider belgesinin tarihi doğrulanamadı; finansal performans raporuna dahil edilmedi.",
+          };
     }
     const { data: createdExpense, error } = await admin.from("expenses").insert(expenseData).select("id").single();
     if (error) throw error;
-    return { type: "general_expense", id: createdExpense.id };
+    return verifiedIssueDate
+      ? { type: "general_expense", id: createdExpense.id }
+      : {
+          type: "general_expense", id: createdExpense.id, matchStatus: "review_required",
+          eventType: "review_required",
+          summary: "KolayBi gider belgesinin tarihi doğrulanamadı; finansal performans raporuna dahil edilmedi.",
+        };
   }
   if (resource === "sales_invoices") {
     const profile = eDocumentProfile(item);
@@ -1255,6 +1382,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let received = 0; let matched = 0; let review = 0; let ignored = 0; let failed = 0;
     let salesProfileReconciliation: Record<string, unknown> | null = null;
+    const generalExpenseDetailStats = { requested: 0, resolved: 0, unresolved: 0 };
     const errors: string[] = [];
     const syncResource = async (resource: Resource) => {
       try {
@@ -1295,6 +1423,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
           const json = await providerRequest(`${baseUrl}${endpoint(resource)}`, { method: "GET", headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" } });
           records = listFrom(json);
+          if (resource === "general_expenses") {
+            const detailResult = await hydrateGeneralExpenseDetails({
+              admin,
+              baseUrl,
+              headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" },
+              providerEnvironment,
+              records,
+            });
+            records = detailResult.records;
+            generalExpenseDetailStats.requested += detailResult.stats.requested;
+            generalExpenseDetailStats.resolved += detailResult.stats.resolved;
+            generalExpenseDetailStats.unresolved += detailResult.stats.unresolved;
+          }
           if (resource === "sales_invoices" && companyId) {
             records = records.map((record: any) => ({
               ...record,
@@ -1365,9 +1506,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await processWithConcurrency(resourcesBeforeTransactions, 3, syncResource);
     if (resources.includes("vault_transactions")) await syncResource("vault_transactions");
     const status = failed === 0 ? "completed" : received > 0 ? "partial" : "failed";
-    const runMetadata = { resources, automatic: cronMode, direction: "inbound", ignored_count: ignored, sales_profile_reconciliation: salesProfileReconciliation };
+    const runMetadata = {
+      resources,
+      automatic: cronMode,
+      direction: "inbound",
+      ignored_count: ignored,
+      sales_profile_reconciliation: salesProfileReconciliation,
+      general_expense_detail: generalExpenseDetailStats,
+    };
     const { data: completed } = await admin.from("kolaybi_sync_runs").update({ status, received_count: received, matched_count: matched, review_count: review, failed_count: failed, last_error: errors[0] || null, completed_at: new Date().toISOString(), metadata: runMetadata }).eq("id", run.id).select().single();
-    await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol, ${ignored} arşiv`, metadata: { errors: errors.slice(0, 10), provider_environment: providerEnvironment, automatic: cronMode, ignored_count: ignored, sales_profile_reconciliation: salesProfileReconciliation }, actor_id: actor.id, actor_email: actor.email });
+    await admin.from("kolaybi_sync_events").insert({ run_id: run.id, resource_type: requested, provider_environment: providerEnvironment, event_type: status === "failed" ? "sync_failed" : "sync_completed", status: status === "completed" ? "success" : status === "partial" ? "warning" : "error", summary: `Senkronizasyon tamamlandı: ${received} kayıt, ${matched} eşleşme, ${review} kontrol, ${ignored} arşiv`, metadata: { errors: errors.slice(0, 10), provider_environment: providerEnvironment, automatic: cronMode, ignored_count: ignored, sales_profile_reconciliation: salesProfileReconciliation, general_expense_detail: generalExpenseDetailStats }, actor_id: actor.id, actor_email: actor.email });
     await updatePartner(status === "completed", errors[0] || null, true);
     return res.status(status === "failed" ? 502 : 200).json({ success: status !== "failed", run: completed, errors: errors.slice(0, 10) });
   } catch (error: any) {

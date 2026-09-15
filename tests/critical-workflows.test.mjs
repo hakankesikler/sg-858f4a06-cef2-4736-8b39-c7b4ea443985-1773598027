@@ -2891,6 +2891,37 @@ test("financial dashboard safely combines verified 2026 history with live TMS da
   assert.match(dashboard, /Kesim tarihi çift sayımı önler/);
 });
 
+test("financial dashboard uses verified expense dates and operating classifications", async () => {
+  const [sql, officeSync, dashboard] = await Promise.all([
+    read("supabase/migrations/20260915150000_expense_reporting_integrity.sql"),
+    read("src/pages/api/kolaybi/office-sync.ts"),
+    read("src/components/dashboard/FinancialPerformanceDashboard.tsx"),
+  ]);
+
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS provider_issue_date date/);
+  assert.match(sql, /reporting_date_status text NOT NULL DEFAULT 'verified'/);
+  assert.match(sql, /reporting_classification text NOT NULL DEFAULT 'operating_expense'/);
+  assert.match(sql, /WHEN 'finansal' THEN 'financing'/);
+  assert.match(sql, /WHEN 'demirbaş' THEN 'capital_expenditure'/);
+  assert.match(sql, /WHERE source = 'kolaybi'/);
+  assert.match(sql, /expense_date = NULL/);
+  assert.match(sql, /CREATE OR REPLACE VIEW public\.rex_financial_reportable_expenses/);
+  assert.match(sql, /e\.reporting_date_status = 'verified'/);
+  assert.match(sql, /e\.reporting_classification = 'operating_expense'/);
+  assert.match(sql, /pg_get_functiondef/);
+  assert.match(sql, /FROM public\.rex_financial_reportable_expenses e/);
+
+  assert.match(officeSync, /providerRequest\(`\$\{input\.baseUrl\}\/invoices\/\$\{documentId\}`/);
+  assert.match(officeSync, /const issueDate = generalExpenseIssueDate\(item\)/);
+  assert.doesNotMatch(officeSync, /const issueDate = text\(header\?\.issue_date\)\.slice\(0, 10\) \|\| new Date/);
+  assert.match(officeSync, /reporting_date_status: verifiedIssueDate \? "verified" : "unverified"/);
+  assert.match(officeSync, /reporting_classification: generalExpenseReportingClassification\(categoryName\)/);
+  assert.match(officeSync, /finansal performans raporuna dahil edilmedi/);
+  assert.match(dashboard, /Faaliyet Gideri/);
+  assert.match(dashboard, /Doğrulanmış faaliyet giderleri · KDV hariç/);
+  assert.match(dashboard, /Brüt kâr − faaliyet gideri/);
+});
+
 test("security-definer RPCs use a reviewed access matrix and server-only KolayBi workers", async () => {
   const [sql, kolaybi, statusEndpoint] = await Promise.all([
     read("supabase/migrations/20260909201711_tighten_function_access_matrix.sql"),

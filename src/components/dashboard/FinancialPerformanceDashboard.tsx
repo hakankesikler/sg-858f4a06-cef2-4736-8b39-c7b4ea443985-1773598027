@@ -364,8 +364,8 @@ export function FinancialPerformanceDashboard({ canManageTargets }: { canManageT
             <MetricCard title="Doğrudan Maliyet" value={money(data.monthActual.directCost, currency)} helper="Sevkiyatlara kayıtlı taşıma maliyeti" icon={<WalletCards className="h-5 w-5" />} accent="border-t-rose-400" />
             <MetricCard title="Brüt Kâr" value={money(data.monthActual.grossProfit, currency)} helper="Ciro − doğrudan maliyet" icon={<TrendingUp className="h-5 w-5" />} accent={data.monthActual.grossProfit >= 0 ? "border-t-emerald-500" : "border-t-red-500"} />
             <MetricCard title="Brüt Kâr Marjı" value={percent(data.monthActual.grossMargin || 0)} helper={`Maliyet üstü oran ${percent(data.monthActual.costMarkup || 0)}`} icon={<Target className="h-5 w-5" />} accent="border-t-cyan-500" />
-            <MetricCard title="Genel Gider" value={money(data.monthActual.operatingExpenses, currency)} helper="Muhasebedeki dönem giderleri" icon={<TrendingDown className="h-5 w-5" />} accent="border-t-amber-400" />
-            <MetricCard title="Net Faaliyet Sonucu" value={money(data.monthActual.netProfit, currency)} helper="Brüt kâr − genel gider" icon={<BarChart3 className="h-5 w-5" />} accent={data.monthActual.netProfit >= 0 ? "border-t-emerald-600" : "border-t-red-600"} />
+            <MetricCard title="Faaliyet Gideri" value={money(data.monthActual.operatingExpenses, currency)} helper="Doğrulanmış faaliyet giderleri · KDV hariç" icon={<TrendingDown className="h-5 w-5" />} accent="border-t-amber-400" />
+            <MetricCard title="Net Faaliyet Sonucu" value={money(data.monthActual.netProfit, currency)} helper="Brüt kâr − faaliyet gideri" icon={<BarChart3 className="h-5 w-5" />} accent={data.monthActual.netProfit >= 0 ? "border-t-emerald-600" : "border-t-red-600"} />
           </div>
 
           <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
