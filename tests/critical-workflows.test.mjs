@@ -525,7 +525,7 @@ test("KolayBi live cutover remains read-only until explicitly enabled", async ()
   assert.match(purchaseSync, /isKolayBiSyncEnabled\(baseUrl\)/);
 });
 
-test("incoming purchase invoices require documents, human matching and owner approval", async () => {
+test("incoming purchase invoices require documents and a human matching check", async () => {
   const [sql, inbox, service] = await Promise.all([
     read("supabase/migrations/20260819013000_purchase_invoice_matching.sql"),
     read("src/components/PurchaseInvoiceInbox.tsx"),
@@ -541,7 +541,7 @@ test("incoming purchase invoices require documents, human matching and owner app
   assert.match(sql, /Sevkiyat dağılımı ve genel gider toplamı fatura toplamına eşit olmalıdır/);
   assert.match(sql, /incoming_purchase_invoices_legal_unique/);
   assert.match(inbox, /Gelenleri Yenile/);
-  assert.match(inbox, /Kontrol Edildi, Eşleştir/);
+  assert.match(inbox, /Eşleştir ve Muhasebeleştir/);
   assert.match(service, /purchase-invoice-documents/);
   assert.match(service, /crypto\.subtle\.digest\("SHA-256"/);
 });
@@ -2511,7 +2511,7 @@ test("purchase invoices separate the operational carrier from the legal payable 
   assert.match(service, /\.is\("archived_at", null\)/);
   assert.match(inbox, /Fatura Carisi/);
   assert.match(inbox, /Operasyon Taşıyıcısı/);
-  assert.match(inbox, /Cari kart açıldığında fatura otomatik bağlanır/);
+  assert.match(inbox, /eşleştirme sırasında fatura bilgileriyle otomatik oluşturulacaktır/);
   assert.match(inbox, /Tahmini maliyet/);
   assert.match(inbox, /Gerçekleşen maliyet/);
   assert.match(shipmentForm, /Operasyon Taşıyıcısı \(Opsiyonel\)/);
@@ -2543,6 +2543,31 @@ test("purchase invoice matching uses the VAT-exclusive base and preserves withho
   assert.match(inbox, /Eşleştirme KDV hariç matrah üzerinden yapılır/);
   assert.match(inbox, /distributionTotal-matchingTarget/);
   assert.doesNotMatch(inbox, /distributionTotal-matchInvoice\.grand_total/);
+});
+
+test("purchase invoice matching fills only empty carriers and finalizes clean owner matches", async () => {
+  const [sql, inbox] = await Promise.all([
+    read("supabase/migrations/20260916100000_auto_assign_invoice_carrier_and_finalize.sql"),
+    read("src/components/PurchaseInvoiceInbox.tsx"),
+  ]);
+
+  assert.match(sql, /rex_ensure_purchase_invoice_billing_supplier/);
+  assert.match(sql, /regexp_replace\(coalesce\(nullif\(c\.vergi_no/);
+  assert.match(sql, /account_type = 'her_ikisi'/);
+  assert.match(sql, /'tedarikci', 'diger', 'Aktif'/);
+  assert.match(sql, /SET supplier_id = v_billing_supplier/);
+  assert.match(sql, /WHERE s\.supplier_id IS NULL/);
+  assert.match(sql, /i\.billing_supplier_id = NEW\.supplier_id/);
+  assert.match(sql, /SET active = false/);
+  assert.match(sql, /IF v_status = 'matched'/);
+  assert.match(sql, /PERFORM public\.rex_approve_purchase_invoice\(p_invoice_id, true, p_reason\)/);
+  assert.match(sql, /RETURN 'payment_pending'/);
+
+  assert.match(inbox, /Taşıyıcı boş; \$\{invoiceSupplierName\} otomatik atanacak/);
+  assert.match(inbox, /Kayıtlı taşıyıcının üzerine yazılmayacak/);
+  assert.match(inbox, /Eşleştir ve Muhasebeleştir/);
+  assert.match(inbox, /Fark Kontrolü/);
+  assert.doesNotMatch(inbox, /Şirket Sahibi Olarak Onayla/);
 });
 
 test("KolayBi purchase invoices create and link missing legal supplier cards without duplicates", async () => {
