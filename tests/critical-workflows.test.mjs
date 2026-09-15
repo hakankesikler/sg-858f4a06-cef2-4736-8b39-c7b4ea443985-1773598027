@@ -2517,6 +2517,34 @@ test("purchase invoices separate the operational carrier from the legal payable 
   assert.match(shipmentForm, /Operasyon Taşıyıcısı \(Opsiyonel\)/);
 });
 
+test("purchase invoice matching uses the VAT-exclusive base and preserves withholding", async () => {
+  const [sql, syncApi, inbox] = await Promise.all([
+    read("supabase/migrations/20260915180000_match_purchase_invoices_on_net_total.sql"),
+    read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
+    read("src/components/PurchaseInvoiceInbox.tsx"),
+  ]);
+
+  assert.match(sql, /abs\(coalesce\(s\.cost, 0\) - i\.net_total\)/);
+  assert.match(sql, /v_invoice\.net_total\) > 0\.01/);
+  assert.match(sql, /KDV hariç fatura matrahına eşit olmalıdır/);
+  assert.match(sql, /'matching_basis', 'net_total'/);
+  assert.match(sql, /withholding_total = round\(net_total \+ vat_total - grand_total, 2\)/);
+  assert.match(sql, /round\(\(\(net_total \+ vat_total - grand_total\) \/ vat_total\) \* 10\) BETWEEN 1 AND 10/);
+
+  assert.match(syncApi, /function safeWithholdingTotal/);
+  assert.match(syncApi, /exchange_withholding_total/);
+  assert.match(syncApi, /netTotal \+ vatTotal - grandTotal/);
+  assert.match(syncApi, /Math\.abs\(ratioInTenths - nearestTenth\) <= 0\.01/);
+  assert.match(syncApi, /withholding_inferred: withholdingTotal > 0/);
+
+  assert.match(inbox, /KDV Hariç Matrah/);
+  assert.match(inbox, /Ödenecek Fatura Tutarı/);
+  assert.match(inbox, /Matrah \+ KDV − tevkifat/);
+  assert.match(inbox, /Eşleştirme KDV hariç matrah üzerinden yapılır/);
+  assert.match(inbox, /distributionTotal-matchingTarget/);
+  assert.doesNotMatch(inbox, /distributionTotal-matchInvoice\.grand_total/);
+});
+
 test("KolayBi purchase invoices create and link missing legal supplier cards without duplicates", async () => {
   const [sql, syncApi, cariForm, accounting, crm, shipmentForm, transactions] = await Promise.all([
     read("supabase/migrations/20260909170000_auto_create_kolaybi_purchase_suppliers.sql"),

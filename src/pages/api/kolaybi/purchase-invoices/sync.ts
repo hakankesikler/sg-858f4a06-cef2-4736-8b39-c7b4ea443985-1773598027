@@ -50,6 +50,21 @@ function numberValue(...values: any[]) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function roundMoney(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function safeWithholdingTotal(netTotal: number, vatTotal: number, grandTotal: number, reportedTotal: number) {
+  if (reportedTotal > 0) return roundMoney(reportedTotal);
+  const inferredTotal = roundMoney(netTotal + vatTotal - grandTotal);
+  if (vatTotal <= 0 || inferredTotal <= 0.01 || inferredTotal > vatTotal + 0.01) return 0;
+  const ratioInTenths = (inferredTotal / vatTotal) * 10;
+  const nearestTenth = Math.round(ratioInTenths);
+  return nearestTenth >= 1 && nearestTenth <= 10 && Math.abs(ratioInTenths - nearestTenth) <= 0.01
+    ? inferredTotal
+    : 0;
+}
+
 function digits(...values: any[]) {
   return textValue(...values).replace(/\D/g, "");
 }
@@ -206,6 +221,42 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
     commercial?.grand_total,
     commercial?.payable_amount,
   );
+  const netTotal = numberValue(
+    official?.exchange_subtotal,
+    official?.subtotal,
+    officialTotals?.subtotal,
+    officialTotals?.net_total,
+    commercialTotals?.subtotal,
+    commercialTotals?.net_total,
+    commercial?.subtotal,
+    grandTotal,
+  );
+  const vatTotal = numberValue(
+    official?.exchange_total_vat,
+    official?.total_vat,
+    official?.vat_total,
+    officialTotals?.vat_total,
+    officialTotals?.tax,
+    commercialTotals?.total_vat,
+    commercialTotals?.vat_total,
+    commercial?.vat_total,
+  );
+  const reportedWithholdingTotal = numberValue(
+    official?.exchange_withholding_total,
+    official?.exchange_total_withholding,
+    official?.withholding_total,
+    official?.total_withholding,
+    official?.withholding_tax_total,
+    officialTotals?.withholding_total,
+    officialTotals?.total_withholding,
+    officialTotals?.withholding_tax_total,
+    commercialTotals?.withholding_total,
+    commercialTotals?.total_withholding,
+    commercialTotals?.withholding_tax_total,
+    commercial?.withholding_total,
+    commercial?.total_withholding,
+  );
+  const withholdingTotal = safeWithholdingTotal(netTotal, vatTotal, grandTotal, reportedWithholdingTotal);
 
   if (!documentId) return { invoice: null, reason: "missing_document_id" };
   if (!invoiceNo) return { invoice: null, reason: "missing_invoice_no" };
@@ -228,27 +279,10 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
       issuer_tax_id: issuerTaxId,
       issuer_tax_office: taxOffice || textValue(official?.tax_office, commercial?.tax_office) || null,
       currency: textValue(official?.grand_currency, official?.currency, officialTotals?.currency, commercial?.currency, commercialTotals?.currency, "TRY").toUpperCase(),
-      net_total: numberValue(
-        official?.exchange_subtotal,
-        official?.subtotal,
-        officialTotals?.subtotal,
-        officialTotals?.net_total,
-        commercialTotals?.subtotal,
-        commercialTotals?.net_total,
-        commercial?.subtotal,
-        grandTotal,
-      ),
-      vat_total: numberValue(
-        official?.exchange_total_vat,
-        official?.total_vat,
-        official?.vat_total,
-        officialTotals?.vat_total,
-        officialTotals?.tax,
-        commercialTotals?.total_vat,
-        commercialTotals?.vat_total,
-        commercial?.vat_total,
-      ),
-      withholding_total: numberValue(official?.withholding_total, officialTotals?.withholding_total, commercialTotals?.withholding_total, commercial?.withholding_total),
+      net_total: netTotal,
+      vat_total: vatTotal,
+      withholding_total: withholdingTotal,
+      withholding_inferred: withholdingTotal > 0 && reportedWithholdingTotal <= 0,
       grand_total: grandTotal,
       description: textValue(commercial?.description, commercial?.notes, commercial?.note, official?.description, official?.notes, official?.note) || null,
       provider_status: firstValue(commercial?.commercial_doc_status, commercial?.status, official?.status, official?.document_status) || null,
