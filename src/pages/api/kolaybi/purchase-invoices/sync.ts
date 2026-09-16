@@ -187,16 +187,27 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
   const officialTotals = official?.totals || official?.amounts || {};
   const commercialTotals = commercial?.total || commercial?.totals || commercial?.amounts || {};
   const payment = commercial?.payment_plan || commercial?.payment || official?.payment_plan || official?.payment || {};
+  const officialUuid = textValue(
+    official?.document_uuid,
+    official?.uuid,
+    official?.ettn,
+    official?.official_uuid,
+    commercial?.e_document?.uuid,
+    commercial?.uuid,
+  );
   const documentId = textValue(
     official?.commercial_doc_id,
     official?.document_id,
     official?.id,
     official?.invoice_id,
-    official?.uuid,
     commercial?.commercial_doc_id,
     commercial?.document_id,
     commercial?.id,
     commercial?.invoice_id,
+    // An inbound e-document can exist before the user imports it as a
+    // commercial purchase invoice in KolayBi. Its ETTN/document UUID is the
+    // stable provider identity during that stage and must not be discarded.
+    officialUuid,
   );
   const invoiceNo = textValue(
     official?.no,
@@ -269,7 +280,7 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
   return {
     invoice: {
       provider_document_id: documentId,
-      official_uuid: textValue(official?.document_uuid, official?.uuid, official?.ettn, official?.official_uuid, commercial?.e_document?.uuid, commercial?.uuid) || null,
+      official_uuid: officialUuid || null,
       document_type: inferDocumentType(official, commercial),
       invoice_no: invoiceNo.toLocaleUpperCase("tr-TR"),
       invoice_date: dateValue(firstValue(official?.issue_date, official?.invoice_date, commercial?.issue_date, commercial?.invoice_date, commercial?.order_date, commercial?.date)),

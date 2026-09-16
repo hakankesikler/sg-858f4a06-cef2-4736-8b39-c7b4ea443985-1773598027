@@ -2657,7 +2657,10 @@ test("KolayBi incoming e-documents resolve their commercial invoice before suppl
   ]);
 
   assert.match(syncApi, /official\?\.commercial_doc_id, official\?\.document_id/);
-  assert.match(syncApi, /official\?\.document_uuid, official\?\.uuid/);
+  assert.match(syncApi, /official\?\.document_uuid,\s*official\?\.uuid/);
+  assert.match(syncApi, /const officialUuid = textValue\([\s\S]*?official\?\.document_uuid[\s\S]*?official\?\.ettn[\s\S]*?\);/);
+  assert.match(syncApi, /const documentId = textValue\([\s\S]*?commercial\?\.invoice_id,[\s\S]*?officialUuid,[\s\S]*?\);/);
+  assert.match(syncApi, /official_uuid: officialUuid \|\| null/);
   assert.match(syncApi, /min_issue_date: minIssueDate/);
   assert.match(syncApi, /max_issue_date: maxIssueDate/);
   assert.doesNotMatch(syncApi, /start_date: minIssueDate/);
