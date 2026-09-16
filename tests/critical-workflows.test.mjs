@@ -2670,6 +2670,16 @@ test("KolayBi incoming e-documents resolve their commercial invoice before suppl
   assert.doesNotMatch(inbox, /zorunlu tedarikçi bilgisi eksik olduğu için alınamadı/);
 });
 
+test("unimported KolayBi e-documents can resolve one unique existing associate by exact title", async () => {
+  const syncApi = await read("src/pages/api/kolaybi/purchase-invoices/sync.ts");
+
+  assert.match(syncApi, /function partyNameKey/);
+  assert.match(syncApi, /const byName = new Map<string, any \| null>\(\)/);
+  assert.match(syncApi, /addUnique\(byName, partyNameKey\(value\), payload\)/);
+  assert.match(syncApi, /const nameMatch = associates\.byName\.get\(partyNameKey\(name\)\)/);
+  assert.match(syncApi, /ambiguous names remain in manual review/);
+});
+
 test("invoice preview follows official e-invoice and e-archive presentation data", async () => {
   const [dialog, template] = await Promise.all([
     read("src/components/InvoicePreviewDialog.tsx"),

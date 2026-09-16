@@ -78,6 +78,13 @@ function documentKey(value: any) {
   return textValue(value).toLocaleUpperCase("tr-TR").replace(/[^A-Z0-9]/g, "");
 }
 
+function partyNameKey(value: any) {
+  return textValue(value)
+    .toLocaleUpperCase("tr-TR")
+    .replace(/[ÇĞİÖŞÜ]/g, (character) => ({ Ç: "C", Ğ: "G", İ: "I", Ö: "O", Ş: "S", Ü: "U" })[character] || character)
+    .replace(/[^A-Z0-9]/g, "");
+}
+
 function partyCandidates(item: any) {
   return [
     item?.header?.associate,
@@ -120,8 +127,8 @@ function partyName(parties: any[], official: any, commercial: any) {
       party?.title,
       party?.company_name,
       party?.trade_name,
-      party?.name,
       [party?.name, party?.surname].filter(Boolean).join(" "),
+      party?.name,
     );
     if (name) return name;
   }
@@ -366,8 +373,9 @@ function matchingCommercial(official: any, indexes: ReturnType<typeof commercial
   return null;
 }
 
-async function associateIndex(admin: any, providerEnvironment: "test" | "live") {
-  const result = new Map<string, any>();
+async function associateIndexes(admin: any, providerEnvironment: "test" | "live") {
+  const byId = new Map<string, any>();
+  const byName = new Map<string, any | null>();
   for (let from = 0; from < 10_000; from += 1_000) {
     const { data, error } = await admin.from("kolaybi_master_records")
       .select("external_id,payload")
@@ -375,17 +383,40 @@ async function associateIndex(admin: any, providerEnvironment: "test" | "live") 
       .eq("resource_type", "associate")
       .range(from, from + 999);
     if (error) throw error;
-    for (const row of data || []) result.set(textValue(row.external_id), row.payload || {});
+    for (const row of data || []) {
+      const payload = row.payload || {};
+      byId.set(textValue(row.external_id), payload);
+      [
+        payload?.full_name,
+        payload?.title,
+        payload?.company_name,
+        payload?.trade_name,
+        [payload?.name, payload?.surname].filter(Boolean).join(" "),
+        payload?.name,
+      ].forEach((value) => addUnique(byName, partyNameKey(value), payload));
+    }
     if ((data || []).length < 1_000) break;
   }
-  return result;
+  return { byId, byName };
 }
 
-function matchingAssociate(official: any, commercial: any, associates: Map<string, any>) {
+function matchingAssociate(official: any, commercial: any, associates: Awaited<ReturnType<typeof associateIndexes>>) {
   for (const id of [...associateReferenceIds(commercial), ...associateReferenceIds(official)]) {
-    const match = associates.get(id);
+    const match = associates.byId.get(id);
     if (match) return match;
   }
+
+  // Official inbound e-document rows that have not yet been imported in
+  // KolayBi do not expose a commercial document or associate ID. Resolve the
+  // supplier only when its exact normalized title identifies one unique
+  // KolayBi associate; ambiguous names remain in manual review.
+  const name = partyName(
+    [...partyCandidates(official), ...partyCandidates(commercial)],
+    official,
+    commercial,
+  );
+  const nameMatch = associates.byName.get(partyNameKey(name));
+  if (nameMatch) return nameMatch;
   return null;
 }
 
@@ -458,7 +489,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         min_issue_date: minIssueDate,
         max_issue_date: maxIssueDate,
       }), headers),
-      associateIndex(admin, providerEnvironment),
+      associateIndexes(admin, providerEnvironment),
     ]);
 
     const indexes = commercialIndexes(commercialRows);
