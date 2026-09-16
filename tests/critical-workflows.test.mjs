@@ -2826,6 +2826,28 @@ test("shipment parties distinguish companies from people and learn reusable addr
   assert.match(shipmentService, /party_type,identity_no,source_customer_id/);
 });
 
+test("company owner can apply completed shipment changes without self-approval or a manual reason", async () => {
+  const [migration, form, shipmentService, logistics] = await Promise.all([
+    read("supabase/migrations/20260916223000_owner_direct_shipment_revision.sql"),
+    read("src/components/ShipmentForm.tsx"),
+    read("src/services/shipmentService.ts"),
+    read("src/components/modules/LogisticsModule.tsx"),
+  ]);
+
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.rex_owner_apply_shipment_revision/);
+  assert.match(migration, /v_email <> 'info@rexlojistik\.com'/);
+  assert.match(migration, /public\.rex_request_shipment_revision/);
+  assert.match(migration, /public\.rex_review_shipment_revision/);
+  assert.match(migration, /Şirket sahibi tarafından doğrudan düzenlendi/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.rex_owner_apply_shipment_revision/);
+  assert.match(form, /isCompletedEdit && !isOwner && revisionReason\.trim\(\)\.length < 10/);
+  assert.match(form, /shipmentService\.applyOwnerRevision/);
+  assert.match(form, /Şirket sahibi düzenlemesi/);
+  assert.match(form, /Değişiklikleri Kaydet/);
+  assert.match(shipmentService, /rex_owner_apply_shipment_revision/);
+  assert.match(logistics, /isOwner=\{currentUserEmail === "info@rexlojistik\.com"\}/);
+});
+
 test("required form fields are highlighted and the first invalid field is revealed", async () => {
   const [form, stopCard, input, select, textarea] = await Promise.all([
     read("src/components/ShipmentForm.tsx"),

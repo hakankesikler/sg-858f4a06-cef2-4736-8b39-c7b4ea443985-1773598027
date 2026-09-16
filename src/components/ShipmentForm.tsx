@@ -67,6 +67,7 @@ interface ShipmentFormProps {
   onSuccess: () => void;
   editMode?: boolean;
   initialData?: any;
+  isOwner?: boolean;
 }
 
 const createRouteStop = (
@@ -90,7 +91,7 @@ const createRouteStop = (
   planned_at: values.planned_at || "",
 });
 
-export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, initialData }: ShipmentFormProps) {
+export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, initialData, isOwner = false }: ShipmentFormProps) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -669,7 +670,7 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isCompletedEdit && revisionReason.trim().length < 10) {
+    if (isCompletedEdit && !isOwner && revisionReason.trim().length < 10) {
       setValidationAttempted(true);
       revealFirstInvalidField();
       toast({
@@ -786,6 +787,18 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
       };
 
       if (isCompletedEdit) {
+        if (isOwner) {
+          await shipmentService.applyOwnerRevision(initialData.id, submitData, cargoItems, routeStops);
+          toast({
+            title: "Değişiklikler kaydedildi",
+            description: "Şirket sahibi düzenlemesi doğrudan uygulandı ve denetim kaydına işlendi.",
+          });
+          onSuccess();
+          onClose();
+          resetForm();
+          return;
+        }
+
         await shipmentService.requestRevision(initialData.id, revisionReason.trim(), submitData, cargoItems, routeStops);
         toast({
           title: "Revizyon talebi oluşturuldu",
@@ -1536,7 +1549,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
           )}
 
-          {isCompletedEdit && (
+          {isCompletedEdit && isOwner && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-1">
+              <p className="font-semibold text-blue-950">Şirket sahibi düzenlemesi</p>
+              <p className="text-sm text-blue-800">
+                Değişiklikler ayrıca gerekçe veya ikinci onay istenmeden uygulanır ve denetim geçmişine kaydedilir.
+              </p>
+            </div>
+          )}
+
+          {isCompletedEdit && !isOwner && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-2">
               <p className="font-semibold text-amber-900">Yönetici onaylı revizyon</p>
               <p className="text-sm text-amber-800">
@@ -1562,7 +1584,15 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
               type="submit"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Kaydediliyor..." : isCompletedEdit ? "Revizyon Talebi Oluştur" : editMode ? "Güncelle" : "Kaydet"}
+              {isSubmitting
+                ? "Kaydediliyor..."
+                : isCompletedEdit && isOwner
+                  ? "Değişiklikleri Kaydet"
+                  : isCompletedEdit
+                    ? "Revizyon Talebi Oluştur"
+                    : editMode
+                      ? "Güncelle"
+                      : "Kaydet"}
             </Button>
           </DialogFooter>
         </form>

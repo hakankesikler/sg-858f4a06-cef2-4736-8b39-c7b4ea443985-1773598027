@@ -1180,6 +1180,7 @@ export function LogisticsModule() {
         onSuccess={loadData}
         editMode={!!editingShipment}
         initialData={editingShipment}
+        isOwner={currentUserEmail === "info@rexlojistik.com"}
       />
 
       <DeliveryModal

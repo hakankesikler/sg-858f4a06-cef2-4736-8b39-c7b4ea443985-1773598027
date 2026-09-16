@@ -165,6 +165,21 @@ export const shipmentService = {
     return data as unknown as string;
   },
 
+  async applyOwnerRevision(
+    shipmentId: string,
+    proposedShipment: Partial<Shipment>,
+    proposedCargoItems: unknown[],
+    proposedRouteStops: ShipmentRouteStopInput[],
+  ) {
+    const { data, error } = await supabase.rpc("rex_owner_apply_shipment_revision" as any, {
+      p_shipment_id: shipmentId,
+      p_proposed_shipment: { ...proposedShipment, _route_stops: proposedRouteStops },
+      p_proposed_cargo_items: proposedCargoItems,
+    } as any);
+    if (error) throw error;
+    return data as unknown as string;
+  },
+
   async getRevisionRequests(): Promise<ShipmentRevisionRequest[]> {
     const { data, error } = await (supabase.from("shipment_revision_requests" as any) as any)
       .select("*")
