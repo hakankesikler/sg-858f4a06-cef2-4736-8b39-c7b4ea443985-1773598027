@@ -2570,6 +2570,28 @@ test("purchase invoice matching fills only empty carriers and finalizes clean ow
   assert.doesNotMatch(inbox, /Şirket Sahibi Olarak Onayla/);
 });
 
+test("purchase invoice payables preserve VAT withholding without writing the generated total", async () => {
+  const [sql, accounting] = await Promise.all([
+    read("supabase/migrations/20260916123000_fix_purchase_invoice_generated_total.sql"),
+    read("src/services/accountingService.ts"),
+  ]);
+
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS withholding_total numeric\(15,2\) NOT NULL DEFAULT 0/);
+  assert.match(sql, /ALTER COLUMN total DROP EXPRESSION IF EXISTS/);
+  assert.match(sql, /NEW\.total := round\([\s\S]*NEW\.subtotal[\s\S]*NEW\.tax[\s\S]*NEW\.discount[\s\S]*NEW\.withholding_total/);
+  assert.match(sql, /BEFORE INSERT OR UPDATE ON public\.purchases/);
+
+  const approvalInsert = sql.match(/INSERT INTO public\.purchases\([\s\S]*?RETURNING id INTO v_purchase;/)?.[0] || "";
+  assert.match(approvalInsert, /withholding_total/);
+  assert.match(approvalInsert, /v_invoice\.withholding_total/);
+  assert.doesNotMatch(approvalInsert, /\btax\s*,\s*total\b/);
+  assert.doesNotMatch(approvalInsert, /v_invoice\.grand_total\s*,\s*'beklemede'/);
+  assert.match(sql, /abs\(v_expected_payable - v_invoice\.grand_total\) > 0\.01/);
+
+  assert.match(accounting, /from\("purchases"\)\.select\("total"\)/);
+  assert.doesNotMatch(accounting, /sum \+ Number\(p\.subtotal\) \+ Number\(p\.tax\)/);
+});
+
 test("KolayBi purchase invoices create and link missing legal supplier cards without duplicates", async () => {
   const [sql, syncApi, cariForm, accounting, crm, shipmentForm, transactions] = await Promise.all([
     read("supabase/migrations/20260909170000_auto_create_kolaybi_purchase_suppliers.sql"),

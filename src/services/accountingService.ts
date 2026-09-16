@@ -439,11 +439,11 @@ export const accountingService = {
   // ==================== STATISTICS ====================
   async getFinancialStats(): Promise<any> {
     const { data: invoices } = await supabase.from("invoices").select("amount, tax, status");
-    const { data: purchases } = await supabase.from("purchases").select("subtotal, tax");
+    const { data: purchases } = await supabase.from("purchases").select("total");
     const { data: expenses } = await supabase.from("expenses").select("amount, tax");
 
     const totalRevenue = invoices?.reduce((sum, inv) => sum + Number(inv.amount) + Number(inv.tax), 0) || 0;
-    const totalCosts = (purchases?.reduce((sum, p) => sum + Number(p.subtotal) + Number(p.tax), 0) || 0) +
+    const totalCosts = (purchases?.reduce((sum, p) => sum + Number(p.total), 0) || 0) +
                        (expenses?.reduce((sum, e) => sum + Number(e.amount) + Number(e.tax), 0) || 0);
     const profit = totalRevenue - totalCosts;
     const paid = invoices?.filter(i => i.status === "Ödendi").length || 0;
@@ -455,12 +455,12 @@ export const accountingService = {
 
   async getDashboardStats(): Promise<any> {
     const { data: invoices } = await supabase.from("invoices").select("amount, tax, status");
-    const { data: purchases } = await supabase.from("purchases").select("subtotal, tax, status");
+    const { data: purchases } = await supabase.from("purchases").select("total, status");
     const { data: expenses } = await supabase.from("expenses").select("amount, tax");
     const { data: projects } = await supabase.from("projects").select("budget, actual_cost, status");
 
     const salesRevenue = invoices?.reduce((sum, inv) => sum + Number(inv.amount) + Number(inv.tax), 0) || 0;
-    const purchaseCosts = purchases?.reduce((sum, p) => sum + Number(p.subtotal) + Number(p.tax), 0) || 0;
+    const purchaseCosts = purchases?.reduce((sum, p) => sum + Number(p.total), 0) || 0;
     const expenseCosts = expenses?.reduce((sum, e) => sum + Number(e.amount) + Number(e.tax), 0) || 0;
     const activeProjects = projects?.filter(p => p.status === "Devam Ediyor").length || 0;
 
@@ -489,7 +489,7 @@ export const accountingService = {
   async getCustomerAccountStats(): Promise<any> {
     const { data: customers } = await supabase.from("customers").select("id");
     const { data: invoices } = await supabase.from("invoices").select("amount, tax, status");
-    const { data: purchases } = await supabase.from("purchases").select("subtotal, tax, status");
+    const { data: purchases } = await supabase.from("purchases").select("total, status");
 
     const totalReceivables = invoices?.reduce((sum, inv) => {
       if (inv.status === "Bekliyor" || inv.status === "Gecikmiş") {
@@ -500,7 +500,7 @@ export const accountingService = {
 
     const totalPayables = purchases?.reduce((sum, pur) => {
       if (pur.status === "Bekliyor" || pur.status === "Gecikmiş") {
-        return sum + Number(pur.subtotal) + Number(pur.tax);
+        return sum + Number(pur.total);
       }
       return sum;
     }, 0) || 0;

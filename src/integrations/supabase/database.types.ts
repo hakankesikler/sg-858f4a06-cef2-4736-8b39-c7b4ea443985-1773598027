@@ -1631,6 +1631,7 @@ export type Database = {
           tax: number | null
           total: number | null
           updated_at: string | null
+          withholding_total: number
         }
         Insert: {
           created_at?: string | null
@@ -1649,6 +1650,7 @@ export type Database = {
           tax?: number | null
           total?: number | null
           updated_at?: string | null
+          withholding_total?: number
         }
         Update: {
           created_at?: string | null
@@ -1667,6 +1669,7 @@ export type Database = {
           tax?: number | null
           total?: number | null
           updated_at?: string | null
+          withholding_total?: number
         }
         Relationships: [
           {
