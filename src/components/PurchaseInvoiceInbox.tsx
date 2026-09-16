@@ -357,6 +357,11 @@ export function PurchaseInvoiceInbox() {
             <Checkbox checked={state.selected} onCheckedChange={(value) => setAllocations({...allocations,[candidate.shipment_id]:{selected:Boolean(value),amount:state.amount || String(candidate.expected_cost || "")}})}/>
             <div>
               <div className="flex flex-wrap items-center gap-2"><span className="font-mono font-semibold">{candidate.shipment_code}</span><Badge variant="outline">%{candidate.score} uyum</Badge></div>
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
+                <span><strong>Gönderici:</strong> {candidate.sender_name || "-"}</span>
+                <span><strong>Alıcı:</strong> {candidate.receiver_name || "-"}</span>
+                <span><strong>Yük:</strong> {candidate.package_count ?? "-"} {candidate.package_type || "ambalaj"}</span>
+              </div>
               <div className="text-sm">{candidate.origin || "-"} → {candidate.destination || "-"}</div>
               <div className="text-xs text-slate-500">{candidate.supplier_name || "Operasyon taşıyıcısı seçilmemiş; eşleştirme taşıyıcı atamaz"} · {(candidate.reasons || []).join(" · ")}</div>
               {state.selected && carrierConflict && <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">Sevkiyatta kayıtlı taşıyıcı <strong>{candidate.supplier_name}</strong>, fatura carisinden farklı. Kayıtlı taşıyıcının üzerine yazılmayacak; eşleştirme fark kontrolüne alınacak.</div>}

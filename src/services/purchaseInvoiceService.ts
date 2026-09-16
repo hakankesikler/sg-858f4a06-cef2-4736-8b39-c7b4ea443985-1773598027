@@ -76,6 +76,10 @@ export type PurchaseInvoiceCandidate = {
   shipment_status?: string | null;
   expected_cost?: number | null;
   cost_currency?: string | null;
+  sender_name?: string | null;
+  receiver_name?: string | null;
+  package_count?: number | null;
+  package_type?: string | null;
   score: number;
   reasons: string[];
 };

@@ -2545,6 +2545,27 @@ test("purchase invoice matching uses the VAT-exclusive base and preserves withho
   assert.doesNotMatch(inbox, /distributionTotal-matchInvoice\.grand_total/);
 });
 
+test("purchase invoice candidates use a 100-point evidence scale and show shipment context", async () => {
+  const [sql, service, inbox] = await Promise.all([
+    read("supabase/migrations/20260916233000_improve_purchase_invoice_candidate_context.sql"),
+    read("src/services/purchaseInvoiceService.ts"),
+    read("src/components/PurchaseInvoiceInbox.tsx"),
+  ]);
+
+  assert.match(sql, /assigned_carrier_matches OR direct_tax_matches OR approved_issuer_matches THEN 45/);
+  assert.match(sql, /greatest\(net_total\*0\.01,1\) THEN 35/);
+  assert.match(sql, /abs\(pickup_date-invoice_date\) <= 15 THEN 20/);
+  assert.match(sql, /s\.sender_name/);
+  assert.match(sql, /s\.receiver/);
+  assert.match(sql, /s\.adet/);
+  assert.match(sql, /s\.cinsi/);
+  assert.match(service, /sender_name\?: string \| null/);
+  assert.match(service, /package_count\?: number \| null/);
+  assert.match(inbox, /<strong>Gönderici:<\/strong>/);
+  assert.match(inbox, /<strong>Alıcı:<\/strong>/);
+  assert.match(inbox, /<strong>Yük:<\/strong>/);
+});
+
 test("purchase invoice matching respects the TYS cutover and never auto-assigns shipment carriers", async () => {
   const [supplierSql, policySql, inbox, syncApi, service] = await Promise.all([
     read("supabase/migrations/20260916100000_auto_assign_invoice_carrier_and_finalize.sql"),
