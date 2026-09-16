@@ -2650,6 +2650,23 @@ test("KolayBi purchase invoices create and link missing legal supplier cards wit
   assert.match(transactions, /accountType === "tedarikci" \|\| accountType === "her_ikisi"/);
 });
 
+test("KolayBi incoming e-documents resolve their commercial invoice before supplier matching", async () => {
+  const [syncApi, inbox] = await Promise.all([
+    read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
+    read("src/components/PurchaseInvoiceInbox.tsx"),
+  ]);
+
+  assert.match(syncApi, /official\?\.commercial_doc_id, official\?\.document_id/);
+  assert.match(syncApi, /official\?\.document_uuid, official\?\.uuid/);
+  assert.match(syncApi, /min_issue_date: minIssueDate/);
+  assert.match(syncApi, /max_issue_date: maxIssueDate/);
+  assert.doesNotMatch(syncApi, /start_date: minIssueDate/);
+  assert.doesNotMatch(syncApi, /end_date: maxIssueDate/);
+  assert.match(inbox, /faturadaki düzenleyen unvanı okunamadı/);
+  assert.match(inbox, /faturadaki VKN\/TCKN okunamadı/);
+  assert.doesNotMatch(inbox, /zorunlu tedarikçi bilgisi eksik olduğu için alınamadı/);
+});
+
 test("invoice preview follows official e-invoice and e-archive presentation data", async () => {
   const [dialog, template] = await Promise.all([
     read("src/components/InvoicePreviewDialog.tsx"),

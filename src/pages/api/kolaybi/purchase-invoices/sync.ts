@@ -188,6 +188,7 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
   const commercialTotals = commercial?.total || commercial?.totals || commercial?.amounts || {};
   const payment = commercial?.payment_plan || commercial?.payment || official?.payment_plan || official?.payment || {};
   const documentId = textValue(
+    official?.commercial_doc_id,
     official?.document_id,
     official?.id,
     official?.invoice_id,
@@ -268,7 +269,7 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
   return {
     invoice: {
       provider_document_id: documentId,
-      official_uuid: textValue(official?.uuid, official?.ettn, official?.official_uuid, commercial?.e_document?.uuid, commercial?.uuid) || null,
+      official_uuid: textValue(official?.document_uuid, official?.uuid, official?.ettn, official?.official_uuid, commercial?.e_document?.uuid, commercial?.uuid) || null,
       document_type: inferDocumentType(official, commercial),
       invoice_no: invoiceNo.toLocaleUpperCase("tr-TR"),
       invoice_date: dateValue(firstValue(official?.issue_date, official?.invoice_date, commercial?.issue_date, commercial?.invoice_date, commercial?.order_date, commercial?.date)),
@@ -341,7 +342,9 @@ function commercialIndexes(rows: any[]) {
 }
 
 function matchingCommercial(official: any, indexes: ReturnType<typeof commercialIndexes>) {
-  for (const value of [official?.document_id, official?.id, official?.invoice_id]) {
+  // The official e-document list points to the underlying commercial invoice
+  // with `commercial_doc_id`. Supplier name and VKN/TCKN live on that record.
+  for (const value of [official?.commercial_doc_id, official?.document_id, official?.id, official?.invoice_id]) {
     const match = indexes.byId.get(documentKey(value));
     if (match) return match;
   }
@@ -441,8 +444,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       pagedProviderList(baseUrl, "/invoices", new URLSearchParams({
         type: "purchase_invoice",
         has_products: "true",
-        start_date: minIssueDate,
-        end_date: maxIssueDate,
+        min_issue_date: minIssueDate,
+        max_issue_date: maxIssueDate,
       }), headers),
       associateIndex(admin, providerEnvironment),
     ]);

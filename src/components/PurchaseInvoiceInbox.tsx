@@ -56,6 +56,14 @@ type SortDirection = "asc" | "desc";
 
 type AllocationState = Record<string, { selected: boolean; amount: string }>;
 
+const syncSkipLabel: Record<string, string> = {
+  missing_document_id: "belge kimliği bulunamadı",
+  missing_invoice_no: "fatura numarası bulunamadı",
+  missing_supplier_name: "faturadaki düzenleyen unvanı okunamadı",
+  missing_supplier_identity: "faturadaki VKN/TCKN okunamadı",
+  invalid_total: "fatura tutarı geçersiz",
+};
+
 export function PurchaseInvoiceInbox() {
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<IncomingPurchaseInvoice[]>([]);
@@ -207,7 +215,12 @@ export function PurchaseInvoiceInbox() {
         `${result.imported || 0} yeni alış faturası havuza alındı`,
         `${result.existing || 0} mevcut kayıt güncellendi`,
       ];
-      if (result.skipped) details.push(`${result.skipped} kayıt zorunlu tedarikçi bilgisi eksik olduğu için alınamadı`);
+      const skippedDetails = Object.entries(result.skip_reasons || {})
+        .filter(([, count]) => Number(count) > 0)
+        .map(([reason, count]) => `${count} kayıt: ${syncSkipLabel[reason] || reason}`);
+      if (result.skipped) details.push(skippedDetails.length
+        ? skippedDetails.join(", ")
+        : `${result.skipped} kayıt doğrulama nedeniyle alınamadı`);
       if (result.errors?.length) details.push(`${result.errors.length} kayıt hatası oluştu`);
       toast({
         title: result.skipped || result.errors?.length ? "Gelen faturalar kontrol gerektiriyor" : "Gelen faturalar güncellendi",
