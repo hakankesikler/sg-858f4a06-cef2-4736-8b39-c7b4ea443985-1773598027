@@ -134,7 +134,7 @@ test("driver licence and vehicle registration upload without OCR or confirmation
   assert.match(cleanupMigration, /DROP TRIGGER IF EXISTS rex_driver_document_confirmation_stamp/);
   assert.match(cleanupMigration, /DROP TRIGGER IF EXISTS rex_vehicle_document_confirmation_stamp/);
   assert.match(cleanupMigration, /DROP FUNCTION IF EXISTS public\.rex_stamp_transport_document_confirmation/);
-  assert.doesNotMatch(packageJson, /tesseract|pdfjs|prepare-local-ocr/i);
+  assert.doesNotMatch(packageJson, /tesseract|prepare-local-ocr/i);
   assert.doesNotMatch(nextConfig, /wasm-unsafe-eval/);
 });
 
@@ -2546,10 +2546,11 @@ test("purchase invoice matching uses the VAT-exclusive base and preserves withho
 });
 
 test("KolayBi inbound invoices require and refresh a verified official tax breakdown", async () => {
-  const [syncApi, migration, inbox] = await Promise.all([
+  const [syncApi, migration, inbox, pdfBreakdown] = await Promise.all([
     read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
     read("supabase/migrations/20260917090000_refresh_verified_purchase_invoice_amounts.sql"),
     read("src/components/PurchaseInvoiceInbox.tsx"),
+    read("src/lib/official-invoice-breakdown.ts"),
   ]);
 
   assert.match(syncApi, /missing_tax_breakdown/);
@@ -2557,6 +2558,21 @@ test("KolayBi inbound invoices require and refresh a verified official tax break
   assert.match(syncApi, /TaxExclusiveAmount/);
   assert.match(syncApi, /WithholdingTaxTotal/);
   assert.match(syncApi, /e_document\/download/);
+  assert.match(syncApi, /invoices\/e-document\/view/);
+  assert.match(pdfBreakdown, /parseOfficialInvoicePdfText/);
+  assert.match(pdfBreakdown, /KDV Matrahi/);
+  assert.match(pdfBreakdown, /Hesaplanan KDV/);
+  assert.match(pdfBreakdown, /Odenecek Tutar/);
+  assert.match(pdfBreakdown, /tax_breakdown_source: "official_pdf"/);
+  const { parseOfficialInvoicePdfText } = await import("../src/lib/official-invoice-breakdown.ts");
+  assert.deepEqual(
+    parseOfficialInvoicePdfText("KDV Matrahı 6.000,00 TL Hesaplanan KDV(%20,00) 1.200,00 TL Vergiler Dahil Toplam Tutar 7.200,00 TL Ödenecek Tutar 7.200,00 TL"),
+    { subtotal: 6000, total_vat: 1200, withholding_total: 0, grand_total: 7200, tax_breakdown_source: "official_pdf" },
+  );
+  assert.deepEqual(
+    parseOfficialInvoicePdfText("KDV Matrahı 10.000,00 TL Hesaplanan KDV(%20,00) 2.000,00 TL Vergiler Dahil Toplam Tutar 12.000,00 TL Ödenecek Tutar 11.000,00 TL"),
+    { subtotal: 10000, total_vat: 2000, withholding_total: 1000, grand_total: 11000, tax_breakdown_source: "official_pdf" },
+  );
   assert.doesNotMatch(syncApi, /commercial\?\.subtotal,\s*grandTotal/);
   assert.match(syncApi, /rex_refresh_kolaybi_purchase_invoice_amounts/);
   assert.match(migration, /tax_breakdown_verified/);

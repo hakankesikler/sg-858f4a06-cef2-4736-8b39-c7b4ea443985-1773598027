@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { isKolayBiSyncEnabled } from "@/lib/kolaybi-live-gate";
+import { decodeOfficialPdf, parseOfficialInvoicePdf } from "@/lib/official-invoice-breakdown";
 
 const defaultBaseUrl = "https://ofis-sandbox-api.kolaybi.com/kolaybi/v1";
 const pageSize = 100;
@@ -216,6 +217,22 @@ async function enrichTaxBreakdown(
       // Try the next KolayBi endpoint shape. If neither returns a verified UBL
       // breakdown, normalization rejects the incomplete amount record.
     }
+  }
+
+  try {
+    const response = await fetch(
+      `${baseUrl}/invoices/e-document/view?uuid=${encodeURIComponent(uuid)}`,
+      { method: "GET", headers, signal: AbortSignal.timeout(25_000) },
+    );
+    const body = await response.text();
+    if (response.ok) {
+      const pdf = decodeOfficialPdf(body);
+      const breakdown = pdf ? await parseOfficialInvoicePdf(pdf) : null;
+      if (breakdown) return { official: { ...official, ...breakdown }, commercial: enrichedCommercial };
+    }
+  } catch {
+    // The verified PDF is the final safe fallback. The invoice remains pending
+    // if its official tax breakdown cannot be read and validated.
   }
   return { official, commercial: enrichedCommercial };
 }
