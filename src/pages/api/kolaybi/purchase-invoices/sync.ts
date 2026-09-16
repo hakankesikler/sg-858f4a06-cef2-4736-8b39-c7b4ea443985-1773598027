@@ -11,6 +11,7 @@ type SkipReason =
   | "missing_invoice_no"
   | "missing_supplier_name"
   | "missing_supplier_identity"
+  | "missing_tax_breakdown"
   | "invalid_total";
 
 type NormalizedResult =
@@ -50,6 +51,17 @@ function numberValue(...values: any[]) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function optionalNumberValue(...values: any[]): number | null {
+  const value = firstValue(...values);
+  if (value === undefined || value === null || value === "") return null;
+  const candidate = typeof value === "object" && value !== null
+    ? firstValue(value?.amount, value?.value, value?.total, value?.grand_total)
+    : value;
+  if (candidate === undefined || candidate === null || candidate === "") return null;
+  const parsed = Number(candidate);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
@@ -63,6 +75,149 @@ function safeWithholdingTotal(netTotal: number, vatTotal: number, grandTotal: nu
   return nearestTenth >= 1 && nearestTenth <= 10 && Math.abs(ratioInTenths - nearestTenth) <= 0.01
     ? inferredTotal
     : 0;
+}
+
+function xmlTagValue(xml: string, tagName: string) {
+  const escaped = tagName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = xml.match(new RegExp(`<(?:(?:[A-Za-z_][\\w.-]*):)?${escaped}\\b[^>]*>([^<]+)<\\/(?:(?:[A-Za-z_][\\w.-]*):)?${escaped}>`, "i"));
+  return match?.[1]?.trim() || "";
+}
+
+function xmlTagBlock(xml: string, tagName: string) {
+  const escaped = tagName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return xml.match(new RegExp(`<(?:(?:[A-Za-z_][\\w.-]*):)?${escaped}\\b[^>]*>[\\s\\S]*?<\\/(?:(?:[A-Za-z_][\\w.-]*):)?${escaped}>`, "i"))?.[0] || "";
+}
+
+function xmlMoney(xml: string, tagName: string): number | null {
+  const raw = xmlTagValue(xml, tagName).replace(/\s/g, "").replace(",", ".");
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? roundMoney(parsed) : null;
+}
+
+function parseOfficialInvoiceXml(xml: string) {
+  const invoiceXml = xml.replace(/^\uFEFF/, "").trim();
+  if (!/<(?:(?:[A-Za-z_][\w.-]*):)?Invoice\b/i.test(invoiceXml)) return null;
+  const monetaryTotal = xmlTagBlock(invoiceXml, "LegalMonetaryTotal");
+  const taxTotal = xmlTagBlock(invoiceXml, "TaxTotal");
+  const withholdingTaxTotal = xmlTagBlock(invoiceXml, "WithholdingTaxTotal");
+  const netTotal = xmlMoney(monetaryTotal, "TaxExclusiveAmount");
+  const payableTotal = xmlMoney(monetaryTotal, "PayableAmount");
+  const explicitVatTotal = xmlMoney(taxTotal, "TaxAmount");
+  const taxInclusiveTotal = xmlMoney(monetaryTotal, "TaxInclusiveAmount");
+  const withholdingTotal = xmlMoney(withholdingTaxTotal, "TaxAmount") || 0;
+  const vatTotal = explicitVatTotal ?? (
+    netTotal !== null && taxInclusiveTotal !== null
+      ? roundMoney(Math.max(0, taxInclusiveTotal - netTotal))
+      : null
+  );
+  if (netTotal === null || vatTotal === null || payableTotal === null || netTotal <= 0 || payableTotal <= 0) return null;
+  if (Math.abs(roundMoney(netTotal + vatTotal - withholdingTotal) - payableTotal) > 0.02) return null;
+  return {
+    subtotal: netTotal,
+    total_vat: vatTotal,
+    withholding_total: withholdingTotal,
+    grand_total: payableTotal,
+    tax_breakdown_source: "official_xml",
+  };
+}
+
+function decodeOfficialXml(body: string) {
+  const trimmed = body.trim();
+  if (trimmed.startsWith("<")) return trimmed;
+  let parsed: any = null;
+  try { parsed = JSON.parse(trimmed); } catch { return ""; }
+  const encoded = textValue(
+    parsed?.data?.src,
+    parsed?.data?.content,
+    parsed?.data?.xml,
+    parsed?.src,
+    parsed?.content,
+    parsed?.xml,
+  ).replace(/^data:(?:application|text)\/[^;]+;base64,/i, "");
+  if (!encoded) return "";
+  if (encoded.trim().startsWith("<")) return encoded.trim();
+  try {
+    const decoded = Buffer.from(encoded, "base64").toString("utf8").replace(/^\uFEFF/, "").trim();
+    return decoded.startsWith("<") ? decoded : "";
+  } catch {
+    return "";
+  }
+}
+
+function hasExplicitTaxBreakdown(official: any, commercial: any) {
+  const officialTotals = official?.totals || official?.amounts || {};
+  const commercialTotals = commercial?.total || commercial?.totals || commercial?.amounts || {};
+  const netTotal = optionalNumberValue(
+    official?.subtotal,
+    official?.exchange_subtotal,
+    officialTotals?.subtotal,
+    officialTotals?.net_total,
+    commercialTotals?.subtotal,
+    commercialTotals?.net_total,
+    commercial?.subtotal,
+  );
+  const vatTotal = optionalNumberValue(
+    official?.total_vat,
+    official?.exchange_total_vat,
+    official?.vat_total,
+    officialTotals?.vat_total,
+    officialTotals?.tax,
+    commercialTotals?.total_vat,
+    commercialTotals?.vat_total,
+    commercial?.vat_total,
+  );
+  return netTotal !== null && vatTotal !== null;
+}
+
+function providerData(json: any) {
+  return json?.data?.data || json?.data || json || null;
+}
+
+async function enrichTaxBreakdown(
+  baseUrl: string,
+  companyId: string,
+  headers: Record<string, string>,
+  official: any,
+  commercial: any,
+) {
+  let enrichedCommercial = commercial;
+  if (!hasExplicitTaxBreakdown(official, enrichedCommercial)) {
+    const documentId = textValue(official?.commercial_doc_id, official?.document_id, official?.invoice_id);
+    if (/^\d+$/.test(documentId)) {
+      try {
+        const detail = providerData(await request(`${baseUrl}/invoices/${encodeURIComponent(documentId)}?include_draft=true`, { method: "GET", headers }));
+        if (detail && typeof detail === "object") enrichedCommercial = { ...(commercial || {}), ...detail };
+      } catch {
+        // Inbound e-documents may not have been imported into KolayBi as a
+        // commercial purchase invoice yet. Their official XML is authoritative.
+      }
+    }
+  }
+  if (hasExplicitTaxBreakdown(official, enrichedCommercial)) {
+    return { official, commercial: enrichedCommercial };
+  }
+
+  const uuid = textValue(official?.document_uuid, official?.uuid, official?.ettn, official?.official_uuid);
+  if (!uuid) return { official, commercial: enrichedCommercial };
+  const params = new URLSearchParams({ company_id: companyId, uuid, direction: "inbound", output_type: "xml" });
+  const endpointCandidates = [
+    `${baseUrl}/e_document/download?${params.toString()}`,
+    `${new URL(baseUrl).origin}/api/e_document/download?${params.toString()}`,
+  ];
+  for (const endpoint of endpointCandidates) {
+    try {
+      const response = await fetch(endpoint, { method: "GET", headers, signal: AbortSignal.timeout(25_000) });
+      const body = await response.text();
+      if (!response.ok) continue;
+      const breakdown = parseOfficialInvoiceXml(decodeOfficialXml(body));
+      if (breakdown) return { official: { ...official, ...breakdown }, commercial: enrichedCommercial };
+    } catch {
+      // Try the next KolayBi endpoint shape. If neither returns a verified UBL
+      // breakdown, normalization rejects the incomplete amount record.
+    }
+  }
+  return { official, commercial: enrichedCommercial };
 }
 
 function digits(...values: any[]) {
@@ -229,9 +384,9 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
   );
   const issuerName = partyName(parties, official, commercial);
   const issuerTaxId = partyIdentity(parties, official, commercial);
-  const grandTotal = numberValue(
-    official?.exchange_grand_total,
+  const grandTotalValue = optionalNumberValue(
     official?.grand_total,
+    official?.exchange_grand_total,
     official?.payable_amount,
     officialTotals?.grand_total,
     officialTotals?.total,
@@ -240,19 +395,18 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
     commercial?.grand_total,
     commercial?.payable_amount,
   );
-  const netTotal = numberValue(
-    official?.exchange_subtotal,
+  const netTotalValue = optionalNumberValue(
     official?.subtotal,
+    official?.exchange_subtotal,
     officialTotals?.subtotal,
     officialTotals?.net_total,
     commercialTotals?.subtotal,
     commercialTotals?.net_total,
     commercial?.subtotal,
-    grandTotal,
   );
-  const vatTotal = numberValue(
-    official?.exchange_total_vat,
+  const vatTotalValue = optionalNumberValue(
     official?.total_vat,
+    official?.exchange_total_vat,
     official?.vat_total,
     officialTotals?.vat_total,
     officialTotals?.tax,
@@ -260,12 +414,15 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
     commercialTotals?.vat_total,
     commercial?.vat_total,
   );
+  const grandTotal = grandTotalValue ?? 0;
+  const netTotal = netTotalValue ?? 0;
+  const vatTotal = vatTotalValue ?? 0;
   const reportedWithholdingTotal = numberValue(
-    official?.exchange_withholding_total,
-    official?.exchange_total_withholding,
     official?.withholding_total,
     official?.total_withholding,
     official?.withholding_tax_total,
+    official?.exchange_withholding_total,
+    official?.exchange_total_withholding,
     officialTotals?.withholding_total,
     officialTotals?.total_withholding,
     officialTotals?.withholding_tax_total,
@@ -281,7 +438,11 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
   if (!invoiceNo) return { invoice: null, reason: "missing_invoice_no" };
   if (!issuerName) return { invoice: null, reason: "missing_supplier_name" };
   if (![10, 11].includes(issuerTaxId.length)) return { invoice: null, reason: "missing_supplier_identity" };
+  if (netTotalValue === null || vatTotalValue === null) return { invoice: null, reason: "missing_tax_breakdown" };
   if (grandTotal <= 0) return { invoice: null, reason: "invalid_total" };
+  if (Math.abs(roundMoney(netTotal + vatTotal - withholdingTotal) - grandTotal) > 0.02) {
+    return { invoice: null, reason: "invalid_total" };
+  }
 
   const taxOffice = parties.map((party) => textValue(party?.tax_office, party?.tax_office_name)).find(Boolean);
   return {
@@ -297,11 +458,13 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
       issuer_name: issuerName,
       issuer_tax_id: issuerTaxId,
       issuer_tax_office: taxOffice || textValue(official?.tax_office, commercial?.tax_office) || null,
-      currency: textValue(official?.grand_currency, official?.currency, officialTotals?.currency, commercial?.currency, commercialTotals?.currency, "TRY").toUpperCase(),
+      currency: textValue(official?.grand_currency, official?.currency, officialTotals?.currency, commercial?.currency, commercialTotals?.currency, official?.exchange_grand_currency, "TRY").toUpperCase(),
       net_total: netTotal,
       vat_total: vatTotal,
       withholding_total: withholdingTotal,
       withholding_inferred: withholdingTotal > 0 && reportedWithholdingTotal <= 0,
+      tax_breakdown_verified: true,
+      tax_breakdown_source: textValue(official?.tax_breakdown_source) || (commercial ? "commercial_invoice_totals" : "provider_totals"),
       grand_total: grandTotal,
       description: textValue(commercial?.description, commercial?.notes, commercial?.note, official?.description, official?.notes, official?.note) || null,
       provider_status: firstValue(commercial?.commercial_doc_status, commercial?.status, official?.status, official?.document_status) || null,
@@ -507,13 +670,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       missing_invoice_no: 0,
       missing_supplier_name: 0,
       missing_supplier_identity: 0,
+      missing_tax_breakdown: 0,
       invalid_total: 0,
     };
     const errors: string[] = [];
 
-    for (const official of officialRows) {
-      const commercial = matchingCommercial(official, indexes);
+    for (const officialRow of officialRows) {
+      let commercial = matchingCommercial(officialRow, indexes);
       if (commercial) commercialMatches += 1;
+      const enriched = await enrichTaxBreakdown(baseUrl, companyId, headers, officialRow, commercial);
+      const official = enriched.official;
+      commercial = enriched.commercial;
       const associate = matchingAssociate(official, commercial, associates);
       if (associate) associateMatches += 1;
       const normalized = normalize(official, commercial, associate);
@@ -548,7 +715,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         continue;
       }
       if ((data as any)?.created) imported += 1;
-      else existing += 1;
+      else {
+        existing += 1;
+        const { error: refreshError } = await admin.rpc(
+          "rex_refresh_kolaybi_purchase_invoice_amounts" as any,
+          { p_invoice: normalized.invoice } as any,
+        );
+        if (refreshError) {
+          errors.push(`${textValue(official?.no, official?.document_id, "Bilinmeyen belge")}: tutar kırılımı güncellenemedi: ${String(refreshError.message).slice(0, 180)}`);
+        }
+      }
     }
 
     const skipped = Object.values(skipReasons).reduce((sum, count) => sum + count, 0);

@@ -61,6 +61,7 @@ const syncSkipLabel: Record<string, string> = {
   missing_invoice_no: "fatura numarası bulunamadı",
   missing_supplier_name: "faturadaki düzenleyen unvanı okunamadı",
   missing_supplier_identity: "faturadaki VKN/TCKN okunamadı",
+  missing_tax_breakdown: "resmî faturadaki matrah/KDV kırılımı okunamadı",
   invalid_total: "fatura tutarı geçersiz",
 };
 

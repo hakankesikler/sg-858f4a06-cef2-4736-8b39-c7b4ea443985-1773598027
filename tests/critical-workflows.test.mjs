@@ -2545,6 +2545,27 @@ test("purchase invoice matching uses the VAT-exclusive base and preserves withho
   assert.doesNotMatch(inbox, /distributionTotal-matchInvoice\.grand_total/);
 });
 
+test("KolayBi inbound invoices require and refresh a verified official tax breakdown", async () => {
+  const [syncApi, migration, inbox] = await Promise.all([
+    read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
+    read("supabase/migrations/20260917090000_refresh_verified_purchase_invoice_amounts.sql"),
+    read("src/components/PurchaseInvoiceInbox.tsx"),
+  ]);
+
+  assert.match(syncApi, /missing_tax_breakdown/);
+  assert.match(syncApi, /parseOfficialInvoiceXml/);
+  assert.match(syncApi, /TaxExclusiveAmount/);
+  assert.match(syncApi, /WithholdingTaxTotal/);
+  assert.match(syncApi, /e_document\/download/);
+  assert.doesNotMatch(syncApi, /commercial\?\.subtotal,\s*grandTotal/);
+  assert.match(syncApi, /rex_refresh_kolaybi_purchase_invoice_amounts/);
+  assert.match(migration, /tax_breakdown_verified/);
+  assert.match(migration, /v_invoice\.status NOT IN \('review_required','match_proposed'\)/);
+  assert.match(migration, /v_net_total \+ v_vat_total - v_withholding_total/);
+  assert.match(migration, /kolaybi_tax_breakdown_refreshed/);
+  assert.match(inbox, /resmî faturadaki matrah\/KDV kırılımı okunamadı/);
+});
+
 test("purchase invoice candidates use a 100-point evidence scale and show shipment context", async () => {
   const [sql, service, inbox] = await Promise.all([
     read("supabase/migrations/20260916233000_improve_purchase_invoice_candidate_context.sql"),
