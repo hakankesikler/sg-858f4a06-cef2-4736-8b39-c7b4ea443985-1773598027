@@ -2592,6 +2592,21 @@ test("purchase invoice payables preserve VAT withholding without writing the gen
   assert.doesNotMatch(accounting, /sum \+ Number\(p\.subtotal\) \+ Number\(p\.tax\)/);
 });
 
+test("purchase invoice approval uses a status accepted by the legacy purchases constraint", async () => {
+  const [baseSchema, statusFix] = await Promise.all([
+    read("supabase/migrations/20260330081524_migration_7598b4d6.sql"),
+    read("supabase/migrations/20260916182000_fix_purchase_invoice_purchase_status.sql"),
+  ]);
+
+  assert.match(
+    baseSchema,
+    /status TEXT DEFAULT 'Bekliyor' CHECK \(status IN \('Bekliyor', 'Ödendi', 'Kısmi Ödendi', 'Gecikmiş', 'İptal'\)\)/,
+  );
+  assert.match(statusFix, /CREATE OR REPLACE FUNCTION public\.rex_approve_purchase_invoice/);
+  assert.match(statusFix, /v_invoice\.withholding_total,[\s\S]*?'Bekliyor'/);
+  assert.doesNotMatch(statusFix, /v_invoice\.withholding_total,[\s\S]*?'beklemede'/);
+});
+
 test("KolayBi purchase invoices create and link missing legal supplier cards without duplicates", async () => {
   const [sql, syncApi, cariForm, accounting, crm, shipmentForm, transactions] = await Promise.all([
     read("supabase/migrations/20260909170000_auto_create_kolaybi_purchase_suppliers.sql"),
