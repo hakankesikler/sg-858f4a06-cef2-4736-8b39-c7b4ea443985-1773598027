@@ -2545,25 +2545,33 @@ test("purchase invoice matching uses the VAT-exclusive base and preserves withho
   assert.doesNotMatch(inbox, /distributionTotal-matchInvoice\.grand_total/);
 });
 
-test("purchase invoice matching fills only empty carriers and finalizes clean owner matches", async () => {
-  const [sql, inbox] = await Promise.all([
+test("purchase invoice matching respects the TYS cutover and never auto-assigns shipment carriers", async () => {
+  const [supplierSql, policySql, inbox, syncApi, service] = await Promise.all([
     read("supabase/migrations/20260916100000_auto_assign_invoice_carrier_and_finalize.sql"),
+    read("supabase/migrations/20260916213000_purchase_invoice_cutover_and_manual_carrier.sql"),
     read("src/components/PurchaseInvoiceInbox.tsx"),
+    read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
+    read("src/services/purchaseInvoiceService.ts"),
   ]);
 
-  assert.match(sql, /rex_ensure_purchase_invoice_billing_supplier/);
-  assert.match(sql, /regexp_replace\(coalesce\(nullif\(c\.vergi_no/);
-  assert.match(sql, /account_type = 'her_ikisi'/);
-  assert.match(sql, /'tedarikci', 'diger', 'Aktif'/);
-  assert.match(sql, /SET supplier_id = v_billing_supplier/);
-  assert.match(sql, /WHERE s\.supplier_id IS NULL/);
-  assert.match(sql, /i\.billing_supplier_id = NEW\.supplier_id/);
-  assert.match(sql, /SET active = false/);
-  assert.match(sql, /IF v_status = 'matched'/);
-  assert.match(sql, /PERFORM public\.rex_approve_purchase_invoice\(p_invoice_id, true, p_reason\)/);
-  assert.match(sql, /RETURN 'payment_pending'/);
+  assert.match(supplierSql, /rex_ensure_purchase_invoice_billing_supplier/);
+  assert.match(policySql, /'historical'/);
+  assert.match(policySql, /invoice_date < DATE '2026-09-09'/);
+  assert.match(policySql, /s\.pickup_date >= DATE '2026-09-09'/);
+  assert.match(policySql, /carrier_assignment_policy','manual_only'/);
+  assert.doesNotMatch(policySql, /SET supplier_id = v_billing_supplier/);
+  assert.doesNotMatch(policySql, /WHERE s\.supplier_id IS NULL/);
+  assert.match(policySql, /SET active=false/);
+  assert.match(policySql, /IF v_status='matched'/);
+  assert.match(policySql, /PERFORM public\.rex_approve_purchase_invoice\(p_invoice_id,true,p_reason\)/);
+  assert.match(policySql, /RETURN 'payment_pending'/);
 
-  assert.match(inbox, /Taşıyıcı boş; \$\{invoiceSupplierName\} otomatik atanacak/);
+  assert.match(syncApi, /purchaseInvoiceCutoverDate = "2026-09-09"/);
+  assert.match(syncApi, /requestedMinIssueDate < purchaseInvoiceCutoverDate/);
+  assert.match(service, /\.neq\("status", "historical"\)/);
+  assert.match(inbox, /TYS Öncesi/);
+  assert.match(inbox, /Operasyon taşıyıcısı seçilmemiş; eşleştirme taşıyıcı atamaz/);
+  assert.doesNotMatch(inbox, /otomatik atanacak/);
   assert.match(inbox, /Kayıtlı taşıyıcının üzerine yazılmayacak/);
   assert.match(inbox, /Eşleştir ve Muhasebeleştir/);
   assert.match(inbox, /Fark Kontrolü/);

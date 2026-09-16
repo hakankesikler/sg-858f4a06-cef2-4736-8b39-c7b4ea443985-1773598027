@@ -419,7 +419,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const startDate = new Date();
     const syncDays = Math.min(Math.max(Number(process.env.KOLAYBI_PURCHASE_SYNC_DAYS || 730), 30), 3650);
     startDate.setDate(startDate.getDate() - syncDays);
-    const minIssueDate = startDate.toISOString().slice(0, 10);
+    // REX TYS became the operational source of truth on 9 September 2026.
+    // Older invoices remain in KolayBi/legacy records and must not enter the
+    // TYS matching queue.
+    const purchaseInvoiceCutoverDate = "2026-09-09";
+    const requestedMinIssueDate = startDate.toISOString().slice(0, 10);
+    const minIssueDate = requestedMinIssueDate < purchaseInvoiceCutoverDate
+      ? purchaseInvoiceCutoverDate
+      : requestedMinIssueDate;
     const maxIssueDate = endDate.toISOString().slice(0, 10);
     const headers = { Channel: channel, Authorization: `Bearer ${accessToken}`, Accept: "application/json" };
     const providerEnvironment = baseUrl.includes("sandbox") ? "test" as const : "live" as const;

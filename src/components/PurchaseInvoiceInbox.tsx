@@ -30,12 +30,14 @@ const statusLabel: Record<string, string> = {
   rejected: "Reddedildi",
   duplicate: "Mükerrer",
   cancelled: "İptal Edildi",
+  historical: "TYS Öncesi",
 };
 
 const statusClass = (status: string) => {
   if (["paid", "approved", "payment_pending", "matched"].includes(status)) return "bg-emerald-50 text-emerald-700 border-emerald-200";
   if (status === "approval_pending") return "bg-amber-50 text-amber-700 border-amber-200";
   if (["disputed", "rejected", "duplicate"].includes(status)) return "bg-red-50 text-red-700 border-red-200";
+  if (status === "historical") return "bg-slate-50 text-slate-600 border-slate-200";
   return "bg-blue-50 text-blue-700 border-blue-200";
 };
 
@@ -280,7 +282,7 @@ export function PurchaseInvoiceInbox() {
 
     <Card className="p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div><h2 className="text-xl font-semibold">Gelen Alış Faturaları</h2><p className="text-sm text-slate-500">Gelen e-faturalar ve yüklenen e-arşivler tek kontrol havuzunda.</p></div>
+        <div><h2 className="text-xl font-semibold">Gelen Alış Faturaları</h2><p className="text-sm text-slate-500">9 Eylül 2026 ve sonrasındaki gelen e-faturalar ile yüklenen e-arşivler eşleştirme havuzunda. Daha eski kayıtlar TYS öncesi geçmiş olarak saklanır.</p></div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => void sync()} disabled={busy}><RefreshCw className="mr-2 h-4 w-4"/>Gelenleri Yenile</Button>
           <Button onClick={() => setManualOpen(true)}><FileUp className="mr-2 h-4 w-4"/>E-Arşiv Yükle</Button>
@@ -305,7 +307,7 @@ export function PurchaseInvoiceInbox() {
         <TableCell className="font-semibold">{money(invoice.grand_total, invoice.currency)}</TableCell>
         <TableCell><Badge variant="outline" className={invoice.payment_status === "paid" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{paymentLabel[invoice.payment_status || ""] || invoice.payment_status || "Bilinmiyor"}</Badge></TableCell>
         <TableCell><Badge variant="outline" className={statusClass(invoice.status)}>{statusLabel[invoice.status] || invoice.status}</Badge></TableCell>
-        <TableCell><div className="flex justify-end gap-1">{(invoice.file_path || invoice.official_uuid) && <Button size="sm" variant="ghost" onClick={() => void openDocument(invoice)} title="Belgeyi aç"><Eye className="h-4 w-4"/></Button>}<Button size="sm" variant="outline" onClick={() => void openMatch(invoice)}><SearchCheck className="mr-1 h-4 w-4"/>{["review_required","match_proposed"].includes(invoice.status) ? "Eşleştir" : "İncele"}</Button></div></TableCell>
+        <TableCell><div className="flex justify-end gap-1">{(invoice.file_path || invoice.official_uuid) && <Button size="sm" variant="ghost" onClick={() => void openDocument(invoice)} title="Belgeyi aç"><Eye className="h-4 w-4"/></Button>}{invoice.status !== "historical" && <Button size="sm" variant="outline" onClick={() => void openMatch(invoice)}><SearchCheck className="mr-1 h-4 w-4"/>{["review_required","match_proposed"].includes(invoice.status) ? "Eşleştir" : "İncele"}</Button>}</div></TableCell>
       </TableRow>)}</TableBody></Table></div>
       <div className="flex items-center justify-between border-t px-4 py-3 text-sm"><span>{total === 0 ? "0 kayıt" : `${page * PAGE_SIZE + 1}-${Math.min((page + 1) * PAGE_SIZE, total)} / ${total} kayıt`}</span><div className="flex gap-2"><Button size="sm" variant="outline" disabled={page === 0 || loading} onClick={() => setPage((value) => Math.max(0, value - 1))}>Önceki</Button><Button size="sm" variant="outline" disabled={(page + 1) * PAGE_SIZE >= total || loading} onClick={() => setPage((value) => value + 1)}>Sonraki</Button></div></div>
     </Card>
@@ -338,13 +340,12 @@ export function PurchaseInvoiceInbox() {
           const state = allocations[candidate.shipment_id] || { selected: false, amount: "" };
           const variance = Number(state.amount || 0) - Number(candidate.expected_cost || 0);
           const carrierConflict = Boolean(candidate.supplier_id && matchInvoice.billing_supplier_id && candidate.supplier_id !== matchInvoice.billing_supplier_id);
-          const invoiceSupplierName = matchInvoice.billing_supplier?.company || matchInvoice.billing_supplier?.name || matchInvoice.issuer_name;
           return <div key={candidate.shipment_id} className={`grid gap-3 rounded-lg border p-3 md:grid-cols-[32px_1fr_150px_150px] ${state.selected ? "border-blue-300 bg-blue-50" : ""}`}>
             <Checkbox checked={state.selected} onCheckedChange={(value) => setAllocations({...allocations,[candidate.shipment_id]:{selected:Boolean(value),amount:state.amount || String(candidate.expected_cost || "")}})}/>
             <div>
               <div className="flex flex-wrap items-center gap-2"><span className="font-mono font-semibold">{candidate.shipment_code}</span><Badge variant="outline">%{candidate.score} uyum</Badge></div>
               <div className="text-sm">{candidate.origin || "-"} → {candidate.destination || "-"}</div>
-              <div className="text-xs text-slate-500">{candidate.supplier_name || `Taşıyıcı boş; ${invoiceSupplierName} otomatik atanacak`} · {(candidate.reasons || []).join(" · ")}</div>
+              <div className="text-xs text-slate-500">{candidate.supplier_name || "Operasyon taşıyıcısı seçilmemiş; eşleştirme taşıyıcı atamaz"} · {(candidate.reasons || []).join(" · ")}</div>
               {state.selected && carrierConflict && <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">Sevkiyatta kayıtlı taşıyıcı <strong>{candidate.supplier_name}</strong>, fatura carisinden farklı. Kayıtlı taşıyıcının üzerine yazılmayacak; eşleştirme fark kontrolüne alınacak.</div>}
             </div>
             <div><div className="text-xs text-slate-500">Tahmini maliyet (KDV hariç)</div><div>{money(Number(candidate.expected_cost||0),candidate.cost_currency||"TRY")}</div>{state.selected && <div className={`text-xs ${variance>0.01?"text-red-600":variance<(-0.01)?"text-emerald-700":"text-slate-500"}`}>Fark: {money(variance,candidate.cost_currency||"TRY")}</div>}</div>

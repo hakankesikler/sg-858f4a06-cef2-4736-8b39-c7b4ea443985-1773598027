@@ -152,7 +152,8 @@ export const purchaseInvoiceService = {
       const { count, error } = await (supabase as any)
         .from("incoming_purchase_invoices")
         .select("id", { count: "exact", head: true })
-        .eq("payment_status", paymentStatus);
+        .eq("payment_status", paymentStatus)
+        .neq("status", "historical");
       if (error) throw error;
       return [paymentStatus, count || 0] as const;
     }));
