@@ -913,10 +913,10 @@ test("staff security requires MFA for every staff role and records immutable sec
   assert.match(mfa, /mfa\.verify/);
   assert.match(settings, /Diğer Tüm Cihazlardan Çıkış Yap/);
   assert.match(settings, /Güvenlik Hareketleri/);
-  assert.match(settings, /30 dakika/);
+  assert.match(settings, /2 saat 30 dakika/);
   assert.match(session, /STAFF_IDLE_TIMEOUT_MS/);
   assert.match(session, /STAFF_MAX_SESSION_MS/);
-  assert.match(securityLib, /STAFF_IDLE_TIMEOUT_MS = 30 \* 60 \* 1000/);
+  assert.match(securityLib, /STAFF_IDLE_TIMEOUT_MS = 150 \* 60 \* 1000/);
   assert.match(securityLib, /STAFF_MAX_SESSION_MS = 8 \* 60 \* 60 \* 1000/);
   assert.match(api, /tokenAssuranceLevel\(token\) !== "aal2"/);
   assert.match(config, /Content-Security-Policy/);
@@ -1921,7 +1921,7 @@ test("staff password recovery opens a dedicated secure reset flow", async () => 
   assert.match(recoveryGate, /type=recovery/);
   assert.doesNotMatch(recoveryGate, /supabase\.auth/);
   assert.match(security, /MIN_PASSWORD_LENGTH = 12/);
-  assert.match(security, /STAFF_IDLE_TIMEOUT_MS = 30 \* 60 \* 1000/);
+  assert.match(security, /STAFF_IDLE_TIMEOUT_MS = 150 \* 60 \* 1000/);
   assert.match(security, /\["admin", "sales", "operations", "accounting", "hr", "viewer", "demo"\]\.includes\(role\)/);
   assert.match(security, /en az bir özel karakter/);
 });
