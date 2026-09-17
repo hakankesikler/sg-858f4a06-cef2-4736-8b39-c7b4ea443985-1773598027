@@ -2546,11 +2546,12 @@ test("purchase invoice matching uses the VAT-exclusive base and preserves withho
 });
 
 test("KolayBi inbound invoices require and refresh a verified official tax breakdown", async () => {
-  const [syncApi, migration, inbox, pdfBreakdown] = await Promise.all([
+  const [syncApi, migration, inbox, pdfBreakdown, nextConfig] = await Promise.all([
     read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
     read("supabase/migrations/20260917090000_refresh_verified_purchase_invoice_amounts.sql"),
     read("src/components/PurchaseInvoiceInbox.tsx"),
     read("src/lib/official-invoice-breakdown.ts"),
+    read("next.config.mjs"),
   ]);
 
   assert.match(syncApi, /missing_tax_breakdown/);
@@ -2564,6 +2565,10 @@ test("KolayBi inbound invoices require and refresh a verified official tax break
   assert.match(pdfBreakdown, /Hesaplanan KDV/);
   assert.match(pdfBreakdown, /Odenecek Tutar/);
   assert.match(pdfBreakdown, /tax_breakdown_source: "official_pdf"/);
+  assert.match(nextConfig, /outputFileTracingIncludes/);
+  assert.match(nextConfig, /\/api\/kolaybi\/purchase-invoices\/sync/);
+  assert.match(nextConfig, /pdf\.worker\.mjs/);
+  assert.match(syncApi, /official invoice PDF processing failed/);
   const { parseOfficialInvoicePdfText } = await import("../src/lib/official-invoice-breakdown.ts");
   assert.deepEqual(
     parseOfficialInvoicePdfText("KDV Matrahı 6.000,00 TL Hesaplanan KDV(%20,00) 1.200,00 TL Vergiler Dahil Toplam Tutar 7.200,00 TL Ödenecek Tutar 7.200,00 TL"),

@@ -229,8 +229,20 @@ async function enrichTaxBreakdown(
       const pdf = decodeOfficialPdf(body);
       const breakdown = pdf ? await parseOfficialInvoicePdf(pdf) : null;
       if (breakdown) return { official: { ...official, ...breakdown }, commercial: enrichedCommercial };
+      console.warn("KolayBi official invoice PDF totals could not be verified", {
+        stage: pdf ? "parse" : "decode",
+        responseStatus: response.status,
+      });
+    } else {
+      console.warn("KolayBi official invoice PDF could not be fetched", {
+        responseStatus: response.status,
+      });
     }
-  } catch {
+  } catch (error) {
+    console.error("KolayBi official invoice PDF processing failed", {
+      errorName: error instanceof Error ? error.name : "UnknownError",
+      errorMessage: String(error instanceof Error ? error.message : error).slice(0, 300),
+    });
     // The verified PDF is the final safe fallback. The invoice remains pending
     // if its official tax breakdown cannot be read and validated.
   }
