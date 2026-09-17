@@ -983,6 +983,19 @@ test("all user-facing reports and exports generate real XLSX workbooks", async (
   }
 });
 
+test("customer account summary derives the current balance from every account movement", async () => {
+  const transactions = await read("src/components/CustomerTransactionsDialog.tsx");
+
+  assert.match(
+    transactions,
+    /const currentBalance = transactions\.reduce\(\(sum, tx\) => sum \+ tx\.credit - tx\.debit, 0\)/,
+  );
+  assert.doesNotMatch(
+    transactions,
+    /filteredTransactions\[filteredTransactions\.length - 1\]\?\.balance/,
+  );
+});
+
 test("public logistics services have dedicated SEO pages and internal navigation", async () => {
   const slugs = [
     "yurtici-parsiyel-tasimacilik",

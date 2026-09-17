@@ -312,6 +312,9 @@ export function CustomerTransactionsDialog({
       tx.type.toLowerCase().includes(searchLower)
     );
   });
+  const filteredTotalDebit = filteredTransactions.reduce((sum, tx) => sum + tx.debit, 0);
+  const filteredTotalCredit = filteredTransactions.reduce((sum, tx) => sum + tx.credit, 0);
+  const currentBalance = transactions.reduce((sum, tx) => sum + tx.credit - tx.debit, 0);
 
   const handleExport = async () => {
     await downloadExcel(`cari_hareketleri_${customer?.name}_${new Date().toISOString().split('T')[0]}.xlsx`, filteredTransactions.map(tx => ({
@@ -577,19 +580,19 @@ export function CustomerTransactionsDialog({
               <div>
                 <p className="text-sm text-gray-600">Toplam Borç</p>
                 <p className="text-lg font-bold text-red-600">
-                  {filteredTransactions.reduce((sum, tx) => sum + tx.debit, 0).toLocaleString("tr-TR")} TRY
+                  {filteredTotalDebit.toLocaleString("tr-TR")} TRY
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Toplam Alacak</p>
                 <p className="text-lg font-bold text-green-600">
-                  {filteredTransactions.reduce((sum, tx) => sum + tx.credit, 0).toLocaleString("tr-TR")} TRY
+                  {filteredTotalCredit.toLocaleString("tr-TR")} TRY
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Güncel Bakiye</p>
-                <p className={`text-lg font-bold ${filteredTransactions[filteredTransactions.length - 1]?.balance > 0 ? "text-green-600" : filteredTransactions[filteredTransactions.length - 1]?.balance < 0 ? "text-red-600" : "text-gray-700"}`}>
-                  {(filteredTransactions[filteredTransactions.length - 1]?.balance || 0).toLocaleString("tr-TR")} TRY
+                <p className={`text-lg font-bold ${currentBalance > 0 ? "text-green-600" : currentBalance < 0 ? "text-red-600" : "text-gray-700"}`}>
+                  {currentBalance.toLocaleString("tr-TR")} TRY
                 </p>
               </div>
             </div>
