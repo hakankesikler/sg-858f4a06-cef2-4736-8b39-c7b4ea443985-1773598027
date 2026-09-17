@@ -1,3 +1,6 @@
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import "pdfjs-dist/legacy/build/pdf.worker.mjs";
+
 function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
@@ -83,11 +86,11 @@ export function decodeOfficialPdf(body: string): Uint8Array | null {
 }
 
 export async function parseOfficialInvoicePdf(data: Uint8Array) {
-  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const loadingTask = getDocument({
     data,
     isEvalSupported: false,
     useSystemFonts: false,
+    useWasm: false,
   } as unknown as Parameters<typeof getDocument>[0]);
   const pdf = await loadingTask.promise;
   try {

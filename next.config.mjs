@@ -51,18 +51,9 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
-  // pdfjs-dist is loaded dynamically by the purchase-invoice sync route.
-  // Next's static file tracer cannot discover its runtime PDF/worker modules,
-  // so include only the server assets that this route needs on Vercel.
-  outputFileTracingIncludes: {
-    "/api/kolaybi/purchase-invoices/sync": [
-      "./node_modules/pdfjs-dist/package.json",
-      "./node_modules/pdfjs-dist/legacy/build/pdf.mjs",
-      "./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
-      "./node_modules/pdfjs-dist/standard_fonts/**/*",
-      "./node_modules/pdfjs-dist/wasm/**/*",
-    ],
-  },
+  // Bundle the server-side PDF parser instead of tracing pnpm's symlinked
+  // package files into the Vercel function output.
+  transpilePackages: ["pdfjs-dist"],
   experimental: {
     // Keep build-time type checking isolated without requiring child processes.
     workerThreads: true,

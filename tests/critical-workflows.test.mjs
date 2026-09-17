@@ -2565,9 +2565,10 @@ test("KolayBi inbound invoices require and refresh a verified official tax break
   assert.match(pdfBreakdown, /Hesaplanan KDV/);
   assert.match(pdfBreakdown, /Odenecek Tutar/);
   assert.match(pdfBreakdown, /tax_breakdown_source: "official_pdf"/);
-  assert.match(nextConfig, /outputFileTracingIncludes/);
-  assert.match(nextConfig, /\/api\/kolaybi\/purchase-invoices\/sync/);
-  assert.match(nextConfig, /pdf\.worker\.mjs/);
+  assert.match(nextConfig, /transpilePackages:\s*\["pdfjs-dist"\]/);
+  assert.doesNotMatch(nextConfig, /outputFileTracingIncludes/);
+  assert.match(pdfBreakdown, /import \{ getDocument \} from "pdfjs-dist\/legacy\/build\/pdf\.mjs"/);
+  assert.match(pdfBreakdown, /pdf\.worker\.mjs/);
   assert.match(syncApi, /official invoice PDF processing failed/);
   const { parseOfficialInvoicePdfText } = await import("../src/lib/official-invoice-breakdown.ts");
   assert.deepEqual(
