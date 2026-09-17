@@ -836,9 +836,34 @@ export async function proceedKolayBiInvoice(
   if (!Number.isFinite(input.amount) || input.amount <= 0) {
     throw new KolayBiError("Tahsilat tutarı geçersiz.", false);
   }
+  return proceedKolayBiDocument({
+    documentId: Number(invoice.kolaybi_document_id),
+    vaultId: input.vaultId,
+    amount: input.amount,
+    issueDate: input.issueDate,
+  });
+}
+
+export async function proceedKolayBiDocument(input: {
+  documentId: number;
+  vaultId: number;
+  amount: number;
+  issueDate: string;
+}) {
+  const config = getConfig();
+  assertKolayBiSyncEnabled(config.baseUrl);
+  if (!Number.isSafeInteger(input.documentId) || input.documentId <= 0) {
+    throw new KolayBiError("Fatura henüz KolayBi ile eşleştirilmemiş.", false);
+  }
+  if (!Number.isSafeInteger(input.vaultId) || input.vaultId <= 0) {
+    throw new KolayBiError("KolayBi kasa/banka eşlemesi eksik.", false);
+  }
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    throw new KolayBiError("Ödeme/tahsilat tutarı geçersiz.", false);
+  }
   const token = await getAccessToken(config);
   const form = new URLSearchParams({
-    document_id: String(invoice.kolaybi_document_id),
+    document_id: String(input.documentId),
     vault_id: String(input.vaultId),
     amount: input.amount.toFixed(2),
     issue_date: `${input.issueDate.slice(0, 10)} 12:00:00`,

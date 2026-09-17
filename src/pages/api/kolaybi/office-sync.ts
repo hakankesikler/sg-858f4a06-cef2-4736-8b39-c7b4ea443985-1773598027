@@ -101,6 +101,27 @@ function number(value: any) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function optionalNumber(...values: any[]): number | null {
+  const value = values.find((candidate) => candidate !== undefined && candidate !== null && candidate !== "");
+  if (value === undefined) return null;
+  const candidate = typeof value === "object" && value !== null
+    ? value.amount ?? value.value ?? value.total ?? value.grand_total
+    : value;
+  if (candidate === undefined || candidate === null || candidate === "") return null;
+  const parsed = Number(candidate);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizedPaymentState(value: unknown) {
+  const state = text(value).toLocaleLowerCase("tr-TR").replace(/[_-]+/g, " ").trim();
+  return {
+    state,
+    cancelled: /^(cancelled|canceled|iptal)$/.test(state),
+    paid: /^(paid|ödendi|odendi|completed|tamamlandı|tamamlandi)$/.test(state),
+    partial: /^(partially paid|partial paid|kısmi ödendi|kismi odendi)$/.test(state),
+  };
+}
+
 function materialAssociateBalance(item: any): boolean | null {
   const balances = Array.isArray(item?.balances) ? item.balances : [];
   if (!balances.length) return null;
@@ -1214,13 +1235,32 @@ async function findLocal(
     if (profile && customerId) await updateCustomerEDocumentProfile(admin, customerId, profile, providerEnvironment);
     if (data?.id) {
       const payment = item?.payment_plan || item?.payment || {};
-      const hasPayment = item?.payment_plan !== undefined || item?.payment !== undefined || item?.balance !== undefined;
-      const remaining = number(payment?.remaining_amount ?? payment?.balance ?? item?.balance);
+      const remaining = optionalNumber(
+        payment?.total_remaining,
+        payment?.remaining_amount,
+        payment?.balance,
+        item?.balance,
+      );
+      const paid = optionalNumber(
+        payment?.total_paid,
+        payment?.paid_amount,
+        item?.paid_amount,
+      );
+      const paymentState = normalizedPaymentState(
+        payment?.payment_status_value || payment?.status || item?.payment_status,
+      );
+      const hasPayment = remaining !== null || paid !== null || Boolean(paymentState.state);
       const total = number(item?.total?.grand_total ?? item?.total ?? item?.grand_total ?? data.grand_total);
       const paymentStatus = !hasPayment ? data.payment_status
-        : remaining <= 0.01 ? "Ödendi"
-          : total > 0 && remaining < total ? "Kısmi Ödendi"
-            : data.due_date && data.due_date < new Date().toISOString().slice(0, 10) ? "Gecikmiş" : "Bekliyor";
+        : paymentState.cancelled ? "İptal"
+          : remaining !== null && remaining <= 0.01 ? "Ödendi"
+            : paid !== null && total > 0 && paid >= total - 0.01 ? "Ödendi"
+              : (remaining !== null && total > 0 && remaining < total) || (paid !== null && paid > 0) ? "Kısmi Ödendi"
+                : paymentState.paid ? "Ödendi"
+                  : paymentState.partial ? "Kısmi Ödendi"
+                    : data.due_date && data.due_date < new Date().toISOString().slice(0, 10) ? "Gecikmiş" : "Bekliyor";
+      const resolvedPaid = paid ?? (remaining !== null ? Math.max(total - remaining, 0) : null);
+      const resolvedBalance = remaining ?? (paid !== null ? Math.max(total - paid, 0) : null);
       const { error } = await admin.rpc("rex_reconcile_sales_invoice_from_provider", {
         p_invoice_id: data.id,
         p_provider_status: text(item?.commercial_doc_status || item?.status) || null,
@@ -1232,6 +1272,8 @@ async function findLocal(
         p_official_uuid: profile ? text(invoiceEDocument(item)?.uuid) || null : null,
         p_official_invoice_no: profile ? text(invoiceEDocument(item)?.no || invoiceEDocument(item)?.invoice_no) || null : null,
         p_payment_status: paymentStatus || null,
+        p_paid_amount: resolvedPaid,
+        p_balance: resolvedBalance,
       });
       if (error) throw error;
       return { type: "sales_invoice", id: data.id };

@@ -413,7 +413,13 @@ function normalize(official: any, commercial: any, associate: any): NormalizedRe
       provider_status: firstValue(commercial?.commercial_doc_status, commercial?.status, official?.status, official?.document_status) || null,
       e_document_status: firstValue(official?.status, official?.e_document_status, official?.gib_status, commercial?.e_document_status) || null,
       payment_status: firstValue(payment?.payment_status_value, payment?.status, commercial?.payment_status, official?.payment_status) || null,
-      provider_balance: numberValue(payment?.remaining_amount, payment?.balance, commercial?.balance, official?.balance),
+      provider_balance: optionalNumberValue(
+        payment?.total_remaining,
+        payment?.remaining_amount,
+        payment?.balance,
+        commercial?.balance,
+        official?.balance,
+      ),
     },
     reason: null,
   };

@@ -58,7 +58,7 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
 
       const { data: invoices, error: invoicesError } = await supabase
         .from("sales_invoices")
-        .select("id, invoice_no, grand_total, currency, payment_status, kolaybi_document_id")
+        .select("id, invoice_no, grand_total, paid_amount, balance, currency, payment_status, kolaybi_document_id")
         .eq("customer_id", customer.id)
         .is("archived_at", null)
         .neq("payment_status", "Ödendi")
@@ -257,7 +257,7 @@ export function CollectionDialog({ isOpen, onClose, customer, onSuccess }: Colle
                     <SelectItem value="unallocated">Genel tahsilat</SelectItem>
                     {openInvoices.map((invoice) => (
                       <SelectItem key={invoice.id} value={invoice.id}>
-                        {invoice.invoice_no} - {Number(invoice.grand_total || 0).toLocaleString("tr-TR")} {invoice.currency || "TRY"}
+                        {invoice.invoice_no} - Açık: {Number(invoice.balance ?? invoice.grand_total ?? 0).toLocaleString("tr-TR")} {invoice.currency || "TRY"}
                       </SelectItem>
                     ))}
                   </SelectContent>

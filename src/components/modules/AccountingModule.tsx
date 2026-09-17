@@ -1207,8 +1207,12 @@ export function AccountingModule({ permissions }: { permissions: PermissionMap }
                       <TableCell>{new Date(invoice.invoice_date || invoice.created_at).toLocaleDateString("tr-TR")}</TableCell>
                       <TableCell>{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("tr-TR") : "-"}</TableCell>
                       <TableCell className="text-right font-semibold">{invoice.grand_total.toLocaleString('tr-TR')} {invoice.currency || "TRY"}</TableCell>
-                      <TableCell className="text-right">0 {invoice.currency || "TRY"}</TableCell>
-                      <TableCell className="text-right font-semibold">{invoice.grand_total.toLocaleString('tr-TR')} {invoice.currency || "TRY"}</TableCell>
+                      <TableCell className="text-right">
+                        {Number(invoice.paid_amount || 0).toLocaleString('tr-TR')} {invoice.currency || "TRY"}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {Number(invoice.balance ?? Math.max(Number(invoice.grand_total || 0) - Number(invoice.paid_amount || 0), 0)).toLocaleString('tr-TR')} {invoice.currency || "TRY"}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {canManageSales && ["draft", "queued", "failed", "mapping_required"].includes(invoice.integration_status || "draft") && !invoice.kolaybi_document_id && (

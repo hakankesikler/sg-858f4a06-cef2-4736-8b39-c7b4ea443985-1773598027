@@ -60,6 +60,21 @@ export const workflowService = {
     return authenticatedApi(`/api/kolaybi/invoices/${input.relatedInvoiceId}/proceed`, input);
   },
 
+  async recordKolayBiSupplierPayment(input: {
+    customerId: string;
+    amount: number;
+    paymentMethod: string;
+    paymentDate: string;
+    financialAccountId: string;
+    referenceNo?: string;
+    description?: string;
+    currency: string;
+    relatedPurchaseId: string;
+    incomingPurchaseInvoiceId: string;
+  }) {
+    return authenticatedApi(`/api/kolaybi/purchase-invoices/${input.incomingPurchaseInvoiceId}/proceed`, input);
+  },
+
   async cancelSalesInvoice(input: {
     invoiceId: string;
     reason: string;

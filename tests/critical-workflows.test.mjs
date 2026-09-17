@@ -3003,6 +3003,45 @@ test("legacy test sales invoices are archived without affecting operational tota
   assert.match(officeSync, /\.is\("archived_at", null\)/);
 });
 
+test("customer collections and supplier payments keep invoice balances and KolayBi in sync", async () => {
+  const [sql, officeSync, purchaseSync, accounting, collection, payment, workflow, supplierProceed, provider] = await Promise.all([
+    read("supabase/migrations/20260917130000_customer_payment_integrity.sql"),
+    read("src/pages/api/kolaybi/office-sync.ts"),
+    read("src/pages/api/kolaybi/purchase-invoices/sync.ts"),
+    read("src/components/modules/AccountingModule.tsx"),
+    read("src/components/CollectionDialog.tsx"),
+    read("src/components/PaymentDialog.tsx"),
+    read("src/services/workflowService.ts"),
+    read("src/pages/api/kolaybi/purchase-invoices/[invoiceId]/proceed.ts"),
+    read("src/lib/kolaybi.ts"),
+  ]);
+
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS paid_amount/);
+  assert.match(sql, /ADD COLUMN IF NOT EXISTS balance/);
+  assert.match(sql, /customer_payments_provider_transaction_uidx/);
+  assert.match(sql, /Tahsilat açık fatura bakiyesini aşamaz/);
+  assert.match(sql, /Ödeme açık alış faturası bakiyesini aşamaz/);
+  assert.match(sql, /status = CASE WHEN v_payment_total >= coalesce\(v_purchase_total,0\) - 0\.01 THEN 'Ödendi' ELSE 'Kısmi Ödendi' END/);
+  assert.match(sql, /p_paid_amount numeric/);
+  assert.match(sql, /p_balance numeric/);
+  assert.match(sql, /trg_rex_sync_sales_invoice_balance/);
+  assert.match(officeSync, /payment\?\.total_remaining/);
+  assert.match(officeSync, /payment\?\.total_paid/);
+  assert.match(officeSync, /normalizedPaymentState/);
+  assert.doesNotMatch(officeSync, /rawPaymentStatus\.includes\("paid"\)/);
+  assert.match(officeSync, /p_paid_amount: resolvedPaid/);
+  assert.match(purchaseSync, /payment\?\.total_remaining/);
+  assert.match(accounting, /invoice\.paid_amount/);
+  assert.match(accounting, /invoice\.balance/);
+  assert.match(collection, /Açık:/);
+  assert.match(payment, /recordKolayBiSupplierPayment/);
+  assert.match(payment, /Ödeme, alış faturası, cari hareketi ve KolayBi hesabına birlikte işlenecektir/);
+  assert.match(workflow, /recordKolayBiSupplierPayment/);
+  assert.match(supplierProceed, /rex_record_customer_payment/);
+  assert.match(supplierProceed, /sync_status: "synced"/);
+  assert.match(provider, /export async function proceedKolayBiDocument/);
+});
+
 test("integrated sales list hides non-operational records and opens shipment history", async () => {
   const [service, office] = await Promise.all([
     read("src/services/kolaybiOfficeService.ts"),

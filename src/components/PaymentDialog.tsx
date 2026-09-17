@@ -58,12 +58,26 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
 
       const { data: purchases, error: purchasesError } = await supabase
         .from("purchases")
-        .select("id, purchase_no, total, paid_amount, currency, status")
+        .select("id, purchase_no, total, paid_amount, status")
         .eq("supplier_id", customer.id)
-        .neq("status", "odendi")
+        .neq("status", "Ödendi")
         .order("purchase_date", { ascending: false });
       if (purchasesError) throw purchasesError;
-      setOpenPurchases(purchases || []);
+      const purchaseRows = (purchases || []) as any[];
+      const purchaseIds = purchaseRows.map((purchase) => purchase.id);
+      const { data: incomingInvoices, error: incomingError } = purchaseIds.length
+        ? await (supabase as any)
+            .from("incoming_purchase_invoices")
+            .select("id,legacy_purchase_id,provider_document_id")
+            .in("legacy_purchase_id", purchaseIds)
+        : { data: [], error: null };
+      if (incomingError) throw incomingError;
+      const incomingByPurchase = new Map<string, any>((incomingInvoices || []).map((invoice: any) => [invoice.legacy_purchase_id, invoice]));
+      setOpenPurchases(purchaseRows.map((purchase) => ({
+        ...purchase,
+        incomingPurchaseInvoiceId: incomingByPurchase.get(purchase.id)?.id || null,
+        providerDocumentId: incomingByPurchase.get(purchase.id)?.provider_document_id || null,
+      })));
     } catch (error) {
       console.error("Error loading bank accounts:", error);
     }
@@ -88,7 +102,9 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
     setLoading(true);
 
     try {
-      await workflowService.recordCustomerPayment({
+      const selectedPurchase = openPurchases.find((purchase) => purchase.id === formData.relatedPurchaseId);
+      const selectedAccount = bankAccounts.find((account) => account.id === formData.bankAccountId);
+      const paymentInput = {
         customerId: customer.id,
         transactionType: "odeme",
         amount: parseFloat(formData.amount),
@@ -99,7 +115,19 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
         referenceNo: formData.referenceNo,
         financialAccountId: formData.bankAccountId,
         relatedPurchaseId: formData.relatedPurchaseId || null,
-      });
+      } as const;
+      if (selectedPurchase?.incomingPurchaseInvoiceId && selectedPurchase?.providerDocumentId) {
+        if (!selectedAccount?.kolaybi_vault_id) {
+          throw new Error("Bu fatura için muhasebe sistemiyle eşleşmiş bir kasa/banka hesabı seçilmelidir.");
+        }
+        await workflowService.recordKolayBiSupplierPayment({
+          ...paymentInput,
+          relatedPurchaseId: formData.relatedPurchaseId,
+          incomingPurchaseInvoiceId: selectedPurchase.incomingPurchaseInvoiceId,
+        });
+      } else {
+        await workflowService.recordCustomerPayment(paymentInput);
+      }
 
       toast({
         title: "Başarılı",
@@ -241,11 +269,16 @@ export function PaymentDialog({ isOpen, onClose, customer, onSuccess }: PaymentD
                     <SelectItem value="unallocated">Genel ödeme</SelectItem>
                     {openPurchases.map((purchase) => (
                       <SelectItem key={purchase.id} value={purchase.id}>
-                        {purchase.purchase_no} - {Number(purchase.total || 0).toLocaleString("tr-TR")} {purchase.currency || "TRY"}
+                        {purchase.purchase_no} - Açık: {Math.max(Number(purchase.total || 0) - Number(purchase.paid_amount || 0), 0).toLocaleString("tr-TR")} {purchase.currency || "TRY"}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {formData.relatedPurchaseId && openPurchases.find((item) => item.id === formData.relatedPurchaseId)?.providerDocumentId && (
+                  <p className="text-xs text-muted-foreground">
+                    Ödeme, alış faturası, cari hareketi ve KolayBi hesabına birlikte işlenecektir.
+                  </p>
+                )}
               </div>
             )}
 

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
-import { proceedKolayBiInvoice, publicKolayBiError } from "@/lib/kolaybi";
+import { proceedKolayBiDocument, publicKolayBiError } from "@/lib/kolaybi";
 
 function providerTransactionId(value: any) {
   const candidate = value?.transaction_id ?? value?.id ?? value?.payment_id ?? value?.data?.transaction_id ?? value?.data?.id;
@@ -15,12 +15,12 @@ function providerEnvironment(value: unknown) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Yalnızca POST desteklenir." });
   const bearer = req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : "";
-  const invoiceId = String(req.query.invoiceId || "");
+  const incomingInvoiceId = String(req.query.invoiceId || "");
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!bearer) return res.status(401).json({ error: "Oturum doğrulanamadı." });
-  if (!invoiceId || !supabaseUrl || !anonKey || !serviceKey) return res.status(500).json({ error: "Sunucu ayarları eksik." });
+  if (!incomingInvoiceId || !supabaseUrl || !anonKey || !serviceKey) return res.status(500).json({ error: "Sunucu ayarları eksik." });
 
   const userDb = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: `Bearer ${bearer}` } },
@@ -32,38 +32,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     p_key: "accounting.accounts",
     p_required: "manage",
   } as any);
-  if (!allowed) return res.status(403).json({ error: "Tahsilat işleme yetkiniz yok." });
+  if (!allowed) return res.status(403).json({ error: "Tedarikçi ödemesi işleme yetkiniz yok." });
 
   const amount = Number(req.body?.amount);
   const financialAccountId = String(req.body?.financialAccountId || "");
   const customerId = String(req.body?.customerId || "");
+  const purchaseId = String(req.body?.relatedPurchaseId || "");
   const paymentDate = String(req.body?.paymentDate || "").slice(0, 10);
-  if (!Number.isFinite(amount) || amount <= 0 || !financialAccountId || !customerId || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
-    return res.status(422).json({ error: "Tahsilat bilgileri eksik veya geçersiz." });
+  if (!Number.isFinite(amount) || amount <= 0 || !financialAccountId || !customerId || !purchaseId || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
+    return res.status(422).json({ error: "Ödeme bilgileri eksik veya geçersiz." });
   }
 
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const [{ data: invoice }, { data: account }] = await Promise.all([
-    admin.from("sales_invoices").select("id,customer_id,kolaybi_document_id,grand_total,paid_amount,balance,payment_status").eq("id", invoiceId).single(),
-    admin.from("financial_accounts").select("id,kolaybi_vault_id,source,provider_environment").eq("id", financialAccountId).single(),
+  const [{ data: incoming }, { data: purchase }, { data: account }] = await Promise.all([
+    admin.from("incoming_purchase_invoices").select("id,provider_document_id,legacy_purchase_id,billing_supplier_id,operational_supplier_id,provider_balance").eq("id", incomingInvoiceId).single(),
+    admin.from("purchases").select("id,supplier_id,total,paid_amount,status").eq("id", purchaseId).single(),
+    admin.from("financial_accounts").select("id,kolaybi_vault_id,provider_environment").eq("id", financialAccountId).single(),
   ]);
-  if (!invoice || invoice.customer_id !== customerId) return res.status(404).json({ error: "Müşteriye ait fatura bulunamadı." });
-  if (!invoice.kolaybi_document_id) return res.status(409).json({ error: "Fatura henüz KolayBi ile eşleştirilmemiş." });
+  if (!incoming || incoming.legacy_purchase_id !== purchaseId) return res.status(404).json({ error: "Alış faturası eşleşmesi bulunamadı." });
+  if (!purchase || purchase.supplier_id !== customerId) return res.status(404).json({ error: "Tedarikçiye ait alış faturası bulunamadı." });
   if (!account?.kolaybi_vault_id) return res.status(409).json({ error: "Seçilen finans hesabının KolayBi kasa/banka eşlemesi yok." });
-  const remaining = Number(invoice.balance ?? Math.max(Number(invoice.grand_total || 0) - Number(invoice.paid_amount || 0), 0));
-  if (invoice.payment_status === "İptal") return res.status(409).json({ error: "İptal edilmiş faturaya tahsilat işlenemez." });
-  if (amount > remaining + 0.01) return res.status(422).json({ error: "Tahsilat açık fatura bakiyesini aşamaz." });
+  const documentId = Number(incoming.provider_document_id || 0);
+  if (!Number.isSafeInteger(documentId) || documentId <= 0) return res.status(409).json({ error: "Alış faturası KolayBi belgesiyle eşleşmemiş." });
+  const remaining = Math.max(Number(purchase.total || 0) - Number(purchase.paid_amount || 0), 0);
+  if (amount > remaining + 0.01) return res.status(422).json({ error: "Ödeme açık alış faturası bakiyesini aşamaz." });
 
   try {
-    const provider = await proceedKolayBiInvoice(admin, {
-      invoiceId,
+    const provider = await proceedKolayBiDocument({
+      documentId,
       vaultId: Number(account.kolaybi_vault_id),
       amount,
       issueDate: paymentDate,
     });
     const { data: paymentId, error: paymentError } = await userDb.rpc("rex_record_customer_payment" as any, {
       p_customer_id: customerId,
-      p_transaction_type: "tahsilat",
+      p_transaction_type: "odeme",
       p_amount: amount,
       p_payment_method: String(req.body?.paymentMethod || "Havale"),
       p_payment_date: paymentDate,
@@ -71,12 +74,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       p_reference_no: String(req.body?.referenceNo || "") || null,
       p_description: String(req.body?.description || "") || null,
       p_currency: String(req.body?.currency || "TRY"),
-      p_related_invoice_id: invoiceId,
-      p_related_purchase_id: null,
+      p_related_invoice_id: null,
+      p_related_purchase_id: purchaseId,
     } as any);
     if (paymentError) {
       return res.status(409).json({
-        error: `Tahsilat KolayBi'ye işlendi ancak REX TYS kaydı tamamlanamadı: ${paymentError.message}`,
+        error: `Ödeme KolayBi'ye işlendi ancak REX TYS kaydı tamamlanamadı: ${paymentError.message}`,
         providerApplied: true,
       });
     }

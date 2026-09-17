@@ -300,10 +300,16 @@ export type Database = {
           id: string
           payment_date: string
           payment_method: string
+          provider_environment: string | null
+          provider_error: string | null
+          provider_payload: Json | null
+          provider_synced_at: string | null
+          provider_transaction_id: string | null
           reference_no: string | null
           related_invoice_id: string | null
           related_purchase_id: string | null
           source_customer_id: string | null
+          sync_status: string
           target_customer_id: string | null
           transaction_type: string
           updated_at: string | null
@@ -319,10 +325,16 @@ export type Database = {
           id?: string
           payment_date?: string
           payment_method: string
+          provider_environment?: string | null
+          provider_error?: string | null
+          provider_payload?: Json | null
+          provider_synced_at?: string | null
+          provider_transaction_id?: string | null
           reference_no?: string | null
           related_invoice_id?: string | null
           related_purchase_id?: string | null
           source_customer_id?: string | null
+          sync_status?: string
           target_customer_id?: string | null
           transaction_type: string
           updated_at?: string | null
@@ -338,10 +350,16 @@ export type Database = {
           id?: string
           payment_date?: string
           payment_method?: string
+          provider_environment?: string | null
+          provider_error?: string | null
+          provider_payload?: Json | null
+          provider_synced_at?: string | null
+          provider_transaction_id?: string | null
           reference_no?: string | null
           related_invoice_id?: string | null
           related_purchase_id?: string | null
           source_customer_id?: string | null
+          sync_status?: string
           target_customer_id?: string | null
           transaction_type?: string
           updated_at?: string | null
@@ -1748,6 +1766,7 @@ export type Database = {
         Row: {
           archive_reason: string | null
           archived_at: string | null
+          balance: number
           created_at: string | null
           currency: string
           customer_id: string | null
@@ -1760,7 +1779,10 @@ export type Database = {
           invoice_no: string
           notes: string | null
           payment_method: string | null
+          payment_last_synced_at: string | null
+          payment_source: string
           payment_status: string
+          paid_amount: number
           shipment_id: string | null
           shipping_cost: number
           subtotal: number
@@ -1772,6 +1794,7 @@ export type Database = {
         Insert: {
           archive_reason?: string | null
           archived_at?: string | null
+          balance?: number
           created_at?: string | null
           currency?: string
           customer_id?: string | null
@@ -1784,7 +1807,10 @@ export type Database = {
           invoice_no: string
           notes?: string | null
           payment_method?: string | null
+          payment_last_synced_at?: string | null
+          payment_source?: string
           payment_status?: string
+          paid_amount?: number
           shipment_id?: string | null
           shipping_cost?: number
           subtotal?: number
@@ -1796,6 +1822,7 @@ export type Database = {
         Update: {
           archive_reason?: string | null
           archived_at?: string | null
+          balance?: number
           created_at?: string | null
           currency?: string
           customer_id?: string | null
@@ -1808,7 +1835,10 @@ export type Database = {
           invoice_no?: string
           notes?: string | null
           payment_method?: string | null
+          payment_last_synced_at?: string | null
+          payment_source?: string
           payment_status?: string
+          paid_amount?: number
           shipment_id?: string | null
           shipping_cost?: number
           subtotal?: number
