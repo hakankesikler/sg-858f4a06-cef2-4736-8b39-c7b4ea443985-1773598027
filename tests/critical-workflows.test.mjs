@@ -2559,7 +2559,9 @@ test("KolayBi inbound invoices require and refresh a verified official tax break
   assert.match(syncApi, /TaxExclusiveAmount/);
   assert.match(syncApi, /WithholdingTaxTotal/);
   assert.match(syncApi, /e_document\/download/);
-  assert.match(syncApi, /invoices\/e-document\/view/);
+  assert.match(syncApi, /officialDocumentDownloadEndpoints\(baseUrl, companyId, uuid, "xml"\)/);
+  assert.match(syncApi, /officialDocumentDownloadEndpoints\(baseUrl, companyId, uuid, "pdf"\)/);
+  assert.doesNotMatch(syncApi, /invoices\/e-document\/view/);
   assert.match(pdfBreakdown, /parseOfficialInvoicePdfText/);
   assert.match(pdfBreakdown, /KDV Matrahi/);
   assert.match(pdfBreakdown, /Hesaplanan KDV/);

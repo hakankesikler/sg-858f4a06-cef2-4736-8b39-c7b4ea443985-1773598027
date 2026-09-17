@@ -175,6 +175,24 @@ function providerData(json: any) {
   return json?.data?.data || json?.data || json || null;
 }
 
+function officialDocumentDownloadEndpoints(
+  baseUrl: string,
+  companyId: string,
+  uuid: string,
+  outputType: "xml" | "pdf",
+) {
+  const params = new URLSearchParams({
+    company_id: companyId,
+    uuid,
+    direction: "inbound",
+    output_type: outputType,
+  });
+  return [
+    `${baseUrl}/e_document/download?${params.toString()}`,
+    `${new URL(baseUrl).origin}/api/e_document/download?${params.toString()}`,
+  ];
+}
+
 async function enrichTaxBreakdown(
   baseUrl: string,
   companyId: string,
@@ -201,12 +219,7 @@ async function enrichTaxBreakdown(
 
   const uuid = textValue(official?.document_uuid, official?.uuid, official?.ettn, official?.official_uuid);
   if (!uuid) return { official, commercial: enrichedCommercial };
-  const params = new URLSearchParams({ company_id: companyId, uuid, direction: "inbound", output_type: "xml" });
-  const endpointCandidates = [
-    `${baseUrl}/e_document/download?${params.toString()}`,
-    `${new URL(baseUrl).origin}/api/e_document/download?${params.toString()}`,
-  ];
-  for (const endpoint of endpointCandidates) {
+  for (const endpoint of officialDocumentDownloadEndpoints(baseUrl, companyId, uuid, "xml")) {
     try {
       const response = await fetch(endpoint, { method: "GET", headers, signal: AbortSignal.timeout(25_000) });
       const body = await response.text();
@@ -219,13 +232,16 @@ async function enrichTaxBreakdown(
     }
   }
 
-  try {
-    const response = await fetch(
-      `${baseUrl}/invoices/e-document/view?uuid=${encodeURIComponent(uuid)}`,
-      { method: "GET", headers, signal: AbortSignal.timeout(25_000) },
-    );
-    const body = await response.text();
-    if (response.ok) {
+  for (const endpoint of officialDocumentDownloadEndpoints(baseUrl, companyId, uuid, "pdf")) {
+    try {
+      const response = await fetch(endpoint, { method: "GET", headers, signal: AbortSignal.timeout(25_000) });
+      const body = await response.text();
+      if (!response.ok) {
+        console.warn("KolayBi official invoice PDF could not be fetched", {
+          responseStatus: response.status,
+        });
+        continue;
+      }
       const pdf = decodeOfficialPdf(body);
       const breakdown = pdf ? await parseOfficialInvoicePdf(pdf) : null;
       if (breakdown) return { official: { ...official, ...breakdown }, commercial: enrichedCommercial };
@@ -233,18 +249,14 @@ async function enrichTaxBreakdown(
         stage: pdf ? "parse" : "decode",
         responseStatus: response.status,
       });
-    } else {
-      console.warn("KolayBi official invoice PDF could not be fetched", {
-        responseStatus: response.status,
+    } catch (error) {
+      console.error("KolayBi official invoice PDF processing failed", {
+        errorName: error instanceof Error ? error.name : "UnknownError",
+        errorMessage: String(error instanceof Error ? error.message : error).slice(0, 300),
       });
+      // Try the next KolayBi endpoint shape. The invoice remains pending if
+      // neither official document can be decoded and validated.
     }
-  } catch (error) {
-    console.error("KolayBi official invoice PDF processing failed", {
-      errorName: error instanceof Error ? error.name : "UnknownError",
-      errorMessage: String(error instanceof Error ? error.message : error).slice(0, 300),
-    });
-    // The verified PDF is the final safe fallback. The invoice remains pending
-    // if its official tax breakdown cannot be read and validated.
   }
   return { official, commercial: enrichedCommercial };
 }
