@@ -78,74 +78,6 @@ function safeWithholdingTotal(netTotal: number, vatTotal: number, grandTotal: nu
     : 0;
 }
 
-function xmlTagValue(xml: string, tagName: string) {
-  const escaped = tagName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = xml.match(new RegExp(`<(?:(?:[A-Za-z_][\\w.-]*):)?${escaped}\\b[^>]*>([^<]+)<\\/(?:(?:[A-Za-z_][\\w.-]*):)?${escaped}>`, "i"));
-  return match?.[1]?.trim() || "";
-}
-
-function xmlTagBlock(xml: string, tagName: string) {
-  const escaped = tagName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return xml.match(new RegExp(`<(?:(?:[A-Za-z_][\\w.-]*):)?${escaped}\\b[^>]*>[\\s\\S]*?<\\/(?:(?:[A-Za-z_][\\w.-]*):)?${escaped}>`, "i"))?.[0] || "";
-}
-
-function xmlMoney(xml: string, tagName: string): number | null {
-  const raw = xmlTagValue(xml, tagName).replace(/\s/g, "").replace(",", ".");
-  if (!raw) return null;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? roundMoney(parsed) : null;
-}
-
-function parseOfficialInvoiceXml(xml: string) {
-  const invoiceXml = xml.replace(/^\uFEFF/, "").trim();
-  if (!/<(?:(?:[A-Za-z_][\w.-]*):)?Invoice\b/i.test(invoiceXml)) return null;
-  const monetaryTotal = xmlTagBlock(invoiceXml, "LegalMonetaryTotal");
-  const taxTotal = xmlTagBlock(invoiceXml, "TaxTotal");
-  const withholdingTaxTotal = xmlTagBlock(invoiceXml, "WithholdingTaxTotal");
-  const netTotal = xmlMoney(monetaryTotal, "TaxExclusiveAmount");
-  const payableTotal = xmlMoney(monetaryTotal, "PayableAmount");
-  const explicitVatTotal = xmlMoney(taxTotal, "TaxAmount");
-  const taxInclusiveTotal = xmlMoney(monetaryTotal, "TaxInclusiveAmount");
-  const withholdingTotal = xmlMoney(withholdingTaxTotal, "TaxAmount") || 0;
-  const vatTotal = explicitVatTotal ?? (
-    netTotal !== null && taxInclusiveTotal !== null
-      ? roundMoney(Math.max(0, taxInclusiveTotal - netTotal))
-      : null
-  );
-  if (netTotal === null || vatTotal === null || payableTotal === null || netTotal <= 0 || payableTotal <= 0) return null;
-  if (Math.abs(roundMoney(netTotal + vatTotal - withholdingTotal) - payableTotal) > 0.02) return null;
-  return {
-    subtotal: netTotal,
-    total_vat: vatTotal,
-    withholding_total: withholdingTotal,
-    grand_total: payableTotal,
-    tax_breakdown_source: "official_xml",
-  };
-}
-
-function decodeOfficialXml(body: string) {
-  const trimmed = body.trim();
-  if (trimmed.startsWith("<")) return trimmed;
-  let parsed: any = null;
-  try { parsed = JSON.parse(trimmed); } catch { return ""; }
-  const encoded = textValue(
-    parsed?.data?.src,
-    parsed?.data?.content,
-    parsed?.data?.xml,
-    parsed?.src,
-    parsed?.content,
-    parsed?.xml,
-  ).replace(/^data:(?:application|text)\/[^;]+;base64,/i, "");
-  if (!encoded) return "";
-  if (encoded.trim().startsWith("<")) return encoded.trim();
-  try {
-    const decoded = Buffer.from(encoded, "base64").toString("utf8").replace(/^\uFEFF/, "").trim();
-    return decoded.startsWith("<") ? decoded : "";
-  } catch {
-    return "";
-  }
-}
-
 function hasExplicitTaxBreakdown(official: any, commercial: any) {
   const officialTotals = official?.totals || official?.amounts || {};
   const commercialTotals = commercial?.total || commercial?.totals || commercial?.amounts || {};
@@ -175,27 +107,8 @@ function providerData(json: any) {
   return json?.data?.data || json?.data || json || null;
 }
 
-function officialDocumentDownloadEndpoints(
-  baseUrl: string,
-  companyId: string,
-  uuid: string,
-  outputType: "xml" | "pdf",
-) {
-  const params = new URLSearchParams({
-    company_id: companyId,
-    uuid,
-    direction: "inbound",
-    output_type: outputType,
-  });
-  return [
-    `${baseUrl}/e_document/download?${params.toString()}`,
-    `${new URL(baseUrl).origin}/api/e_document/download?${params.toString()}`,
-  ];
-}
-
 async function enrichTaxBreakdown(
   baseUrl: string,
-  companyId: string,
   headers: Record<string, string>,
   official: any,
   commercial: any,
@@ -219,29 +132,14 @@ async function enrichTaxBreakdown(
 
   const uuid = textValue(official?.document_uuid, official?.uuid, official?.ettn, official?.official_uuid);
   if (!uuid) return { official, commercial: enrichedCommercial };
-  for (const endpoint of officialDocumentDownloadEndpoints(baseUrl, companyId, uuid, "xml")) {
-    try {
-      const response = await fetch(endpoint, { method: "GET", headers, signal: AbortSignal.timeout(25_000) });
-      const body = await response.text();
-      if (!response.ok) continue;
-      const breakdown = parseOfficialInvoiceXml(decodeOfficialXml(body));
-      if (breakdown) return { official: { ...official, ...breakdown }, commercial: enrichedCommercial };
-    } catch {
-      // Try the next KolayBi endpoint shape. If neither returns a verified UBL
-      // breakdown, normalization rejects the incomplete amount record.
-    }
-  }
-
-  for (const endpoint of officialDocumentDownloadEndpoints(baseUrl, companyId, uuid, "pdf")) {
-    try {
-      const response = await fetch(endpoint, { method: "GET", headers, signal: AbortSignal.timeout(25_000) });
-      const body = await response.text();
-      if (!response.ok) {
-        console.warn("KolayBi official invoice PDF could not be fetched", {
-          responseStatus: response.status,
-        });
-        continue;
-      }
+  const viewParams = new URLSearchParams({ uuid, direction: "inbound" });
+  try {
+    const response = await fetch(
+      `${baseUrl}/invoices/e-document/view?${viewParams.toString()}`,
+      { method: "GET", headers, signal: AbortSignal.timeout(25_000) },
+    );
+    const body = await response.text();
+    if (response.ok) {
       const pdf = decodeOfficialPdf(body);
       const breakdown = pdf ? await parseOfficialInvoicePdf(pdf) : null;
       if (breakdown) return { official: { ...official, ...breakdown }, commercial: enrichedCommercial };
@@ -249,14 +147,18 @@ async function enrichTaxBreakdown(
         stage: pdf ? "parse" : "decode",
         responseStatus: response.status,
       });
-    } catch (error) {
-      console.error("KolayBi official invoice PDF processing failed", {
-        errorName: error instanceof Error ? error.name : "UnknownError",
-        errorMessage: String(error instanceof Error ? error.message : error).slice(0, 300),
+    } else {
+      console.warn("KolayBi official invoice PDF could not be fetched", {
+        responseStatus: response.status,
       });
-      // Try the next KolayBi endpoint shape. The invoice remains pending if
-      // neither official document can be decoded and validated.
     }
+  } catch (error) {
+    console.error("KolayBi official invoice PDF processing failed", {
+      errorName: error instanceof Error ? error.name : "UnknownError",
+      errorMessage: String(error instanceof Error ? error.message : error).slice(0, 300),
+    });
+    // The verified PDF is the final safe fallback. The invoice remains pending
+    // if its official tax breakdown cannot be read and validated.
   }
   return { official, commercial: enrichedCommercial };
 }
@@ -719,7 +621,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     for (const officialRow of officialRows) {
       let commercial = matchingCommercial(officialRow, indexes);
       if (commercial) commercialMatches += 1;
-      const enriched = await enrichTaxBreakdown(baseUrl, companyId, headers, officialRow, commercial);
+      const enriched = await enrichTaxBreakdown(baseUrl, headers, officialRow, commercial);
       const official = enriched.official;
       commercial = enriched.commercial;
       const associate = matchingAssociate(official, commercial, associates);

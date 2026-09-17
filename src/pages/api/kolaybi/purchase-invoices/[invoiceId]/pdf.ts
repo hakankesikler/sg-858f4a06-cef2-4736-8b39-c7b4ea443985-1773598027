@@ -37,7 +37,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const tokenJson = await json(tokenResponse);
     const token = tokenJson?.data?.access_token || tokenJson?.data?.token || tokenJson?.data;
     if (typeof token !== "string" || !token) throw new Error("KolayBi erişim anahtarı alınamadı.");
-    const pdfResponse = await fetch(`${baseUrl}/invoices/e-document/view?uuid=${encodeURIComponent(record.official_uuid)}`, { headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" }, signal: AbortSignal.timeout(25_000) });
+    const params = new URLSearchParams({ uuid: record.official_uuid, direction: "inbound" });
+    const pdfResponse = await fetch(`${baseUrl}/invoices/e-document/view?${params.toString()}`, { headers: { Channel: channel, Authorization: `Bearer ${token}`, Accept: "application/json" }, signal: AbortSignal.timeout(25_000) });
     const pdfJson = await json(pdfResponse);
     const payload = pdfJson?.data || pdfJson;
     if (!payload?.src) throw new Error("KolayBi PDF çıktısı alınamadı.");

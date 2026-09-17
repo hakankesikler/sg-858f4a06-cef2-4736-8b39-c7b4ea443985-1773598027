@@ -562,7 +562,8 @@ test("KolayBi inbound purchase invoices are synchronized without exposing creden
   assert.match(syncApi, /KOLAYBI_COMPANY_ID/);
   assert.match(syncApi, /rex_import_kolaybi_purchase_invoice/);
   assert.match(syncApi, /Authorization: `Bearer \$\{accessToken\}`/);
-  assert.match(pdfApi, /invoices\/e-document\/view\?uuid=/);
+  assert.match(pdfApi, /new URLSearchParams\(\{ uuid: record\.official_uuid, direction: "inbound" \}\)/);
+  assert.match(pdfApi, /invoices\/e-document\/view\?\$\{params\.toString\(\)\}/);
   assert.match(pdfApi, /Cache-Control", "private, no-store"/);
 });
 
@@ -2555,13 +2556,8 @@ test("KolayBi inbound invoices require and refresh a verified official tax break
   ]);
 
   assert.match(syncApi, /missing_tax_breakdown/);
-  assert.match(syncApi, /parseOfficialInvoiceXml/);
-  assert.match(syncApi, /TaxExclusiveAmount/);
-  assert.match(syncApi, /WithholdingTaxTotal/);
-  assert.match(syncApi, /e_document\/download/);
-  assert.match(syncApi, /officialDocumentDownloadEndpoints\(baseUrl, companyId, uuid, "xml"\)/);
-  assert.match(syncApi, /officialDocumentDownloadEndpoints\(baseUrl, companyId, uuid, "pdf"\)/);
-  assert.doesNotMatch(syncApi, /invoices\/e-document\/view/);
+  assert.match(syncApi, /invoices\/e-document\/view/);
+  assert.match(syncApi, /new URLSearchParams\(\{ uuid, direction: "inbound" \}\)/);
   assert.match(pdfBreakdown, /parseOfficialInvoicePdfText/);
   assert.match(pdfBreakdown, /KDV Matrahi/);
   assert.match(pdfBreakdown, /Hesaplanan KDV/);
