@@ -12,12 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
-import { downloadExcel } from "@/lib/excel";
+import { downloadExcel, readExcelObjects } from "@/lib/excel";
 import { GpslineDeliveryEstimator } from "@/components/GpslineDeliveryEstimator";
 import {
   salesCrmService, type ActivityOutcome, type ActivityType, type CrmActivity,
   type CrmContact, type CrmNotification, type CrmOffer, type CrmOfferItem, type CrmOpportunity, type CrmStage, type CrmTask, type Customer360, type QuoteDetail,
-  type CrmSettings, type CrmSupplier, type SalesPerformance, type SalesRepresentative,
+  type CrmProspectImportRow, type CrmSettings, type CrmSupplier, type SalesPerformance, type SalesRepresentative,
 } from "@/services/salesCrmService";
 import { kolaybiOfficeService } from "@/services/kolaybiOfficeService";
 
@@ -81,6 +81,11 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const [taskToComplete, setTaskToComplete] = useState<CrmTask | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
   const [prospectOpen, setProspectOpen] = useState(false);
+  const [prospectImportOpen, setProspectImportOpen] = useState(false);
+  const [prospectImporting, setProspectImporting] = useState(false);
+  const [prospectImportFile, setProspectImportFile] = useState<File | null>(null);
+  const [prospectImportRows, setProspectImportRows] = useState<CrmProspectImportRow[]>([]);
+  const [prospectImportErrors, setProspectImportErrors] = useState<string[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [editingContactId, setEditingContactId] = useState<string | null>(null);
@@ -266,6 +271,106 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
     })), "Satış CRM");
   };
 
+  const downloadProspectTemplate = async () => {
+    try {
+      await downloadExcel("CRM_Potansiyel_Musteri_Sablonu.xlsx", [{
+        "Firma Adı": "Örn: ABC Sanayi A.Ş.",
+        "İlgili Kişi": "Örn: Ayşe Yılmaz",
+        Telefon: "Örn: 0532 123 45 67",
+        "E-posta": "Örn: ayse@abc.com",
+        "Sonraki İşlem Tarihi": "Örn: 25.09.2026",
+        Not: "Örn: Fuar görüşmesinden sonra aranacak",
+      }], "CRM Potansiyelleri");
+      toast({ title: "CRM Excel şablonu indirildi" });
+    } catch (error: any) {
+      toast({ title: "Şablon indirilemedi", description: error?.message, variant: "destructive" });
+    }
+  };
+
+  const parseProspectNextAction = (value: unknown): string | null => {
+    if (value == null || String(value).trim() === "") return null;
+    const input = value instanceof Date ? value : String(value).trim();
+    const trMatch = typeof input === "string" && input.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+    const parsed = input instanceof Date
+      ? input
+      : trMatch
+        ? new Date(`${trMatch[3]}-${trMatch[2].padStart(2, "0")}-${trMatch[1].padStart(2, "0")}T09:00:00`)
+        : new Date(input);
+    if (Number.isNaN(parsed.getTime())) throw new Error("geçersiz tarih");
+    return parsed.toISOString();
+  };
+
+  const resetProspectImport = () => {
+    setProspectImportFile(null);
+    setProspectImportRows([]);
+    setProspectImportErrors([]);
+  };
+
+  const prepareProspectImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setProspectImporting(true);
+    try {
+      if (file.size > 2 * 1024 * 1024) throw new Error("Excel dosyası 2 MB'den büyük olamaz");
+      const rawRows = await readExcelObjects(file);
+      if (!rawRows.length) throw new Error("Excel dosyasında aktarılacak satır bulunamadı");
+      if (rawRows.length > 1000) throw new Error("Tek seferde en fazla 1000 potansiyel müşteri aktarılabilir");
+
+      const errors: string[] = [];
+      const rows = rawRows.map((row, index) => {
+        const company_name = String(row["Firma Adı"] || "").trim();
+        const contact_name = String(row["İlgili Kişi"] || "").trim() || null;
+        const email = String(row["E-posta"] || "").trim().toLowerCase() || null;
+        const phone = String(row.Telefon || "").trim() || null;
+        let next_action_at: string | null = null;
+        if (company_name.length < 2) errors.push(`Satır ${index + 2}: Firma adı zorunludur.`);
+        if (!email && !phone) errors.push(`Satır ${index + 2}: Telefon veya e-posta zorunludur.`);
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push(`Satır ${index + 2}: E-posta biçimi geçersiz.`);
+        if (phone && phone.replace(/\D/g, "").length < 7) errors.push(`Satır ${index + 2}: Telefon en az 7 rakam içermelidir.`);
+        try { next_action_at = parseProspectNextAction(row["Sonraki İşlem Tarihi"]); }
+        catch { errors.push(`Satır ${index + 2}: Sonraki işlem tarihi geçersiz.`); }
+        return {
+          company_name,
+          contact_name,
+          email,
+          phone,
+          next_action_at,
+          notes: String(row.Not || "").trim() || null,
+        };
+      });
+      setProspectImportFile(file);
+      setProspectImportRows(rows);
+      setProspectImportErrors(errors);
+    } catch (error: any) {
+      resetProspectImport();
+      toast({ title: "Excel dosyası hazırlanamadı", description: error?.message || "Dosya okunamadı.", variant: "destructive" });
+    } finally {
+      setProspectImporting(false);
+      event.target.value = "";
+    }
+  };
+
+  const importProspects = async () => {
+    if (!prospectImportFile || !prospectImportRows.length || prospectImportErrors.length) return;
+    setProspectImporting(true);
+    try {
+      const digest = await crypto.subtle.digest("SHA-256", await prospectImportFile.arrayBuffer());
+      const idempotencyKey = Array.from(new Uint8Array(digest)).map((item) => item.toString(16).padStart(2, "0")).join("");
+      const result = await salesCrmService.bulkImportProspects(prospectImportFile.name, idempotencyKey, prospectImportRows);
+      toast({
+        title: result.already_processed ? "Bu dosya daha önce aktarıldı" : "CRM aktarımı tamamlandı",
+        description: `${result.imported} yeni potansiyel eklendi${result.duplicates ? `, ${result.duplicates} mükerrer kayıt atlandı` : ""}.`,
+      });
+      setProspectImportOpen(false);
+      resetProspectImport();
+      await loadAll();
+    } catch (error: any) {
+      toast({ title: "CRM aktarımı tamamlanamadı", description: error?.message || "İşlem geri alındı.", variant: "destructive" });
+    } finally {
+      setProspectImporting(false);
+    }
+  };
+
   const updateOpportunity = async (updates: Partial<CrmOpportunity>, success: string) => {
     if (!selected) return;
     setSubmitting(true);
@@ -362,9 +467,36 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
           {canExport && <Button variant="outline" onClick={() => void exportSales()} disabled={!opportunities.length}><FileSpreadsheet className="mr-2 h-4 w-4" />Excel</Button>}
           <Button variant="outline" onClick={() => void loadAll()}><RefreshCw className="mr-2 h-4 w-4" />Yenile</Button>
           {canConfigure && <Button variant="outline" onClick={() => void openSettings()}><Settings2 className="mr-2 h-4 w-4" />CRM Ayarları</Button>}
+          {canManage && <Button variant="outline" onClick={() => setProspectImportOpen(true)}><FileSpreadsheet className="mr-2 h-4 w-4" />Excel'den Potansiyel Yükle</Button>}
           {canManage && <Button className="bg-[#e96d25] hover:bg-[#d95e1d]" onClick={() => setProspectOpen(true)}><Plus className="mr-2 h-4 w-4" />Yeni Potansiyel</Button>}
         </div>
       </div>
+
+      <Dialog open={prospectImportOpen} onOpenChange={(open) => { setProspectImportOpen(open); if (!open) resetProspectImport(); }}>
+        <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
+          <DialogHeader><DialogTitle>Excel'den Potansiyel Müşteri Yükle</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+              <p className="font-semibold">Güvenli aktarım akışı</p>
+              <p className="mt-1">Dosya önce kontrol edilir. Hatalı satır varken aktarım açılamaz; mevcut cari veya açık satış kaydıyla aynı olan satırlar otomatik atlanır.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={() => void downloadProspectTemplate()}><FileSpreadsheet className="mr-2 h-4 w-4" />Excel Şablonu İndir</Button>
+              <Button type="button" onClick={() => document.getElementById("crm-prospect-import-input")?.click()} disabled={prospectImporting}>
+                {prospectImporting ? "Kontrol ediliyor..." : "XLSX Dosyası Seç"}
+              </Button>
+              <input id="crm-prospect-import-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => void prepareProspectImport(event)} className="hidden" />
+            </div>
+            <p className="text-xs text-slate-500">Zorunlu alanlar: <strong>Firma Adı</strong> ve en az bir <strong>Telefon</strong> veya <strong>E-posta</strong>. En fazla 1.000 satır ve 2 MB XLSX dosyası yüklenebilir.</p>
+            {prospectImportFile && <div className="rounded-xl border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="font-semibold text-[#10213e]">{prospectImportFile.name}</p><p className="text-sm text-slate-500">{prospectImportRows.length} satır bulundu</p></div><Badge className={prospectImportErrors.length ? "bg-red-600 text-white" : "bg-emerald-600 text-white"}>{prospectImportErrors.length ? `${prospectImportErrors.length} hata` : "Aktarıma hazır"}</Badge></div>
+              {prospectImportErrors.length > 0 && <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800"><p className="font-semibold">Dosyayı düzeltip tekrar seçin:</p><ul className="mt-1 list-disc space-y-1 pl-5">{prospectImportErrors.slice(0, 8).map((error) => <li key={error}>{error}</li>)}{prospectImportErrors.length > 8 && <li>… ve {prospectImportErrors.length - 8} hata daha</li>}</ul></div>}
+              {!prospectImportErrors.length && <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead className="border-b text-xs uppercase text-slate-500"><tr><th className="py-2">Firma</th><th>Yetkili</th><th>İletişim</th><th>İlk takip</th></tr></thead><tbody>{prospectImportRows.slice(0, 5).map((row, index) => <tr key={`${row.company_name}-${index}`} className="border-b last:border-0"><td className="py-2 font-medium">{row.company_name}</td><td>{row.contact_name || "-"}</td><td>{row.phone || row.email}</td><td>{row.next_action_at ? readableDate(row.next_action_at) : "7 gün içinde"}</td></tr>)}</tbody></table>{prospectImportRows.length > 5 && <p className="mt-2 text-xs text-slate-500">Önizlemede ilk 5 satır gösteriliyor.</p>}</div>}
+            </div>}
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setProspectImportOpen(false)}>Vazgeç</Button><Button onClick={() => void importProspects()} disabled={prospectImporting || !prospectImportRows.length || prospectImportErrors.length > 0}><Target className="mr-2 h-4 w-4" />Kontrol Edildi, Aktar</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>CRM Otomasyon ve Onay Ayarları</DialogTitle></DialogHeader>

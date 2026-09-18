@@ -128,6 +128,26 @@ test("new CRM prospects use an authorized security-definer RPC and self assignme
   assert.doesNotMatch(service, /table\("crm_opportunities"\)\.insert\(payload\)/);
 });
 
+test("CRM prospect Excel imports are previewed, idempotent and skip exact duplicates", async () => {
+  const [sql, service, screen] = await Promise.all([
+    read("supabase/migrations/20260918130000_crm_bulk_prospect_import.sql"),
+    read("src/services/salesCrmService.ts"),
+    read("src/components/modules/SalesCRMModule.tsx"),
+  ]);
+  assert.match(sql, /crm_prospect_import_batches/);
+  assert.match(sql, /idempotency_key text NOT NULL UNIQUE/);
+  assert.match(sql, /rex_crm_import_prospects/);
+  assert.match(sql, /crm\.sales_pipeline', 'manage'/);
+  assert.match(sql, /v_duplicate/);
+  assert.match(sql, /source IN \('manual', 'website', 'referral', 'existing_customer', 'integration', 'excel'\)/);
+  assert.match(service, /bulkImportProspects/);
+  assert.match(service, /rex_crm_import_prospects/);
+  assert.match(screen, /Excel'den Potansiyel Yükle/);
+  assert.match(screen, /CRM_Potansiyel_Musteri_Sablonu\.xlsx/);
+  assert.match(screen, /Kontrol Edildi, Aktar/);
+  assert.match(screen, /Firma Adı/);
+});
+
 test("customer directory has no 1000-row blind spot and prioritizes financial activity", async () => {
   const [sql, service, crmScreen, accountingScreen] = await Promise.all([
     read("supabase/migrations/20260902194500_customer_financial_directory.sql"),

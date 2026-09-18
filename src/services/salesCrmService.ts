@@ -206,6 +206,23 @@ export type QuoteDetail = {
   created_at: string;
 };
 
+export type CrmProspectImportRow = {
+  company_name: string;
+  contact_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  next_action_at?: string | null;
+  notes?: string | null;
+};
+
+export type CrmProspectImportResult = {
+  batch_id: string;
+  already_processed: boolean;
+  total: number;
+  imported: number;
+  duplicates: number;
+};
+
 const table = (name: string) => supabase.from(name as never) as any;
 
 export const salesCrmService = {
@@ -281,6 +298,16 @@ export const salesCrmService = {
     const { data, error: readError } = await table("crm_opportunities").select("*").eq("id", opportunityId).single();
     if (readError) throw readError;
     return data as CrmOpportunity;
+  },
+
+  async bulkImportProspects(fileName: string, idempotencyKey: string, rows: CrmProspectImportRow[]): Promise<CrmProspectImportResult> {
+    const { data, error } = await supabase.rpc("rex_crm_import_prospects" as never, {
+      p_file_name: fileName,
+      p_idempotency_key: idempotencyKey,
+      p_rows: rows,
+    } as never);
+    if (error) throw error;
+    return data as unknown as CrmProspectImportResult;
   },
 
   async updateOpportunity(id: string, input: Partial<CrmOpportunity>) {
