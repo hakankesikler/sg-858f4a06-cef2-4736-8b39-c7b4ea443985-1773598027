@@ -221,6 +221,7 @@ async function createAssociateCustomer(
   row: { externalId: string; displayName: string; code: string; taxIdentity: string },
   providerEnvironment: "test" | "live",
   actor: { id: string | null; email: string },
+  importReason: string,
 ) {
   const associateId = Number(row.externalId);
   if (!Number.isSafeInteger(associateId) || associateId <= 0) throw new ProviderError("KolayBi cari kimliği geçerli değil.");
@@ -254,7 +255,7 @@ async function createAssociateCustomer(
   const { error: auditError } = await admin.from("customer_audit_events").insert({
     customer_id: created.id,
     event_type: "imported",
-    reason: "Bakiyesi bulunan KolayBi carisi otomatik aktarıldı.",
+    reason: importReason,
     old_data: null,
     new_data: customerData,
     actor_id: actor.id,
@@ -262,6 +263,12 @@ async function createAssociateCustomer(
   });
   if (auditError) throw auditError;
   return created.id as string;
+}
+
+function isActiveAssociate(item: any) {
+  const value = item?.is_active ?? item?.active;
+  const normalized = text(value).toLocaleLowerCase("tr-TR");
+  return value !== false && !["false", "0", "pasif", "inactive", "deleted"].includes(normalized);
 }
 
 function ignoredProviderRecord(summary: string) {
@@ -955,13 +962,14 @@ async function findLocal(
       );
       return { type: "customer", id: result.id };
     }
-    const hasMaterialBalance = materialAssociateBalance(item);
-    if (hasMaterialBalance === false) {
-      return ignoredProviderRecord("Sıfır bakiyeli ve REX TYS'de kullanılmayan KolayBi carisi arşiv kaydı olarak tutuldu.");
-    }
     const hasDurableIdentity = [10, 11].includes(row.taxIdentity.length) || Boolean(row.code);
-    if (hasMaterialBalance === true && hasDurableIdentity && !ambiguousMatch) {
-      const customerId = await createAssociateCustomer(admin, item, row, providerEnvironment, actor);
+    const hasMaterialBalance = materialAssociateBalance(item);
+    const activeAssociate = isActiveAssociate(item);
+    if (hasDurableIdentity && activeAssociate && !ambiguousMatch) {
+      const importReason = hasMaterialBalance
+        ? "Bakiyesi bulunan KolayBi carisi REX TYS'ye otomatik aktarıldı."
+        : "Aktif KolayBi carisi bakiye beklenmeden REX TYS'ye otomatik aktarıldı.";
+      const customerId = await createAssociateCustomer(admin, item, row, providerEnvironment, actor, importReason);
       await replaceAssociateBalanceSnapshots(
         admin,
         item,
@@ -973,8 +981,11 @@ async function findLocal(
         type: "customer",
         id: customerId,
         matchStatus: "matched" as const,
-        summary: "Bakiyesi bulunan KolayBi carisi REX TYS'ye otomatik aktarıldı.",
+        summary: importReason,
       };
+    }
+    if (!activeAssociate) {
+      return ignoredProviderRecord("Pasif KolayBi carisi REX TYS'ye otomatik aktarılmadı.");
     }
     return {
       type: null,

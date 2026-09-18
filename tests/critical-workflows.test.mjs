@@ -2168,7 +2168,8 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(api, /review_required/);
   assert.match(api, /materialAssociateBalance/);
   assert.match(api, /if \(!balances\.length\) return null/);
-  assert.match(api, /Sıfır bakiyeli ve REX TYS'de kullanılmayan KolayBi carisi/);
+  assert.match(api, /isActiveAssociate/);
+  assert.match(api, /Aktif KolayBi carisi bakiye beklenmeden REX TYS'ye otomatik aktarıldı/);
   assert.match(api, /incoming_purchase_invoices/);
   assert.doesNotMatch(api, /from\("purchase_invoices"\)/);
   assert.match(api, /REX TYS fatura kataloğunda kullanılmayan KolayBi ürün\/hizmeti yok sayıldı/);
@@ -2303,7 +2304,7 @@ test("KolayBi office connects sales, operations and accounting with durable sync
   assert.match(accounting, /KolayBiOfficeModule/);
 });
 
-test("KolayBi live associate sync imports open-balance customers and publishes provider balances", async () => {
+test("KolayBi live associate sync imports active verified customers and publishes provider balances", async () => {
   const [migration, api, service] = await Promise.all([
     read("supabase/migrations/20260909010000_kolaybi_customer_balance_sync.sql"),
     read("src/pages/api/kolaybi/office-sync.ts"),
@@ -2318,6 +2319,8 @@ test("KolayBi live associate sync imports open-balance customers and publishes p
   assert.match(api, /createAssociateCustomer/);
   assert.match(api, /replaceAssociateBalanceSnapshots/);
   assert.match(api, /Bakiyesi bulunan KolayBi carisi REX TYS'ye otomatik aktarıldı/);
+  assert.match(api, /Aktif KolayBi carisi bakiye beklenmeden REX TYS'ye otomatik aktarıldı/);
+  assert.match(api, /Pasif KolayBi carisi REX TYS'ye otomatik aktarılmadı/);
   assert.match(api, /provider_environment,provider_associate_id,currency/);
   assert.match(api, /ambiguousMatch/);
   assert.match(service, /rex_customer_financial_directory/);
