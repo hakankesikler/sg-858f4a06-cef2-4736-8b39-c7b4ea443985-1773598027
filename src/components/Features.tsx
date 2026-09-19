@@ -56,7 +56,7 @@ export function Features() {
               Neden REX Lojistik?
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              Kurucusunun 2002 yılından bu yana edindiği sektör deneyimi üzerine 2022 yılında kurulan REX Lojistik; operasyonel tecrübeyi günümüzün yurtiçi ve uluslararası lojistik ihtiyaçlarıyla bir araya getirir.
+              Kurucusunun 2002 yılından bu yana edindiği 20+ yıllık sektör deneyimi üzerine 2022 yılında kurulan REX Lojistik; operasyonel tecrübeyi günümüzün yurtiçi ve uluslararası lojistik ihtiyaçlarıyla bir araya getirir.
             </p>
 
             <div className="space-y-6">
