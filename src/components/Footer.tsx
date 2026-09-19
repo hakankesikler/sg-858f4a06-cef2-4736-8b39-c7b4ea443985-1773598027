@@ -11,7 +11,7 @@ export function Footer() {
               <img src="/rexlogo.png" alt="Rex Lojistik" className="w-full max-w-[270px] h-auto" />
             </div>
             <p className="text-sm text-white">
-              2002 yılından bu yana sektör tecrübesi ile 2022&apos;de kurulan REX Lojistik, güvenilir ve profesyonel lojistik çözümleri sunuyor.
+              Kurucusunun 2002 yılından bu yana edindiği sektör deneyimi üzerine 2022 yılında kurulan REX Lojistik; yurtiçi ve uluslararası taşımacılıkta güvenilir, planlı ve ihtiyaca uygun lojistik çözümleri sunar.
             </p>
           </div>
 
