@@ -1663,7 +1663,7 @@ test("homepage SEO, hero copy and service headings are semantic and focused", as
   assert.match(services, /Detayları İncele/);
   assert.equal((services.match(/title: "/g) || []).length, 8);
   assert.doesNotMatch(services, /target="_blank"|rel="nofollow"/);
-  assert.match(features, /20\+ yıllık sektör deneyiminin üzerine kurulan REX Lojistik/);
+  assert.match(features, /Kurucusunun 2002 yılından bu yana edindiği 20\+ yıllık sektör deneyimi üzerine 2022 yılında kurulan REX Lojistik/);
 
   const expectedServices = [
     ["Yurtiçi Parsiyel Taşımacılık", "/yurtici-parsiyel-tasimacilik"],
