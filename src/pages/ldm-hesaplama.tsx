@@ -8,9 +8,19 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 const TRAILER_WIDTH_M = 2.4;
-const TRAILER_LENGTH_M = 13.6;\nconst ASSUMED_USABLE_HEIGHT_CM = 280;
+const TRAILER_LENGTH_M = 13.6;
+const ASSUMED_USABLE_HEIGHT_CM = 280;
 
-type LoadRow = { id: number; quantity: string; lengthCm: string; widthCm: string; heightCm: string; stackable: boolean };\n\nfunction parsePositive(value: string) {
+type LoadRow = {
+  id: number;
+  quantity: string;
+  lengthCm: string;
+  widthCm: string;
+  heightCm: string;
+  stackable: boolean;
+};
+
+function parsePositive(value: string) {
   const normalized = value.replace(",", ".");
   const number = Number(normalized);
   return Number.isFinite(number) && number > 0 ? number : 0;
