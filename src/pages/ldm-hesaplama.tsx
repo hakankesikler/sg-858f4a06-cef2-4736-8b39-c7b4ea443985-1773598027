@@ -89,20 +89,20 @@ export default function LdmHesaplama() {
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <label className="block text-sm font-semibold text-slate-700">Adet
-                          <input value={row.quantity} onChange={(e) => updateLoad(row.id, "quantity", e.target.value)} inputMode="numeric" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
+                          <input value={row.quantity} onChange={(e) => updateTextField(row.id, "quantity", e.target.value)} inputMode="numeric" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
                         </label>
                         <label className="block text-sm font-semibold text-slate-700">Uzunluk (cm)
-                          <input value={row.lengthCm} onChange={(e) => updateLoad(row.id, "lengthCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
+                          <input value={row.lengthCm} onChange={(e) => updateTextField(row.id, "lengthCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
                         </label>
                         <label className="block text-sm font-semibold text-slate-700">Genişlik (cm)
-                          <input value={row.widthCm} onChange={(e) => updateLoad(row.id, "widthCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
+                          <input value={row.widthCm} onChange={(e) => updateTextField(row.id, "widthCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
                         </label>
                         <label className="block text-sm font-semibold text-slate-700">Yükseklik (cm)
-                          <input value={row.heightCm} onChange={(e) => updateLoad(row.id, "heightCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
+                          <input value={row.heightCm} onChange={(e) => updateTextField(row.id, "heightCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
                         </label>
                       </div>
                       <label className="mt-4 flex min-h-11 flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
-                        <input type="checkbox" checked={row.stackable} onChange={(e) => updateLoad(row.id, "stackable", e.target.checked)} className="h-5 w-5 accent-orange-600" />
+                        <input type="checkbox" checked={row.stackable} onChange={(e) => updateStackable(row.id, e.target.checked)} className="h-5 w-5 accent-orange-600" />
                         İstiflenebilir
                         {row.stackable && row.heightCm > 0 && <span className="ml-auto text-slate-500">2,80 m varsayımıyla en fazla {row.stackLevels} kat</span>}
                       </label>
