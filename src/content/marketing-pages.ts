@@ -417,6 +417,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
       { anchor: "minivan express", href: "/minivan-express-tasimacilik" },
       { anchor: "hava kargo", href: "/hava-kargo" },
+      { anchor: "LDM hesaplama", href: "/ldm-hesaplama" },
     ],
   },
   "minivan-express-tasimacilik": {
