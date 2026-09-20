@@ -54,3 +54,15 @@ export default function LdmHesaplama() {
   const updateStackable = (id: number, value: boolean) => {
     setLoads((current) => current.map((load) => load.id === id ? { ...load, stackable: value } : load));
   };
+
+  const addLoad = () => setLoads((current) => [...current, { id: Date.now(), quantity: "1", lengthCm: "", widthCm: "", heightCm: "", stackable: false }]);
+  const removeLoad = (id: number) => setLoads((current) => current.length === 1 ? current : current.filter((load) => load.id !== id));
+
+  const openQuote = () => {
+    const rows = result.rows
+      .filter((row) => row.area > 0)
+      .map((row) => `${row.qty} adet ${row.lengthCm} × ${row.widthCm} × ${row.heightCm || "?"} cm, ${row.stackable ? `istiflenebilir / ${row.stackLevels} kat` : "istiflenemez"} (${row.ldm.toFixed(2)} LDM)`)
+      .join("; ");
+    const detail = valid ? `LDM hesabı: ${rows}. Toplam yaklaşık ${result.ldm.toFixed(2)} LDM.` : "LDM hesaplama sayfasından teklif talebi.";
+    window.dispatchEvent(new CustomEvent("rex:open-quote-form", { detail: { specialRequirements: detail } }));
+  };
