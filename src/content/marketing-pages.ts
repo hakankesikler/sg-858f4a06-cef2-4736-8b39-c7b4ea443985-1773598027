@@ -95,7 +95,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { anchor: "Depolama bağlantısı", href: "/depolama" },
       { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
       { anchor: "İzmir parsiyel taşımacılık", href: "/izmir-parsiyel-tasimacilik" },
-      { anchor: "Manisa parsiyel taşımacılık", href: "/manisa-parsiyel-tasimacilik" },
+      { anchor: "Manisa parsiyel taşımacılık", href: "/manisa-parsiyel-tasimacilik" },\n      { anchor: "LDM hesaplama", href: "/ldm-hesaplama" },
     ],
   },
   "gumruk-antrepo-yurtici-transfer": {
