@@ -8,7 +8,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 const TRAILER_WIDTH_M = 2.4;
-const TRAILER_LENGTH_M = 13.6;
+const TRAILER_LENGTH_M = 13.6;\nconst ASSUMED_USABLE_HEIGHT_CM = 280;
 
 function parsePositive(value: string) {
   const normalized = value.replace(",", ".");
@@ -17,15 +17,18 @@ function parsePositive(value: string) {
 }
 
 export default function LdmHesaplama() {
-  const [loads, setLoads] = useState([{ id: 1, quantity: "1", lengthCm: "120", widthCm: "80" }]);
+  const [loads, setLoads] = useState([{ id: 1, quantity: "1", lengthCm: "120", widthCm: "80", heightCm: "100", stackable: false }]);
 
   const result = useMemo(() => {
     const rows = loads.map((load) => {
       const qty = Math.max(1, Math.floor(parsePositive(load.quantity) || 1));
       const length = parsePositive(load.lengthCm) / 100;
       const width = parsePositive(load.widthCm) / 100;
-      const area = qty * length * width;
-      return { ...load, qty, area, ldm: area / TRAILER_WIDTH_M };
+      const heightCm = parsePositive(load.heightCm);
+      const stackLevels = load.stackable && heightCm > 0 ? Math.max(1, Math.floor(ASSUMED_USABLE_HEIGHT_CM / heightCm)) : 1;
+      const floorPositions = Math.ceil(qty / stackLevels);
+      const area = floorPositions * length * width;
+      return { ...load, qty, heightCm, stackLevels, floorPositions, area, ldm: area / TRAILER_WIDTH_M };
     });
     const area = rows.reduce((sum, row) => sum + row.area, 0);
     const ldm = rows.reduce((sum, row) => sum + row.ldm, 0);
@@ -34,15 +37,15 @@ export default function LdmHesaplama() {
 
   const valid = result.area > 0;
 
-  const updateLoad = (id: number, field: "quantity" | "lengthCm" | "widthCm", value: string) => {
+  const updateLoad = (id: number, field: "quantity" | "lengthCm" | "widthCm" | "heightCm" | "stackable", value: string | boolean) => {
     setLoads((current) => current.map((load) => load.id === id ? { ...load, [field]: value } : load));
   };
 
-  const addLoad = () => setLoads((current) => [...current, { id: Date.now(), quantity: "1", lengthCm: "", widthCm: "" }]);
+  const addLoad = () => setLoads((current) => [...current, { id: Date.now(), quantity: "1", lengthCm: "", widthCm: "", heightCm: "", stackable: false }]);
   const removeLoad = (id: number) => setLoads((current) => current.length === 1 ? current : current.filter((load) => load.id !== id));
 
   const openQuote = () => {
-    const rows = result.rows.filter((row) => row.area > 0).map((row) => `${row.qty} adet ${row.lengthCm} × ${row.widthCm} cm (${row.ldm.toFixed(2)} LDM)`).join("; ");
+    const rows = result.rows.filter((row) => row.area > 0).map((row) => `${row.qty} adet ${row.lengthCm} × ${row.widthCm} × ${row.heightCm || "?"} cm, ${row.stackable ? `istiflenebilir / ${row.stackLevels} kat` : "istiflenemez"} (${row.ldm.toFixed(2)} LDM)`).join("; ");
     const detail = valid ? `LDM hesabı: ${rows}. Toplam yaklaşık ${result.ldm.toFixed(2)} LDM.` : "LDM hesaplama sayfasından teklif talebi.";
     window.dispatchEvent(new CustomEvent("rex:open-quote-form", { detail: { specialRequirements: detail } }));
   };
@@ -50,7 +53,7 @@ export default function LdmHesaplama() {
     <>
       <SEO
         title="LDM Hesaplama | Yükleme Metresi Hesaplayıcı | REX Lojistik"
-        description="Ücretsiz LDM hesaplama aracıyla yükünüzün araç tabanında kapladığı yükleme metresini hesaplayın. Adet, uzunluk ve genişlik girerek yaklaşık LDM sonucunu görün."
+        description="Ücretsiz LDM hesaplama aracıyla yükünüzün araç tabanında kapladığı yükleme metresini hesaplayın. Farklı yük ölçülerini ve istiflenebilirliği dikkate alarak yaklaşık LDM sonucunu görün."
         url="https://www.rexlojistik.com/ldm-hesaplama"
       />
       <div className="min-h-screen bg-slate-50">
@@ -61,7 +64,7 @@ export default function LdmHesaplama() {
               <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-orange-600">REX Lojistik Hesaplama Araçları</p>
               <h1 className="max-w-4xl text-3xl font-black tracking-tight text-slate-950 sm:text-5xl">LDM Hesaplama – Yükleme Metresi Hesaplayıcı</h1>
               <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">
-                Yükünüzün araç tabanında yaklaşık kaç yükleme metresi kapladığını hesaplayın. Farklı ölçülerdeki yüklerinizi ayrı satırlar halinde ekleyerek toplam yükleme metresini hesaplayın. Hesaplama, yüklerin tabanda yer kapladığı ve standart 2,40 m araç iç genişliği varsayımıyla çalışır.
+                Yükünüzün araç tabanında yaklaşık kaç yükleme metresi kapladığını hesaplayın. Farklı ölçülerdeki yüklerinizi ayrı satırlar halinde ekleyerek toplam yükleme metresini hesaplayın. Hesaplama standart 2,40 m araç iç genişliği varsayımıyla çalışır. İstiflenebilir yüklerde planlama için 2,80 m kullanılabilir iç yükseklik varsayılır.
               </p>
             </div>
           </section>
@@ -84,7 +87,7 @@ export default function LdmHesaplama() {
                           )}
                         </div>
                       </div>
-                      <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <label className="block text-sm font-semibold text-slate-700">Adet
                           <input value={row.quantity} onChange={(e) => updateLoad(row.id, "quantity", e.target.value)} inputMode="numeric" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
                         </label>
@@ -94,6 +97,9 @@ export default function LdmHesaplama() {
                         <label className="block text-sm font-semibold text-slate-700">Genişlik (cm)
                           <input value={row.widthCm} onChange={(e) => updateLoad(row.id, "widthCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
                         </label>
+                        <label className="block text-sm font-semibold text-slate-700">Yükseklik (cm)
+                          <input value={row.heightCm} onChange={(e) => updateLoad(row.id, "heightCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
+                        </label>
                       </div>
                     </div>
                   ))}
@@ -101,7 +107,7 @@ export default function LdmHesaplama() {
                     <Plus className="h-4 w-4" /> Yük Ekle
                   </button>
                 </div>
-                <p className="mt-5 text-sm leading-relaxed text-slate-500">Formül: Adet × Uzunluk (m) × Genişlik (m) ÷ 2,40 m. Sonuç planlama amaçlı yaklaşık değerdir.</p>
+                <p className="mt-5 text-sm leading-relaxed text-slate-500">Temel formül: tabanda gereken pozisyon × uzunluk (m) × genişlik (m) ÷ 2,40 m. İstiflenebilir yüklerde 2,80 m kullanılabilir iç yükseklik varsayımıyla kat sayısı hesaplanır. Sonuç planlama amaçlı yaklaşık değerdir.</p>
               </div>
 
               <div className="rounded-2xl bg-slate-950 p-6 text-white sm:p-8" aria-live="polite">
@@ -121,14 +127,14 @@ export default function LdmHesaplama() {
           <section className="border-y border-slate-200 bg-white">
             <div className="container mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
               <h2 className="text-3xl font-bold text-slate-950">LDM nedir?</h2>
-              <p className="mt-4 leading-7 text-slate-600">LDM (loading meter / yükleme metresi), özellikle parsiyel karayolu taşımalarında bir yükün araç tabanında kapladığı alanı uzunluk cinsinden ifade etmek için kullanılan pratik bir ölçüdür. Standart hesapta araç iç genişliği 2,40 metre kabul edilir.</p>
+              <p className="mt-4 leading-7 text-slate-600">LDM (loading meter / yükleme metresi), özellikle parsiyel karayolu taşımalarında bir yükün araç tabanında kapladığı alanı uzunluk cinsinden ifade etmek için kullanılan pratik bir ölçüdür. Standart hesapta araç iç genişliği 2,40 metre kabul edilir. Bu araçta istiflenebilir yük hesabı için 2,80 metre kullanılabilir iç yükseklik varsayımı kullanılır; gerçek yükseklik dorse tipine göre değişebilir.</p>
 
               <h2 className="mt-10 text-2xl font-bold text-slate-950">LDM nasıl hesaplanır?</h2>
               <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-5 font-semibold text-slate-800">LDM = Adet × Uzunluk (m) × Genişlik (m) ÷ 2,40</div>
-              <p className="mt-4 leading-7 text-slate-600">Örneğin 2 adet 120 × 100 cm yük için toplam taban alanı 2,40 m² olur. 2,40 ÷ 2,40 = 1,00 LDM sonucuna ulaşılır.</p>
+              <p className="mt-4 leading-7 text-slate-600">Örneğin 2 adet 120 × 100 cm yük istiflenemezse toplam taban alanı 2,40 m² ve sonuç 1,00 LDM olur. Yükler 130 cm yüksekliğinde ve güvenle istiflenebilir ise iki kat toplam 260 cm olur; 2,80 m varsayımının altında kaldığı için tek taban pozisyonu kullanılır ve yaklaşık 0,50 LDM hesaplanır.</p>
 
               <h2 className="mt-10 text-2xl font-bold text-slate-950">LDM navlun fiyatı mıdır?</h2>
-              <p className="mt-4 leading-7 text-slate-600">Hayır. LDM, yükün araç tabanında kapladığı alanı anlamaya yardımcı olur. Taşıma fiyatı; toplam ağırlık, istiflenebilirlik, güzergâh, yükleme ve teslimat koşulları, araç gereksinimi ve operasyon detaylarından da etkilenir.</p>
+              <p className="mt-4 leading-7 text-slate-600">Hayır. LDM, yükün araç tabanında kapladığı alanı anlamaya yardımcı olur. Taşıma fiyatı; toplam ağırlık, istiflenebilirlik, güzergâh, yükleme ve teslimat koşulları, araç gereksinimi ve operasyon detaylarından da etkilenir. İstiflenebilir seçimi yalnız yükün fiziksel olarak üst üste konulmaya uygun olduğu durumlarda yapılmalıdır; ağırlık, ambalaj dayanımı ve yük emniyeti ayrıca değerlendirilir.</p>
 
               <h2 className="mt-10 text-2xl font-bold text-slate-950">Sonucu nasıl kullanmalısınız?</h2>
               <p className="mt-4 leading-7 text-slate-600">Hesaplanan LDM değeri, yükünüzün parsiyel veya daha yüksek araç kapasitesi gerektiren bir taşıma planına uygunluğunu değerlendirmede yardımcı bir veridir. Kesin planlama için ölçü ve ağırlık bilgilerinin birlikte değerlendirilmesi gerekir.</p>
