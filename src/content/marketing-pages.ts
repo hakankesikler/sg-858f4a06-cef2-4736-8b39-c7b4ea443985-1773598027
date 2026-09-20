@@ -299,8 +299,8 @@ export const marketingPages: Record<string, MarketingPageData> = {
     eyebrow: "Türkiye–Avrupa karayolu ağı",
     title: "Uluslararası Karayolu Taşımacılığı",
     lead: "Türkiye ile Avrupa arasındaki ticari yüklerinizi; parsiyel, komple araç ve zaman kritik minivan express seçeneklerini aynı plan içinde karşılaştırarak yönetiyoruz. Doğru kapasiteyi seçer, gereksiz bekleme ve araç maliyetini daha teklif aşamasında ayıklarız.",
-    seoTitle: "Uluslararası Karayolu Taşımacılığı | REX Lojistik",
-    seoDescription: "Türkiye Avrupa uluslararası karayolu taşımacılığı; parsiyel LTL, komple FTL ve kapıdan kapıya operasyon seçenekleri. REX Lojistik'ten karşılaştırmalı teklif alın.",
+    seoTitle: "Uluslararası Karayolu Taşımacılığı | Avrupa FTL & LTL | REX",
+    seoDescription: "Türkiye–Avrupa uluslararası karayolu taşımacılığı. Parsiyel (LTL), komple (FTL) ve kapıdan kapıya taşıma seçeneklerini karşılaştırın, REX'ten teklif alın.",
     keywords: ["uluslararası karayolu taşımacılığı", "Türkiye Avrupa nakliye", "Avrupa karayolu taşımacılığı", "ihracat taşımacılığı", "ithalat taşımacılığı", "uluslararası parsiyel", "LTL FTL taşımacılık"],
     highlights: [
       { title: "Tek Planda 3 Model", text: "Parsiyel, LTL ve komple araç seçeneklerinin birlikte değerlendirilmesi" },
@@ -311,10 +311,17 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Yükünüz hangi karayolu modeline gerçekten ihtiyaç duyuyor?",
         paragraphs: [
-          "Uluslararası karayolunda iyi planlama, doğrudan araç istemekle değil yükün kapladığı alanı ve teslim hedefini doğru okumakla başlar. Birkaç palet için uluslararası parsiyel taşımacılık, daha yüksek hacimler için LTL, araca özel program gerektiğinde ise komple taşımacılık seçenekleri karşılaştırılır.",
+          "Uluslararası karayolunda iyi planlama, doğrudan araç istemekle değil yükün kapladığı alanı ve teslim hedefini doğru okumakla başlar. Düşük ve orta hacimli yüklerde parsiyel (LTL), yüksek hacimde veya araca özel program gerektiğinde komple (FTL) taşıma seçenekleri karşılaştırılır.",
           "REX Lojistik; çıkış ve teslim adresini, palet ölçülerini, brüt ağırlığı, istiflenebilirliği ve hazır olma tarihini aynı tabloda değerlendirir. Böylece yalnızca hızlı görünen değil, kapıdan kapıya toplam süresi ve toplam maliyeti işinize uyan model belirlenir. Zaman kritik Avrupa yüklerinde minivan express, uçuş bağlantısının belirleyici olduğu gönderilerde hava kargo alternatif taşıma modeli olarak değerlendirilir.",
         ],
         bullets: ["Az hacimli yüklerde parsiyel ve grupaj planı", "Orta hacimde LTL kapasite karşılaştırması", "Yüksek hacim ve özel programda komple araç", "Türkiye–Avrupa çift yönlü kapı bağlantısı"],
+      },
+      {
+        title: "Türkiye–Avrupa Uluslararası Karayolu Hatları",
+        paragraphs: [
+          "Almanya, Benelüks, Fransa, İtalya, Orta Avrupa ve Balkan hatlarında uluslararası parsiyel taşımacılık veya komple taşımacılık organizasyonu; çıkış ve varış adresi, yük özellikleri ve uygun araç kapasitesine göre planlanır. Kesin hat kapsamı ve çıkış planı yük bilgileri incelendikten sonra teyit edilir.",
+          "Paletli yükünüzün araç tabanında kapladığı alanı ön değerlendirmek için LDM Hesaplama aracını kullanabilirsiniz. Taşıma modeli belirlenirken bu değer; brüt ağırlık, istiflenebilirlik ve teslim programıyla birlikte değerlendirilir.",
+        ],
       },
       {
         title: "Türkiye’den Avrupa’ya, Avrupa’dan Türkiye’ye tek operasyon masası",
@@ -346,6 +353,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
     ],
     related: ["minivan-express-tasimacilik", "uluslararasi-karayolu-parsiyel-tasimacilik", "komple-tasimacilik", "hava-kargo"],
     contextualLinks: [
+      { anchor: "LDM Hesaplama", href: "/ldm-hesaplama" },
       { anchor: "uluslararası parsiyel taşımacılık", href: "/uluslararasi-karayolu-parsiyel-tasimacilik" },
       { anchor: "komple taşımacılık", href: "/komple-tasimacilik" },
       { anchor: "minivan express", href: "/minivan-express-tasimacilik" },
