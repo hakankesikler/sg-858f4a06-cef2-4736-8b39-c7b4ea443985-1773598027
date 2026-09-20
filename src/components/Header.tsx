@@ -113,6 +113,16 @@ export function Header() {
                   ))}
                 </div>
               </div>
+              <div className="group relative">
+                <button type="button" className="flex items-center gap-1 py-7 font-medium text-gray-700 transition-colors hover:text-orange-500">
+                  Araçlar <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <div className="invisible absolute left-0 top-full w-80 -translate-y-2 rounded-2xl border border-slate-200 bg-white p-2 opacity-0 shadow-2xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                  {toolLinks.map((item) => (
+                    <Link key={item.href} href={item.href} className="block rounded-xl px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-orange-50 hover:text-orange-600">{item.label}</Link>
+                  ))}
+                </div>
+              </div>
               <Link href="/#takip" className="font-medium text-gray-700 transition-colors hover:text-orange-500">Kargo Takip</Link>
               <Link href="/hakkimizda" className="font-medium text-gray-700 transition-colors hover:text-orange-500">Hakkımızda</Link>
               <Link href="/iletisim" className="font-medium text-gray-700 transition-colors hover:text-orange-500">İletişim</Link>
@@ -182,6 +192,13 @@ export function Header() {
                   )}
                 </li>
               ) : (
+                <li key={item.href}><Link href={item.href} onClick={closeMobileMenu} className="block rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-orange-50 hover:text-orange-600">{item.label}</Link></li>
+              ))}
+            </ul>
+            <div className="my-4 border-t border-slate-200" />
+            <p className="px-4 pb-2 text-xs font-bold uppercase tracking-wider text-slate-400">Araçlar</p>
+            <ul className="space-y-1">
+              {toolLinks.map((item) => (
                 <li key={item.href}><Link href={item.href} onClick={closeMobileMenu} className="block rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-orange-50 hover:text-orange-600">{item.label}</Link></li>
               ))}
             </ul>
