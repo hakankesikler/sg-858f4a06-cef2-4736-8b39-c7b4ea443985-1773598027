@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { SEO } from "@/components/SEO";
 import { Header } from "@/components/Header";
@@ -16,29 +17,35 @@ function parsePositive(value: string) {
 }
 
 export default function LdmHesaplama() {
-  const [quantity, setQuantity] = useState("1");
-  const [lengthCm, setLengthCm] = useState("120");
-  const [widthCm, setWidthCm] = useState("80");
+  const [loads, setLoads] = useState([{ id: 1, quantity: "1", lengthCm: "120", widthCm: "80" }]);
 
   const result = useMemo(() => {
-    const qty = Math.max(1, Math.floor(parsePositive(quantity) || 1));
-    const length = parsePositive(lengthCm) / 100;
-    const width = parsePositive(widthCm) / 100;
-    const area = qty * length * width;
-    const ldm = area / TRAILER_WIDTH_M;
-    const trailerShare = (ldm / TRAILER_LENGTH_M) * 100;
-    return { qty, area, ldm, trailerShare };
-  }, [quantity, lengthCm, widthCm]);
+    const rows = loads.map((load) => {
+      const qty = Math.max(1, Math.floor(parsePositive(load.quantity) || 1));
+      const length = parsePositive(load.lengthCm) / 100;
+      const width = parsePositive(load.widthCm) / 100;
+      const area = qty * length * width;
+      return { ...load, qty, area, ldm: area / TRAILER_WIDTH_M };
+    });
+    const area = rows.reduce((sum, row) => sum + row.area, 0);
+    const ldm = rows.reduce((sum, row) => sum + row.ldm, 0);
+    return { rows, area, ldm, trailerShare: (ldm / TRAILER_LENGTH_M) * 100 };
+  }, [loads]);
 
   const valid = result.area > 0;
 
-  const openQuote = () => {
-    const detail = valid
-      ? `LDM hesabı: ${result.qty} adet, ${lengthCm} × ${widthCm} cm, yaklaşık ${result.ldm.toFixed(2)} LDM.`
-      : "LDM hesaplama sayfasından teklif talebi.";
-    window.dispatchEvent(new CustomEvent("rex:open-quote-form", { detail: { specialRequirements: detail } }));
+  const updateLoad = (id: number, field: "quantity" | "lengthCm" | "widthCm", value: string) => {
+    setLoads((current) => current.map((load) => load.id === id ? { ...load, [field]: value } : load));
   };
 
+  const addLoad = () => setLoads((current) => [...current, { id: Date.now(), quantity: "1", lengthCm: "", widthCm: "" }]);
+  const removeLoad = (id: number) => setLoads((current) => current.length === 1 ? current : current.filter((load) => load.id !== id));
+
+  const openQuote = () => {
+    const rows = result.rows.filter((row) => row.area > 0).map((row) => `${row.qty} adet ${row.lengthCm} × ${row.widthCm} cm (${row.ldm.toFixed(2)} LDM)`).join("; ");
+    const detail = valid ? `LDM hesabı: ${rows}. Toplam yaklaşık ${result.ldm.toFixed(2)} LDM.` : "LDM hesaplama sayfasından teklif talebi.";
+    window.dispatchEvent(new CustomEvent("rex:open-quote-form", { detail: { specialRequirements: detail } }));
+  };
   return (
     <>
       <SEO
@@ -54,7 +61,7 @@ export default function LdmHesaplama() {
               <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-orange-600">REX Lojistik Hesaplama Araçları</p>
               <h1 className="max-w-4xl text-3xl font-black tracking-tight text-slate-950 sm:text-5xl">LDM Hesaplama – Yükleme Metresi Hesaplayıcı</h1>
               <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">
-                Yükünüzün araç tabanında yaklaşık kaç yükleme metresi kapladığını hesaplayın. İlk sürüm, yüklerin yan yana boşluksuz yerleştirildiği ve standart 2,40 m araç iç genişliği varsayımıyla çalışır.
+                Yükünüzün araç tabanında yaklaşık kaç yükleme metresi kapladığını hesaplayın. Farklı ölçülerdeki yüklerinizi ayrı satırlar halinde ekleyerek toplam yükleme metresini hesaplayın. Hesaplama, yüklerin tabanda yer kapladığı ve standart 2,40 m araç iç genişliği varsayımıyla çalışır.
               </p>
             </div>
           </section>
@@ -63,19 +70,36 @@ export default function LdmHesaplama() {
             <div className="grid gap-8 lg:grid-cols-[1.05fr_.95fr]">
               <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
                 <h2 className="text-2xl font-bold text-slate-950">Yük bilgilerini girin</h2>
-                <div className="mt-6 grid gap-5 sm:grid-cols-3">
-                  <label className="block text-sm font-semibold text-slate-700">
-                    Adet
-                    <input value={quantity} onChange={(e) => setQuantity(e.target.value)} inputMode="numeric" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
-                  </label>
-                  <label className="block text-sm font-semibold text-slate-700">
-                    Uzunluk (cm)
-                    <input value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
-                  </label>
-                  <label className="block text-sm font-semibold text-slate-700">
-                    Genişlik (cm)
-                    <input value={widthCm} onChange={(e) => setWidthCm(e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
-                  </label>
+                <div className="mt-6 space-y-4">
+                  {result.rows.map((row, index) => (
+                    <div key={row.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <p className="font-bold text-slate-800">Yük {index + 1}</p>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-semibold text-slate-500">{row.area > 0 ? row.ldm.toFixed(2) : "—"} LDM</span>
+                          {loads.length > 1 && (
+                            <button type="button" onClick={() => removeLoad(row.id)} aria-label={`Yük ${index + 1} satırını sil`} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-orange-200">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        <label className="block text-sm font-semibold text-slate-700">Adet
+                          <input value={row.quantity} onChange={(e) => updateLoad(row.id, "quantity", e.target.value)} inputMode="numeric" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
+                        </label>
+                        <label className="block text-sm font-semibold text-slate-700">Uzunluk (cm)
+                          <input value={row.lengthCm} onChange={(e) => updateLoad(row.id, "lengthCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
+                        </label>
+                        <label className="block text-sm font-semibold text-slate-700">Genişlik (cm)
+                          <input value={row.widthCm} onChange={(e) => updateLoad(row.id, "widthCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                  <button type="button" onClick={addLoad} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-orange-300 bg-orange-50 px-4 py-2 font-bold text-orange-800 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-200">
+                    <Plus className="h-4 w-4" /> Yük Ekle
+                  </button>
                 </div>
                 <p className="mt-5 text-sm leading-relaxed text-slate-500">Formül: Adet × Uzunluk (m) × Genişlik (m) ÷ 2,40 m. Sonuç planlama amaçlı yaklaşık değerdir.</p>
               </div>
