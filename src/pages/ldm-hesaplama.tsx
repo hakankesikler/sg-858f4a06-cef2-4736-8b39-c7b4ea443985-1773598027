@@ -10,14 +10,14 @@ import { Footer } from "@/components/Footer";
 const TRAILER_WIDTH_M = 2.4;
 const TRAILER_LENGTH_M = 13.6;\nconst ASSUMED_USABLE_HEIGHT_CM = 280;
 
-function parsePositive(value: string) {
+type LoadRow = { id: number; quantity: string; lengthCm: string; widthCm: string; heightCm: string; stackable: boolean };\n\nfunction parsePositive(value: string) {
   const normalized = value.replace(",", ".");
   const number = Number(normalized);
   return Number.isFinite(number) && number > 0 ? number : 0;
 }
 
 export default function LdmHesaplama() {
-  const [loads, setLoads] = useState([{ id: 1, quantity: "1", lengthCm: "120", widthCm: "80", heightCm: "100", stackable: false }]);
+  const [loads, setLoads] = useState<LoadRow[]>([{ id: 1, quantity: "1", lengthCm: "120", widthCm: "80", heightCm: "100", stackable: false }]);
 
   const result = useMemo(() => {
     const rows = loads.map((load) => {
