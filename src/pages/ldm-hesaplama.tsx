@@ -101,6 +101,11 @@ export default function LdmHesaplama() {
                           <input value={row.heightCm} onChange={(e) => updateLoad(row.id, "heightCm", e.target.value)} inputMode="decimal" min="1" type="number" className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-base focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100" />
                         </label>
                       </div>
+                      <label className="mt-4 flex min-h-11 flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
+                        <input type="checkbox" checked={row.stackable} onChange={(e) => updateLoad(row.id, "stackable", e.target.checked)} className="h-5 w-5 accent-orange-600" />
+                        İstiflenebilir
+                        {row.stackable && row.heightCm > 0 && <span className="ml-auto text-slate-500">2,80 m varsayımıyla en fazla {row.stackLevels} kat</span>}
+                      </label>
                     </div>
                   ))}
                   <button type="button" onClick={addLoad} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-orange-300 bg-orange-50 px-4 py-2 font-bold text-orange-800 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-200">
