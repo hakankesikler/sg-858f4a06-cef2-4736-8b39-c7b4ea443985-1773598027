@@ -741,12 +741,13 @@ export function LogisticsModule() {
                               Teslim Et
                             </button>
                           )}
-                          {shipment.status === "teslim_edildi" && shipment.delivery_proof_url && (
+                          {shipment.status === "teslim_edildi" && (
                             <button
                               type="button"
                               onClick={() => setDocumentsShipment(shipment)}
                               className="text-blue-600 hover:text-blue-800"
-                              title="Teslim evrakını görüntüle"
+                              title="Teslim evraklarını yönet"
+                              aria-label="Teslim evraklarını yönet"
                             >
                               <FileText className="h-4 w-4" />
                             </button>

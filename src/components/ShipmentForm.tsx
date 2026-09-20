@@ -20,7 +20,7 @@ import {
 import { driverService } from "@/services/driverService";
 import { vehicleService } from "@/services/vehicleService";
 import { crmService } from "@/services/crmService";
-import { openPrivateDocument } from "@/lib/private-storage";
+import { DeliveryDocumentsDialog } from "@/components/DeliveryDocumentsDialog";
 import { ShipmentNotificationDialog, type ShipmentNotificationData } from "@/components/ShipmentNotificationDialog";
 import { GpslineDeliveryEstimator } from "@/components/GpslineDeliveryEstimator";
 import { ShipmentPartyStopCard } from "@/components/ShipmentPartyStopCard";
@@ -95,6 +95,8 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deliveryDocumentsOpen, setDeliveryDocumentsOpen] = useState(false);
+  useEffect(() => { if (!isOpen) setDeliveryDocumentsOpen(false); }, [isOpen]);
   const [validationAttempted, setValidationAttempted] = useState(false);
   const [shipmentCode, setShipmentCode] = useState("SHP-000001");
   const [pickupDate, setPickupDate] = useState("");
@@ -1528,22 +1530,16 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
                 
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">Teslim Evrakı</Label>
-                  {initialData.delivery_proof_url ? (
                     <button
                       type="button"
-                      onClick={() => void openPrivateDocument(initialData.delivery_proof_url, 'shipment-documents')}
+                      onClick={() => setDeliveryDocumentsOpen(true)}
                       className="flex items-center gap-2 px-3 py-2 bg-white border rounded-md hover:bg-gray-50 transition-colors text-blue-600 hover:text-blue-700"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
-                      PDF İndir
+                      Evrakları Görüntüle / Düzenle
                     </button>
-                  ) : (
-                    <div className="px-3 py-2 bg-white border rounded-md text-gray-400">
-                      Yok
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -1597,6 +1593,11 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
           </DialogFooter>
         </form>
       </DialogContent>
+      <DeliveryDocumentsDialog
+        isOpen={isOpen && deliveryDocumentsOpen}
+        onClose={() => setDeliveryDocumentsOpen(false)}
+        shipment={initialData?.id ? initialData : null}
+      />
       
       {notificationData && (
         <ShipmentNotificationDialog

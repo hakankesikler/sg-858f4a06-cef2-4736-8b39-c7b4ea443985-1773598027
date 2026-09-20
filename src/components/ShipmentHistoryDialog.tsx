@@ -84,6 +84,7 @@ const fieldLabels: Record<string, string> = {
   toplam_kg_ds: "Toplam Kg/Desi",
   satis_tutar: "Satış tutarı",
   delivery_proof_url: "Teslim evrakı",
+  delivery_document_removed: "Kaldırılan teslim evrakı",
   invoice_status: "Fatura durumu",
   sale_invoice_id: "Fatura bağlantısı",
   kolaybi_status: "E-belge durumu",

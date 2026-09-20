@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   deliveryDocumentService,
@@ -11,7 +12,7 @@ import {
   type DeliveryDocument,
   type DeliveryDocumentType,
 } from "@/services/deliveryDocumentService";
-import { AlertTriangle, CheckCircle2, Eye, FileClock, FilePlus2, Loader2, RefreshCcw, ShieldAlert, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Eye, FileClock, FilePlus2, Loader2, RefreshCcw, ShieldAlert, Trash2, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 
@@ -36,27 +37,70 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
   const [documents, setDocuments] = useState<DeliveryDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<DeliveryDocument | null>(null);
+  const [permissions, setPermissions] = useState({ manage: false, remove: false });
+  const fileInput = useRef<HTMLInputElement>(null);
+  const loadRequest = useRef(0);
+  const previewRequest = useRef(0);
+  const busy = uploading || removing || loading;
+  const canManage = !readOnly && permissions.manage;
   const [documentType, setDocumentType] = useState<DeliveryDocumentType>("delivery_proof");
   const [notes, setNotes] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<{ url: string; mimeType: string; name: string } | null>(null);
 
-  const loadDocuments = async () => {
-    if (!shipment?.id) return;
+  const shipmentId = shipment?.id;
+  const loadDocuments = useCallback(async () => {
+    if (!shipmentId) return;
+    const request = ++loadRequest.current;
     try {
       setLoading(true);
-      setDocuments(await deliveryDocumentService.list(shipment.id));
+      const result = await deliveryDocumentService.list(shipmentId);
+      if (request === loadRequest.current) setDocuments(result);
     } catch (error: any) {
-      toast({ title: "Belgeler alınamadı", description: error?.message, variant: "destructive" });
+      if (request === loadRequest.current) toast({ title: "Belgeler alınamadı", description: error?.message, variant: "destructive" });
     } finally {
-      setLoading(false);
+      if (request === loadRequest.current) setLoading(false);
     }
-  };
+  }, [shipmentId, toast]);
 
   useEffect(() => {
+    let cancelled = false;
+    setPermissions({ manage: false, remove: false });
+    setDocuments([]);
+    setNewFiles([]);
+    setNotes("");
+    setPreview(null);
+    setRemoveTarget(null);
+    if (fileInput.current) fileInput.current.value = "";
     if (isOpen && shipment?.id) void loadDocuments();
-    if (!isOpen) setPreview(null);
-  }, [isOpen, shipment?.id]);
+    if (isOpen && !readOnly) {
+      void deliveryDocumentService.permissions().then((value) => {
+        if (!cancelled) setPermissions(value);
+      }).catch(() => undefined);
+    }
+    return () => { cancelled = true; loadRequest.current += 1; previewRequest.current += 1; };
+  }, [isOpen, shipment?.id, readOnly, loadDocuments]);
+
+  const removeDocument = async () => {
+    if (!removeTarget || busy || !canManage || !permissions.remove) return;
+    try {
+      setRemoving(true);
+      previewRequest.current += 1;
+      setPreview(null);
+      await deliveryDocumentService.remove(removeTarget.id);
+      setPreview(null);
+      setRemoveTarget(null);
+      toast({ title: "Evrak kaldırıldı", description: "Yeni evrağı yukarıdaki alandan yükleyebilirsiniz. Sevkiyatın teslim durumu değişmedi." });
+      await loadDocuments();
+      onChanged?.();
+    } catch (error: any) {
+      toast({ title: "Evrak kaldırılamadı", description: error?.message || "Lütfen tekrar deneyin.", variant: "destructive" });
+    } finally {
+      setRemoving(false);
+    }
+  };
 
   const groupedDocuments = useMemo(() => {
     const groups = new Map<string, DeliveryDocument[]>();
@@ -69,7 +113,7 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
   }, [documents]);
 
   const uploadNewDocuments = async () => {
-    if (!shipment?.id || newFiles.length === 0) return;
+    if (!shipment?.id || newFiles.length === 0 || busy || !canManage) return;
     try {
       setUploading(true);
       const results = await deliveryDocumentService.uploadMany(
@@ -82,6 +126,7 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
         description: waiting ? `${waiting} belge güvenli karantinada tarama bekliyor.` : "Belgelerin tamamı temiz sonuçlandı.",
       });
       setNewFiles([]);
+      if (fileInput.current) fileInput.current.value = "";
       setNotes("");
       await loadDocuments();
       onChanged?.();
@@ -93,7 +138,7 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
   };
 
   const uploadVersion = async (previous: DeliveryDocument, file?: File) => {
-    if (!shipment?.id || !file) return;
+    if (!shipment?.id || !file || busy || !canManage || previous.removed_at) return;
     try {
       setUploading(true);
       const result = await deliveryDocumentService.upload(shipment.id, {
@@ -116,6 +161,7 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
   };
 
   const retryScan = async (document: DeliveryDocument) => {
+    if (busy || !canManage || document.removed_at) return;
     try {
       setLoading(true);
       await deliveryDocumentService.retryScan(document.id);
@@ -131,43 +177,48 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
   };
 
   const previewDocument = async (document: DeliveryDocument) => {
+    if (busy || document.removed_at) return;
+    const request = ++previewRequest.current;
     try {
       const url = await deliveryDocumentService.preview(document);
-      setPreview({ url, mimeType: document.mime_type, name: document.original_file_name });
+      if (request === previewRequest.current) setPreview({ url, mimeType: document.mime_type, name: document.original_file_name });
     } catch (error: any) {
       toast({ title: "Önizleme açılamadı", description: error?.message, variant: "destructive" });
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !uploading && !removing) onClose(); }}>
       <DialogContent className="max-h-[94vh] overflow-y-auto sm:max-w-[960px]">
         <DialogHeader>
           <DialogTitle>Teslim Belge Paketi</DialogTitle>
           <p className="text-sm text-muted-foreground">Sevkiyat: {shipment?.shipment_code || "-"}</p>
         </DialogHeader>
 
-        {!readOnly && (
+        {canManage && (
           <div className="grid gap-3 rounded-lg border bg-slate-50 p-4 md:grid-cols-[220px_1fr_auto]">
             <div className="space-y-2">
-              <Label>Belge Türü</Label>
-              <select value={documentType} onChange={(event) => setDocumentType(event.target.value as DeliveryDocumentType)} className="h-10 w-full rounded-md border bg-white px-3 text-sm">
+              <Label htmlFor="delivery-document-type">Belge Türü</Label>
+              <select id="delivery-document-type" disabled={busy} value={documentType} onChange={(event) => setDocumentType(event.target.value as DeliveryDocumentType)} className="h-10 w-full rounded-md border bg-white px-3 text-sm">
                 {Object.entries(deliveryDocumentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Açıklama</Label>
-              <Textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Tutanak veya belge açıklaması" className="min-h-10 bg-white" />
+              <Label htmlFor="delivery-document-notes">Açıklama</Label>
+              <Textarea id="delivery-document-notes" disabled={busy} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Tutanak veya belge açıklaması" className="min-h-10 bg-white" />
             </div>
             <div className="flex flex-col justify-end gap-2">
-              <Input type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf" onChange={(event) => setNewFiles(Array.from(event.target.files || []))} />
-              <Button onClick={uploadNewDocuments} disabled={uploading || newFiles.length === 0}>
+              <Label htmlFor="delivery-document-files">Yeni Evrak Yükle</Label>
+              <Input id="delivery-document-files" ref={fileInput} disabled={busy} type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf" onChange={(event) => setNewFiles(Array.from(event.target.files || []))} />
+              <Button onClick={uploadNewDocuments} disabled={busy || newFiles.length === 0}>
                 {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                 {newFiles.length ? `${newFiles.length} Belge Yükle` : "Belge Seçin"}
               </Button>
             </div>
           </div>
         )}
+
+        {canManage && <p className="text-sm text-muted-foreground">Yanlış evrağı kaldırıp yenisini yükleyebilir veya mevcut evrak için Yeni Sürüm seçebilirsiniz. Kaldırılan evrak işlem geçmişinde saklanır ve teslim belgesi olarak kullanılmaz.</p>}
 
         {loading && documents.length === 0 ? (
           <div className="flex justify-center p-10"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -186,7 +237,7 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
                           {document.is_active ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <FileClock className="h-4 w-4 text-slate-500" />}
                           <span className="font-medium">{deliveryDocumentTypeLabels[document.document_type]}</span>
                           <span className="rounded bg-slate-100 px-2 py-0.5 text-xs">Sürüm {document.version_number}</span>
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${scan.className}`}>{scan.label}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${document.removed_at ? "bg-slate-200 text-slate-700" : scan.className}`}>{document.removed_at ? "Kaldırıldı" : scan.label}</span>
                         </div>
                         <p className="mt-1 truncate text-sm">{document.original_file_name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -197,20 +248,23 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
                       <div className="text-xs text-muted-foreground">
                         <p>{document.file_size ? `${(document.file_size / 1024 / 1024).toFixed(2)} MB` : "Boyut bilgisi yok"}</p>
                         <p className="mt-1">{document.mime_type}</p>
-                        {!document.is_active && <p className="mt-1">Geçmiş sürüm</p>}
+                        {document.removed_at ? <p className="mt-1">{format(new Date(document.removed_at), "dd.MM.yyyy HH:mm")} tarihinde kaldırıldı</p> : !document.is_active && <p className="mt-1">{["pending", "error"].includes(document.scan_status) ? "Etkinleştirme bekliyor" : "Geçmiş sürüm"}</p>}
                       </div>
                       <div className="flex flex-wrap items-start justify-end gap-1">
-                        {["clean", "legacy_unscanned"].includes(document.scan_status) && (
-                          <Button variant="outline" size="sm" onClick={() => void previewDocument(document)}><Eye className="mr-1 h-4 w-4" /> Önizle</Button>
+                        {!document.removed_at && ["clean", "legacy_unscanned"].includes(document.scan_status) && (
+                          <Button disabled={busy} variant="outline" size="sm" onClick={() => void previewDocument(document)}><Eye className="mr-1 h-4 w-4" /> Önizle</Button>
                         )}
-                        {!readOnly && ["pending", "error"].includes(document.scan_status) && (
-                          <Button variant="outline" size="sm" onClick={() => void retryScan(document)}><RefreshCcw className="mr-1 h-4 w-4" /> Tara</Button>
+                        {canManage && !document.removed_at && ["pending", "error"].includes(document.scan_status) && (
+                          <Button disabled={busy} variant="outline" size="sm" onClick={() => void retryScan(document)}><RefreshCcw className="mr-1 h-4 w-4" /> Tara</Button>
                         )}
-                        {!readOnly && document.is_active && document.scan_status !== "infected" && (
-                          <label className="inline-flex h-9 cursor-pointer items-center rounded-md border bg-white px-3 text-xs font-medium hover:bg-slate-50">
+                        {canManage && !document.removed_at && document.is_active && document.scan_status !== "infected" && (
+                          <label className={`inline-flex h-9 items-center rounded-md border bg-white px-3 text-xs font-medium focus-within:ring-2 focus-within:ring-orange-500 ${busy ? "opacity-50" : "cursor-pointer hover:bg-slate-50"}`}>
                             <FilePlus2 className="mr-1 h-4 w-4" /> Yeni Sürüm
-                            <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" className="hidden" onChange={(event) => void uploadVersion(document, event.target.files?.[0])} />
+                            <input disabled={busy} aria-label={`${document.original_file_name} için yeni sürüm`} type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; void uploadVersion(document, file); }} />
                           </label>
+                        )}
+                        {canManage && permissions.remove && !document.removed_at && (
+                          <Button type="button" disabled={busy} variant="outline" size="sm" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => setRemoveTarget(document)}><Trash2 className="mr-1 h-4 w-4" /> Evrakı Kaldır</Button>
                         )}
                       </div>
                     </div>
@@ -221,12 +275,12 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
           </div>
         )}
 
-        {documents.some((document) => document.scan_status === "infected") && (
+        {documents.some((document) => !document.removed_at && document.scan_status === "infected") && (
           <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
             <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" /> Zararlı olarak belirlenen dosyalar etkinleştirilmez ve önizlemeye kapalı tutulur.
           </div>
         )}
-        {documents.some((document) => document.scan_status === "legacy_unscanned") && (
+        {documents.some((document) => !document.removed_at && document.scan_status === "legacy_unscanned") && (
           <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> Eski belgeler yeni tarama sistemi kurulmadan önce yüklenmiştir; yeni bir sürüm yükleyerek taratabilirsiniz.
           </div>
@@ -236,7 +290,7 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
           <div className="rounded-lg border bg-slate-950 p-3">
             <div className="mb-2 flex items-center justify-between text-sm text-white">
               <span className="truncate">{preview.name}</span>
-              <Button variant="secondary" size="sm" onClick={() => setPreview(null)}>Önizlemeyi Kapat</Button>
+              <Button variant="secondary" size="sm" onClick={() => { previewRequest.current += 1; setPreview(null); }}>Önizlemeyi Kapat</Button>
             </div>
             {preview.mimeType.startsWith("image/") ? (
               <img src={preview.url} alt={preview.name} className="mx-auto max-h-[520px] max-w-full rounded bg-white object-contain" />
@@ -246,6 +300,18 @@ export function DeliveryDocumentsDialog({ isOpen, onClose, shipment, readOnly = 
           </div>
         )}
       </DialogContent>
+      <AlertDialog open={!!removeTarget} onOpenChange={(open) => { if (!open && !removing) setRemoveTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Teslim evrağı kaldırılsın mı?</AlertDialogTitle>
+            <AlertDialogDescription><span className="font-semibold">{removeTarget?.original_file_name}</span> teslim belgesi olarak kullanımdan kaldırılacak. Ardından doğru evrağı yükleyebilirsiniz. Sevkiyatın teslim durumu ve işlem geçmişi korunur.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removing}>Vazgeç</AlertDialogCancel>
+            <AlertDialogAction disabled={busy} className="bg-red-600 hover:bg-red-700" onClick={(event) => { event.preventDefault(); void removeDocument(); }}>{removing ? "Kaldırılıyor..." : "Evrakı Kaldır"}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

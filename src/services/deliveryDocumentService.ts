@@ -18,6 +18,8 @@ export interface DeliveryDocument {
   version_number: number;
   supersedes_document_id?: string | null;
   is_active: boolean;
+  removed_at?: string | null;
+  removed_by?: string | null;
   file_reference: string;
   original_file_name: string;
   mime_type: string;
@@ -81,6 +83,19 @@ async function requestVirusScan(documentId: string) {
 }
 
 export const deliveryDocumentService = {
+  async permissions() {
+    const [delivery, shipments] = await Promise.all([
+      supabase.rpc("rex_has_permission" as any, { p_key: "operations.delivery", p_required: "manage" } as any),
+      supabase.rpc("rex_has_permission" as any, { p_key: "operations.shipments", p_required: "manage" } as any),
+    ]);
+    return { manage: !delivery.error && delivery.data === true, remove: !delivery.error && delivery.data === true && !shipments.error && shipments.data === true };
+  },
+
+  async remove(documentId: string) {
+    const { error } = await supabase.rpc("rex_remove_delivery_document" as any, { p_document_id: documentId } as any);
+    if (error) throw error;
+  },
+
   async list(shipmentId: string): Promise<DeliveryDocument[]> {
     const { data, error } = await (supabase.from("delivery_documents" as any) as any)
       .select("*")
@@ -139,6 +154,7 @@ export const deliveryDocumentService = {
   },
 
   async preview(document: DeliveryDocument) {
+    if (document.removed_at) throw new Error("Kaldırılan evrak önizlenemez. Yeni bir evrak yükleyebilirsiniz.");
     if (!["clean", "legacy_unscanned"].includes(document.scan_status)) {
       throw new Error("Belge, virüs taraması temiz sonuçlanmadan önizlenemez.");
     }
