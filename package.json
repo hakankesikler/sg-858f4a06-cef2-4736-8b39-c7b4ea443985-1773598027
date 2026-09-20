@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "security:audit": "pnpm audit --prod",
     "security:scan": "node scripts/check-secrets.mjs",
-    "test": "node tests/critical-workflows.test.mjs && node tests/crm-workflows.test.mjs && node tests/crm-live.test.mjs",
+    "test": "node tests/critical-workflows.test.mjs && node tests/crm-workflows.test.mjs && node tests/crm-live.test.mjs && node tests/delivery-details.test.mjs",
     "test:smoke": "node scripts/smoke-test.mjs",
     "test:ci": "pnpm run security:audit && pnpm run security:scan && pnpm run lint && pnpm run build && pnpm run test:smoke"
   },

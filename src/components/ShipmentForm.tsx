@@ -6,8 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { shipmentService, Shipment } from "@/services/shipmentService";
 import { shipmentCargoService, type CargoItemInput } from "@/services/shipmentCargoService";
@@ -20,6 +18,7 @@ import {
 import { driverService } from "@/services/driverService";
 import { vehicleService } from "@/services/vehicleService";
 import { crmService } from "@/services/crmService";
+import { DeliveryDetailsSection } from "@/components/DeliveryDetailsSection";
 import { DeliveryDocumentsDialog } from "@/components/DeliveryDocumentsDialog";
 import { ShipmentNotificationDialog, type ShipmentNotificationData } from "@/components/ShipmentNotificationDialog";
 import { GpslineDeliveryEstimator } from "@/components/GpslineDeliveryEstimator";
@@ -54,12 +53,6 @@ const normalizeTurkish = (str: string): string => {
     .toLowerCase();
 };
 
-// Helper function to format datetime for display
-const formatDateTime = (dateString: string | null | undefined): string => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return format(date, "dd.MM.yyyy HH:mm", { locale: tr });
-};
 
 interface ShipmentFormProps {
   isOpen: boolean;
@@ -1506,43 +1499,13 @@ export function ShipmentForm({ isOpen, onClose, onSuccess, editMode = false, ini
             </div>
           </div>
 
-          {/* TESLIMAT BİLGİLERİ - Sadece teslim edilmiş sevkiyatlar için */}
-          {editMode && initialData && initialData.status === "teslim_edildi" && (
-            <div className="border-t pt-4">
-              <h3 className="font-semibold mb-4 text-green-600">✅ Teslimat Bilgileri</h3>
-              
-              <div className="grid grid-cols-3 gap-4 bg-green-50 p-4 rounded-lg">
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Teslim Tarihi</Label>
-                  <div className="px-3 py-2 bg-white border rounded-md">
-                    {initialData.actual_delivery_date 
-                      ? formatDateTime(initialData.actual_delivery_date)
-                      : "-"}
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Teslim Alan Kişi</Label>
-                  <div className="px-3 py-2 bg-white border rounded-md">
-                    {initialData.delivered_to || "-"}
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold">Teslim Evrakı</Label>
-                    <button
-                      type="button"
-                      onClick={() => setDeliveryDocumentsOpen(true)}
-                      className="flex items-center gap-2 px-3 py-2 bg-white border rounded-md hover:bg-gray-50 transition-colors text-blue-600 hover:text-blue-700"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                      Evrakları Görüntüle / Düzenle
-                    </button>
-                </div>
-              </div>
-            </div>
+          {editMode && initialData && ["teslim_edildi", "Teslim Edildi"].includes(initialData.status) && (
+            <DeliveryDetailsSection
+              key={initialData.id + ":" + isOpen}
+              shipment={initialData}
+              onDocuments={() => setDeliveryDocumentsOpen(true)}
+              onChanged={onSuccess}
+            />
           )}
 
           {isCompletedEdit && isOwner && (

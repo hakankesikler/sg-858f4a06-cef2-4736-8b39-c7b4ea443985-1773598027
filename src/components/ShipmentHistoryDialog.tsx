@@ -69,6 +69,7 @@ const fieldLabels: Record<string, string> = {
   estimated_delivery_date: "Tahmini teslim tarihi",
   delivery_date: "Teslim tarihi",
   delivered_to: "Teslim alan",
+  actual_delivery_date: "Teslim tarihi ve saati",
   status: "Durum",
   cost: "Maliyet",
   cost_currency: "Maliyet para birimi",
