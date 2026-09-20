@@ -1073,7 +1073,7 @@ test("public logistics services have dedicated SEO pages and internal navigation
   const sitemapUrls = [...sitemap.matchAll(/<loc>https:\/\/www\.rexlojistik\.com(\/[^<]*)<\/loc>/g)]
     .map((match) => match[1])
     .sort();
-  assert.deepEqual(sitemapUrls, ["/", ...registeredSlugs.map((slug) => `/${slug}`)].sort());
+  const standalonePublicRoutes = ["/ldm-hesaplama"];\n  assert.deepEqual(sitemapUrls, ["/", ...registeredSlugs.map((slug) => `/${slug}`), ...standalonePublicRoutes].sort());
 });
 
 test("private and utility routes emit explicit noindex directives", async () => {
