@@ -752,6 +752,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "FCL ve LCL denizyolu çözümleri",
         paragraphs: [
+          "LCL nedir? Rehberimizde konteyner paylaşımını, yükleme adımlarını ve maliyet hesabını örneklerle inceleyebilirsiniz.",
           "FCL komple konteyner taşımacılığında konteyner tek müşterinin yüküne ayrılır. LCL parsiyel denizyolu taşımacılığında ise aynı varış yönündeki farklı yükler konteyner kapasitesini paylaşır. Doğru seçim yalnızca hacme değil; ürün niteliğine, yükleme tarihine, liman masraflarına ve teslim hedeflerine göre yapılır.",
           "REX Lojistik, çıkış limanı ve varış limanı alternatiflerini, gemi programını, konteyner türünü ve kara bağlantılarını birlikte değerlendirir. Daha kısa transit hedeflerinde hava kargo, Avrupa kapı bağlantılarında ise uluslararası karayolu taşımacılığı alternatifleri yükün özelliklerine göre ayrıca incelenebilir.",
         ],
@@ -780,6 +781,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
     related: ["denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi", "lcl-mi-fcl-mi", "cbm-hesaplama"],
     contextualLinks: [
       { anchor: "LCL parsiyel denizyolu taşımacılığında", href: "/denizyolu-parsiyel-tasimacilik" },
+      { anchor: "LCL nedir?", href: "/bilgi-merkezi/lcl-nedir" },
       { anchor: "FCL komple konteyner taşımacılığında", href: "/denizyolu-konteyner-tasimaciligi" },
       { anchor: "hava kargo", href: "/hava-kargo" },
       { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
@@ -1601,6 +1603,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "LCL taşımacılık nasıl çalışır?",
         paragraphs: [
+          "LCL nedir? Rehberimiz, konsolidasyondan teslim bağlantısına kadar süreci ve teklif karşılaştırırken dikkat edilecek noktaları açıklar.",
           "LCL, aynı varış yönünde ilerleyen farklı göndericilere ait yüklerin bir konteynerde konsolide edilmesidir. Gönderici komple konteyner yerine kullandığı hacim ve taşıma koşullarına göre planlanan hizmetten yararlanır. Bu model, denizyolu taşımacılığı ana hizmetinin düşük hacimli yükler için kullanılan seçeneğidir.",
           "REX Lojistik; yükün koli veya palet adedini, ölçülerini, brüt ağırlığını, çıkış ve teslim adreslerini değerlendirir. Farklı çıkış programları ve liman bağlantıları arasından maliyet ile transit süre dengesini kuran seçenekler tek teklif kapsamında açıklanır.",
         ],
@@ -1635,6 +1638,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
     ],
     related: ["cbm-hesaplama", "lcl-mi-fcl-mi", "denizyolu-konteyner-tasimaciligi"],
     contextualLinks: [
+      { anchor: "LCL nedir?", href: "/bilgi-merkezi/lcl-nedir" },
       { anchor: "denizyolu taşımacılığı", href: "/denizyolu-tasimaciligi" },
       { anchor: "FCL", href: "/denizyolu-konteyner-tasimaciligi" },
     ],

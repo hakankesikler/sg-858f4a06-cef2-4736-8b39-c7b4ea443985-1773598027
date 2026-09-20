@@ -6,6 +6,41 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const read = (path) => readFile(resolve(root, path), "utf8");
 
+test("LCL knowledge guide is discoverable, linked and free of escaped source newlines", async () => {
+  const [guide, data, hub, content, header, footer, sitemap, planner] = await Promise.all([
+    read("src/pages/bilgi-merkezi/lcl-nedir.tsx"), read("src/content/lcl-guide.ts"),
+    read("src/pages/bilgi-merkezi/index.tsx"), read("src/content/marketing-pages.ts"),
+    read("src/components/Header.tsx"), read("src/components/Footer.tsx"),
+    read("public/sitemap.xml"), read("src/components/ServiceWhatsAppPlanner.tsx"),
+  ]);
+  for (const source of [guide, data, hub, content, header, footer, sitemap]) {
+    assert.ok(!source.includes(String.fromCharCode(92) + "n"), "Public source must contain actual line breaks");
+  }
+  assert.match(data, /LCL Nedir\? LCL Yükleme ve FCL Farkı \| REX Lojistik/);
+  assert.match(data, /path: "\/bilgi-merkezi\/lcl-nedir"/);
+  assert.match(guide, /"@type": "Article"/);
+  assert.match(guide, /"@type": "BreadcrumbList"/);
+  assert.match(guide, /<caption/);
+  assert.match(guide, /scope="col"/);
+  assert.match(guide, /scope="row"/);
+  assert.match(guide, /<details/);
+  for (const slug of ["denizyolu-tasimaciligi", "denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi", "konteyner-olculeri", "cbm-hesaplama"]) {
+    assert.ok(guide.includes(`href="/${slug}"`));
+    await read(`src/pages/${slug}.tsx`);
+  }
+  for (const slug of ["denizyolu-tasimaciligi", "denizyolu-parsiyel-tasimacilik"]) {
+    const section = content.split(`  "${slug}": {`)[1]?.split(/^  ["\w]/m)[0];
+    assert.ok(section?.includes('"LCL nedir? Rehberimiz'));
+    assert.ok(section?.includes('{ anchor: "LCL nedir?", href: "/bilgi-merkezi/lcl-nedir" }'));
+  }
+  assert.match(guide, /href="\/denizyolu-tasimaciligi#sea-whatsapp-planner-heading"/);
+  assert.ok(planner.includes('id={`${variant}-whatsapp-planner-heading`}'));
+  for (const source of [header, footer]) assert.match(source, /href="\/bilgi-merkezi"/);
+  assert.match(hub, /href=\{lclGuide.path\}/);
+  assert.match(sitemap, /\/bilgi-merkezi<\/loc>/);
+  assert.match(sitemap, /\/bilgi-merkezi\/lcl-nedir<\/loc>/);
+});
+
 test("GPSLine estimates keep acceptance day excluded and respect district service days", async () => {
   const [schema, seed, service, estimator, shipmentForm, salesScreen] = await Promise.all([
     read("supabase/migrations/20260831110000_gpsline_transit_estimator.sql"),
@@ -1073,7 +1108,7 @@ test("public logistics services have dedicated SEO pages and internal navigation
   const sitemapUrls = [...sitemap.matchAll(/<loc>https:\/\/www\.rexlojistik\.com(\/[^<]*)<\/loc>/g)]
     .map((match) => match[1])
     .sort();
-  const standalonePublicRoutes = ["/ldm-hesaplama"];
+  const standalonePublicRoutes = ["/ldm-hesaplama", "/bilgi-merkezi", "/bilgi-merkezi/lcl-nedir"];
   assert.deepEqual(sitemapUrls, ["/", ...registeredSlugs.map((slug) => `/${slug}`), ...standalonePublicRoutes].sort());
 });
 

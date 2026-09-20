@@ -292,7 +292,7 @@ export function ServiceWhatsAppPlanner({ variant }: { variant: ServicePlannerVar
         <div className="grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5 lg:grid-cols-[1.35fr_0.65fr]">
           <div className="p-5 sm:p-8">
             <p className="font-semibold text-orange-600">{config.eyebrow}</p>
-            <h2 id={`${variant}-whatsapp-planner-heading`} className="mt-2 max-w-3xl text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">{config.title}</h2>
+            <h2 id={`${variant}-whatsapp-planner-heading`} className="mt-2 max-w-3xl scroll-mt-32 text-3xl font-bold leading-tight text-slate-950 sm:text-4xl">{config.title}</h2>
             <p className="mt-4 max-w-3xl leading-7 text-slate-600">{config.description}</p>
 
             <div className="mt-8 grid gap-5 sm:grid-cols-2">

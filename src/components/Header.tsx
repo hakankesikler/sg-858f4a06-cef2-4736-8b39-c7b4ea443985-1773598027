@@ -96,7 +96,7 @@ export function Header() {
               <Image src="/rex.png" alt="REX Lojistik" width={180} height={77} priority className="h-[57px] w-auto object-contain sm:h-[77px]" />
             </Link>
 
-            <nav aria-label="Ana menü" className="hidden items-center gap-5 lg:flex lg:gap-8">
+            <nav aria-label="Ana menü" className="hidden items-center gap-3 whitespace-nowrap text-sm lg:flex xl:gap-4 2xl:gap-6 2xl:text-base">
               <div className="group relative">
                 <Link href="/#hizmetler" className="flex items-center gap-1 py-7 font-medium text-gray-700 transition-colors hover:text-orange-500">
                   Hizmetler <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -132,6 +132,7 @@ export function Header() {
                 </div>
               </div>
               <Link href="/#takip" className="font-medium text-gray-700 transition-colors hover:text-orange-500">Kargo Takip</Link>
+              <Link href="/bilgi-merkezi" className="font-medium text-gray-700 transition-colors hover:text-orange-500">Bilgi Merkezi</Link>
               <Link href="/hakkimizda" className="font-medium text-gray-700 transition-colors hover:text-orange-500">Hakkımızda</Link>
               <Link href="/iletisim" className="font-medium text-gray-700 transition-colors hover:text-orange-500">İletişim</Link>
               <Link href="/musteri-giris" className="flex items-center gap-2 font-semibold text-blue-600 transition-colors hover:text-blue-700">
@@ -143,7 +144,7 @@ export function Header() {
             </nav>
 
             <div className="hidden items-center gap-4 lg:flex">
-              <a href="tel:+905434010755" className="hidden items-center gap-2 text-gray-700 transition-colors hover:text-orange-500 xl:flex">
+              <a href="tel:+905434010755" className="hidden items-center gap-2 whitespace-nowrap text-gray-700 transition-colors hover:text-orange-500 2xl:flex">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
@@ -213,6 +214,7 @@ export function Header() {
             <div className="my-4 border-t border-slate-200" />
             <ul className="space-y-1">
               <li><Link href="/#takip" onClick={closeMobileMenu} className="block rounded-lg px-4 py-3 font-medium text-gray-700 hover:bg-gray-100 hover:text-orange-500">Kargo Takip</Link></li>
+              <li><Link href="/bilgi-merkezi" onClick={closeMobileMenu} className="block rounded-lg px-4 py-3 font-medium text-gray-700 hover:bg-gray-100 hover:text-orange-500">Bilgi Merkezi</Link></li>
               <li><Link href="/hakkimizda" onClick={closeMobileMenu} className="block rounded-lg px-4 py-3 font-medium text-gray-700 hover:bg-gray-100 hover:text-orange-500">Hakkımızda</Link></li>
               <li><Link href="/iletisim" onClick={closeMobileMenu} className="block rounded-lg px-4 py-3 font-medium text-gray-700 hover:bg-gray-100 hover:text-orange-500">İletişim</Link></li>
               <li><Link href="/musteri-giris" onClick={closeMobileMenu} className="flex items-center gap-2 rounded-lg px-4 py-3 font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700">Müşteri Portalı</Link></li>

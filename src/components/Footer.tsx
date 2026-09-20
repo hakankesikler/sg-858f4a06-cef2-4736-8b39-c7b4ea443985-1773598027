@@ -33,6 +33,7 @@ export function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">KURUMSAL</h3>
             <ul className="space-y-2 text-sm">
+              <li><Link href="/bilgi-merkezi" className="hover:text-white/80 transition-colors">Bilgi Merkezi</Link></li>
               <li>
                 <Link href="/hakkimizda" className="hover:text-white/80 transition-colors">
                   Hakkımızda
