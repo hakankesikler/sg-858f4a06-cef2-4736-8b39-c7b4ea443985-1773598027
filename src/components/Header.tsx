@@ -59,6 +59,14 @@ const serviceLinks: readonly ServiceLink[] = [
   { href: "/depolama", label: "Depolama Hizmetleri" },
 ];
 
+const toolLinks = [
+  { href: "/ldm-hesaplama", label: "LDM Hesaplama" },
+  { href: "/cbm-hesaplama", label: "CBM Hesaplama" },
+  { href: "/hava-kargo-hacimsel-agirlik-hesaplama", label: "Hava Kargo Hacimsel Ağırlık" },
+  { href: "/express-kargo-hacimsel-agirlik-hesaplama", label: "Express Kargo Hacimsel Ağırlık" },
+  { href: "/konteyner-olculeri", label: "Konteyner Ölçüleri" },
+];
+
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileService, setExpandedMobileService] = useState<string | null>(null);
