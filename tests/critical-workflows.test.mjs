@@ -1128,7 +1128,7 @@ test("public logistics services have dedicated SEO pages and internal navigation
   const sitemapUrls = [...sitemap.matchAll(/<loc>https:\/\/www\.rexlojistik\.com(\/[^<]*)<\/loc>/g)]
     .map((match) => match[1])
     .sort();
-  const standalonePublicRoutes = ["/ldm-hesaplama", "/bilgi-merkezi", "/bilgi-merkezi/lcl-nedir"];
+  const standalonePublicRoutes = ["/ldm-hesaplama", "/bilgi-merkezi", "/bilgi-merkezi/lcl-nedir", "/bilgi-merkezi/mikro-ihracat-etgb"];
   assert.deepEqual(sitemapUrls, ["/", ...registeredSlugs.map((slug) => `/${slug}`), ...standalonePublicRoutes].sort());
 });
 
