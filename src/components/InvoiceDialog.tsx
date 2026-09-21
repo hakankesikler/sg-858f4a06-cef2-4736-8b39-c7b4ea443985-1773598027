@@ -20,6 +20,7 @@ import {
   invoicePresentationService,
   type InvoiceBankAccount,
   type InvoiceCategory,
+  type InvoiceNoteSnippet,
   type InvoiceNoteTemplate,
 } from "@/services/invoicePresentationService";
 import { getShipmentInvoiceLines } from "@/lib/shipment-invoice-lines";
@@ -125,6 +126,10 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
   const [invoiceCategory, setInvoiceCategory] = useState<InvoiceCategory>("domestic_transport");
   const [noteTemplates, setNoteTemplates] = useState<InvoiceNoteTemplate[]>([]);
   const [noteTemplateId, setNoteTemplateId] = useState("");
+  const [noteSnippets, setNoteSnippets] = useState<InvoiceNoteSnippet[]>([]);
+  const [noteSnippetId, setNoteSnippetId] = useState("");
+  const [noteSnippetName, setNoteSnippetName] = useState("");
+  const [savingNoteSnippet, setSavingNoteSnippet] = useState(false);
   const [bankAccounts, setBankAccounts] = useState<InvoiceBankAccount[]>([]);
   const [catalogProducts, setCatalogProducts] = useState<InvoiceCatalogProduct[]>([]);
   const [selectedBankAccountIds, setSelectedBankAccountIds] = useState<string[]>([]);
@@ -203,6 +208,48 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
     }) : item));
   };
 
+  const addSelectedNoteSnippet = () => {
+    const snippet = noteSnippets.find((item) => item.id === noteSnippetId);
+    if (!snippet) return;
+    setNotes((current) => current.trim() ? `${current.trimEnd()}\n${snippet.content}` : snippet.content);
+    toast({ title: "Taslak not eklendi", description: snippet.name });
+  };
+
+  const saveCurrentNotesAsSnippet = async () => {
+    const name = noteSnippetName.trim();
+    const content = notes.trim();
+    if (name.length < 2 || !content) {
+      toast({ title: "Taslak kaydedilemedi", description: "Taslak adı ve fatura notu zorunludur.", variant: "destructive" });
+      return;
+    }
+    setSavingNoteSnippet(true);
+    try {
+      const snippet = await invoicePresentationService.saveNoteSnippet({ name, content });
+      setNoteSnippets((current) => [...current, snippet].sort((a, b) => a.name.localeCompare(b.name, "tr-TR")));
+      setNoteSnippetId(snippet.id);
+      setNoteSnippetName("");
+      toast({ title: "Not taslağı kaydedildi", description: "Bu notu sonraki faturalarda seçip ekleyebilirsiniz." });
+    } catch (error: any) {
+      toast({ title: "Taslak kaydedilemedi", description: error?.message || "Not taslağı kaydedilemedi.", variant: "destructive" });
+    } finally {
+      setSavingNoteSnippet(false);
+    }
+  };
+
+  const deleteSelectedNoteSnippet = async () => {
+    const snippet = noteSnippets.find((item) => item.id === noteSnippetId);
+    if (!snippet || !window.confirm(`“${snippet.name}” not taslağını silmek istediğinizden emin misiniz?`)) return;
+
+    try {
+      await invoicePresentationService.deleteNoteSnippet(snippet.id);
+      setNoteSnippets((current) => current.filter((item) => item.id !== snippet.id));
+      setNoteSnippetId("");
+      toast({ title: "Not taslağı silindi", description: snippet.name });
+    } catch (error: any) {
+      toast({ title: "Taslak silinemedi", description: error?.message || "Not taslağı silinemedi.", variant: "destructive" });
+    }
+  };
+
   const loadPresentationOptions = async () => {
     try {
       const [templates, accounts, catalogResult] = await Promise.all([
@@ -232,6 +279,12 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
             || salesTemplates.find((template) => template.category === initialCategory)
       ) || salesTemplates[0];
       if (initialTemplate) applyNoteTemplate(initialTemplate);
+      try {
+        setNoteSnippets(await invoicePresentationService.getNoteSnippets());
+      } catch (error) {
+        console.warn("Fatura not taslakları yüklenemedi:", error);
+        setNoteSnippets([]);
+      }
     } catch (error: any) {
       toast({ title: "Fatura açıklama ayarları yüklenemedi", description: error.message, variant: "destructive" });
     }
@@ -801,6 +854,26 @@ export function InvoiceDialog({ isOpen, onClose, preSelectedCustomer, shipment, 
           {/* NOTES */}
           <div className="space-y-2">
             <Label htmlFor="notes">Açıklama / Notlar</Label>
+            <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 md:grid-cols-[minmax(0,1fr)_auto]">
+              <Select value={noteSnippetId} onValueChange={setNoteSnippetId}>
+                <SelectTrigger><SelectValue placeholder="Kayıtlı not taslağı seçin" /></SelectTrigger>
+                <SelectContent>{noteSnippets.map((snippet) => <SelectItem key={snippet.id} value={snippet.id}>{snippet.name}</SelectItem>)}</SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={addSelectedNoteSnippet} disabled={!noteSnippetId}>Notu Ekle</Button>
+                <Button type="button" variant="outline" size="icon" onClick={() => void deleteSelectedNoteSnippet()} disabled={!noteSnippetId} title="Seçili not taslağını sil">
+                  <Trash2 className="h-4 w-4 text-red-600" />
+                  <span className="sr-only">Seçili not taslağını sil</span>
+                </Button>
+              </div>
+              <div className="md:col-span-2 grid gap-2 md:grid-cols-[minmax(0,1fr)_auto]">
+                <Input value={noteSnippetName} onChange={(event) => setNoteSnippetName(event.target.value)} maxLength={80} placeholder="Bu not taslağının adı" />
+                <Button type="button" variant="outline" onClick={() => void saveCurrentNotesAsSnippet()} disabled={savingNoteSnippet || noteSnippetName.trim().length < 2 || !notes.trim()}>
+                  {savingNoteSnippet ? "Kaydediliyor..." : "Mevcut Notu Taslak Olarak Kaydet"}
+                </Button>
+              </div>
+              <p className="text-xs text-slate-500 md:col-span-2">Taslak notlar yalnızca hesabınızda görünür. Bir taslak seçildiğinde mevcut nota eklenir; not alanındaki metin silinmez. Seçili taslak çöp kutusu düğmesiyle silinebilir.</p>
+            </div>
             <Textarea
               id="notes"
               value={notes}

@@ -517,6 +517,26 @@ test("invoice descriptions and bank details are selected in REX TYS and snapshot
   assert.match(xslt, /"avkntckn"/);
 });
 
+test("invoice note drafts are personal, named, appendable and removable without changing invoice rules", async () => {
+  const [sql, dialog, presentationService] = await Promise.all([
+    read("supabase/migrations/20260921133000_invoice_note_snippets.sql"),
+    read("src/components/InvoiceDialog.tsx"),
+    read("src/services/invoicePresentationService.ts"),
+  ]);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\.invoice_note_snippets/);
+  assert.match(sql, /created_by = auth\.uid\(\)/);
+  assert.match(sql, /content text NOT NULL/);
+  assert.match(dialog, /Kayıtlı not taslağı seçin/);
+  assert.match(dialog, /Mevcut Notu Taslak Olarak Kaydet/);
+  assert.match(dialog, /addSelectedNoteSnippet/);
+  assert.match(dialog, /setNotes\(\(current\) => current\.trim\(\) \?/);
+  assert.match(dialog, /snippet\.content/);
+  assert.match(dialog, /Seçili not taslağını sil/);
+  assert.match(presentationService, /getNoteSnippets/);
+  assert.match(presentationService, /saveNoteSnippet/);
+  assert.match(presentationService, /deleteNoteSnippet/);
+});
+
 test("KolayBi e-invoice and e-archive use separate fixed-label XSLT files", async () => {
   const [eInvoiceXslt, eArchiveXslt, buildScript, guide] = await Promise.all([
     read("docs/kolaybi-xslt/rex-tys-kolaybi-e-fatura.xslt"),

@@ -22,6 +22,14 @@ export type InvoiceNoteTemplate = {
   display_order: number;
 };
 
+export type InvoiceNoteSnippet = {
+  id: string;
+  name: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type InvoiceBankAccount = {
   id: string;
   label: string;
@@ -41,6 +49,27 @@ export type InvoiceBankAccount = {
 const db = supabase as any;
 
 export const invoicePresentationService = {
+  async getNoteSnippets(): Promise<InvoiceNoteSnippet[]> {
+    const { data, error } = await db.from("invoice_note_snippets").select("id,name,content,created_at,updated_at").order("name");
+    if (error) throw error;
+    return data || [];
+  },
+
+  async saveNoteSnippet(input: Pick<InvoiceNoteSnippet, "name" | "content">) {
+    const { data, error } = await db
+      .from("invoice_note_snippets")
+      .insert({ name: input.name.trim(), content: input.content.trim(), updated_at: new Date().toISOString() })
+      .select("id,name,content,created_at,updated_at")
+      .single();
+    if (error) throw error;
+    return data as InvoiceNoteSnippet;
+  },
+
+  async deleteNoteSnippet(id: string) {
+    const { error } = await db.from("invoice_note_snippets").delete().eq("id", id);
+    if (error) throw error;
+  },
+
   async getTemplates(includeInactive = false): Promise<InvoiceNoteTemplate[]> {
     let query = db.from("invoice_note_templates").select("*").order("display_order").order("name");
     if (!includeInactive) query = query.eq("is_active", true);
