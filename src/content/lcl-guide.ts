@@ -4,6 +4,7 @@ export const lclGuide = {
   seoTitle: "LCL Nedir? LCL Yükleme ve FCL Farkı | REX Lojistik",
   description: "LCL nedir, LCL yükleme nasıl yapılır? Parsiyel denizyolunda konsolidasyon, CBM ve W/M hesabı, FCL farkı ve teslim sürecini öğrenin.",
   date: "2026-09-20",
+  updatedDate: "2026-09-21",
   summary: "Konteyneri doldurmayan yükler için LCL nasıl çalışır? Yükleme adımlarını, FCL ile farklarını ve teklif karşılaştırırken dikkat edilecek maliyet kalemlerini inceleyin.",
 };
 

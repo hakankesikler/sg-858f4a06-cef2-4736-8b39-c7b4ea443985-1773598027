@@ -9,7 +9,7 @@ const contents = [
   ["lcl-nedir", "LCL nedir?"], ["yukleme-sureci", "Yükleme süreci"],
   ["lcl-fcl-farki", "LCL ve FCL farkı"], ["fiyat-hesabi", "Fiyat ve W/M hesabı"],
   ["ne-zaman", "Ne zaman tercih edilir?"], ["uygun-olmayan-yukler", "Uygun olmayabilecek yükler"],
-  ["istiflenebilirlik", "İstiflenebilirlik"], ["transit-suresi", "Transit süresi"],
+  ["istiflenebilirlik", "İstiflenebilirlik ve ambalaj"], ["transit-suresi", "Transit süresi"],
   ["teklif-bilgileri", "Teklif bilgileri"], ["sik-sorulan-sorular", "Sık sorulan sorular"],
 ];
 const linkClass = "font-semibold text-orange-700 underline decoration-orange-300 underline-offset-4 hover:text-orange-600";
@@ -23,7 +23,7 @@ export default function LclGuidePage() {
       <SEO title={lclGuide.seoTitle} description={lclGuide.description} url={canonical}
         keywords={["LCL nedir", "LCL yükleme", "LCL FCL farkı", "CBM", "W/M"]}
         structuredData={{ "@context": "https://schema.org", "@graph": [
-          { "@type": "Article", "@id": `${canonical}#article`, headline: lclGuide.title, description: lclGuide.description, url: canonical, inLanguage: "tr-TR", datePublished: lclGuide.date, dateModified: lclGuide.date, mainEntityOfPage: canonical, author: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "REX Lojistik", url: SITE_URL }, publisher: { "@id": `${SITE_URL}/#organization` } },
+          { "@type": "Article", "@id": `${canonical}#article`, headline: lclGuide.title, description: lclGuide.description, url: canonical, inLanguage: "tr-TR", datePublished: lclGuide.date, dateModified: lclGuide.updatedDate, mainEntityOfPage: canonical, author: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "REX Lojistik", url: SITE_URL }, publisher: { "@id": `${SITE_URL}/#organization` } },
           { "@type": "BreadcrumbList", itemListElement: [
             { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: `${SITE_URL}/` },
             { "@type": "ListItem", position: 2, name: "Bilgi Merkezi", item: `${SITE_URL}/bilgi-merkezi` },
@@ -42,7 +42,7 @@ export default function LclGuidePage() {
               <p className="mt-9 text-sm font-bold uppercase tracking-widest text-orange-400">Denizyolu rehberi</p>
               <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-tight sm:text-5xl">{lclGuide.title}</h1>
               <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">{lclGuide.summary}</p>
-              <p className="mt-6 text-sm text-slate-400">REX Lojistik · <time dateTime={lclGuide.date}>20 Eylül 2026</time></p>
+              <p className="mt-6 text-sm text-slate-400">REX Lojistik · Yayın: <time dateTime={lclGuide.date}>20 Eylül 2026</time> · Güncelleme: <time dateTime={lclGuide.updatedDate}>21 Eylül 2026</time></p>
             </div>
           </header>
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:py-14">
@@ -106,6 +106,14 @@ export default function LclGuidePage() {
                 <h2 className={headingClass}>İstiflenebilirlik neden önemlidir?</h2>
                 <p>İstiflenebilirlik, ambalajlı yükün üzerine başka yük konulup konulamayacağını ve hangi sınırlar içinde konulabileceğini belirtir. Paletli olması tek başına istiflenebilir olduğu anlamına gelmez. Ambalaj dayanımı, ürün hassasiyeti, izin verilen üst yük ve yön bilgisi birlikte değerlendirilir.</p>
                 <p>İstiflenemeyen yük konteyner içinde ilave kullanılmayan alan yaratabilir. Bu durum kabulü, yerleşimi ve ücretlendirmeyi etkileyebilir. “Üstüne yük konulamaz” bilgisiyle birlikte varsa istif katı ve üst yük sınırını paylaşın; sonradan bildirilen koşullar teklifin değişmesine yol açabilir.</p>
+                <h3 className="text-xl font-bold text-slate-950">Ambalajı LCL yüklemeye nasıl hazırlamalısınız?</h3>
+                <p>Ambalaj, depodaki aktarmalarda ve ortak konteynerde ürünü koruyacak dayanımda olmalıdır. Hafif ürünlerde uygun dayanımlı kutu ve iç destek; ağır ürünlerde yüke uygun palet veya sandık değerlendirilebilir. Forkliftle güvenli elleçlemeye uygunluğu ve izin verilen istif yükünü rezervasyondan önce teyit edin.</p>
+                <ul className="list-disc space-y-2 pl-6">
+                  <li>Ürünün ambalaj içinde hareket etmesini önleyecek destek ve sabitleme kullanın.</li>
+                  <li>Her taşıma birimini gönderi ve koli/palet numarasıyla ayırt edilebilir biçimde işaretleyin; gerekli yön ve elleçleme işaretlerini belirtin.</li>
+                  <li>Dış ölçüleri son ambalajlama tamamlandıktan sonra alın; palet, sandık ve çıkıntıları ölçüye dahil edin.</li>
+                  <li>Ambalaj fotoğraflarını, brüt ağırlığı ve üstüne yük konulmasına ilişkin sınırları teklif talebine ekleyin.</li>
+                </ul>
               </section>
               <section id="transit-suresi" className={sectionClass}>
                 <h2 className={headingClass}>LCL transit süresi nasıl değerlendirilir?</h2>
@@ -127,7 +135,15 @@ export default function LclGuidePage() {
                 <Link href="/denizyolu-tasimaciligi#sea-whatsapp-planner-heading" className="mt-6 inline-flex rounded-xl bg-orange-600 px-6 py-3 font-bold text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300">Denizyolu Teklifi Al</Link>
               </section>
               <section className="border-t border-slate-200 pt-6 text-sm leading-6 text-slate-500" aria-label="Kaynaklar">
-                <p>Genel kavramlar için kaynaklar: <a href="https://www.dhl.com/us-en/home/global-forwarding/freight-forwarding-education-center/the-cost-drivers-of-lcl-rates.html" className="underline">DHL · LCL maliyet bileşenleri</a> ve <a href="https://www.dhlfreight.com/nl-en/home/global-forwarding/freight-forwarding-education-center/all-you-need-to-know-about-lcl.html" className="underline">DHL · LCL süreç rehberi</a>. Örnek hesap açıklama amaçlıdır; REX tarifesi veya taşıma taahhüdü değildir.</p>
+                <h2 className="font-semibold text-slate-700">Kaynaklar</h2>
+                <p className="mt-2">Genel sektör bilgileri aşağıdaki kaynaklarla kontrol edilerek özgün biçimde hazırlanmıştır. Son kontrol: 21 Eylül 2026.</p>
+                <ul className="mt-3 list-disc space-y-2 pl-5">
+                  <li><a href="https://www.dhl.com/us-en/home/global-forwarding/freight-forwarding-education-center/all-you-need-to-know-about-lcl.html" className="underline">DHL · LCL süreci, transit süresi ve ambalaj</a></li>
+                  <li><a href="https://www.dhl.com/us-en/home/global-forwarding/freight-forwarding-education-center/the-cost-drivers-of-lcl-rates.html" className="underline">DHL · LCL maliyet bileşenleri</a></li>
+                  <li><a href="https://www.dhl.com/us-en/home/global-forwarding/freight-forwarding-education-center/calculating-chargeable-weights.html" className="underline">DHL · Ücretlendirilebilir ağırlık ve hacim hesabı</a></li>
+                  <li><a href="https://www.maersk.com/support/faqs/how-does-maersk-lcl-work" className="underline">Maersk · Konsolidasyon, taşıma ve teslim akışı</a></li>
+                </ul>
+                <p className="mt-3">Örnek hesap açıklama amaçlıdır; REX tarifesi veya taşıma taahhüdü değildir. Yük kabulü, ücretler ve süreler rota ile teklif koşullarına göre teyit edilir.</p>
               </section>
             </div>
           </div>
