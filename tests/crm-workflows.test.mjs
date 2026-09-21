@@ -146,6 +146,8 @@ test("CRM prospect Excel imports are previewed, idempotent and skip exact duplic
   assert.match(screen, /CRM_Potansiyel_Musteri_Sablonu\.xlsx/);
   assert.match(screen, /Kontrol Edildi, Aktar/);
   assert.match(screen, /Firma Adı/);
+  assert.match(screen, /Sonraki İşlem Tarihi ve Saati/);
+  assert.match(screen, /GG\.AA\.YYYY SS:DD/);
 });
 
 test("customer directory has no 1000-row blind spot and prioritizes financial activity", async () => {

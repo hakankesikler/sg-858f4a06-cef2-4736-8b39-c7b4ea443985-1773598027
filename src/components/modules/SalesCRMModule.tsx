@@ -278,7 +278,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
         "İlgili Kişi": "Örn: Ayşe Yılmaz",
         Telefon: "Örn: 0532 123 45 67",
         "E-posta": "Örn: ayse@abc.com",
-        "Sonraki İşlem Tarihi": "Örn: 25.09.2026",
+        "Sonraki İşlem Tarihi ve Saati": "Örn: 25.09.2026 14:30",
         Not: "Örn: Fuar görüşmesinden sonra aranacak",
       }], "CRM Potansiyelleri");
       toast({ title: "CRM Excel şablonu indirildi" });
@@ -290,13 +290,21 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const parseProspectNextAction = (value: unknown): string | null => {
     if (value == null || String(value).trim() === "") return null;
     const input = value instanceof Date ? value : String(value).trim();
-    const trMatch = typeof input === "string" && input.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+    const trMatch = typeof input === "string" && input.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?:[ T]+(\d{1,2})(?::(\d{2}))?)?$/);
+    if (trMatch && (Number(trMatch[4] || 9) > 23 || Number(trMatch[5] || 0) > 59)) throw new Error("geçersiz saat");
     const parsed = input instanceof Date
       ? input
       : trMatch
-        ? new Date(`${trMatch[3]}-${trMatch[2].padStart(2, "0")}-${trMatch[1].padStart(2, "0")}T09:00:00`)
+        ? new Date(`${trMatch[3]}-${trMatch[2].padStart(2, "0")}-${trMatch[1].padStart(2, "0")}T${(trMatch[4] || "09").padStart(2, "0")}:${(trMatch[5] || "00").padStart(2, "0")}:00`)
         : new Date(input);
     if (Number.isNaN(parsed.getTime())) throw new Error("geçersiz tarih");
+    if (trMatch && (
+      parsed.getFullYear() !== Number(trMatch[3])
+      || parsed.getMonth() !== Number(trMatch[2]) - 1
+      || parsed.getDate() !== Number(trMatch[1])
+      || parsed.getHours() !== Number(trMatch[4] || 9)
+      || parsed.getMinutes() !== Number(trMatch[5] || 0)
+    )) throw new Error("geçersiz tarih");
     return parsed.toISOString();
   };
 
@@ -327,8 +335,8 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
         if (!email && !phone) errors.push(`Satır ${index + 2}: Telefon veya e-posta zorunludur.`);
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push(`Satır ${index + 2}: E-posta biçimi geçersiz.`);
         if (phone && phone.replace(/\D/g, "").length < 7) errors.push(`Satır ${index + 2}: Telefon en az 7 rakam içermelidir.`);
-        try { next_action_at = parseProspectNextAction(row["Sonraki İşlem Tarihi"]); }
-        catch { errors.push(`Satır ${index + 2}: Sonraki işlem tarihi geçersiz.`); }
+        try { next_action_at = parseProspectNextAction(row["Sonraki İşlem Tarihi ve Saati"] ?? row["Sonraki İşlem Tarihi"]); }
+        catch { errors.push(`Satır ${index + 2}: Sonraki işlem tarihi ve saati geçersiz.`); }
         return {
           company_name,
           contact_name,
@@ -478,7 +486,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
           <div className="space-y-4">
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
               <p className="font-semibold">Güvenli aktarım akışı</p>
-              <p className="mt-1">Dosya önce kontrol edilir. Hatalı satır varken aktarım açılamaz; mevcut cari veya açık satış kaydıyla aynı olan satırlar otomatik atlanır.</p>
+              <p className="mt-1">Dosya önce kontrol edilir. Sonraki işlem zamanı için <strong>GG.AA.YYYY SS:DD</strong> biçimini kullanın. Hatalı satır varken aktarım açılamaz; mevcut cari veya açık satış kaydıyla aynı olan satırlar otomatik atlanır.</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" onClick={() => void downloadProspectTemplate()}><FileSpreadsheet className="mr-2 h-4 w-4" />Excel Şablonu İndir</Button>
