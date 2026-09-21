@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
@@ -7,7 +8,7 @@ import { SITE_URL } from "@/lib/structured-data";
 
 const canonical = `${SITE_URL}${microExportGuide.path}`;
 const linkClass = "font-semibold text-orange-700 underline underline-offset-4";
-const H2 = ({children}:{children:React.ReactNode}) => <h2 className="text-2xl font-bold text-slate-950 sm:text-3xl">{children}</h2>;
+const H2 = ({children}:{children:ReactNode}) => <h2 className="text-2xl font-bold text-slate-950 sm:text-3xl">{children}</h2>;
 
 export default function MicroExportGuidePage() {
   return <>
