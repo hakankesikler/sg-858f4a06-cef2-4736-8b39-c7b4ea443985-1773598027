@@ -248,7 +248,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
     eyebrow: "Türkiye genelinde araca özel taşıma",
     title: "Yurtiçi Komple Taşımacılık",
     lead: "Tam kamyon ve tam tır yüklerinizi, yalnızca sevkiyatınıza ayrılan uygun araçla Türkiye genelinde doğrudan ve planlı olarak taşıyoruz.",
-    seoTitle: "Yurtiçi Komple Taşımacılık | Tam Kamyon ve Tır Yükü",
+    seoTitle: "Komple Taşımacılık | Yurtiçi FTL, Kamyon ve Tır | REX",
     seoDescription: "Tam kamyon yükü, tam tır yükü ve FTL nakliye için araca özel planlama, doğrudan rota ve Türkiye geneli teslimat. REX Lojistik'ten teklif alın.",
     keywords: ["yurtiçi komple taşımacılık", "tam kamyon yükü", "tam tır yükü", "FTL nakliye", "komple araç taşımacılığı", "şehirlerarası nakliye", "kurumsal yük taşımacılığı"],
     highlights: [
@@ -258,12 +258,26 @@ export const marketingPages: Record<string, MarketingPageData> = {
     ],
     sections: [
       {
-        title: "Yurtiçi komple yük taşımacılığında operasyon kontrolü",
+        title: "Komple Taşımacılık Nedir?",
         paragraphs: [
-          "Yurtiçi komple taşımacılıkta araç kapasitesi tek bir müşterinin yüküne ayrılır. Tam kamyon yükü veya tam tır yükü olarak planlanan sevkiyat; başka müşterilerin yükleriyle birleştirilmeden, yükleme programına ve teslimat penceresine göre doğrudan hareket eder.",
+          "Komple taşımacılık (FTL), aracın kullanılabilir kapasitesinin tek bir müşterinin sevkiyatına ayrıldığı taşıma modelidir. Tam kamyon yükü veya tam tır yükü olarak planlanan sevkiyat; başka müşterilerin yükleriyle birleştirilmeden, yükleme ve teslimat planına göre sevk edilir.",
           "REX Lojistik, yükün toplam ağırlığını, hacmini, palet yerleşimini ve istif durumunu araç kapasitesiyle karşılaştırır. Kamyon, kırkayak, tenteli tır, kapalı kasa veya uygun diğer araç seçenekleri arasından operasyon koşullarını karşılayan araç planlanır.",
         ],
         bullets: ["Tam kamyon yükü ve tam tır yükü sevkiyatları", "Fabrika, depo ve şube arası taşımalar", "Tek noktadan tek veya çoklu teslimat", "Planlı ve tekrarlayan FTL sevkiyat programları"],
+      },
+      {
+        title: "Komple mi Parsiyel mi?",
+        paragraphs: [
+          "Komple ve parsiyel taşıma arasında karar verirken kesin bir palet eşiği yoktur. Uygun model; yükün ağırlığı, hacmi, istiflenebilirliği, rota ve araç tipine göre değişir.",
+          "Yükünüzün araçta kapladığı alanı görmek için LDM Hesaplama aracını kullanabilirsiniz. Hesaplanan alan, ağırlık ve diğer operasyon koşullarıyla birlikte değerlendirilmelidir.",
+        ],
+        bullets: [
+          "Az palet / düşük hacim: Parsiyel taşıma genellikle uygun bir seçenektir; komple araçta kullanılmayan kapasite kalabilir.",
+          "Aracın büyük bölümünü kullanan yük: Komple taşıma değerlendirilebilir; parsiyel seçeneği de rota ve yük koşullarına göre karşılaştırılır.",
+          "Tek araca özel sevkiyat: Aracın yalnızca sizin yükünüze ayrılması gerekiyorsa komple taşıma uygundur; parsiyelde araç farklı müşterilerin yüklerini taşır.",
+          "Kapasite paylaşımı: Parsiyelde aynı güzergâhtaki yükler kapasiteyi paylaşır; komple taşımada kullanılabilir kapasite tek müşterinin sevkiyatına ayrılır.",
+          "Araç seçimi: Komple taşımada kamyon, kırkayak veya tır yükün ve adreslerin koşullarına göre seçilir; parsiyelde yük, uygun hat ve araçtaki paylaşılan kapasiteyle eşleştirilir.",
+        ],
       },
       {
         title: "Hangi araç ve rota seçilir?",
@@ -290,6 +304,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
       { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
       { anchor: "Depolama ihtiyacı", href: "/depolama" },
+      { anchor: "LDM Hesaplama", href: "/ldm-hesaplama" },
     ],
   },
   "uluslararasi-karayolu-tasimaciligi": {
