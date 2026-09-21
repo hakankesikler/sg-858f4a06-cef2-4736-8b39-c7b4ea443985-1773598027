@@ -1810,6 +1810,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
     contextualLinks: [
       { anchor: "hava kargo", href: "/hava-kargo" },
       { anchor: "minivan express", href: "/minivan-express-tasimacilik" },
+      { anchor: "Mikro ihracat ve ETGB/BGB süreci", href: "/bilgi-merkezi/mikro-ihracat-etgb" },
     ],
   },
   "yurtdisindan-turkiyeye-express-kargo": {
