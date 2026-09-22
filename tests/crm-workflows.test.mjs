@@ -128,6 +128,18 @@ test("new CRM prospects use an authorized security-definer RPC and self assignme
   assert.doesNotMatch(service, /table\("crm_opportunities"\)\.insert\(payload\)/);
 });
 
+test("CRM prospect notes remain visible when the record is opened again", async () => {
+  const [service, screen] = await Promise.all([
+    read("src/services/salesCrmService.ts"),
+    read("src/components/modules/SalesCRMModule.tsx"),
+  ]);
+  assert.match(service, /select\("\*"\)/);
+  assert.match(service, /notes: input\.notes \|\| null/);
+  assert.match(screen, /<Label>Not<\/Label><Textarea value=\{prospectForm\.notes\}/);
+  assert.match(screen, /selected\.notes\?\.trim\(\)/);
+  assert.match(screen, />Kayıt Notu</);
+});
+
 test("CRM prospect Excel imports are previewed, idempotent and skip exact duplicates", async () => {
   const [sql, service, screen] = await Promise.all([
     read("supabase/migrations/20260918130000_crm_bulk_prospect_import.sql"),
