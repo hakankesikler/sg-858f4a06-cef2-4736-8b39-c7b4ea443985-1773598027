@@ -53,9 +53,23 @@ function carrierTrackingUrl(carrier?: string | null, awb?: string | null) {
   return urls[carrier.toUpperCase()] || "";
 }
 
+const driverSearchColumns = [
+  { key: "driver_code", label: "KOD" },
+  { key: "full_name", label: "AD SOYAD" },
+  { key: "tc_no", label: "TC NO" },
+  { key: "phone_1", label: "TELEFON" },
+  { key: "ehliyet_sinifi", label: "EHLİYET SINIFI" },
+  { key: "compliance", label: "BELGE UYGUNLUĞU" },
+  { key: "status", label: "DURUM" },
+] as const;
+
+type DriverSearchField = (typeof driverSearchColumns)[number]["key"];
+const emptyDriverFilters = Object.fromEntries(driverSearchColumns.map(({ key }) => [key, ""])) as Record<DriverSearchField, string>;
+
 export function LogisticsModule() {
   const { toast } = useToast();
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [driverFilters, setDriverFilters] = useState<Record<DriverSearchField, string>>(emptyDriverFilters);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [transportJobs, setTransportJobs] = useState<TransportJob[]>([]);
@@ -445,6 +459,32 @@ export function LogisticsModule() {
 
   const complianceFor = (entityType: "driver" | "vehicle", entityId: string) =>
     complianceAlerts.filter((alert) => alert.entity_type === entityType && alert.entity_id === entityId);
+  const driverComplianceLabel = (driver: Driver) => {
+    const alerts = complianceFor("driver", driver.id || "");
+    if (alerts.some((alert) => alert.severity === "blocked")) return "Atama Engelli";
+    if (alerts.some((alert) => alert.severity === "warning")) return "Süre Yaklaşıyor";
+    return "Uygun";
+  };
+  const filteredDrivers = drivers.filter((driver) => {
+    const fields: Record<DriverSearchField, string> = {
+      driver_code: driver.driver_code || "",
+      full_name: driver.full_name,
+      tc_no: driver.tc_no,
+      phone_1: driver.phone_1,
+      ehliyet_sinifi: driver.ehliyet_sinifi || "",
+      compliance: driverComplianceLabel(driver),
+      status: driver.status || "",
+    };
+    return driverSearchColumns.every(({ key }) => {
+      const query = driverFilters[key].trim();
+      if (!query) return true;
+      if (key === "tc_no" || key === "phone_1") {
+        const digits = query.replace(/\D/g, "");
+        return digits.length > 0 && fields[key].replace(/\D/g, "").includes(digits);
+      }
+      return normalize(fields[key]).replace(/\u0307/g, "").includes(normalize(query).replace(/\u0307/g, ""));
+    });
+  });
   const blockedComplianceCount = complianceAlerts.filter((alert) => alert.severity === "blocked").length;
   const warningComplianceCount = complianceAlerts.filter((alert) => alert.severity === "warning").length;
 
@@ -993,18 +1033,24 @@ export function LogisticsModule() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="p-4 text-left text-sm font-medium">KOD</th>
-                    <th className="p-4 text-left text-sm font-medium">AD SOYAD</th>
-                    <th className="p-4 text-left text-sm font-medium">TC NO</th>
-                    <th className="p-4 text-left text-sm font-medium">TELEFON</th>
-                    <th className="p-4 text-left text-sm font-medium">EHLİYET SINIFI</th>
-                    <th className="p-4 text-left text-sm font-medium">BELGE UYGUNLUĞU</th>
-                    <th className="p-4 text-left text-sm font-medium">DURUM</th>
+                    {driverSearchColumns.map(({ key, label }) => (
+                      <th key={key} className="min-w-36 p-4 text-left text-sm font-medium">
+                        <label htmlFor={`driver-filter-${key}`} className="block min-h-10">{label}</label>
+                        <Input
+                          id={`driver-filter-${key}`}
+                          aria-label={`${label} sütununda ara`}
+                          value={driverFilters[key]}
+                          onChange={(event) => setDriverFilters((current) => ({ ...current, [key]: event.target.value }))}
+                          placeholder="Ara..."
+                          className="h-9 bg-white font-normal"
+                        />
+                      </th>
+                    ))}
                     <th className="p-4 text-left text-sm font-medium">İŞLEMLER</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {drivers.map((driver) => (
+                  {filteredDrivers.map((driver) => (
                     <tr key={driver.id} className="border-b hover:bg-gray-50">
                       <td className="p-4 font-medium">{driver.driver_code}</td>
                       <td className="p-4">{driver.full_name}</td>
@@ -1056,6 +1102,9 @@ export function LogisticsModule() {
                       </td>
                     </tr>
                   ))}
+                  {filteredDrivers.length === 0 && (
+                    <tr><td colSpan={8} className="p-8 text-center text-sm text-gray-500">Aramanıza uygun sürücü bulunamadı.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
