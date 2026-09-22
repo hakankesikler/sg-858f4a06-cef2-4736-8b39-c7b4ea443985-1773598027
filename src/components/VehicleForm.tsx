@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ interface VehicleFormProps {
 export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, initialData }: VehicleFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const createIdRef = useRef<string | null>(null);
   const [vehicleCode, setVehicleCode] = useState("VHC-000001");
   const [kaskoBitisTarihi, setKaskoBitisTarihi] = useState("");
   const [trafikSigortasiBitisTarihi, setTrafikSigortasiBitisTarihi] = useState("");
@@ -66,6 +68,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
       }
       setYetkiBelgesiGecerlilikTarihi(initialData.yetki_belgesi_gecerlilik_tarihi?.split('T')[0] || "");
     } else if (!editMode && isOpen) {
+      createIdRef.current = null;
       resetForm();
       loadNextVehicleCode();
     }
@@ -95,6 +98,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
 
     if (!formData.arac_tipi || !formData.cekici_plakasi || !formData.kasa_tipi ||
         !formData.tasima_kapasitesi_kg || Number(formData.tasima_kapasitesi_kg) <= 0 ||
@@ -106,6 +110,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
       });
       return;
     }
+    submittingRef.current = true;
     try {
       setIsSubmitting(true);
 
@@ -124,6 +129,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         ruhsat_no: formData.ruhsat_no || null,
         status: formData.status,
         ruhsat_dosyasi_url: initialData?.ruhsat_dosyasi_url || undefined,
+        ...(!editMode && { id: createIdRef.current ||= crypto.randomUUID() }),
       };
 
       await vehicleService.saveWithDocument(submitData, ruhsatFile, editMode ? initialData?.id : undefined);
@@ -135,6 +141,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
       onSuccess();
       onClose();
       resetForm();
+      createIdRef.current = null;
     } catch (error: any) {
       console.error("Submit error:", error);
       toast({
@@ -143,6 +150,7 @@ export function VehicleForm({ isOpen, onClose, onSuccess, editMode = false, init
         variant: "destructive",
       });
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };

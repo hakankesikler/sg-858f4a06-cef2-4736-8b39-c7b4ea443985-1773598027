@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ interface DriverFormProps {
 export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initialData }: DriverFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const createIdRef = useRef<string | null>(null);
   const [driverCode, setDriverCode] = useState("DRV-000001");
   const [ehliyetGecerlilikTarihi, setEhliyetGecerlilikTarihi] = useState("");
   const [srcGecerlilikTarihi, setSrcGecerlilikTarihi] = useState("");
@@ -78,6 +80,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         setPsikoteknikGecerlilikTarihi(initialData.psikoteknik_gecerlilik_tarihi?.split('T')[0] || "");
       } else {
         console.log("=== CREATE MODE ===");
+        createIdRef.current = null;
         resetForm();
         loadNextDriverCode();
       }
@@ -108,6 +111,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
     
     if (!formData.full_name || !formData.tc_no || !formData.phone_1 || !ehliyetGecerlilikTarihi ||
         formData.ehliyet_sinifi.length === 0 ||
@@ -119,6 +123,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
       });
       return;
     }
+    submittingRef.current = true;
     try {
       setIsSubmitting(true);
       
@@ -139,6 +144,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         ehliyet_gecerlilik_tarihi: ehliyetGecerlilikTarihi || null,
         status: formData.status,
         ehliyet_dosyasi_url: initialData?.ehliyet_dosyasi_url || undefined,
+        ...(!editMode && { id: createIdRef.current ||= crypto.randomUUID() }),
       };
 
       await driverService.saveWithDocument(submitData, ehliyetFile, editMode ? initialData?.id : undefined);
@@ -150,6 +156,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
       onSuccess();
       onClose();
       resetForm();
+      createIdRef.current = null;
     } catch (error: any) {
       console.error("Submit error:", error);
       toast({
@@ -158,6 +165,7 @@ export function DriverForm({ isOpen, onClose, onSuccess, editMode = false, initi
         variant: "destructive",
       });
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };

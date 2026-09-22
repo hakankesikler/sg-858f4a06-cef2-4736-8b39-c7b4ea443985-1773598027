@@ -134,12 +134,21 @@ export const driverService = {
     if (!file && !driver.ehliyet_dosyasi_url) {
       throw new Error("Ehliyet resmi yüklenmeden sürücü kaydedilemez");
     }
-    const id = existingId || crypto.randomUUID();
+    const id = existingId || driver.id || crypto.randomUUID();
     const documentUrl = file ? await this.uploadEhliyetFile(file, id) : driver.ehliyet_dosyasi_url;
     const payload = { ...driver, id, ehliyet_dosyasi_url: documentUrl };
     try {
       return existingId ? await this.updateDriver(id, payload) : await this.createDriver(payload);
     } catch (error) {
+      if (!existingId) {
+        const { data: savedDriver } = await supabase.from("drivers").select("*").eq("id", id).maybeSingle();
+        if (savedDriver?.tc_no === driver.tc_no && savedDriver.full_name === driver.full_name) {
+          if (file && documentUrl && savedDriver.ehliyet_dosyasi_url !== documentUrl) {
+            await deletePrivateDocument(documentUrl, "driver-documents").catch(() => undefined);
+          }
+          return savedDriver;
+        }
+      }
       if (file && documentUrl) await deletePrivateDocument(documentUrl, "driver-documents").catch(() => undefined);
       throw error;
     }

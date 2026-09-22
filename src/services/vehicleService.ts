@@ -134,12 +134,21 @@ export const vehicleService = {
     if (!file && !vehicle.ruhsat_dosyasi_url) {
       throw new Error("Ruhsat resmi yüklenmeden araç kaydedilemez");
     }
-    const id = existingId || crypto.randomUUID();
+    const id = existingId || vehicle.id || crypto.randomUUID();
     const documentUrl = file ? await this.uploadRuhsatFile(file, id) : vehicle.ruhsat_dosyasi_url;
     const payload = { ...vehicle, id, ruhsat_dosyasi_url: documentUrl };
     try {
       return existingId ? await this.updateVehicle(id, payload) : await this.createVehicle(payload);
     } catch (error) {
+      if (!existingId) {
+        const { data: savedVehicle } = await supabase.from("vehicles").select("*").eq("id", id).maybeSingle();
+        if (savedVehicle?.cekici_plakasi === vehicle.cekici_plakasi && savedVehicle.arac_tipi === vehicle.arac_tipi) {
+          if (file && documentUrl && savedVehicle.ruhsat_dosyasi_url !== documentUrl) {
+            await deletePrivateDocument(documentUrl, "vehicle-documents").catch(() => undefined);
+          }
+          return savedVehicle;
+        }
+      }
       if (file && documentUrl) await deletePrivateDocument(documentUrl, "vehicle-documents").catch(() => undefined);
       throw error;
     }

@@ -655,6 +655,22 @@ test("driver and vehicle assignments enforce core documents, licence and load ru
   assert.match(vehicleForm, /Taşıt Kartı \/ Yetki Belgesi Eki \(İsteğe Bağlı\)/);
 });
 
+test("driver and vehicle saves reject repeat submits while reconciling only the same created record", async () => {
+  for (const [formPath, servicePath, table] of [
+    ["src/components/DriverForm.tsx", "src/services/driverService.ts", "drivers"],
+    ["src/components/VehicleForm.tsx", "src/services/vehicleService.ts", "vehicles"],
+  ]) {
+    const [form, service] = await Promise.all([read(formPath), read(servicePath)]);
+    assert.match(form, /if \(submittingRef\.current\) return/);
+    assert.match(form, /submittingRef\.current = true/);
+    assert.match(form, /submittingRef\.current = false/);
+    assert.match(form, /createIdRef\.current \|\|= crypto\.randomUUID\(\)/);
+    assert.match(service, /existingId \|\| \w+\.id \|\| crypto\.randomUUID\(\)/);
+    assert.match(service, new RegExp(`from\\("${table}"\\)\\.select\\("\\*"\\)\\.eq\\("id", id\\)\\.maybeSingle\\(\\)`));
+    assert.match(service, /throw error/);
+  }
+});
+
 test("managers receive 30-day warnings only for assignment-blocking documents", async () => {
   const [sql, service, logistics] = await Promise.all([
     read("supabase/migrations/20260819023000_driver_vehicle_compliance.sql"),
