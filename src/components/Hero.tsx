@@ -2,16 +2,40 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
 import { getImageProps } from "next/image";
 
-const HERO_ALT = "REX Lojistik yurtiçi ve uluslararası taşımacılık çözümleri";
+type HeroLocale = "tr" | "en";
 
-export function Hero() {
+const heroContent = {
+  tr: {
+    alt: "REX Lojistik yurtiçi ve uluslararası taşımacılık çözümleri",
+    heading: "Yurtiçi ve Uluslararası Lojistik Çözümleri",
+    lead: "Yükünüz Varsa,",
+    accent: "Bir Yolu Var.",
+    description: "Yurtiçi ve uluslararası taşımacılıkta, 1 paletten komple araca kadar yükünüze uygun lojistik çözümü planlıyoruz.",
+    quote: "Hızlı Teklif Al",
+    whatsapp: "WhatsApp'tan Sor",
+    benefits: ["Adresten Alım", "Adrese Teslim", "Türkiye Geneli", "Uluslararası Taşıma"],
+  },
+  en: {
+    alt: "REX Logistics domestic and international freight solutions",
+    heading: "Domestic and International Freight Solutions",
+    lead: "Every Shipment Has,",
+    accent: "A Way Forward.",
+    description: "From one pallet to a full vehicle, we plan a logistics solution around your cargo for domestic and international transport.",
+    quote: "Get a Quote",
+    whatsapp: "Ask on WhatsApp",
+    benefits: ["Collection from Your Address", "Delivery to Consignee", "Across Türkiye", "International Transport"],
+  },
+} as const;
+
+export function Hero({ locale = "tr", quoteEventName = "rex:open-quote-form" }: { locale?: HeroLocale; quoteEventName?: string }) {
+  const content = heroContent[locale];
   const handleQuoteRequest = () => {
-    window.dispatchEvent(new Event("rex:open-quote-form"));
+    window.dispatchEvent(new Event(quoteEventName));
   };
 
   const { props: desktopImageProps } = getImageProps({
     src: "/rex-homepage-hero-desktop.webp",
-    alt: HERO_ALT,
+    alt: content.alt,
     width: 1983,
     height: 793,
     quality: 84,
@@ -19,7 +43,7 @@ export function Hero() {
   });
   const { props: mobileImageProps } = getImageProps({
     src: "/rex-homepage-hero-mobile.webp",
-    alt: HERO_ALT,
+    alt: content.alt,
     width: 900,
     height: 1599,
     quality: 82,
@@ -32,7 +56,7 @@ export function Hero() {
         <source media="(max-width: 639px)" srcSet={mobileImageProps.srcSet} sizes="100vw" />
         <img
           {...desktopImageProps}
-          alt={HERO_ALT}
+          alt={content.alt}
           fetchPriority="high"
           className="h-full w-full object-cover object-top"
         />
@@ -50,17 +74,17 @@ export function Hero() {
           </p>
 
           <h1 className="mb-4 text-base font-semibold leading-snug text-white/90 sm:text-lg sm:text-slate-800">
-            Yurtiçi ve Uluslararası Lojistik Çözümleri
+            {content.heading}
           </h1>
 
           <p className="text-[2.75rem] font-black leading-[1.02] tracking-[-0.035em] text-white drop-shadow-sm sm:text-6xl sm:text-slate-950 lg:text-7xl">
-            Yükünüz Varsa,
+            {content.lead}
             <br />
-            <span className="text-orange-400 sm:text-orange-600">Bir Yolu Var.</span>
+            <span className="text-orange-400 sm:text-orange-600">{content.accent}</span>
           </p>
 
           <p className="mt-5 max-w-xl text-base font-medium leading-relaxed text-white/95 sm:mt-6 sm:text-lg sm:text-slate-800 lg:text-xl">
-            Yurtiçi ve uluslararası taşımacılıkta, 1 paletten komple araca kadar yükünüze uygun lojistik çözümü planlıyoruz.
+            {content.description}
           </p>
 
           <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:gap-4">
@@ -69,7 +93,7 @@ export function Hero() {
               className="min-h-12 w-full bg-gradient-to-r from-orange-500 to-orange-600 px-7 text-base font-bold text-white shadow-xl transition-all hover:from-orange-600 hover:to-orange-700 hover:shadow-2xl sm:w-auto sm:text-lg"
               onClick={handleQuoteRequest}
             >
-              Hızlı Teklif Al
+              {content.quote}
             </Button>
             <Button
               asChild
@@ -79,18 +103,13 @@ export function Hero() {
             >
               <a href="https://wa.me/905434010755" target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="mr-2 h-5 w-5" aria-hidden="true" />
-                WhatsApp&apos;tan Sor
+                {content.whatsapp}
               </a>
             </Button>
           </div>
 
           <ul className="mt-6 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-white/30 pt-5 text-sm font-semibold text-white/95 sm:mt-8 sm:flex sm:flex-wrap sm:gap-x-3 sm:border-slate-900/15 sm:text-slate-800">
-            {[
-              "Adresten Alım",
-              "Adrese Teslim",
-              "Türkiye Geneli",
-              "Uluslararası Taşıma",
-            ].map((benefit) => (
+            {content.benefits.map((benefit) => (
               <li key={benefit} className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 flex-none rounded-full bg-orange-500" aria-hidden="true" />
                 {benefit}

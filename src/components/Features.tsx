@@ -1,6 +1,6 @@
 import { CheckCircle2, Shield, Award, MapPin, Globe2, Route, Warehouse, Truck } from "lucide-react";
 
-const features = [
+const turkishFeatures = [
   {
     icon: Shield,
     title: "1.000.000 € FFL Sorumluluk Teminatı",
@@ -33,7 +33,7 @@ const features = [
   },
 ];
 
-const companyValues = [
+const turkishCompanyValues = [
   {
     icon: Award,
     title: "Kalite Politikamız",
@@ -46,17 +46,34 @@ const companyValues = [
   },
 ];
 
-export function Features() {
+const englishFeatures = [
+  { icon: Shield, title: "€1,000,000 FFL Liability Cover", description: "Our responsibilities arising from transport organisation are covered by FFL insurance up to €1,000,000, subject to policy terms and limits." },
+  { icon: MapPin, title: "Part-Load Transport from One Pallet", description: "Transport solutions for part loads from one pallet to all 81 provinces and their districts across Türkiye." },
+  { icon: Truck, title: "Door-to-Door Coordination", description: "Organising the transport process from collection at the consignor's address through delivery at the consignee's address." },
+  { icon: Globe2, title: "Domestic and International Solutions", description: "Transport options for road, air freight, sea freight and express shipment needs." },
+  { icon: Route, title: "Transport Planning Around Your Cargo", description: "Planning an appropriate transport model around pallet count, dimensions, weight, route and delivery point." },
+  { icon: Warehouse, title: "Warehousing and Operational Solutions", description: "Operational solutions for storage, stock tracking, handling and dispatch preparation needs." },
+];
+
+const englishCompanyValues = [
+  { icon: Award, title: "Our Quality Policy", description: "We provide modern logistics solutions with a quality-focused approach centred on customer satisfaction." },
+  { icon: CheckCircle2, title: "Our Vision", description: "To maintain a strong position in Türkiye and global markets as a dynamic and reliable organisation in the sector." },
+];
+
+export function Features({ locale = "tr" }: { locale?: "tr" | "en" }) {
+  const english = locale === "en";
+  const features = english ? englishFeatures : turkishFeatures;
+  const companyValues = english ? englishCompanyValues : turkishCompanyValues;
   return (
-    <section id="hakkimizda" className="py-20">
+    <section id={english ? "about" : "hakkimizda"} className="py-20">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
           <div>
             <h2 className="font-heading font-bold text-4xl text-navy mb-6">
-              Neden REX Lojistik?
+              {english ? "Why REX Logistics?" : "Neden REX Lojistik?"}
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              Kurucusunun 2002 yılından bu yana edindiği 20+ yıllık sektör deneyimi üzerine 2022 yılında kurulan REX Lojistik; operasyonel tecrübeyi günümüzün yurtiçi ve uluslararası lojistik ihtiyaçlarıyla bir araya getirir.
+              {english ? "Founded in 2022 on its founder's logistics experience since 2002, REX Logistics brings operational experience together with today’s domestic and international freight needs." : "Kurucusunun 2002 yılından bu yana edindiği 20+ yıllık sektör deneyimi üzerine 2022 yılında kurulan REX Lojistik; operasyonel tecrübeyi günümüzün yurtiçi ve uluslararası lojistik ihtiyaçlarıyla bir araya getirir."}
             </p>
 
             <div className="space-y-6">
@@ -81,7 +98,7 @@ export function Features() {
           <div className="relative">
             <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-2xl">
               <h3 className="font-heading font-bold text-3xl mb-2 text-white">
-                Kurumsal Değerlerimiz
+                {english ? "Our Corporate Values" : "Kurumsal Değerlerimiz"}
               </h3>
               <div className="w-24 h-1 bg-orange-500 rounded-full mb-8"></div>
               
@@ -106,12 +123,12 @@ export function Features() {
               <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/30">
                 <div className="group">
                   <div className="text-5xl font-heading font-bold text-white mb-1">2022</div>
-                  <div className="text-sm text-blue-100 font-medium">Kuruluş Yılı</div>
+                  <div className="text-sm text-blue-100 font-medium">{english ? "Founded" : "Kuruluş Yılı"}</div>
                   <div className="mt-2 h-1 w-0 group-hover:w-full bg-orange-500 rounded-full transition-all duration-500"></div>
                 </div>
                 <div className="group">
-                  <div className="text-5xl font-heading font-bold text-orange-500 mb-1">81 İl</div>
-                  <div className="text-sm text-blue-100 font-medium">Yurtiçi Teslimat Kapsamı</div>
+                  <div className="text-5xl font-heading font-bold text-orange-500 mb-1">{english ? "81 Provinces" : "81 İl"}</div>
+                  <div className="text-sm text-blue-100 font-medium">{english ? "Domestic Delivery Coverage" : "Yurtiçi Teslimat Kapsamı"}</div>
                   <div className="mt-2 h-1 w-0 group-hover:w-full bg-orange-500 rounded-full transition-all duration-500"></div>
                 </div>
               </div>

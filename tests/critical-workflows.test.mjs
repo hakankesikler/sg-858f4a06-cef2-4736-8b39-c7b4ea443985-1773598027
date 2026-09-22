@@ -257,9 +257,9 @@ test("public tracking shows only server-masked sender and receiver hints", async
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.rex_mask_public_party_name\(text\) FROM PUBLIC,anon,authenticated/);
   assert.match(service, /sender_masked\?: string \| null/);
   assert.match(service, /receiver_masked\?: string \| null/);
-  assert.match(tracking, />Gönderici</);
+  assert.match(tracking, /Gönderici/);
   assert.match(tracking, /result\.sender_masked/);
-  assert.match(tracking, />Alıcı</);
+  assert.match(tracking, /Alıcı/);
   assert.match(tracking, /result\.receiver_masked/);
 });
 
@@ -1152,7 +1152,10 @@ test("English public routes are explicit, indexable and linked to their Turkish 
   assert.match(header, /languagePath\(sourcePath, "en"\)/);
   assert.match(seo, /hrefLang="en"/);
   assert.match(seo, /language === "en" \? "en_GB" : "tr_TR"/);
-  assert.match(home, /EnglishQuoteForm/);
+  assert.match(home, /EnglishQuoteLaunchButton/);
+  assert.match(home, /<Hero locale="en"/);
+  assert.match(home, /<Services locale="en"/);
+  assert.match(home, /<TrackingSection locale="en"/);
   assert.match(route, /getStaticPaths/);
   assert.match(pages, /International Express Courier/);
   assert.doesNotMatch(pages, /own fleet|our warehouses|our carrier network/i);
@@ -1717,12 +1720,12 @@ test("homepage SEO, hero copy and service headings are semantic and focused", as
   assert.match(home, /url="https:\/\/www\.rexlojistik\.com\/"/);
   const documentDefaults = seo.slice(seo.indexOf("export function SEOElements"));
   assert.doesNotMatch(documentDefaults, /<meta name="description"/);
-  assert.match(hero, /<h1[\s\S]*Yurtiçi ve Uluslararası Lojistik Çözümleri[\s\S]*<\/h1>/);
+  assert.match(hero, /heading: "Yurtiçi ve Uluslararası Lojistik Çözümleri"/);
   assert.doesNotMatch(hero, /<h1[\s\S]*Lojistikte Güvenilir Çözüm[\s\S]*<\/h1>/);
   assert.match(hero, /Yükünüz Varsa,/);
   assert.match(hero, /Bir Yolu Var\./);
   assert.match(hero, /Yurtiçi ve uluslararası taşımacılıkta, 1 paletten komple araca kadar yükünüze uygun lojistik çözümü planlıyoruz\./);
-  assert.match(hero, /WhatsApp&apos;tan Sor/);
+  assert.match(hero, /whatsapp: "WhatsApp'tan Sor"/);
   assert.match(hero, /href="https:\/\/wa\.me\/905434010755"/);
   assert.match(hero, /Adresten Alım/);
   assert.match(hero, /Adrese Teslim/);
@@ -1743,7 +1746,7 @@ test("homepage SEO, hero copy and service headings are semantic and focused", as
   assert.match(services, /motion-reduce:transition-none/);
   assert.match(services, /motion-safe:hover:-translate-y-1/);
   assert.match(services, /Detayları İncele/);
-  assert.equal((services.match(/title: "/g) || []).length, 8);
+  assert.equal((services.split("const englishServices")[0].match(/title: "/g) || []).length, 8);
   assert.doesNotMatch(services, /target="_blank"|rel="nofollow"/);
   assert.match(features, /Kurucusunun 2002 yılından bu yana edindiği 20\+ yıllık sektör deneyimi üzerine 2022 yılında kurulan REX Lojistik/);
 

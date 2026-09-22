@@ -1,28 +1,43 @@
-import Image from "next/image";
-import Link from "next/link";
-import { AirVent, Box, Globe2, Package, Ship, Truck, Warehouse } from "lucide-react";
-import { SEO } from "@/components/SEO";
 import { EnglishFooter } from "@/components/EnglishFooter";
 import { EnglishHeader } from "@/components/EnglishHeader";
-import { EnglishQuoteForm } from "@/components/EnglishQuoteForm";
-
-const services = [
-  { href: "/en/full-truckload-transport", title: "Full truckload", text: "Vehicle-based transport planning for commercial and industrial loads.", icon: Truck },
-  { href: "/en/domestic-part-load-transport", title: "Domestic part loads", text: "From one pallet, planned collection and delivery across Türkiye.", icon: Package },
-  { href: "/en/air-freight", title: "Air freight", text: "International air freight assessed around cargo, origin and destination.", icon: AirVent },
-  { href: "/en/international-road-freight", title: "International road freight", text: "Part and full load road transport between Türkiye and Europe.", icon: Globe2 },
-  { href: "/en/express-courier", title: "International express", text: "Express shipments to more than 220 countries and regions.", icon: Box },
-  { href: "/en/sea-freight", title: "Sea freight", text: "LCL part-load and FCL container solutions for international cargo.", icon: Ship },
-  { href: "/en/warehousing-services", title: "Warehousing", text: "Storage, stock tracking, handling and dispatch preparation solutions.", icon: Warehouse },
-  { href: "/en/packing-and-handling", title: "Packing and handling", text: "Packing, labelling, palletising and dispatch preparation support.", icon: Box },
-];
+import { EnglishQuoteLaunchButton } from "@/components/EnglishQuoteLaunchButton";
+import { Features } from "@/components/Features";
+import { Hero } from "@/components/Hero";
+import { SEO } from "@/components/SEO";
+import { Services } from "@/components/Services";
+import { TrackingSection } from "@/components/TrackingSection";
 
 export default function EnglishHome() {
   const url = "https://www.rexlojistik.com/en";
-  const structuredData = { "@context": "https://schema.org", "@graph": [{ "@type": "WebPage", "@id": url, url, name: "REX Logistics | Freight Solutions", isPartOf: { "@id": "https://www.rexlojistik.com/#website" }, about: { "@id": "https://www.rexlojistik.com/#organization" } }] };
-  return <><SEO title="REX Logistics | Domestic and International Freight Solutions" description="REX Logistics organises domestic and international road, air and sea freight solutions. Request a tailored transport quote." url={url} language="en" alternates={{ tr: "https://www.rexlojistik.com/", en: url }} structuredData={structuredData} /><EnglishHeader /><main>
-    <section className="relative isolate overflow-hidden bg-slate-900"><Image src="/rex-homepage-hero-desktop.webp" alt="Logistics network, freight truck, port and aircraft" fill priority sizes="100vw" className="-z-20 object-cover object-center opacity-35" /><div className="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950 via-slate-950/75 to-slate-900/30" /><div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8"><div className="max-w-3xl text-white"><p className="text-sm font-bold uppercase tracking-[0.24em] text-orange-300">REX Logistics</p><h1 className="mt-4 text-4xl font-bold leading-tight sm:text-6xl">Every shipment has a way forward.</h1><p className="mt-6 text-lg leading-relaxed text-slate-100 sm:text-xl">From one pallet to a full vehicle, we organise domestic and international logistics solutions around your cargo, route and delivery needs.</p><div className="mt-9 flex flex-wrap gap-4"><a href="#quote" className="rounded-md bg-orange-500 px-6 py-3 font-bold hover:bg-orange-600">Get a quote</a><a href="https://wa.me/905434010755" className="rounded-md border border-white/40 px-6 py-3 font-semibold hover:bg-white/10">Ask on WhatsApp</a></div><div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-slate-100"><span>Collection from your address</span><span>Delivery to consignee</span><span>Across Türkiye</span><span>International transport</span></div></div></div></section>
-    <section id="services" className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><div className="max-w-2xl"><p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-600">Logistics solutions</p><h2 className="mt-3 text-4xl font-bold text-slate-900">Services designed around the shipment</h2><p className="mt-4 text-lg leading-relaxed text-slate-600">Choose the service that best matches your cargo. We assess the route, volume, weight and timing before planning the operation.</p></div><div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{services.map((service) => <Link key={service.href} href={service.href} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-orange-300 hover:shadow-lg"><service.icon className="h-8 w-8 text-orange-500" /><h3 className="mt-6 text-xl font-bold text-slate-900 group-hover:text-orange-700">{service.title}</h3><p className="mt-3 leading-relaxed text-slate-600">{service.text}</p><span className="mt-6 inline-block font-semibold text-orange-600">Explore service →</span></Link>)}</div></div></section>
-    <section className="px-4 py-16 sm:px-6 lg:px-8"><div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2"><div><p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-600">A clear start</p><h2 className="mt-3 text-4xl font-bold text-slate-900">Share the shipment details that matter</h2><p className="mt-5 text-lg leading-relaxed text-slate-600">Collection and delivery address, pallet or package count, dimensions, weight and cargo readiness are enough for us to start assessing your options.</p><ul className="mt-7 space-y-3 text-slate-700"><li>• Tailored to cargo and route</li><li>• One operational contact</li><li>• No fixed-price promises without shipment details</li></ul></div><div id="quote"><EnglishQuoteForm /></div></div></section>
-  </main><EnglishFooter /></>;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [{
+      "@type": "WebPage",
+      "@id": url,
+      url,
+      name: "REX Logistics | Freight Solutions",
+      isPartOf: { "@id": "https://www.rexlojistik.com/#website" },
+      about: { "@id": "https://www.rexlojistik.com/#organization" },
+    }],
+  };
+
+  return <>
+    <SEO title="REX Logistics | Domestic and International Freight Solutions" description="REX Logistics organises domestic and international road, air and sea freight solutions. Request a tailored transport quote." url={url} language="en" alternates={{ tr: "https://www.rexlojistik.com/", en: url }} structuredData={structuredData} />
+    <EnglishHeader />
+    <main>
+      <Hero locale="en" quoteEventName="rex:open-english-quote-form" />
+      <Services locale="en" />
+      <TrackingSection locale="en" />
+      <Features locale="en" />
+      <section id="quote" className="bg-slate-50 py-16 scroll-mt-24">
+        <div className="container mx-auto px-4 text-center sm:px-6 lg:px-8">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-600">A clear start</p>
+          <h2 className="mt-3 font-heading text-3xl font-bold text-navy sm:text-4xl">Tell Us About Your Shipment</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-slate-600">Share the collection and delivery addresses, cargo quantity, dimensions, weight and readiness date. We will assess a suitable transport option.</p>
+          <div className="mt-7"><EnglishQuoteLaunchButton label="Get a Quote" /></div>
+        </div>
+      </section>
+    </main>
+    <EnglishFooter />
+  </>;
 }

@@ -1,12 +1,19 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 
 export function EnglishFooter() {
-  return <footer className="bg-[#1a1f2e] text-white">
-    <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-3 lg:px-8">
-      <div><Image src="/rexlogo.png" alt="REX Logistics" width={270} height={60} className="mb-6 w-56" /><p className="text-sm leading-relaxed text-slate-200">Founded in 2022 on its founder's logistics experience since 2002, REX Logistics offers planned, reliable solutions for domestic and international transport.</p></div>
-      <div><h2 className="mb-4 text-lg font-semibold">Services</h2><ul className="space-y-2 text-sm text-slate-200"><li><Link href="/en/domestic-part-load-transport">Domestic part loads</Link></li><li><Link href="/en/full-truckload-transport">Full truckload</Link></li><li><Link href="/en/international-road-freight">International road freight</Link></li><li><Link href="/en/air-freight">Air freight</Link></li><li><Link href="/en/sea-freight">Sea freight</Link></li></ul></div>
-      <div><h2 className="mb-4 text-lg font-semibold">Contact</h2><address className="not-italic text-sm leading-relaxed text-slate-200">Folkart Towers A Tower No:47/B<br />Floor 26, Suite 2601<br />Bayraklı, İzmir, Türkiye<br /><a className="mt-3 block" href="tel:+902322290014">+90 232 229 00 14</a><a href="mailto:info@rexlojistik.com">info@rexlojistik.com</a></address></div>
-    </div><div className="border-t border-white/10 px-4 py-5 text-center text-sm text-slate-300">© 2026 REX Logistics. <Link href="/gizlilik-politikasi" className="underline">Privacy notice</Link> (Turkish)</div>
-  </footer>;
+  return (
+    <footer className="bg-[#1a1f2e] text-white">
+      <div className="max-w-7xl mx-auto px-4 pt-14 sm:px-6 sm:pt-16 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
+          <div><div className="h-[28px] flex items-center mb-16 pt-6"><Image src="/rexlogo.png" alt="REX Logistics" width={270} height={60} className="w-full max-w-[270px] h-auto" /></div><p className="text-sm text-white">Founded in 2022 on its founder&apos;s logistics experience since 2002, REX Logistics provides reliable, planned solutions for domestic and international freight needs.</p></div>
+          <div><h3 className="text-lg font-semibold mb-4">SERVICES</h3><ul className="space-y-2 text-sm"><li><Link href="/en/domestic-part-load-transport" className="hover:text-orange-300 transition-colors">Domestic Part Loads</Link></li><li><Link href="/en/full-truckload-transport" className="hover:text-orange-300 transition-colors">Domestic Full Truckload</Link></li><li><Link href="/en/international-road-freight" className="hover:text-orange-300 transition-colors">International Road Freight</Link></li><li><Link href="/en/air-freight" className="hover:text-orange-300 transition-colors">Air Freight</Link></li><li><Link href="/en/sea-freight" className="hover:text-orange-300 transition-colors">Sea Freight</Link></li><li><Link href="/en/express-courier" className="hover:text-orange-300 transition-colors">International Express Courier</Link></li><li><Link href="/en/warehousing-services" className="hover:text-orange-300 transition-colors">Warehousing Services</Link></li></ul></div>
+          <div><h3 className="text-lg font-semibold mb-4">COMPANY</h3><ul className="space-y-2 text-sm"><li><Link href="/bilgi-merkezi" className="hover:text-white/80 transition-colors">Knowledge Centre</Link></li><li><Link href="/en/about" className="hover:text-white/80 transition-colors">About Us</Link></li><li><Link href="/en/#services" className="hover:text-white/80 transition-colors">Our Services</Link></li><li><Link href="/login" title="REX Transport Management System" className="hover:text-white/80 transition-colors">REX TMS</Link></li><li><Link href="/en/contact" className="hover:text-white/80 transition-colors">Contact</Link></li></ul></div>
+          <div><h3 className="text-lg font-semibold mb-4">Head Office — İzmir</h3><div className="space-y-2 text-sm"><p>Folkart Towers A Tower No:47/B<br />Floor 26, Suite 2601</p><p>Adalet Mahallesi, Manas Boulevard<br />Bayraklı, 35630, İzmir</p><p className="pt-2">+90 (232) 229 0014</p><p>+90 (543) 401 0755</p></div></div>
+          <div><h3 className="font-semibold text-white mb-4">Manisa Office</h3><div className="space-y-2 text-sm"><p className="text-white">Rainbow Life Shopping Centre</p><p className="text-white">Muradiye Mahallesi, Manolya Sokak No: 228/1</p><p className="text-white">A Blok No: 28 Yunusemre, 45140, Manisa</p><p className="text-white pt-2">+90 (236) 230 00 13</p><p className="text-white">+90 (543) 401 0755</p></div></div>
+        </div>
+        <div className="border-t border-white/10 mt-8 pt-8 text-sm text-center"><p className="mb-2">© 2026 REX Logistics. All rights reserved.</p><p className="mb-3"><a href="mailto:info@rexlojistik.com" className="text-white hover:text-white/80 transition-colors">info@rexlojistik.com</a></p><div className="flex justify-center gap-4 flex-wrap"><Link href="/gizlilik-politikasi" className="text-white/80 hover:text-white transition-colors">Privacy Notice (Turkish)</Link><Link href="/kullanim-kosullari" className="text-white/80 hover:text-white transition-colors">Terms of Use (Turkish)</Link><Link href="/kvkk-aydinlatma-metni" className="text-white/80 hover:text-white transition-colors">Data Protection (Turkish)</Link></div></div>
+      </div>
+    </footer>
+  );
 }

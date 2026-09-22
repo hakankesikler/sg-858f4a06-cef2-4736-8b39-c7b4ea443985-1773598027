@@ -14,7 +14,7 @@ interface Service {
   badge?: string;
 }
 
-const services: Service[] = [
+const turkishServices: Service[] = [
   {
     icon: Truck,
     title: "Yurtiçi Komple Taşımacılık",
@@ -67,22 +67,35 @@ const services: Service[] = [
   },
 ];
 
-export function Services() {
+const englishServices: Service[] = [
+  { icon: Truck, title: "Domestic Full Truckload Transport", description: "Door-to-door transport solutions for commercial and industrial loads that require a full vehicle across Türkiye.", href: "/en/full-truckload-transport" },
+  { icon: MapPin, title: "Domestic Part-Load Transport", description: "Door-to-door transport solutions from one pallet to all 81 provinces and their districts across Türkiye.", href: "/en/domestic-part-load-transport", featured: true, badge: "Across Türkiye" },
+  { icon: Plane, title: "Air Freight", description: "Air freight solutions for international shipments, planned around cargo dimensions, weight, origin and destination.", href: "/en/air-freight" },
+  { icon: Globe, title: "International Road Freight", description: "Planned, door-to-door road freight solutions for part and full loads between Türkiye and Europe.", href: "/en/international-road-freight" },
+  { icon: Package, title: "International Express Courier", description: "International express shipping to more than 220 countries and regions, with collection options from abroad to Türkiye.", href: "/en/express-courier" },
+  { icon: Ship, title: "Sea Freight", description: "LCL part-load and FCL full-container transport solutions for international cargo.", href: "/en/sea-freight" },
+  { icon: Warehouse, title: "Warehousing Services", description: "Flexible logistics solutions for storage, stock tracking, handling and preparing cargo for dispatch.", href: "/en/warehousing-services" },
+  { icon: Box, title: "Packing and Handling", description: "Operational solutions for packing, labelling, palletising and preparing cargo for dispatch.", href: "/en/packing-and-handling" },
+];
+
+export function Services({ locale = "tr" }: { locale?: "tr" | "en" }) {
+  const english = locale === "en";
+  const services = english ? englishServices : turkishServices;
   return (
     <section
-      id="hizmetler"
+      id={english ? "services" : "hizmetler"}
       className="relative overflow-hidden border-t border-slate-100 bg-gradient-to-b from-white via-slate-50/70 to-white py-14 sm:py-20 lg:py-24"
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-14">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-orange-600 sm:text-sm">
-            Lojistik Çözümleri
+            {english ? "Logistics Solutions" : "Lojistik Çözümleri"}
           </p>
           <h2 className="font-heading text-3xl font-bold text-navy sm:text-4xl lg:text-5xl">
-            Hizmetlerimiz
+            {english ? "Our Services" : "Hizmetlerimiz"}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            Yurtiçi ve uluslararası taşımacılık ihtiyaçlarınıza uygun lojistik çözümlerini tek noktadan planlıyoruz.
+            {english ? "We plan logistics solutions for domestic and international transport needs from one point of contact." : "Yurtiçi ve uluslararası taşımacılık ihtiyaçlarınıza uygun lojistik çözümlerini tek noktadan planlıyoruz."}
           </p>
         </div>
 
@@ -93,7 +106,7 @@ export function Services() {
               key={`${service.href}-${index}`}
               href={service.href}
               className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-4"
-              aria-label={`${service.title} detaylarını inceleyin`}
+              aria-label={english ? `Explore ${service.title}` : `${service.title} detaylarını inceleyin`}
             >
               <Card
                 className={cn(
@@ -137,7 +150,7 @@ export function Services() {
                     {service.description}
                   </p>
                   <span className="mt-6 inline-flex items-center text-sm font-semibold text-orange-600 transition-colors duration-200 group-hover:text-orange-700">
-                    Detayları İncele <span className="ml-2" aria-hidden="true">→</span>
+                    {english ? "Explore Service" : "Detayları İncele"} <span className="ml-2" aria-hidden="true">→</span>
                   </span>
                 </CardContent>
               </Card>
