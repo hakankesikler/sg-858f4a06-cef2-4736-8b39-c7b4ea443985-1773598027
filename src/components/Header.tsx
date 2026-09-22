@@ -7,6 +7,7 @@ import { ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuoteForm } from "@/components/QuoteForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 type ServiceLink = {
   href: string;
@@ -96,7 +97,7 @@ export function Header() {
               <Image src="/rex.png" alt="REX Lojistik" width={180} height={77} priority className="h-[57px] w-auto object-contain sm:h-[77px]" />
             </Link>
 
-            <nav aria-label="Ana menü" className="hidden items-center gap-3 whitespace-nowrap text-sm lg:flex xl:gap-4 2xl:gap-6 2xl:text-base">
+            <nav aria-label="Ana menü" className="hidden items-center gap-3 whitespace-nowrap text-sm xl:flex xl:gap-4 2xl:gap-6 2xl:text-base">
               <div className="group relative">
                 <Link href="/#hizmetler" className="flex items-center gap-1 py-7 font-medium text-gray-700 transition-colors hover:text-orange-500">
                   Hizmetler <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -143,7 +144,8 @@ export function Header() {
               </Link>
             </nav>
 
-            <div className="hidden items-center gap-4 lg:flex">
+            <div className="hidden items-center gap-4 xl:flex">
+              <LanguageSwitcher locale="tr" />
               <a href="tel:+905434010755" className="hidden items-center gap-2 whitespace-nowrap text-gray-700 transition-colors hover:text-orange-500 2xl:flex">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -153,20 +155,23 @@ export function Header() {
               <Button size="lg" className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700" onClick={openQuoteForm}>Teklif Al</Button>
             </div>
 
-            <button onClick={() => setMobileMenuOpen(true)} className="p-2 text-gray-700 transition-colors hover:text-orange-500 lg:hidden" aria-label="Menüyü aç">
+            <button onClick={() => setMobileMenuOpen(true)} className="p-2 text-gray-700 transition-colors hover:text-orange-500 xl:hidden" aria-label="Menüyü aç">
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
           </div>
         </div>
       </header>
 
-      {mobileMenuOpen && <div className="fixed inset-0 z-50 bg-black/50 lg:hidden" onClick={closeMobileMenu} />}
+      {mobileMenuOpen && <div className="fixed inset-0 z-50 bg-black/50 xl:hidden" onClick={closeMobileMenu} />}
 
-      <div className={`fixed bottom-0 right-0 top-0 z-50 w-80 max-w-[85vw] transform bg-white transition-transform duration-300 ease-in-out lg:hidden ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
+      <div className={`fixed bottom-0 right-0 top-0 z-50 w-80 max-w-[85vw] transform bg-white transition-transform duration-300 ease-in-out xl:hidden ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-gray-200 p-4">
             <Link href="/" onClick={closeMobileMenu} aria-label="REX Lojistik ana sayfa"><Image src="/rex.png" alt="REX Lojistik" width={94} height={40} className="h-10 w-auto object-contain" /></Link>
-            <button onClick={closeMobileMenu} className="p-2 text-gray-700 hover:text-orange-500" aria-label="Menüyü kapat"><X className="h-6 w-6" /></button>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher locale="tr" />
+              <button onClick={closeMobileMenu} className="p-2 text-gray-700 hover:text-orange-500" aria-label="Menüyü kapat"><X className="h-6 w-6" /></button>
+            </div>
           </div>
 
           <nav aria-label="Mobil menü" className="flex-1 overflow-y-auto p-5">

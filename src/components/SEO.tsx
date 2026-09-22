@@ -8,6 +8,8 @@ interface SEOProps {
   noIndex?: boolean;
   keywords?: string[] | string;
   structuredData?: Record<string, unknown> | Record<string, unknown>[];
+  language?: "tr" | "en";
+  alternates?: { tr: string; en: string };
 }
 
 export function SEO({
@@ -18,6 +20,8 @@ export function SEO({
   noIndex = false,
   keywords,
   structuredData,
+  language = "tr",
+  alternates,
 }: SEOProps) {
   const keywordContent = Array.isArray(keywords)
     ? keywords.join(", ")
@@ -37,13 +41,13 @@ export function SEO({
       <meta name="description" content={description} />
       <meta name="keywords" content={keywordContent} />
       <meta name="author" content="Rex Lojistik" />
-      <meta name="language" content="tr" />
+      <meta name="language" content={language} />
       <meta name="robots" content={noIndex ? "noindex, nofollow" : "index, follow"} />
       
       {/* Open Graph */}
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="Rex Lojistik" />
-      <meta property="og:locale" content="tr_TR" />
+      <meta property="og:locale" content={language === "en" ? "en_GB" : "tr_TR"} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={absoluteImage} />
@@ -60,6 +64,11 @@ export function SEO({
       
       {/* Canonical */}
       {url && <link rel="canonical" href={url} />}
+      {alternates && <>
+        <link rel="alternate" hrefLang="tr" href={alternates.tr} />
+        <link rel="alternate" hrefLang="en" href={alternates.en} />
+        <link rel="alternate" hrefLang="x-default" href={alternates.tr} />
+      </>}
       
       {/* Additional SEO */}
       <meta name="theme-color" content="#D84315" />

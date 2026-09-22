@@ -1,0 +1,9 @@
+import { SEO } from "@/components/SEO";
+import { EnglishFooter } from "@/components/EnglishFooter";
+import { EnglishHeader } from "@/components/EnglishHeader";
+import { EnglishQuoteForm } from "@/components/EnglishQuoteForm";
+
+export default function EnglishContact() {
+  const url = "https://www.rexlojistik.com/en/contact";
+  return <><SEO title="Contact REX Logistics" description="Contact REX Logistics for domestic and international freight planning and a tailored transport quote." url={url} language="en" alternates={{ tr: "https://www.rexlojistik.com/iletisim", en: url }} /><EnglishHeader /><main><section className="bg-slate-900 px-4 py-16 text-white sm:px-6 lg:px-8"><div className="mx-auto max-w-6xl"><p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-300">Contact</p><h1 className="mt-3 text-5xl font-bold">Tell us about your shipment</h1><p className="mt-5 max-w-3xl text-xl leading-relaxed text-slate-200">Share the route and cargo essentials. We will assess a suitable logistics option.</p></div></section><section className="px-4 py-14 sm:px-6 lg:px-8"><div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-2"><address className="not-italic text-lg leading-relaxed text-slate-700"><h2 className="text-3xl font-bold text-slate-900">REX Logistics</h2><p className="mt-5 font-semibold text-slate-900">Head Office — İzmir</p><p>Folkart Towers A Tower No:47/B<br />Floor 26, Suite 2601<br />Adalet Mahallesi, Manas Boulevard<br />Bayraklı, 35630, İzmir, Türkiye</p><p className="mt-5"><a href="tel:+902322290014">+90 232 229 00 14</a><br /><a href="tel:+905434010755">+90 543 401 07 55</a><br /><a href="mailto:info@rexlojistik.com">info@rexlojistik.com</a></p><p className="mt-8 font-semibold text-slate-900">Manisa Office</p><p>Rainbow Life AVM, Muradiye Mahallesi<br />Manolya Sokak No: 228/1, A Block No: 28<br />Yunusemre, 45140, Manisa, Türkiye</p></address><EnglishQuoteForm /></div></section></main><EnglishFooter /></>;
+}

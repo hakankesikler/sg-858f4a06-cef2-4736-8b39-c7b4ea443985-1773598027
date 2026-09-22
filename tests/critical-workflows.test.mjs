@@ -1063,7 +1063,7 @@ test("public logistics services have dedicated SEO pages and internal navigation
     "hakkimizda",
     "iletisim",
   ];
-  const [content, pageTemplate, structuredData, seo, header, footer, services, sitemap, robots, nextConfig] = await Promise.all([
+  const [content, pageTemplate, structuredData, seo, header, footer, services, sitemap, robots, nextConfig, englishPaths] = await Promise.all([
     read("src/content/marketing-pages.ts"),
     read("src/components/MarketingPage.tsx"),
     read("src/lib/structured-data.ts"),
@@ -1074,6 +1074,7 @@ test("public logistics services have dedicated SEO pages and internal navigation
     read("public/sitemap.xml"),
     read("public/robots.txt"),
     read("next.config.mjs"),
+    read("src/lib/public-locale.ts"),
   ]);
 
   for (const slug of slugs) {
@@ -1129,7 +1130,32 @@ test("public logistics services have dedicated SEO pages and internal navigation
     .map((match) => match[1])
     .sort();
   const standalonePublicRoutes = ["/ldm-hesaplama", "/bilgi-merkezi", "/bilgi-merkezi/lcl-nedir", "/bilgi-merkezi/mikro-ihracat-etgb"];
-  assert.deepEqual(sitemapUrls, ["/", ...registeredSlugs.map((slug) => `/${slug}`), ...standalonePublicRoutes].sort());
+  const englishPublicRoutes = [...new Set([...englishPaths.matchAll(/"(\/en(?:\/[^"\n]+)?)"/g)].map((match) => match[1]))];
+  assert.deepEqual(sitemapUrls, ["/", ...registeredSlugs.map((slug) => `/${slug}`), ...standalonePublicRoutes, ...englishPublicRoutes].sort());
+});
+
+test("English public routes are explicit, indexable and linked to their Turkish equivalents", async () => {
+  const [locale, seo, header, home, route, pages, sitemap] = await Promise.all([
+    read("src/lib/public-locale.ts"),
+    read("src/components/SEO.tsx"),
+    read("src/components/LanguageSwitcher.tsx"),
+    read("src/pages/en/index.tsx"),
+    read("src/pages/en/[slug].tsx"),
+    read("src/content/english-public-pages.ts"),
+    read("public/sitemap.xml"),
+  ]);
+  for (const path of ["/en", "/en/domestic-part-load-transport", "/en/full-truckload-transport", "/en/international-road-freight", "/en/air-freight", "/en/express-courier", "/en/sea-freight", "/en/warehousing-services", "/en/packing-and-handling", "/en/about", "/en/contact"]) {
+    assert.match(sitemap, new RegExp(`${path}</loc>`));
+  }
+  assert.match(locale, /"\/yurtici-parsiyel-tasimacilik": "\/en\/domestic-part-load-transport"/);
+  assert.match(header, /languagePath\(sourcePath, "tr"\)/);
+  assert.match(header, /languagePath\(sourcePath, "en"\)/);
+  assert.match(seo, /hrefLang="en"/);
+  assert.match(seo, /language === "en" \? "en_GB" : "tr_TR"/);
+  assert.match(home, /EnglishQuoteForm/);
+  assert.match(route, /getStaticPaths/);
+  assert.match(pages, /International Express Courier/);
+  assert.doesNotMatch(pages, /own fleet|our warehouses|our carrier network/i);
 });
 
 test("private and utility routes emit explicit noindex directives", async () => {

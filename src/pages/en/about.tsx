@@ -1,0 +1,8 @@
+import { SEO } from "@/components/SEO";
+import { EnglishFooter } from "@/components/EnglishFooter";
+import { EnglishHeader } from "@/components/EnglishHeader";
+
+export default function EnglishAbout() {
+  const url = "https://www.rexlojistik.com/en/about";
+  return <><SEO title="About REX Logistics" description="Learn about REX Logistics and our planned approach to domestic and international transport." url={url} language="en" alternates={{ tr: "https://www.rexlojistik.com/hakkimizda", en: url }} /><EnglishHeader /><main><section className="bg-slate-900 px-4 py-20 text-white sm:px-6 lg:px-8"><div className="mx-auto max-w-4xl"><p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-300">About REX Logistics</p><h1 className="mt-3 text-5xl font-bold">A planned approach to every shipment</h1><p className="mt-6 text-xl leading-relaxed text-slate-200">Founded in 2022 on its founder's logistics experience since 2002, REX Logistics organises domestic and international transport solutions around real shipment needs.</p></div></section><section className="px-4 py-16 sm:px-6 lg:px-8"><div className="mx-auto max-w-4xl space-y-9 text-lg leading-relaxed text-slate-700"><h2 className="text-3xl font-bold text-slate-900">Our role</h2><p>We plan and coordinate transport solutions for commercial cargo. Our work starts with accurate cargo, route and timing information and continues through collection and delivery planning with a single operational contact.</p><p>We do not present third-party carriers, facilities or vehicle ownership as our own. The focus is on an appropriate, transparent and well-coordinated solution for each shipment.</p></div></section></main><EnglishFooter /></>;
+}
