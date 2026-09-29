@@ -91,10 +91,10 @@ export default function KonteynerOlculeriPage() {
             <h2 className="mt-2 text-3xl font-bold text-slate-950">Ölçü tablosundan sonra CBM hesabı</h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">Koli ve palet ölçülerini hesaplayarak yükünüze en yakın kapasiteyi belirleyebilirsiniz. Net hacim bilgisi, doğru ekipmanla daha dengeli maliyet ve daha akıcı bir yükleme planı kurulmasını kolaylaştırır.</p>
           </div>
-          <Link href="/cbm-hesaplama" className="group flex items-center justify-between rounded-2xl border border-orange-200 bg-orange-50 p-6 text-lg font-bold text-orange-800 transition hover:border-orange-400 hover:shadow-lg">
-            Ücretsiz CBM hesaplama aracını kullanın
-            <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-          </Link>
+          <div className="space-y-3">
+            <Link href="/cbm-hesaplama" className="group flex items-center justify-between rounded-2xl border border-orange-200 bg-orange-50 p-6 text-lg font-bold text-orange-800 transition hover:border-orange-400 hover:shadow-lg">Ücretsiz CBM hesaplama aracını kullanın <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1" aria-hidden="true" /></Link>
+            <Link href="/yukleme-planlayici" className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6 text-lg font-bold text-slate-900 transition hover:border-orange-400 hover:shadow-lg">Paletleri 3D yükleme planında karşılaştırın <ArrowRight className="h-6 w-6 text-orange-600 transition-transform group-hover:translate-x-1" aria-hidden="true" /></Link>
+          </div>
         </section>
       </div>
     </SeaFreightResourcePage>

@@ -1145,7 +1145,7 @@ test("public logistics services have dedicated SEO pages and internal navigation
   const sitemapUrls = [...sitemap.matchAll(/<loc>https:\/\/www\.rexlojistik\.com(\/[^<]*)<\/loc>/g)]
     .map((match) => match[1])
     .sort();
-  const standalonePublicRoutes = ["/ldm-hesaplama", "/bilgi-merkezi", "/bilgi-merkezi/lcl-nedir", "/bilgi-merkezi/mikro-ihracat-etgb"];
+  const standalonePublicRoutes = ["/ldm-hesaplama", "/bilgi-merkezi", "/bilgi-merkezi/lcl-nedir", "/bilgi-merkezi/mikro-ihracat-etgb", "/yukleme-planlayici", "/bilgi-merkezi/konteynere-kac-palet-sigar", "/bilgi-merkezi/tira-kac-palet-yuklenir", "/bilgi-merkezi/palet-istifleme-kosullari", "/bilgi-merkezi/paletli-yuk-packing-list"];
   const englishPublicRoutes = [...new Set([...englishPaths.matchAll(/"(\/en(?:\/[^"\n]+)?)"/g)].map((match) => match[1]))];
   assert.deepEqual(sitemapUrls, ["/", ...registeredSlugs.map((slug) => `/${slug}`), ...standalonePublicRoutes, ...englishPublicRoutes].sort());
 });
@@ -1707,7 +1707,7 @@ test("the detailed quote form is rendered only from the header", async () => {
     read("src/components/ExpressQuotePlanner.tsx"),
   ]);
 
-  assert.match(header, /<QuoteForm\s*\/>/);
+  assert.match(header, /<QuoteForm\s+prefill=\{quotePrefill\}\s*\/>/);
   assert.match(header, /onClick=\{openQuoteForm\}>Teklif Al/);
   assert.match(header, /rex:open-quote-form/);
   assert.match(hero, /rex:open-quote-form/);

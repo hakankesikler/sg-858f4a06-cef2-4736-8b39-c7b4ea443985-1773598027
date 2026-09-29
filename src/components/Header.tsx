@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { QuoteForm } from "@/components/QuoteForm";
+import { QuoteForm, type QuotePrefill } from "@/components/QuoteForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
@@ -66,24 +66,31 @@ const toolLinks = [
   { href: "/hava-kargo-hacimsel-agirlik-hesaplama", label: "Hava Kargo Hacimsel Ağırlık" },
   { href: "/express-kargo-hacimsel-agirlik-hesaplama", label: "Express Kargo Hacimsel Ağırlık" },
   { href: "/konteyner-olculeri", label: "Konteyner Ölçüleri" },
+  { href: "/yukleme-planlayici", label: "3D Yükleme Planlayıcı" },
 ];
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileService, setExpandedMobileService] = useState<string | null>(null);
   const [quoteFormOpen, setQuoteFormOpen] = useState(false);
+  const [quotePrefill, setQuotePrefill] = useState<QuotePrefill | null>(null);
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
     setExpandedMobileService(null);
   };
   const openQuoteForm = () => {
+    setQuotePrefill(null);
     setQuoteFormOpen(true);
     closeMobileMenu();
   };
 
   useEffect(() => {
-    const handleQuoteRequest = () => setQuoteFormOpen(true);
+    const handleQuoteRequest = (event: Event) => {
+      const detail = (event as CustomEvent<QuotePrefill>).detail;
+      setQuotePrefill(detail && Array.isArray(detail.cargos) ? detail : null);
+      setQuoteFormOpen(true);
+    };
     window.addEventListener("rex:open-quote-form", handleQuoteRequest);
     return () => window.removeEventListener("rex:open-quote-form", handleQuoteRequest);
   }, []);
@@ -236,7 +243,7 @@ export function Header() {
       <Dialog open={quoteFormOpen} onOpenChange={setQuoteFormOpen}>
         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-slate-800 bg-slate-900 p-6">
           <DialogHeader><DialogTitle className="mb-4 text-2xl font-bold text-white">Teklif Al</DialogTitle></DialogHeader>
-          <QuoteForm />
+          <QuoteForm prefill={quotePrefill} />
         </DialogContent>
       </Dialog>
     </>

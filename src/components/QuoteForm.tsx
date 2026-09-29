@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -52,6 +52,7 @@ const formSchema = z.object({
   transportDetail: z.string().optional(),
   loadingPoint: z.string().min(2, "Yükleme noktası giriniz"),
   deliveryPoint: z.string().min(2, "Teslimat noktası giriniz"),
+  readyDate: z.string().optional(),
   specialRequirements: z.string().optional(),
   kvkkAcknowledged: z.boolean().refine((value) => value, {
     message: "KVKK Aydınlatma Metni hakkında bilgilendirildiğinizi işaretleyiniz",
@@ -69,6 +70,13 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 type CargoData = z.infer<typeof cargoSchema>;
+export type QuotePrefill = {
+  cargos: CargoData[];
+  serviceType: "domestic" | "international";
+  transportMode: "road" | "sea";
+  transportDetail: string;
+  specialRequirements: string;
+};
 
 const domesticRoadOptions = [
   { value: "pallet", label: "Palet" },
@@ -104,7 +112,7 @@ const seawayOptions = [
   { value: "container-40", label: "40 cc Konteyner" },
 ];
 
-export function QuoteForm() {
+export function QuoteForm({ prefill }: { prefill?: QuotePrefill | null }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -139,6 +147,16 @@ export function QuoteForm() {
   const serviceType = watch("serviceType");
   const transportMode = watch("transportMode");
   const transportDetail = watch("transportDetail");
+
+  useEffect(() => {
+    if (!prefill) return;
+    setCargos(prefill.cargos.map((cargo) => ({ ...cargo })));
+    setCargoErrors(prefill.cargos.map(() => ({})));
+    setValue("serviceType", prefill.serviceType);
+    setValue("transportMode", prefill.transportMode);
+    setValue("transportDetail", prefill.transportDetail);
+    setValue("specialRequirements", prefill.specialRequirements);
+  }, [prefill, setValue]);
 
   const getTransportOptions = () => {
     if (serviceType === "domestic") {
@@ -255,6 +273,7 @@ export function QuoteForm() {
         },
         body: JSON.stringify({
           ...data,
+          specialRequirements: [data.specialRequirements, data.readyDate ? `Yük hazır olma tarihi: ${data.readyDate}` : ""].filter(Boolean).join("\n").slice(0, 2000),
           cargos,
           submissionId,
           captchaToken,
@@ -367,6 +386,10 @@ export function QuoteForm() {
                 <Input id="deliveryPoint" {...register("deliveryPoint")} className="mt-1 bg-white/95" placeholder="İl / İlçe" />
                 {errors.deliveryPoint && <p className="mt-1 text-sm text-red-300">{errors.deliveryPoint.message}</p>}
               </div>
+            </div>
+            <div className="max-w-sm">
+              <Label htmlFor="readyDate" className="text-white">Yük hazır olma tarihi</Label>
+              <Input id="readyDate" type="date" {...register("readyDate")} className="mt-1 bg-white/95" />
             </div>
           </div>
 
