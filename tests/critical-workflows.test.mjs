@@ -33,7 +33,7 @@ test("LCL knowledge guide is discoverable, linked and free of escaped source new
     assert.ok(section?.includes('"LCL nedir? Rehberimiz'));
     assert.ok(section?.includes('{ anchor: "LCL nedir?", href: "/bilgi-merkezi/lcl-nedir" }'));
   }
-  assert.match(guide, /href="\/denizyolu-tasimaciligi#sea-whatsapp-planner-heading"/);
+  assert.match(guide, /href="\/denizyolu-parsiyel-tasimacilik#sea-lcl-whatsapp-planner-heading"/);
   assert.ok(planner.includes('id={`${variant}-whatsapp-planner-heading`}'));
   for (const source of [header, footer]) assert.match(source, /href="\/bilgi-merkezi"/);
   assert.match(hub, /href=\{lclGuide.path\}/);
