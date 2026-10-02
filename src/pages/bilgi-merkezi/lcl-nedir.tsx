@@ -96,6 +96,11 @@ export default function LclGuidePage() {
                 <p>Konteyner dolduracak miktarı beklemeden daha küçük partiler göndermek istediğinizde LCL değerlendirilebilir. Stokları parça parça yenileyen, teslim planı konsolidasyon programına uyabilen ve denizyoluna uygun ambalaj kullanan gönderiler bu modele adaydır.</p>
                 <p>Ancak “şu CBM'nin altında her zaman LCL” şeklinde evrensel bir eşik yoktur. Hacim büyüdükçe veya yerel masraflar yükseldikçe FCL toplamda daha uygun olabilir. Karar, aynı kapsamda hazırlanmış iki teklif üzerinden verilmelidir.</p>
               </section>
+              <section className="rounded-2xl border border-orange-200 bg-orange-50 p-6 sm:p-7" aria-labelledby="lcl-uygunluk">
+                <h2 id="lcl-uygunluk" className={headingClass}>Yükünüz LCL taşımaya uygun mu?</h2>
+                <p className="mt-4">Konteyneri doldurmayan kolili veya paletli yüklerde; ambalaj, istiflenebilirlik ve teslim takvimi konsolidasyona uygunsa LCL değerlendirilebilir. Kesin uygunluk, ürün özellikleri ve çıkış-varış hattının kabul koşullarıyla teyit edilir.</p>
+                <p className="mt-4">Yükünüz için alım, konsolidasyon ve teslim kapsamının nasıl planlandığını <Link href="/denizyolu-parsiyel-tasimacilik" className={linkClass}>Denizyolu Parsiyel Taşımacılık (LCL)</Link> hizmet sayfasında inceleyebilirsiniz.</p>
+              </section>
               <section id="uygun-olmayan-yukler" className={sectionClass}>
                 <h2 className={headingClass}>Hangi yüklerde uygun olmayabilir?</h2>
                 <p>Çok acil teslim gerektiren, ek elleçlemeye dayanamayan veya standart konteyner/depo ekipmanıyla güvenli taşınamayan yükler için başka seçenekler gerekebilir.</p>
@@ -130,9 +135,9 @@ export default function LclGuidePage() {
                 <div className="divide-y divide-slate-200">{lclFaq.map(item => <details key={item.question} className="py-5"><summary className="cursor-pointer font-semibold text-slate-950">{item.question}</summary><p className="mt-3">{item.answer}</p></details>)}</div>
               </section>
               <section className="rounded-2xl bg-slate-950 p-7 text-white sm:p-9" aria-labelledby="lcl-teklif">
-                <h2 id="lcl-teklif" className="text-2xl font-bold sm:text-3xl">Yükünüz LCL mi FCL mi olmalı?</h2>
-                <p className="mt-4 text-slate-300">Ölçü, brüt ağırlık, istiflenebilirlik, rota ve hazır olma tarihini paylaşın. Uygun taşıma seçeneğini toplam maliyet ve teslim planıyla birlikte değerlendirelim.</p>
-                <Link href="/denizyolu-tasimaciligi#sea-whatsapp-planner-heading" className="mt-6 inline-flex rounded-xl bg-orange-600 px-6 py-3 font-bold text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300">Denizyolu Teklifi Al</Link>
+                <h2 id="lcl-teklif" className="text-2xl font-bold sm:text-3xl">LCL navlun teklifi alın</h2>
+                <p className="mt-4 text-slate-300">Çıkış ve varış noktalarını, koli/palet adedini, ambalaj dahil boy × en × yükseklik ölçülerini, toplam brüt ağırlığı ve yükün hazır olma tarihini paylaşın. Ürün tanımı ve istiflenebilirlik bilgisini de ekleyin; LCL seçeneğini toplam maliyet ve teslim planıyla birlikte değerlendirelim.</p>
+                <Link href="/denizyolu-parsiyel-tasimacilik#sea-lcl-whatsapp-planner-heading" className="mt-6 inline-flex rounded-xl bg-orange-600 px-6 py-3 font-bold text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300">LCL navlun teklifi alın</Link>
               </section>
               <section className="border-t border-slate-200 pt-6 text-sm leading-6 text-slate-500" aria-label="Kaynaklar">
                 <h2 className="font-semibold text-slate-700">Kaynaklar</h2>
