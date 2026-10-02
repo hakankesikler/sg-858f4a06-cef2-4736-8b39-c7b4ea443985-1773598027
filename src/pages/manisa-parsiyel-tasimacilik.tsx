@@ -4,7 +4,11 @@ import { marketingPages } from "@/content/marketing-pages";
 
 export default function ManisaParsiyelTasimacilikPage() {
   return (
-    <MarketingPage page={marketingPages["manisa-parsiyel-tasimacilik"]} childrenPlacement="after-sections">
+    <MarketingPage page={{
+        ...marketingPages["manisa-parsiyel-tasimacilik"],
+        seoTitle: "Manisa Parsiyel Taşımacılık | Türkiye Geneli Nakliye | REX",
+        seoDescription: "Manisa çıkışlı parsiyel yüklerinizi Türkiye geneline taşıyoruz. 1 paletten başlayan ticari yükler için adresten alım, planlı sevkiyat ve hızlı teklif alın.",
+      }} childrenPlacement="after-sections">
       <DomesticPartialPlanner
         defaultSenderCity="Manisa"
         eyebrow="Manisa parsiyel teklif hazırlama"
