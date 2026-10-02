@@ -11,8 +11,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Work Sans', 'system-ui', 'sans-serif'],
-        heading: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        sans: ['var(--rex-font-body)', 'system-ui', 'sans-serif'],
+        heading: ['var(--rex-font-heading)', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
