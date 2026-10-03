@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import Link from "next/link";
+import Head from "next/head";
 import {
   ArrowRight,
   Building2,
@@ -98,6 +99,9 @@ export function MarketingPage({
 
   return (
     <>
+      <Head>
+        <link rel="preload" as="image" href="/hero-warehouse.jpg" fetchPriority="high" key="marketing-hero" />
+      </Head>
       <SEO
         title={page.seoTitle}
         description={page.seoDescription}
