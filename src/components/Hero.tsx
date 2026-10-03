@@ -57,6 +57,7 @@ export function Hero({ locale = "tr", quoteEventName = "rex:open-quote-form" }: 
         <img
           {...desktopImageProps}
           alt={content.alt}
+          loading="eager"
           fetchPriority="high"
           className="h-full w-full object-cover object-top"
         />
