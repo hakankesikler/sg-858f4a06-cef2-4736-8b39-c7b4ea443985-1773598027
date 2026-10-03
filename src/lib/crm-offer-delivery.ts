@@ -1,4 +1,4 @@
-import jsPDF from "jspdf";
+import { buildCrmOfferPdf } from "./crm-offer-pdf";
 import { Resend } from "resend";
 
 export type DeliverableCrmOffer = {
@@ -34,66 +34,11 @@ const escapeHtml = (value: unknown) => String(value ?? "")
   .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
   .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 
-const trToPdf = (value: unknown) => String(value ?? "")
-  .replaceAll("Ç", "C").replaceAll("Ğ", "G").replaceAll("İ", "I")
-  .replaceAll("Ö", "O").replaceAll("Ş", "S").replaceAll("Ü", "U")
-  .replaceAll("ç", "c").replaceAll("ğ", "g").replaceAll("ı", "i")
-  .replaceAll("ö", "o").replaceAll("ş", "s").replaceAll("ü", "u");
-
 const amountText = (amount: number, currency: string) => new Intl.NumberFormat("tr-TR", {
   style: "currency", currency, minimumFractionDigits: 2,
 }).format(amount);
 
-export function createCrmOfferPdf(offer: DeliverableCrmOffer, recipient: OfferRecipient) {
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
-  doc.setFillColor(16, 33, 62);
-  doc.rect(0, 0, 210, 35, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
-  doc.text("REX LOJISTIK", 18, 17);
-  doc.setFontSize(10);
-  doc.text("Tasima ve Lojistik Hizmet Teklifi", 18, 25);
-
-  doc.setTextColor(16, 33, 62);
-  doc.setFontSize(15);
-  doc.text(trToPdf(offer.subject), 18, 52);
-  doc.setFontSize(10);
-  const rows = [
-    ["Teklif No", `${offer.offer_no} / V${offer.version_no}`],
-    ["Firma", trToPdf(recipient.company_name)],
-    ["Yetkili", trToPdf(recipient.contact_name || "-")],
-    ["Teklif Tutari", trToPdf(amountText(offer.amount, offer.currency))],
-    ["Gecerlilik", offer.valid_until ? new Date(`${offer.valid_until}T12:00:00`).toLocaleDateString("tr-TR") : "Belirtilmedi"],
-    ["Guzergah", trToPdf([offer.pickup_location, offer.delivery_location].filter(Boolean).join(" -> ") || "Belirtilmedi")],
-    ["Hizmet / Arac", trToPdf([offer.service_type, offer.vehicle_type].filter(Boolean).join(" / ") || "Belirtilmedi")],
-    ["Yuk", trToPdf(offer.cargo_description || "Belirtilmedi")],
-    ["Agirlik / Palet", `${offer.weight_kg || 0} kg / ${offer.pallet_count || 0} palet`],
-    ["Odeme", trToPdf(offer.payment_terms || "Belirtilmedi")],
-  ];
-  let y = 65;
-  for (const [label, value] of rows) {
-    doc.setFont("helvetica", "bold"); doc.text(label, 18, y);
-    doc.setFont("helvetica", "normal"); doc.text(value, 65, y);
-    doc.setDrawColor(225, 231, 239); doc.line(18, y + 3, 192, y + 3); y += 12;
-  }
-  if (offer.crm_offer_items?.length) {
-    y += 2; doc.setFont("helvetica", "bold"); doc.text("Fiyat Kalemleri", 18, y); y += 8;
-    doc.setFont("helvetica", "normal");
-    for (const item of offer.crm_offer_items) {
-      const line = `${trToPdf(item.description)} | ${item.quantity} ${trToPdf(item.unit)} x ${trToPdf(amountText(item.unit_price, offer.currency))} | KDV %${item.tax_rate}`;
-      doc.text(doc.splitTextToSize(line, 174), 18, y); y += 7;
-    }
-  }
-  if (offer.notes) {
-    doc.setFont("helvetica", "bold"); doc.text("Aciklama", 18, y + 4);
-    doc.setFont("helvetica", "normal");
-    doc.text(doc.splitTextToSize(trToPdf(offer.notes), 174), 18, y + 12);
-  }
-  doc.setFontSize(9); doc.setTextColor(90, 103, 123);
-  doc.text("REX Lojistik Tasimacilik Depolama Danismanlik Limited Sirketi", 18, 275);
-  doc.text("info@rexlojistik.com  |  +90 (543) 401 07 55  |  www.rexlojistik.com", 18, 282);
-  return Buffer.from(doc.output("arraybuffer"));
-}
+export const createCrmOfferPdf = buildCrmOfferPdf;
 
 export async function sendCrmOfferEmail(offer: DeliverableCrmOffer, recipient: OfferRecipient) {
   const apiKey = process.env.RESEND_API_KEY;
