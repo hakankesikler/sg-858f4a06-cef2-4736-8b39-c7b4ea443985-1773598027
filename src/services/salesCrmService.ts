@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type CrmStage = "introduction" | "quote_required" | "follow_up" | "won" | "lost";
+export type CrmStage = "introduction" | "quote_required" | "follow_up" | "declined" | "won" | "lost";
 export type ActivityType = "call" | "visit" | "email" | "meeting" | "note";
 export type ActivityOutcome = "reached" | "not_reached" | "introduction_completed" | "positive" | "negative" | "follow_up" | "quote_requested" | "quote_sent" | "no_interest" | "other";
 
@@ -22,6 +22,8 @@ export type CrmOpportunity = {
   first_job_id: string | null;
   first_invoice_id: string | null;
   won_at: string | null;
+  declined_at: string | null;
+  declined_reason: string | null;
   lost_at: string | null;
   lost_reason: string | null;
   created_at: string;

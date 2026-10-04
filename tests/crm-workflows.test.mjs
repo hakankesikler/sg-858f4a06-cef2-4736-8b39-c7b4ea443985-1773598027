@@ -7,6 +7,27 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const read = (path) => readFile(resolve(root, path), "utf8");
 
+test("negative prospect outcomes and former-customer loss remain separate CRM stages", async () => {
+  const [sql, service, screen] = await Promise.all([
+    read("supabase/migrations/20261004120000_crm_declined_vs_lost.sql"),
+    read("src/services/salesCrmService.ts"),
+    read("src/components/modules/SalesCRMModule.tsx"),
+  ]);
+  assert.match(service, /"follow_up" \| "declined" \| "won" \| "lost"/);
+  assert.match(screen, /Olumsuz Sonuçlandır/);
+  assert.match(screen, /Çalışmayı Bıraktı — Kaybedildi/);
+  assert.match(screen, /selected\.stage === "won"/);
+  assert.doesNotMatch(screen, /Kaybedildi Olarak İşaretle/);
+  assert.match(sql, /WHERE o\.stage='lost' AND o\.won_at IS NULL/);
+  assert.match(sql, /OLD\.stage<>'won' OR OLD\.won_at IS NULL/);
+  assert.match(sql, /s\.status IN \('teslim_edildi','Teslim Edildi'\)/);
+  assert.match(sql, /Açık sevkiyatı olan müşteri Kaybedildi yapılamaz/);
+  assert.match(sql, /count\(\*\) FILTER \(WHERE v\.won_at::date BETWEEN p_from AND p_to\) won/);
+  assert.match(sql, /UPDATE public\.crm_tasks SET status='cancelled'/);
+  assert.match(sql, /CREATE TRIGGER rex_crm_terminal_activity_guard/);
+  assert.match(sql, /CREATE TRIGGER rex_crm_terminal_offer_guard/);
+});
+
 test("CRM customer records are archived and audited instead of hard-deleted", async () => {
   const [sql, service, screen] = await Promise.all([
     read("supabase/migrations/20260827160000_crm_customer_security.sql"),

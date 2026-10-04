@@ -1964,7 +1964,8 @@ test("sales CRM preserves the complete quote-to-first-invoice funnel", async () 
   assert.match(service, /createJobFromQuote/);
   assert.match(screen, /Müşteri Görüşmeleri ve Teklif Süreci/);
   assert.match(screen, /Satış Temsilcisi Performansı/);
-  assert.match(screen, /İlk iş emri onaylanıp sevkiyat tamamlandıktan/);
+  assert.match(screen, /Tanıtım veya teklif olumsuz sonuçlanırsa/);
+  assert.match(screen, /önce kazanılmış, gerçek sevkiyat yapmış/);
   assert.match(permissions, /crm\.sales_pipeline/);
   assert.match(workspace, /Satış CRM/);
 });
