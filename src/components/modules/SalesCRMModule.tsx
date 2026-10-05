@@ -14,9 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { hasPermission, type PermissionMap } from "@/lib/staff-permissions";
 import { downloadExcel, readExcelObjects } from "@/lib/excel";
 import { GpslineDeliveryEstimator } from "@/components/GpslineDeliveryEstimator";
+import { AcceptedOfferJobDialog } from "@/components/modules/AcceptedOfferJobDialog";
 import {
   salesCrmService, type ActivityOutcome, type ActivityType, type CrmActivity,
-  type CrmContact, type CrmNotification, type CrmOffer, type CrmOfferItem, type CrmOpportunity, type CrmStage, type CrmTask, type Customer360, type QuoteDetail,
+  type CrmContact, type CrmNotification, type CrmOffer, type CrmOfferItem, type CrmOfferJobLink, type CrmOpportunity, type CrmStage, type CrmTask, type Customer360, type QuoteDetail,
   type CrmProspectImportRow, type CrmSettings, type CrmSupplier, type SalesPerformance, type SalesRepresentative,
 } from "@/services/salesCrmService";
 import { kolaybiOfficeService } from "@/services/kolaybiOfficeService";
@@ -74,6 +75,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const [selected, setSelected] = useState<CrmOpportunity | null>(null);
   const [activities, setActivities] = useState<CrmActivity[]>([]);
   const [offers, setOffers] = useState<CrmOffer[]>([]);
+  const [offerJobs, setOfferJobs] = useState<CrmOfferJobLink[]>([]);
   const [quoteDetail, setQuoteDetail] = useState<QuoteDetail | null>(null);
   const [customer360, setCustomer360] = useState<Customer360 | null>(null);
   const [contacts, setContacts] = useState<CrmContact[]>([]);
@@ -81,6 +83,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const [activityOpen, setActivityOpen] = useState(false);
   const [taskToComplete, setTaskToComplete] = useState<CrmTask | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
+  const [jobOffer, setJobOffer] = useState<CrmOffer | null>(null);
   const [prospectOpen, setProspectOpen] = useState(false);
   const [prospectImportOpen, setProspectImportOpen] = useState(false);
   const [prospectImporting, setProspectImporting] = useState(false);
@@ -136,13 +139,14 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
   const repName = (id?: string | null) => representatives.find((item) => item.user_id === id)?.full_name || (id ? "Atanmış temsilci" : "Atanmadı");
 
   const openDetail = async (item: CrmOpportunity) => {
-    setSelected(item); setDetailOpen(true); setQuoteDetail(null); setCustomer360(null);
+    setSelected(item); setDetailOpen(true); setQuoteDetail(null); setCustomer360(null); setActivities([]); setOffers([]); setOfferJobs([]);
     try {
-      const [activityRows, offerRows, quote] = await Promise.all([
+      const [activityRows, offerRows, quote, jobLinks] = await Promise.all([
         salesCrmService.listActivities(item.id), salesCrmService.listOffers(item.id),
         item.quote_request_id ? salesCrmService.getQuoteDetail(item.quote_request_id) : Promise.resolve(null),
+        salesCrmService.listOfferJobLinks(item.id),
       ]);
-      setActivities(activityRows); setOffers(offerRows); setQuoteDetail(quote);
+      setActivities(activityRows); setOffers(offerRows); setQuoteDetail(quote); setOfferJobs(jobLinks);
       if (item.customer_id) {
         const [summary, contactRows] = await Promise.all([salesCrmService.customer360(item.customer_id), salesCrmService.listContacts(item.customer_id)]);
         setCustomer360(summary); setContacts(contactRows);
@@ -430,12 +434,9 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
     finally { setSubmitting(false); }
   };
 
-  const createJob = async () => {
-    if (!selected) return;
-    setSubmitting(true);
-    try { await salesCrmService.createJobFromQuote(selected.id); toast({ title: "İş emri oluşturuldu", description: "Operasyon onayına gönderildi." }); await refreshDetail(); }
-    catch (error: any) { toast({ title: "İş emri oluşturulamadı", description: error?.message, variant: "destructive" }); }
-    finally { setSubmitting(false); }
+  const openJobDraft = (offer: CrmOffer) => {
+    setDetailOpen(false);
+    setJobOffer(offer);
   };
 
   const openSettings = async () => {
@@ -597,7 +598,7 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
         {customer360 && <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5"><h3 className="mb-3 font-bold text-[#10213e]">Müşteri 360°</h3><div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4"><div><p className="text-slate-500">İş / Sevkiyat</p><p className="text-lg font-bold">{customer360.job_count || 0} / {customer360.shipment_count || 0}</p></div><div><p className="text-slate-500">Teslim edilen</p><p className="text-lg font-bold text-emerald-700">{customer360.delivered_count || 0}</p></div><div><p className="text-slate-500">Faturalanan</p><p className="text-lg font-bold">{money(customer360.invoiced_total || 0, selected.currency)}</p></div><div><p className="text-slate-500">Açık bakiye / İstisna</p><p className="text-lg font-bold text-orange-700">{money(customer360.outstanding_total || 0, selected.currency)} · {customer360.exception_count || 0}</p></div></div></div>}
         {selected.customer_id && <div className="rounded-2xl border border-slate-200 p-5"><div className="mb-3 flex items-center justify-between gap-3"><div><h3 className="font-bold text-[#10213e]">Müşteri Yetkilileri</h3><p className="text-xs text-slate-500">Karar verici, iletişim tercihi ve ticari ileti onayı ayrı kaydedilir.</p></div>{canCreateCustomer && <Button size="sm" variant="outline" onClick={() => { setEditingContactId(null); setContactForm({ full_name: "", title: "", department: "", email: "", phone: "", preferred_channel: "email", is_decision_maker: false, is_primary: false, commercial_consent: false }); setContactOpen(true); }}><Plus className="mr-1 h-4 w-4" />Yetkili Ekle</Button>}</div><div className="grid gap-2 md:grid-cols-2">{contacts.map((contact) => <div key={contact.id} className="rounded-xl border bg-slate-50 p-3"><div className="flex items-start justify-between gap-2"><div><p className="font-semibold text-[#10213e]">{contact.full_name}</p><p className="text-xs text-slate-500">{contact.title || contact.department || "Görev belirtilmedi"}</p></div><div className="flex items-center gap-1">{contact.is_decision_maker && <Badge className="bg-violet-100 text-violet-800">Karar verici</Badge>}{canCreateCustomer && <button className="rounded p-1 text-slate-500 hover:bg-white" onClick={() => editContact(contact)} title="Yetkiliyi düzenle"><Settings2 className="h-4 w-4" /></button>}{canCreateCustomer && <button className="rounded p-1 text-amber-700 hover:bg-white" onClick={() => void deactivateContact(contact)} title="Yetkiliyi pasife al">×</button>}</div></div><p className="mt-2 text-xs text-slate-600">{contact.phone || "-"} · {contact.email || "-"}</p><p className="mt-1 text-xs text-slate-500">Tercih: {contact.preferred_channel || "belirtilmedi"} · Ticari ileti: {contact.commercial_consent ? "Onaylı" : "Onaysız"}</p></div>)}{contacts.length === 0 && <p className="rounded-xl border border-dashed p-4 text-center text-sm text-slate-500 md:col-span-2">Henüz müşteri yetkilisi eklenmedi.</p>}</div></div>}
         {quoteDetail && <div className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5"><div className="mb-3 flex items-center gap-2"><ClipboardList className="h-5 w-5 text-[#e96d25]" /><h3 className="font-bold text-[#10213e]">Web Sitesinden Alınan Teklif Talebi</h3></div><div className="grid gap-3 text-sm md:grid-cols-3"><div><span className="text-slate-500">Taşıma:</span><p className="font-medium">{quoteDetail.service_type === "domestic" ? "Yurtiçi" : "Uluslararası"} · {quoteDetail.transport_mode === "road" ? "Karayolu" : quoteDetail.transport_mode === "air" ? "Havayolu" : "Denizyolu"}</p></div><div><span className="text-slate-500">Güzergâh:</span><p className="font-medium">{quoteDetail.loading_point} → {quoteDetail.delivery_point}</p></div><div><span className="text-slate-500">Yük kalemi:</span><p className="font-medium">{quoteDetail.cargos?.length || 0} kalem</p></div></div>{quoteDetail.special_requirements && <p className="mt-3 rounded-lg bg-white p-3 text-sm">{quoteDetail.special_requirements}</p>}</div>}
-        {canManage && <div className="flex flex-wrap gap-2"><Button onClick={() => { if (selected.stage === "declined" || selected.stage === "lost") setActivityForm({ ...activityForm, outcome: "other", next_action_at: "" }); setActivityOpen(true); }}><Phone className="mr-2 h-4 w-4" />Faaliyet Kaydet</Button>{selected.stage !== "declined" && selected.stage !== "lost" && <Button className="bg-[#e96d25] hover:bg-[#d95e1d]" onClick={() => setOfferOpen(true)}><ClipboardList className="mr-2 h-4 w-4" />Teklif Oluştur</Button>}{!selected.customer_id && canCreateCustomer && selected.stage !== "declined" && selected.stage !== "lost" && <Button variant="outline" onClick={() => void convertCustomer()} disabled={submitting}><Users className="mr-2 h-4 w-4" />Cari Oluştur</Button>}{selected.quote_request_id && selected.customer_id && !selected.first_job_id && canCreateJob && selected.stage !== "declined" && selected.stage !== "lost" && <Button variant="outline" onClick={() => void createJob()} disabled={submitting}><BriefcaseBusiness className="mr-2 h-4 w-4" />İş Emrine Dönüştür</Button>}{selected.first_job_id && <Badge className="px-3 py-2 bg-blue-100 text-blue-800">İlk iş emri oluşturuldu</Badge>}{selected.first_invoice_id && <Badge className="px-3 py-2 bg-emerald-100 text-emerald-800">İlk resmî fatura kesildi</Badge>}</div>}
+        {canManage && <div className="flex flex-wrap gap-2"><Button onClick={() => { if (selected.stage === "declined" || selected.stage === "lost") setActivityForm({ ...activityForm, outcome: "other", next_action_at: "" }); setActivityOpen(true); }}><Phone className="mr-2 h-4 w-4" />Faaliyet Kaydet</Button>{selected.stage !== "declined" && selected.stage !== "lost" && <Button className="bg-[#e96d25] hover:bg-[#d95e1d]" onClick={() => setOfferOpen(true)}><ClipboardList className="mr-2 h-4 w-4" />Teklif Oluştur</Button>}{!selected.customer_id && canCreateCustomer && selected.stage !== "declined" && selected.stage !== "lost" && <Button variant="outline" onClick={() => void convertCustomer()} disabled={submitting}><Users className="mr-2 h-4 w-4" />Cari Oluştur</Button>}{selected.first_job_id && <Badge className="px-3 py-2 bg-blue-100 text-blue-800">İlk iş emri oluşturuldu</Badge>}{selected.first_invoice_id && <Badge className="px-3 py-2 bg-emerald-100 text-emerald-800">İlk resmî fatura kesildi</Badge>}</div>}
         {canManage && <div className="flex flex-wrap gap-2">
           {(["introduction", "quote_required", "follow_up"] as CrmStage[]).includes(selected.stage) && <Button variant="outline" className="text-amber-800" onClick={() => closeOpportunity("declined")} disabled={submitting}><AlertTriangle className="mr-2 h-4 w-4" />Olumsuz Sonuçlandır</Button>}
           {selected.stage === "won" && <Button variant="outline" className="text-slate-700" onClick={() => closeOpportunity("lost")} disabled={submitting}>Çalışmayı Bıraktı — Kaybedildi</Button>}
@@ -611,11 +612,22 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
           <div><h3 className="mb-3 font-bold text-[#10213e]">Verilen Teklifler</h3><div className="space-y-3">{offers.length === 0 && <p className="rounded-xl border border-dashed p-5 text-center text-sm text-slate-500">Henüz teklif oluşturulmadı.</p>}{offers.map((item) => {
             const margin = item.amount > 0 ? Math.round(((item.amount - Number(item.cost_amount || 0)) / item.amount) * 100) : 0;
             const statusLabel = item.approval_status === "pending" ? "Yönetici onayı bekliyor" : item.status === "draft" ? "Taslak" : item.status === "sent" ? "Müşteri kararı bekleniyor" : item.status === "accepted" ? "Kabul edildi" : item.status === "rejected" ? "Reddedildi" : item.status === "cancelled" ? "İptal edildi" : "Süresi doldu";
+            const rootOfferId = item.parent_offer_id || item.id;
+            const linkedJob = offerJobs.find((link) => offers.some((family) =>
+              family.id === link.offer_id && (family.parent_offer_id || family.id) === rootOfferId,
+            ));
+            const isLatestAcceptedRevision = item.status === "accepted" && !offers.some((other) =>
+              other.status === "accepted" && (other.parent_offer_id || other.id) === rootOfferId && other.revision_no > item.revision_no,
+            );
             return <div key={item.id} className="rounded-xl border border-slate-200 p-4"><div className="flex justify-between gap-3"><div><p className="font-semibold">{item.offer_no} · R{item.revision_no || 1} / V{item.version_no || 1}</p><p className="text-sm text-slate-600">{item.subject}</p></div><Badge variant="outline">{statusLabel}</Badge></div>{item.pickup_location && <p className="mt-2 text-xs text-slate-500">{item.pickup_location} → {item.delivery_location || "-"}</p>}<div className="mt-3 flex items-end justify-between"><p className="text-lg font-bold text-[#10213e]">{money(item.amount, item.currency)}</p><p className={`text-xs font-semibold ${margin < 8 ? "text-red-600" : "text-emerald-700"}`}>Marj %{margin}</p></div><p className="text-xs text-slate-500">{item.email_sent_at ? `Gönderim: ${readableDate(item.email_sent_at)}` : item.email_error ? `Hata: ${item.email_error}` : "Henüz gönderilmedi"}</p>
               {canApproveOffers && item.approval_status === "pending" && <div className="mt-3 flex gap-2"><Button size="sm" onClick={() => void reviewOffer(item, "approve")} disabled={submitting}>Onayla</Button><Button size="sm" variant="outline" onClick={() => void reviewOffer(item, "reject")} disabled={submitting}>Reddet</Button></div>}
               {!canApproveOffers && item.approval_status === "pending" && <p className="mt-2 text-xs font-medium text-orange-700">Şirket sahibi onayı bekleniyor.</p>}
               {canManage && ["not_required","approved"].includes(item.approval_status) && item.email_status !== "sent" && <Button size="sm" className="mt-3 bg-[#e96d25] hover:bg-[#d95e1d]" onClick={() => void sendOffer(item)} disabled={submitting}><Send className="mr-2 h-4 w-4" />E-posta ile Gönder</Button>}
               {canManage && item.status === "sent" && <div className="mt-3 flex flex-wrap gap-2"><Button size="sm" onClick={() => void decideOffer(item, "accepted")}>Kabul</Button><Button size="sm" variant="outline" onClick={() => void decideOffer(item, "rejected")}>Ret</Button><Button size="sm" variant="outline" onClick={() => void reviseOffer(item)}>Revizyon</Button><Button size="sm" variant="ghost" onClick={() => void decideOffer(item, "cancelled")}>İptal</Button></div>}
+              {isLatestAcceptedRevision && linkedJob && <p className="mt-2 text-xs font-medium text-blue-700">Bu teklif ailesinin iş emri: {linkedJob.job_code}</p>}
+              {isLatestAcceptedRevision && !linkedJob && canManage && canCreateJob && selected.customer_id && !["declined", "lost"].includes(selected.stage) && !["pending", "rejected"].includes(item.approval_status) && <Button size="sm" variant="outline" className="mt-3" onClick={() => openJobDraft(item)}><BriefcaseBusiness className="mr-2 h-4 w-4" />Bu Kabul Edilen Tekliften İş Emri Oluştur</Button>}
+              {isLatestAcceptedRevision && !selected.customer_id && <p className="mt-2 text-xs text-amber-800">İş emri için önce müşteri cari kartını oluşturun.</p>}
+              {item.status === "accepted" && !isLatestAcceptedRevision && <p className="mt-2 text-xs text-slate-500">Daha yeni kabul edilen revizyon iş emrine esas alınır.</p>}
               {canManage && ["accepted","rejected","expired","cancelled"].includes(item.status) && <Button size="sm" variant="outline" className="mt-3" onClick={() => void reviseOffer(item)}>Yeni Revizyon Oluştur</Button>}
               {item.decision_at && <p className="mt-2 text-xs text-slate-500">Karar: {item.decision_by_name || "-"} · {item.decision_channel || "-"} · {readableDate(item.decision_at)}</p>}
             </div>;
@@ -623,6 +635,10 @@ export function SalesCRMModule({ permissions }: { permissions: PermissionMap }) 
         </div>
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"><strong>Aşama kuralı:</strong> Tanıtım veya teklif olumsuz sonuçlanırsa “Olumsuz Sonuçlandı” kullanılır. “Kaybedildi” yalnızca önce kazanılmış, gerçek sevkiyat yapmış ve artık çalışmadığı teyit edilen müşteri içindir; açık sevkiyat varken seçilemez.</div>
       </div>}</DialogContent></Dialog>
+
+      {jobOffer && selected && <AcceptedOfferJobDialog key={jobOffer.id} offer={jobOffer} opportunity={selected} suppliers={suppliers}
+        onClose={() => { setJobOffer(null); setDetailOpen(true); }}
+        onSuccess={async () => { setJobOffer(null); await refreshDetail(); }} />}
 
       <Dialog open={contactOpen} onOpenChange={(open) => { setContactOpen(open); if (!open) setEditingContactId(null); }}><DialogContent><DialogHeader><DialogTitle>{editingContactId ? "Müşteri Yetkilisini Düzenle" : "Müşteri Yetkilisi Ekle"}</DialogTitle></DialogHeader><div className="grid gap-4 md:grid-cols-2"><div className="md:col-span-2"><Label>Ad soyad *</Label><Input value={contactForm.full_name} onChange={(e) => setContactForm({ ...contactForm, full_name: e.target.value })} /></div><div><Label>Görevi / ünvanı</Label><Input value={contactForm.title} onChange={(e) => setContactForm({ ...contactForm, title: e.target.value })} /></div><div><Label>Departman</Label><Input value={contactForm.department} onChange={(e) => setContactForm({ ...contactForm, department: e.target.value })} /></div><div><Label>E-posta</Label><Input type="email" value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} /></div><div><Label>Telefon</Label><Input value={contactForm.phone} onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} /></div><div><Label>Tercih edilen kanal</Label><select value={contactForm.preferred_channel} onChange={(e) => setContactForm({ ...contactForm, preferred_channel: e.target.value })} className="mt-1 w-full rounded-md border px-3 py-2"><option value="email">E-posta</option><option value="phone">Telefon</option><option value="whatsapp">WhatsApp</option><option value="meeting">Yüz yüze görüşme</option></select></div><div className="space-y-2 pt-6"><label className="flex items-center gap-2"><input type="checkbox" checked={contactForm.is_decision_maker} onChange={(e) => setContactForm({ ...contactForm, is_decision_maker: e.target.checked })} />Karar verici</label><label className="flex items-center gap-2"><input type="checkbox" checked={contactForm.is_primary} onChange={(e) => setContactForm({ ...contactForm, is_primary: e.target.checked })} />Birincil yetkili</label><label className="flex items-center gap-2"><input type="checkbox" checked={contactForm.commercial_consent} onChange={(e) => setContactForm({ ...contactForm, commercial_consent: e.target.checked })} />Ticari ileti onayı mevcut</label></div></div><DialogFooter><Button variant="outline" onClick={() => setContactOpen(false)}>Vazgeç</Button><Button onClick={() => void saveContact()} disabled={submitting || contactForm.full_name.trim().length < 2 || (!contactForm.email.trim() && !contactForm.phone.trim())}>Kaydet</Button></DialogFooter></DialogContent></Dialog>
 

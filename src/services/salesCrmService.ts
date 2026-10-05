@@ -104,6 +104,8 @@ export type CrmOfferItem = {
   surcharge_type?: string | null;
 };
 
+export type CrmOfferJobLink = { offer_id: string; job_id: string; job_code: string };
+
 export type CrmTask = {
   id: string;
   opportunity_id: string;
@@ -484,9 +486,29 @@ export const salesCrmService = {
     return data as unknown as string;
   },
 
-  async createJobFromQuote(opportunityId: string): Promise<string> {
-    const { data, error } = await supabase.rpc("rex_crm_create_job_from_quote" as never, { p_opportunity_id: opportunityId } as never);
+  async createJobFromAcceptedOffer(offerId: string, job: {
+    job_date: string;
+    supplier_id: string | null;
+    sender_name: string;
+    sender_address: string;
+    sender_district: string;
+    sender_city: string;
+    receiver_name: string;
+    receiver_address: string;
+    receiver_district: string;
+    receiver_city: string;
+    quantity: number;
+    cargo_type: string;
+    total_weight: number;
+  }): Promise<string> {
+    const { data, error } = await supabase.rpc("rex_crm_create_job_from_accepted_offer" as never, { p_offer_id: offerId, p_job: job } as never);
     if (error) throw error;
     return data as unknown as string;
+  },
+
+  async listOfferJobLinks(opportunityId: string): Promise<CrmOfferJobLink[]> {
+    const { data, error } = await supabase.rpc("rex_crm_offer_job_links" as never, { p_opportunity_id: opportunityId } as never);
+    if (error) throw error;
+    return (data || []) as CrmOfferJobLink[];
   },
 };

@@ -1961,7 +1961,7 @@ test("sales CRM preserves the complete quote-to-first-invoice funnel", async () 
   assert.match(sql, /rex_crm_stage_events_immutable/);
   assert.match(service, /addActivity/);
   assert.match(service, /createOffer/);
-  assert.match(service, /createJobFromQuote/);
+  assert.match(service, /createJobFromAcceptedOffer/);
   assert.match(screen, /Müşteri Görüşmeleri ve Teklif Süreci/);
   assert.match(screen, /Satış Temsilcisi Performansı/);
   assert.match(screen, /Tanıtım veya teklif olumsuz sonuçlanırsa/);

@@ -7,6 +7,34 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const read = (path) => readFile(resolve(root, path), "utf8");
 
+test("accepted CRM offer revisions create at most one reviewed work order", async () => {
+  const [sql, service, screen, dialog] = await Promise.all([
+    read("supabase/migrations/20261005120000_crm_accepted_offer_to_job.sql"),
+    read("src/services/salesCrmService.ts"),
+    read("src/components/modules/SalesCRMModule.tsx"),
+    read("src/components/modules/AcceptedOfferJobDialog.tsx"),
+  ]);
+  assert.match(sql, /crm_offer_id uuid REFERENCES public\.crm_offers\(id\)/);
+  assert.match(sql, /CREATE UNIQUE INDEX IF NOT EXISTS transport_jobs_crm_offer_id_unique/);
+  assert.match(sql, /rex_crm_can_access_opportunity\(v_offer\.opportunity_id\)/);
+  assert.match(sql, /v_offer\.status<>'accepted'/);
+  assert.match(sql, /newer\.status='accepted' AND newer\.revision_no>v_offer\.revision_no/);
+  assert.match(sql, /rex_crm_offer_job_links/);
+  assert.match(sql, /coalesce\(linked\.parent_offer_id,linked\.id\)=coalesce\(v_offer\.parent_offer_id,v_offer\.id\)/);
+  assert.match(sql, /first_job_id=coalesce\(first_job_id,v_job\)/);
+  assert.match(sql, /v_offer\.amount\/v_quantity,v_offer\.amount/);
+  assert.match(sql, /REVOKE EXECUTE ON FUNCTION public\.rex_crm_create_job_from_quote\(uuid\) FROM authenticated/);
+  assert.match(service, /rex_crm_create_job_from_accepted_offer/);
+  assert.match(service, /rex_crm_offer_job_links/);
+  assert.match(screen, /isLatestAcceptedRevision/);
+  assert.match(screen, /linkedJob/);
+  assert.match(screen, /Bu Kabul Edilen Tekliften İş Emri Oluştur/);
+  assert.doesNotMatch(screen, /selected\.quote_request_id && selected\.customer_id && !selected\.first_job_id/);
+  assert.match(dialog, /Yükleme tarihi \*/);
+  assert.match(dialog, /Teslim adresi \*/);
+  assert.match(dialog, /Toplam ağırlık \(kg\) \*/);
+});
+
 test("negative prospect outcomes and former-customer loss remain separate CRM stages", async () => {
   const [sql, service, screen] = await Promise.all([
     read("supabase/migrations/20261004120000_crm_declined_vs_lost.sql"),
