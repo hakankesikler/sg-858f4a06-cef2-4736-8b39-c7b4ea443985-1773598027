@@ -6,20 +6,32 @@ export interface TransportJob {
   job_date: string;
   customer_id: string;
   supplier_id?: string | null;
+  quote_no?: string | null;
+  seller?: string | null;
   sender_name: string;
+  sender_address?: string | null;
+  sender_postal_code?: string | null;
+  sender_district?: string | null;
   receiver_name: string;
+  receiver_address?: string | null;
+  receiver_postal_code?: string | null;
+  receiver_district?: string | null;
   sender_city?: string | null;
   receiver_city?: string | null;
   quantity: number;
   cargo_type: string;
+  unit_weight: number;
   total_weight: number;
+  sales_unit_price: number;
   sales_total: number;
+  cost: number;
   currency: string;
   status: "onay_bekliyor" | "onaylandi" | "reddedildi";
   shipment_id?: string | null;
   rejection_reason?: string | null;
   created_at: string;
   customer?: { id: string; customer_code?: string | null; name: string } | null;
+  supplier?: { id: string; name: string } | null;
 }
 
 export interface TransportJobEvent {
@@ -47,10 +59,19 @@ export const transportJobService = {
 
   async list() {
     const { data, error } = await (supabase.from("transport_jobs" as any) as any)
-      .select("*, customer:customers!transport_jobs_customer_id_fkey(id, customer_code, name)")
+      .select("*, customer:customers!transport_jobs_customer_id_fkey(id, customer_code, name), supplier:customers!transport_jobs_supplier_id_fkey(id, name)")
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data || []) as TransportJob[];
+  },
+
+  async getById(id: string): Promise<TransportJob> {
+    const { data, error } = await (supabase.from("transport_jobs" as any) as any)
+      .select("*, customer:customers!transport_jobs_customer_id_fkey(id, customer_code, name), supplier:customers!transport_jobs_supplier_id_fkey(id, name)")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    return data as TransportJob;
   },
 
   async review(id: string, decision: "onayla" | "reddet", reason?: string) {

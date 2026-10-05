@@ -2610,6 +2610,25 @@ test("shipment save lets PostgreSQL calculate the generated cargo subtotal", asy
   assert.doesNotMatch(cargoInsert, /adet'\)::numeric\*\(item->>'kg_ds/);
 });
 
+test("work order approval leaves generated cargo subtotal to PostgreSQL and presents planned cost", async () => {
+  const [sql, service, screen] = await Promise.all([
+    read("supabase/migrations/20261006130000_fix_transport_job_approval_generated_subtotal.sql"),
+    read("src/services/transportJobService.ts"),
+    read("src/components/modules/LogisticsModule.tsx"),
+  ]);
+  const cargoInsert = sql.match(/INSERT INTO public\.shipment_cargo_items\([\s\S]*?VALUES\([\s\S]*?\);/)?.[0] || "";
+
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.rex_review_transport_job/);
+  assert.match(cargoInsert, /shipment_id,adet,cinsi,kg_ds,sira_no,birim_fiyat,alt_toplam_fiyat/);
+  assert.doesNotMatch(cargoInsert, /alt_toplam\s*[,)]/);
+  assert.match(service, /async getById\(id: string\)/);
+  assert.match(service, /supplier:customers!transport_jobs_supplier_id_fkey/);
+  assert.match(screen, /İş Emri Onay Özeti/);
+  assert.match(screen, /Planlanan alış maliyeti/);
+  assert.match(screen, /Maliyet netleşmeden hesaplanamaz/);
+  assert.match(screen, /Kontrol Ettim, İş Emrini Onayla/);
+});
+
 test("purchase invoices separate the operational carrier from the legal payable supplier", async () => {
   const [sql, service, inbox, shipmentForm] = await Promise.all([
     read("supabase/migrations/20260905130000_separate_operational_and_billing_suppliers.sql"),

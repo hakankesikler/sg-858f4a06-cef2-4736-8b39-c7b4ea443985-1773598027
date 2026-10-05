@@ -66,6 +66,14 @@ const driverSearchColumns = [
 type DriverSearchField = (typeof driverSearchColumns)[number]["key"];
 const emptyDriverFilters = Object.fromEntries(driverSearchColumns.map(({ key }) => [key, ""])) as Record<DriverSearchField, string>;
 
+function formatJobAmount(amount: number | null | undefined, currency: string) {
+  return `${Number(amount || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+}
+
+function formatJobAddress(address?: string | null, district?: string | null, city?: string | null, postalCode?: string | null) {
+  return [address, district, city, postalCode].filter(Boolean).join(" · ") || "Belirtilmedi";
+}
+
 export function LogisticsModule() {
   const { toast } = useToast();
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -103,6 +111,9 @@ export function LogisticsModule() {
   const [documentsShipment, setDocumentsShipment] = useState<any | null>(null);
   const [exceptionShipment, setExceptionShipment] = useState<any | null>(null);
   const [historyJob, setHistoryJob] = useState<TransportJob | null>(null);
+  const [reviewingJob, setReviewingJob] = useState<TransportJob | null>(null);
+  const [reviewLoadingId, setReviewLoadingId] = useState<string | null>(null);
+  const [reviewingJobBusy, setReviewingJobBusy] = useState(false);
   const [cancellingShipment, setCancellingShipment] = useState<any | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
 
@@ -310,11 +321,31 @@ export function LogisticsModule() {
     }
   };
 
+  const openJobReview = async (job: TransportJob) => {
+    if (reviewLoadingId) return;
+    setReviewLoadingId(job.id);
+    try {
+      const currentJob = await transportJobService.getById(job.id);
+      if (currentJob.status !== "onay_bekliyor") {
+        toast({ title: "İş emri zaten sonuçlandırılmış", description: "Listeyi yenileyip güncel durumu kontrol edin.", variant: "destructive" });
+        await loadData();
+        return;
+      }
+      setReviewingJob(currentJob);
+    } catch (error: any) {
+      toast({ title: "İş emri açılamadı", description: error?.message, variant: "destructive" });
+    } finally {
+      setReviewLoadingId(null);
+    }
+  };
+
   const handleReviewJob = async (job: TransportJob, decision: "onayla" | "reddet") => {
     const reason = decision === "reddet" ? window.prompt("Ret nedenini yazın:") : undefined;
     if (decision === "reddet" && !reason?.trim()) return;
+    if (decision === "onayla") setReviewingJobBusy(true);
     try {
       await transportJobService.review(job.id, decision, reason);
+      if (decision === "onayla") setReviewingJob(null);
       toast({
         title: decision === "onayla" ? "İş onaylandı" : "İş reddedildi",
         description: decision === "onayla" ? "Sevkiyat, atama bekleyenler listesine eklendi." : undefined,
@@ -322,6 +353,8 @@ export function LogisticsModule() {
       await loadData();
     } catch (error: any) {
       toast({ title: "İşlem tamamlanamadı", description: error?.message, variant: "destructive" });
+    } finally {
+      if (decision === "onayla") setReviewingJobBusy(false);
     }
   };
 
@@ -577,7 +610,9 @@ export function LogisticsModule() {
                           <History className="h-4 w-4" />
                         </Button>
                         {job.status === "onay_bekliyor" && <>
-                          <Button size="sm" onClick={() => void handleReviewJob(job, "onayla")}>Onayla</Button>
+                          <Button size="sm" disabled={reviewLoadingId === job.id} onClick={() => void openJobReview(job)}>
+                            {reviewLoadingId === job.id ? "Yükleniyor..." : "Onayla"}
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => void handleReviewJob(job, "reddet")}>Reddet</Button>
                         </>}
                       </div>
@@ -1307,6 +1342,56 @@ export function LogisticsModule() {
         onClose={() => setHistoryJob(null)}
         job={historyJob}
       />
+
+      <AlertDialog open={!!reviewingJob} onOpenChange={(open) => {
+        if (!open && !reviewingJobBusy) setReviewingJob(null);
+      }}>
+        <AlertDialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>İş Emri Onay Özeti</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bilgileri kontrol edin. Onay, bu iş emrinden sevkiyat oluşturur; alış faturası veya kesinleşmiş maliyet oluşturmaz.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {reviewingJob && <div className="space-y-4 text-sm text-slate-700">
+            <div className="grid gap-3 rounded-lg border bg-slate-50 p-4 sm:grid-cols-2">
+              <div><span className="block text-slate-500">İş / teklif</span><strong>{reviewingJob.job_code}</strong>{reviewingJob.quote_no ? ` · ${reviewingJob.quote_no}` : ""}</div>
+              <div><span className="block text-slate-500">İş tarihi</span><strong>{format(new Date(reviewingJob.job_date), "dd MMMM yyyy", { locale: tr })}</strong></div>
+              <div><span className="block text-slate-500">Müşteri</span><strong>{reviewingJob.customer?.name || "Belirtilmedi"}</strong></div>
+              <div><span className="block text-slate-500">Satış temsilcisi</span><strong>{reviewingJob.seller || "Belirtilmedi"}</strong></div>
+              <div><span className="block text-slate-500">Operasyonel tedarikçi</span><strong>{reviewingJob.supplier?.name || "Henüz belirlenmedi"}</strong></div>
+              <div><span className="block text-slate-500">Durum</span><strong>Onay bekliyor</strong></div>
+            </div>
+            <div className="grid gap-3 rounded-lg border p-4 sm:grid-cols-2">
+              <div><span className="block text-slate-500">Gönderici</span><strong>{reviewingJob.sender_name || "Belirtilmedi"}</strong><p>{formatJobAddress(reviewingJob.sender_address, reviewingJob.sender_district, reviewingJob.sender_city, reviewingJob.sender_postal_code)}</p></div>
+              <div><span className="block text-slate-500">Alıcı</span><strong>{reviewingJob.receiver_name || "Belirtilmedi"}</strong><p>{formatJobAddress(reviewingJob.receiver_address, reviewingJob.receiver_district, reviewingJob.receiver_city, reviewingJob.receiver_postal_code)}</p></div>
+            </div>
+            <div className="grid gap-3 rounded-lg border p-4 sm:grid-cols-3">
+              <div><span className="block text-slate-500">Yük / ambalaj</span><strong>{reviewingJob.cargo_type || "Belirtilmedi"}</strong></div>
+              <div><span className="block text-slate-500">Adet</span><strong>{reviewingJob.quantity}</strong></div>
+              <div><span className="block text-slate-500">Birim / toplam ağırlık</span><strong>{reviewingJob.unit_weight} / {reviewingJob.total_weight} kg-ds</strong></div>
+            </div>
+            <div className="grid gap-3 rounded-lg border border-orange-200 bg-orange-50 p-4 sm:grid-cols-2">
+              <div><span className="block text-slate-600">Satış birim fiyatı</span><strong>{formatJobAmount(reviewingJob.sales_unit_price, reviewingJob.currency)}</strong></div>
+              <div><span className="block text-slate-600">Satış toplamı</span><strong>{formatJobAmount(reviewingJob.sales_total, reviewingJob.currency)}</strong></div>
+              <div><span className="block text-slate-600">Planlanan alış maliyeti</span><strong>{Number(reviewingJob.cost) > 0 ? formatJobAmount(reviewingJob.cost, reviewingJob.currency) : "Henüz girilmedi"}</strong></div>
+              <div><span className="block text-slate-600">Tahmini brüt fark / marj</span><strong>{Number(reviewingJob.cost) > 0 && Number(reviewingJob.sales_total) > 0
+                ? `${formatJobAmount(Number(reviewingJob.sales_total) - Number(reviewingJob.cost), reviewingJob.currency)} / %${(((Number(reviewingJob.sales_total) - Number(reviewingJob.cost)) / Number(reviewingJob.sales_total)) * 100).toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`
+                : "Maliyet netleşmeden hesaplanamaz"}</strong></div>
+              <p className="sm:col-span-2 text-xs text-slate-600">Bu maliyet iş emrindeki planlanan tutardır; gerçek alış faturası maliyeti daha sonra farklı olabilir. Tutarlar KDV hariç değerlendirilir.</p>
+            </div>
+          </div>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={reviewingJobBusy}>Vazgeç</AlertDialogCancel>
+            <AlertDialogAction disabled={reviewingJobBusy} onClick={(event) => {
+              event.preventDefault();
+              if (reviewingJob) void handleReviewJob(reviewingJob, "onayla");
+            }}>
+              {reviewingJobBusy ? "Onaylanıyor..." : "Kontrol Ettim, İş Emrini Onayla"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!cancellingShipment} onOpenChange={(open) => {
         if (!open) {
