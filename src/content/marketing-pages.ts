@@ -2123,7 +2123,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
     title: "Depolama Hizmetleri",
     lead: "Ürün kabulünden stok takibine, elleçlemeden sevkiyat hazırlığına kadar depolama ihtiyacınızı dağıtım operasyonuyla birlikte planlıyoruz.",
     seoTitle: "Depolama, Stok ve Dağıtım Hizmetleri | REX Lojistik",
-    seoDescription: "Kurumsal depolama, stok takibi, ürün kabulü, elleçleme, paketleme ve Türkiye geneli dağıtım çözümleri. REX Lojistik'ten depolama teklifi alın.",
+    seoDescription: "İzmir'de depolama, stok takibi, sipariş toplama ve paketleme; çözüm ortaklarıyla mobil ve geçici depolama organizasyonu. REX Lojistik'ten teklif alın.",
     keywords: ["depolama hizmetleri", "lojistik depo", "stok yönetimi", "elleçleme", "İzmir depolama", "dağıtım hizmetleri"],
     highlights: [
       { title: "Esnek Alan", text: "Dönemsel veya sürekli ihtiyaca göre planlama" },
@@ -2138,6 +2138,15 @@ export const marketingPages: Record<string, MarketingPageData> = {
           "Dönemsel stok artışları, proje bazlı yükler, bayi dağıtımı ve şehir bazlı ürün konumlandırma gibi senaryolar için esnek modeller değerlendirilebilir.",
         ],
         bullets: ["Mal kabul ve miktar kontrolü", "Palet/koli bazlı stok takibi", "Toplama, paketleme ve etiketleme", "Sevkiyat hazırlığı ve dağıtım bağlantısı"],
+      },
+      {
+        title: "İzmir Mobil ve Geçici Depolama Çözümleri",
+        paragraphs: [
+          "REX Lojistik, çözüm ortakları aracılığıyla İzmir ve çevresinde kısa süreli, proje bazlı veya dönemsel mobil ve geçici depolama ihtiyaçlarını organize edebilir. Geçici stok alanı ihtiyacı; ürünün niteliği, miktarı, kullanılacak lokasyon ve depolama süresine göre değerlendirilir. Uygun alan ve operasyon kapsamı, çözüm ortaklarının kapasitesi ve ürün kabul koşulları doğrultusunda teklif öncesinde netleştirilir.",
+          "Paletli ürünlerin depolanması, elleçleme, sipariş toplama ve paketleme ile sevkiyata hazırlık ihtiyaçları aynı plan içinde değerlendirilebilir. Depolama sonrası dağıtım gerekiyorsa mevcut taşıma akışına bağlantı kurulur; ihtiyaç duyulan hizmetler ve giriş-çıkış sıklığı teklifin kapsamına dahil edilir.",
+          "Depolama teklifi için ürün tanımını, palet veya koli adedini, ölçüleri, İzmir ve çevresindeki lokasyonunuzu ve ihtiyaç duyduğunuz süreyi paylaşın. Sipariş hazırlama, paketleme veya sevkiyat beklentinizi de belirterek operasyon ekibimizin ihtiyacınıza uygun çözümü değerlendirmesini sağlayabilirsiniz.",
+        ],
+        cta: { label: "Depolama Teklifi Al", href: "#storage-whatsapp-planner-heading" },
       },
       {
         title: "Depo ve taşıma tek operasyonda",
