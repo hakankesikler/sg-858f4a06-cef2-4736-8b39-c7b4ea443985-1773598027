@@ -6,7 +6,7 @@ import { lclGuide, loadingSteps, comparisonRows, lclFaq } from "@/content/lcl-gu
 import { SITE_URL } from "@/lib/structured-data";
 
 const contents = [
-  ["lcl-nedir", "LCL nedir?"], ["yukleme-sureci", "Yükleme süreci"],
+  ["lcl-nedir", "LCL nedir, açılımı nedir?"], ["lcl-shipment", "LCL shipment nedir?"], ["yukleme-sureci", "LCL yükleme nedir?"],
   ["lcl-fcl-farki", "LCL ve FCL farkı"], ["fiyat-hesabi", "Fiyat ve W/M hesabı"],
   ["ne-zaman", "Ne zaman tercih edilir?"], ["uygun-olmayan-yukler", "Uygun olmayabilecek yükler"],
   ["istiflenebilirlik", "İstiflenebilirlik ve ambalaj"], ["transit-suresi", "Transit süresi"],
@@ -21,7 +21,7 @@ export default function LclGuidePage() {
   return (
     <>
       <SEO title={lclGuide.seoTitle} description={lclGuide.description} url={canonical}
-        keywords={["LCL nedir", "LCL yükleme", "LCL FCL farkı", "CBM", "W/M"]}
+        keywords={["LCL nedir", "LCL açılımı", "LCL yükleme nedir", "LCL shipment nedir", "LCL FCL farkı", "CBM", "W/M"]}
         structuredData={{ "@context": "https://schema.org", "@graph": [
           { "@type": "Article", "@id": `${canonical}#article`, headline: lclGuide.title, description: lclGuide.description, url: canonical, inLanguage: "tr-TR", datePublished: lclGuide.date, dateModified: lclGuide.updatedDate, mainEntityOfPage: canonical, author: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "REX Lojistik", url: SITE_URL }, publisher: { "@id": `${SITE_URL}/#organization` } },
           { "@type": "BreadcrumbList", itemListElement: [
@@ -42,7 +42,7 @@ export default function LclGuidePage() {
               <p className="mt-9 text-sm font-bold uppercase tracking-widest text-orange-400">Denizyolu rehberi</p>
               <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-tight sm:text-5xl">{lclGuide.title}</h1>
               <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">{lclGuide.summary}</p>
-              <p className="mt-6 text-sm text-slate-400">REX Lojistik · Yayın: <time dateTime={lclGuide.date}>20 Eylül 2026</time> · Güncelleme: <time dateTime={lclGuide.updatedDate}>21 Eylül 2026</time></p>
+              <p className="mt-6 text-sm text-slate-400">REX Lojistik · Yayın: <time dateTime={lclGuide.date}>20 Eylül 2026</time> · Güncelleme: <time dateTime={lclGuide.updatedDate}>6 Ekim 2026</time></p>
             </div>
           </header>
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:py-14">
@@ -54,13 +54,18 @@ export default function LclGuidePage() {
             </aside>
             <div className="min-w-0 space-y-12 text-base leading-8 text-slate-700 sm:text-lg">
               <section id="lcl-nedir" className="scroll-mt-32 space-y-5">
-                <h2 className={headingClass}>LCL nedir?</h2>
+                <h2 className={headingClass}>LCL nedir, açılımı nedir?</h2>
                 <p><strong>LCL (Less than Container Load)</strong>, bir konteynerin farklı göndericilere ait yüklerle paylaşıldığı parsiyel denizyolu taşıma modelidir. Yükünüz konteynerin tamamını doldurmadığında, uygun diğer gönderilerle aynı konteynerde taşınabilir.</p>
                 <p>LCL yalnızca “az miktarda yük” anlamına gelmez. Gönderilerin depoda birleştirilmesi, konteynere yerleştirilmesi ve varışta ayrıştırılması da bu modelin parçasıdır. Bu nedenle seçim yapılırken hacim kadar ambalaj, yük uyumu ve teslim takvimi de değerlendirilir.</p>
-                <p>Taşıma seçeneklerinin genel kapsamı için <Link href="/denizyolu-tasimaciligi" className={linkClass}>denizyolu taşımacılığı</Link>, hizmet ve teklif hazırlığı için <Link href="/denizyolu-parsiyel-tasimacilik" className={linkClass}>denizyolu parsiyel taşımacılık</Link> sayfalarını inceleyebilirsiniz.</p>
+                <p>Yükünüz için rota ve navlun değerlendirmesine geçmek isterseniz <Link href="/denizyolu-tasimaciligi" className={linkClass}>denizyolu ve LCL taşıma hizmetlerimizi</Link>, parsiyel hizmet kapsamı için <Link href="/denizyolu-parsiyel-tasimacilik" className={linkClass}>denizyolu parsiyel taşımacılık</Link> sayfasını inceleyebilirsiniz.</p>
+              </section>
+              <section id="lcl-shipment" className={sectionClass}>
+                <h2 className={headingClass}>LCL shipment nedir?</h2>
+                <p><strong>LCL shipment</strong>, İngilizcede parsiyel denizyolu gönderisi anlamına gelir. Bir göndericinin yükü, başka göndericilerin uygun yükleriyle aynı konteynerde taşınır. Buradaki “shipment” gönderiyi, “LCL” ise konteyner kapasitesinin paylaşıldığı taşıma modelini belirtir.</p>
               </section>
               <section id="yukleme-sureci" className={sectionClass}>
-                <h2 className={headingClass}>LCL yükleme nasıl yapılır?</h2>
+                <h2 className={headingClass}>LCL yükleme nedir, nasıl yapılır?</h2>
+                <p><strong>LCL yükleme</strong>, farklı göndericilerin uygun yüklerinin ortak bir konteynere yerleştirilip sabitlenmesidir. Bu ifade günlük kullanımda konsolidasyon, taşıma ve varışta ayrıştırma adımlarının tamamını anlatmak için de kullanılır.</p>
                 <p>LCL yükleme süreci, yükün konsolidasyon noktasına kabulünden varıştaki teslim bağlantısına kadar birbirini izleyen aşamalardan oluşur. Kesin akış, hat ve hizmet kapsamına göre değişir.</p>
                 <ol className="space-y-6">{loadingSteps.map((step, i) => <li key={step.title} className="rounded-2xl bg-slate-50 p-5 sm:p-6"><h3 className="text-xl font-bold text-slate-950"><span className="mr-2 text-orange-700">{i + 1}.</span>{step.title}</h3><p className="mt-3">{step.text}</p></li>)}</ol>
               </section>
@@ -137,6 +142,7 @@ export default function LclGuidePage() {
               <section className="rounded-2xl bg-slate-950 p-7 text-white sm:p-9" aria-labelledby="lcl-teklif">
                 <h2 id="lcl-teklif" className="text-2xl font-bold sm:text-3xl">LCL navlun teklifi alın</h2>
                 <p className="mt-4 text-slate-300">Çıkış ve varış noktalarını, koli/palet adedini, ambalaj dahil boy × en × yükseklik ölçülerini, toplam brüt ağırlığı ve yükün hazır olma tarihini paylaşın. Ürün tanımı ve istiflenebilirlik bilgisini de ekleyin; LCL seçeneğini toplam maliyet ve teslim planıyla birlikte değerlendirelim.</p>
+                <p className="mt-4"><Link href="/denizyolu-tasimaciligi#sea-whatsapp-planner-heading" className="font-semibold text-orange-300 underline underline-offset-4 hover:text-orange-200">LCL / Denizyolu Teklifi Al</Link></p>
                 <Link href="/denizyolu-parsiyel-tasimacilik#sea-lcl-whatsapp-planner-heading" className="mt-6 inline-flex rounded-xl bg-orange-600 px-6 py-3 font-bold text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-300">LCL navlun teklifi alın</Link>
               </section>
               <section className="border-t border-slate-200 pt-6 text-sm leading-6 text-slate-500" aria-label="Kaynaklar">

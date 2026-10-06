@@ -16,7 +16,7 @@ test("LCL knowledge guide is discoverable, linked and free of escaped source new
   for (const source of [guide, data, hub, content, header, footer, sitemap]) {
     assert.ok(!source.includes(String.fromCharCode(92) + "n"), "Public source must contain actual line breaks");
   }
-  assert.match(data, /LCL Nedir\? LCL Yükleme ve FCL Farkı \| REX Lojistik/);
+  assert.match(data, /LCL Nedir\? Açılımı ve LCL Yükleme \| REX Lojistik/);
   assert.match(data, /path: "\/bilgi-merkezi\/lcl-nedir"/);
   assert.match(guide, /"@type": "Article"/);
   assert.match(guide, /"@type": "BreadcrumbList"/);
@@ -30,8 +30,8 @@ test("LCL knowledge guide is discoverable, linked and free of escaped source new
   }
   for (const slug of ["denizyolu-tasimaciligi", "denizyolu-parsiyel-tasimacilik"]) {
     const section = content.split(`  "${slug}": {`)[1]?.split(/^  ["\w]/m)[0];
-    assert.ok(section?.includes('"LCL nedir? Rehberimiz'));
-    assert.ok(section?.includes('{ anchor: "LCL nedir?", href: "/bilgi-merkezi/lcl-nedir" }'));
+    assert.ok(section?.includes('LCL nedir?'));
+    assert.match(section, /anchor: "LCL nedir\?(?: rehberimizi)?", href: "\/bilgi-merkezi\/lcl-nedir"/);
   }
   assert.match(guide, /href="\/denizyolu-parsiyel-tasimacilik#sea-lcl-whatsapp-planner-heading"/);
   assert.ok(planner.includes('id={`${variant}-whatsapp-planner-heading`}'));

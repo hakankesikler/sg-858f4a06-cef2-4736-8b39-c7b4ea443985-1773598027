@@ -1,11 +1,11 @@
 export const lclGuide = {
   path: "/bilgi-merkezi/lcl-nedir",
-  title: "LCL Nedir? LCL Yükleme Nasıl Yapılır?",
-  seoTitle: "LCL Nedir? LCL Yükleme ve FCL Farkı | REX Lojistik",
-  description: "LCL nedir, LCL yükleme nasıl yapılır? Parsiyel denizyolunda konsolidasyon, CBM ve W/M hesabı, FCL farkı ve teslim sürecini öğrenin.",
+  title: "LCL Nedir? Açılımı ve LCL Yükleme Süreci",
+  seoTitle: "LCL Nedir? Açılımı ve LCL Yükleme | REX Lojistik",
+  description: "LCL açılımı, LCL yükleme ve LCL shipment ne demek? Parsiyel denizyolunda konteyner paylaşımını, yükleme sürecini ve FCL farkını örneklerle öğrenin.",
   date: "2026-09-20",
-  updatedDate: "2026-09-21",
-  summary: "Konteyneri doldurmayan yükler için LCL nasıl çalışır? Yükleme adımlarını, FCL ile farklarını ve teklif karşılaştırırken dikkat edilecek maliyet kalemlerini inceleyin.",
+  updatedDate: "2026-10-06",
+  summary: "LCL, Less than Container Load ifadesinin kısaltmasıdır. Farklı göndericilerin yüklerinin aynı konteyneri paylaştığı parsiyel denizyolu taşıma modelini ifade eder.",
 };
 
 export const loadingSteps = [
@@ -27,6 +27,8 @@ export const comparisonRows = [
 
 export const lclFaq = [
   { question: "LCL açılımı nedir?", answer: "LCL, Less than Container Load ifadesinin kısaltmasıdır. Türkçede parsiyel denizyolu taşımacılığı olarak kullanılır; farklı gönderiler aynı konteyner kapasitesini paylaşır." },
+  { question: "LCL yükleme nedir, ne demek?", answer: "LCL yükleme, farklı göndericilerin uygun yüklerinin ortak bir konteynere yerleştirilip sabitlenmesidir. Günlük kullanımda yükün konsolidasyon deposuna kabulünden varışta ayrıştırılmasına kadar olan parsiyel denizyolu sürecini de anlatabilir." },
+  { question: "LCL shipment nedir?", answer: "LCL shipment, İngilizcede parsiyel denizyolu gönderisi anlamına gelir. Gönderi, başka göndericilerin yükleriyle aynı konteyneri paylaşır; konteynerin tamamı tek gönderiye ayrılmaz." },
   { question: "LCL ile bir palet gönderilebilir mi?", answer: "Hat, ürün, ölçü ve ağırlık açısından kabul edilen bir palet LCL ile taşınabilir. Minimum ücretlendirme ve çıkış programı ayrıca teyit edilmelidir." },
   { question: "LCL yükleme ile konsolidasyon aynı şey mi?", answer: "Konsolidasyon, farklı gönderileri ortak bir taşıma planında birleştirmektir. Konteyner yükleme ise bu planın fiziksel yerleştirme ve sabitleme aşamasıdır. Günlük kullanımda LCL yükleme ifadesi sürecin tamamını da anlatabilir." },
   { question: "LCL kaç CBM'ye kadar uygundur?", answer: "Her hat ve yük için geçerli tek bir CBM sınırı yoktur. Hacim arttıkça LCL ve FCL seçeneklerinin toplam maliyeti, elleçleme ihtiyacı ve teslim planı birlikte karşılaştırılmalıdır." },
