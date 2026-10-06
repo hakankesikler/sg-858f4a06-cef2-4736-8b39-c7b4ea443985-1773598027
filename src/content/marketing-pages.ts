@@ -2230,7 +2230,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
       {
         title: "Merkez Ofis — İzmir",
         paragraphs: [
-          "Folkart Towers A Kule No:47/B, Kat:26 Daire:2601, Adalet Mahallesi Manas Bulvarı, Bayraklı 35630 İzmir.",
+          "Folkart Towers A Kule No:47/B, Kat:26 Daire:2601, Adalet Mahallesi Manas Bulvarı, Bayraklı 35530 İzmir.",
           "Telefon: +90 (232) 229 00 14 · Mobil: +90 (543) 401 07 55",
         ],
       },

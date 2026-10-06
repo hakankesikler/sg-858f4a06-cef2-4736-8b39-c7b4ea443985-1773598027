@@ -53,7 +53,7 @@ export default function KVKKAydinlatmaMetni() {
                     <p className="text-gray-700">
                       Folkart Towers A Kule No:47/B K:26 D:2601<br />
                       Adalet Mahallesi Manas Bulvarı<br />
-                      Bayraklı, 35630, İzmir
+                      Bayraklı, 35530, İzmir
                     </p>
                   </div>
                   <div>
@@ -360,7 +360,7 @@ export default function KVKKAydinlatmaMetni() {
                   <p className="text-orange-100">
                     Folkart Towers A Kule No:47/B K:26 D:2601<br />
                     Adalet Mahallesi Manas Bulvarı<br />
-                    Bayraklı, 35630, İzmir
+                    Bayraklı, 35530, İzmir
                   </p>
                 </div>
                 <div>

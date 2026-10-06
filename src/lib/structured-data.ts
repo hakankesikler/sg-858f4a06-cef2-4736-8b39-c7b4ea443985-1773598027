@@ -84,7 +84,7 @@ function offices(): StructuredData[] {
         streetAddress: "Folkart Towers A Kule No:47/B Kat:26 Daire:2601, Adalet Mahallesi Manas Bulvarı",
         addressLocality: "Bayraklı",
         addressRegion: "İzmir",
-        postalCode: "35630",
+        postalCode: "35530",
         addressCountry: "TR",
       },
     },
