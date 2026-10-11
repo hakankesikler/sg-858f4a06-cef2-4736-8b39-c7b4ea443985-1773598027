@@ -2,28 +2,66 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "fluid": true,
-  "regions": ["fra1"],
+  "regions": [
+    "fra1"
+  ],
   "functions": {
-    "src/pages/api/kolaybi/process-queue.ts": { "maxDuration": 120 },
-    "src/pages/api/kolaybi/outbound-sync.ts": { "maxDuration": 300 },
-    "src/pages/api/kolaybi/office-sync.ts": { "maxDuration": 300 },
-    "src/pages/api/kolaybi/purchase-invoices/sync.ts": { "maxDuration": 300 },
-    "src/pages/api/quotes/process-queue.ts": { "maxDuration": 120 },
-    "src/pages/api/crm/process-reminders.ts": { "maxDuration": 60 }
+    "src/pages/api/kolaybi/process-queue.ts": {
+      "maxDuration": 120
+    },
+    "src/pages/api/kolaybi/outbound-sync.ts": {
+      "maxDuration": 300
+    },
+    "src/pages/api/kolaybi/office-sync.ts": {
+      "maxDuration": 300
+    },
+    "src/pages/api/kolaybi/purchase-invoices/sync.ts": {
+      "maxDuration": 300
+    },
+    "src/pages/api/quotes/process-queue.ts": {
+      "maxDuration": 120
+    },
+    "src/pages/api/crm/process-reminders.ts": {
+      "maxDuration": 60
+    }
   },
   "crons": [
     {
       "path": "/api/kolaybi/process-queue?limit=10",
       "schedule": "*/15 * * * *"
     },
-    { "path": "/api/kolaybi/office-sync?mode=active&resource=products", "schedule": "7 * * * *" },
-    { "path": "/api/kolaybi/office-sync?mode=active&resource=expense_types", "schedule": "10 * * * *" },
-    { "path": "/api/kolaybi/office-sync?mode=active&resource=vaults", "schedule": "13 * * * *" },
-    { "path": "/api/kolaybi/office-sync?mode=active&resource=associates", "schedule": "17 * * * *" },
-    { "path": "/api/kolaybi/office-sync?mode=active&resource=general_expenses", "schedule": "22 * * * *" },
-    { "path": "/api/kolaybi/office-sync?mode=active&resource=sales_invoices", "schedule": "27 * * * *" },
-    { "path": "/api/kolaybi/office-sync?mode=active&resource=purchase_invoices", "schedule": "32 * * * *" },
-    { "path": "/api/kolaybi/office-sync?mode=active&resource=vault_transactions", "schedule": "37 * * * *" },
+    {
+      "path": "/api/kolaybi/office-sync?mode=active&resource=products",
+      "schedule": "7 * * * *"
+    },
+    {
+      "path": "/api/kolaybi/office-sync?mode=active&resource=expense_types",
+      "schedule": "10 * * * *"
+    },
+    {
+      "path": "/api/kolaybi/office-sync?mode=active&resource=vaults",
+      "schedule": "13 * * * *"
+    },
+    {
+      "path": "/api/kolaybi/office-sync?mode=active&resource=associates",
+      "schedule": "17 * * * *"
+    },
+    {
+      "path": "/api/kolaybi/office-sync?mode=active&resource=general_expenses",
+      "schedule": "22 * * * *"
+    },
+    {
+      "path": "/api/kolaybi/office-sync?mode=active&resource=sales_invoices",
+      "schedule": "27 * * * *"
+    },
+    {
+      "path": "/api/kolaybi/office-sync?mode=active&resource=purchase_invoices",
+      "schedule": "32 * * * *"
+    },
+    {
+      "path": "/api/kolaybi/office-sync?mode=active&resource=vault_transactions",
+      "schedule": "37 * * * *"
+    },
     {
       "path": "/api/kolaybi/outbound-sync?limit=20",
       "schedule": "12,27,42,57 * * * *"
@@ -42,5 +80,47 @@
     }
   ],
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/services/air-freight",
+      "destination": "https://www.rexlojistik.com/en/air-freight",
+      "statusCode": 301
+    },
+    {
+      "source": "/services/air-freight/",
+      "destination": "https://www.rexlojistik.com/en/air-freight",
+      "statusCode": 301
+    },
+    {
+      "source": "/contact",
+      "destination": "https://www.rexlojistik.com/en/contact",
+      "statusCode": 301
+    },
+    {
+      "source": "/contact/",
+      "destination": "https://www.rexlojistik.com/en/contact",
+      "statusCode": 301
+    },
+    {
+      "source": "/contact-2",
+      "destination": "https://www.rexlojistik.com/en/contact",
+      "statusCode": 301
+    },
+    {
+      "source": "/contact-2/",
+      "destination": "https://www.rexlojistik.com/en/contact",
+      "statusCode": 301
+    },
+    {
+      "source": "/home",
+      "destination": "https://www.rexlojistik.com/",
+      "statusCode": 301
+    },
+    {
+      "source": "/home/",
+      "destination": "https://www.rexlojistik.com/",
+      "statusCode": 301
+    }
+  ]
 }
