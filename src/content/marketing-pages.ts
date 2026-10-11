@@ -338,6 +338,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
         paragraphs: [
           "Almanya, Benelüks, Fransa, İtalya, Orta Avrupa ve Balkan hatlarında uluslararası parsiyel taşımacılık veya komple taşımacılık organizasyonu; çıkış ve varış adresi, yük özellikleri ve uygun araç kapasitesine göre planlanır. Kesin hat kapsamı ve çıkış planı yük bilgileri incelendikten sonra teyit edilir.",
           "Paletli yükünüzün araç tabanında kapladığı alanı ön değerlendirmek için LDM Hesaplama aracını kullanabilirsiniz. Taşıma modeli belirlenirken bu değer; brüt ağırlık, istiflenebilirlik ve teslim programıyla birlikte değerlendirilir.",
+          "Araç yerleşimini ön değerlendirmek için tıra kaç palet yüklenir rehberini inceleyebilirsiniz. Teklifte kullanacağınız adet, dış ölçü ve brüt ağırlık bilgilerini ise paletli yük packing list rehberiyle hazırlayabilirsiniz. Palet sayısı tek başına araç veya taşıma modeli seçimi için yeterli değildir.",
         ],
       },
       {
@@ -370,6 +371,8 @@ export const marketingPages: Record<string, MarketingPageData> = {
     ],
     related: ["uluslararasi-karayolu-parsiyel-tasimacilik", "minivan-express-tasimacilik", "hava-kargo"],
     contextualLinks: [
+      { anchor: "tıra kaç palet yüklenir rehberini", href: "/bilgi-merkezi/tira-kac-palet-yuklenir" },
+      { anchor: "paletli yük packing list rehberi", href: "/bilgi-merkezi/paletli-yuk-packing-list" },
       { anchor: "LDM Hesaplama", href: "/ldm-hesaplama" },
       { anchor: "uluslararası parsiyel taşımacılık", href: "/uluslararasi-karayolu-parsiyel-tasimacilik" },
       { anchor: "minivan express", href: "/minivan-express-tasimacilik" },
@@ -779,6 +782,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
         paragraphs: [
           "Navlun dışında çıkış ve varış yerel masrafları, terminal hizmetleri, resmi ithalat ve ihracat giderleri, ardiye riski ve kara transferleri toplam maliyeti etkileyebilir. Teklif kapsamının hangi hizmetleri içerdiği açık biçimde belirlenmelidir.",
           "Konteyner serbest süreleri ve liman teslim kuralları operasyon öncesinde değerlendirilerek gecikme riskini azaltacak takvim oluşturulur.",
+          "Teklif öncesinde koli ve paletlerin dış ölçülerinden toplam hacmi görmek için CBM Hesaplama aracını kullanabilirsiniz. Konteyner ölçüleri rehberi iç ölçü ve kapı açıklıklarını karşılaştırmaya, konteynere kaç palet sığar rehberi ise palet yerleşimini ön değerlendirmeye yardımcı olur. Nihai yükleme planı; ağırlık, istiflenebilirlik ve yük özellikleriyle birlikte teyit edilir.",
         ],
       },
     ],
@@ -796,6 +800,9 @@ export const marketingPages: Record<string, MarketingPageData> = {
     ],
     related: ["denizyolu-parsiyel-tasimacilik", "denizyolu-konteyner-tasimaciligi", "lcl-mi-fcl-mi", "cbm-hesaplama"],
     contextualLinks: [
+      { anchor: "CBM Hesaplama", href: "/cbm-hesaplama" },
+      { anchor: "Konteyner ölçüleri rehberi", href: "/konteyner-olculeri" },
+      { anchor: "konteynere kaç palet sığar rehberi", href: "/bilgi-merkezi/konteynere-kac-palet-sigar" },
       { anchor: "LCL parsiyel denizyolu taşımacılığında", href: "/denizyolu-parsiyel-tasimacilik" },
       { anchor: "LCL nedir? rehberimizi", href: "/bilgi-merkezi/lcl-nedir" },
       { anchor: "FCL komple konteyner taşımacılığında", href: "/denizyolu-konteyner-tasimaciligi" },
@@ -850,6 +857,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
         paragraphs: [
           "Parsiyel taşıma özellikle komple araç kapasitesine ihtiyaç duymayan ticari yüklerde avantaj sağlar. Paletli ürünler, ambalajlı ticari yükler ve sevkiyata uygun farklı yük grupları için yükün özelliklerine göre taşıma planı oluşturulabilir.",
           "Paletli yüklerin yanı sıra, güzergâh ve yük özelliklerine göre koli ve toplu koli gönderileri için de taşıma çözümü sunulabilir. Palet sayısı veya toplam yük hacmi arttığında ise yük için daha uygun araç ve nakliye modeli değerlendirilir.",
+          "Yük bilgilerini hazırlarken paletli yük packing list rehberiyle adet, ölçü ve brüt ağırlık bilgilerini düzenleyebilirsiniz. Palet istifleme koşulları rehberi de üst üste yükleme ve ambalaj uygunluğunu değerlendirmenize yardımcı olur; taşıma kabulü yük ve rota bilgileriyle ayrıca teyit edilir.",
         ],
       },
       {
@@ -893,6 +901,8 @@ export const marketingPages: Record<string, MarketingPageData> = {
     ],
     related: ["yurtici-parsiyel-tasimacilik", "komple-tasimacilik", "manisa-parsiyel-tasimacilik"],
     contextualLinks: [
+      { anchor: "paletli yük packing list rehberi", href: "/bilgi-merkezi/paletli-yuk-packing-list" },
+      { anchor: "Palet istifleme koşulları rehberi", href: "/bilgi-merkezi/palet-istifleme-kosullari" },
       { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
       { anchor: "komple araç", href: "/komple-tasimacilik" },
       { anchor: "İzmir → Gebze", href: "/izmir-gebze-parsiyel-tasimacilik" },
