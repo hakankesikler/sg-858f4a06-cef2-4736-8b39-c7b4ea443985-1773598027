@@ -18,7 +18,7 @@ export function ConversionStatsCard({ days }: { days: number }) {
     let cancelled = false;
     setStatus("loading");
     const db = supabase as unknown as SupabaseClient;
-    void db.rpc("rex_conversion_counts", { p_days: days }).then(({ data, error }) => {
+    void Promise.resolve(db.rpc("rex_conversion_counts", { p_days: days })).then(({ data, error }) => {
       if (cancelled) return;
       if (error) { setStatus("error"); return; }
       setRows((data || []) as CountRow[]);
