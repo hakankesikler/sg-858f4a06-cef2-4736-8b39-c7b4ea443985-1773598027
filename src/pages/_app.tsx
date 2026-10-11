@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { Plus_Jakarta_Sans, Work_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
+import { installConversionTracking } from "@/lib/conversion-tracking";
 import { trackPageVisit } from "@/services/analyticsService";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
@@ -26,6 +27,8 @@ const bodyFont = Work_Sans({
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
+
+  useEffect(() => installConversionTracking(), []);
 
   // Track page visits automatically
   useEffect(() => {
@@ -62,3 +65,4 @@ export default function App({ Component, pageProps }: AppProps) {
     </>
   );
 }
+

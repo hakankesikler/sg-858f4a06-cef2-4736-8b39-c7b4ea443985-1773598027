@@ -344,7 +344,7 @@ export function DomesticPartialPlanner({
               </div>
             </div>
 
-            <a href={`https://wa.me/905434010755?text=${encodeURIComponent(whatsappText)}`} target="_blank" rel="noreferrer" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3.5 font-bold text-white transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
+            <a data-rex-conversion={sectionId === "izmir-parsiyel-teklif" ? "quote_whatsapp_click" : undefined} href={`https://wa.me/905434010755?text=${encodeURIComponent(whatsappText)}`} target="_blank" rel="noreferrer" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3.5 font-bold text-white transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
               <MessageCircle className="h-5 w-5" aria-hidden="true" /> {submitLabel}
             </a>
             <p className="mt-3 text-xs leading-5 text-slate-400">
@@ -356,3 +356,4 @@ export function DomesticPartialPlanner({
     </section>
   );
 }
+

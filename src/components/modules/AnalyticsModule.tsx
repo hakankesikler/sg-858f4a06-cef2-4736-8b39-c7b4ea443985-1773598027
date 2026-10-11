@@ -33,6 +33,8 @@ import {
   getLanguageStats,
 } from "@/services/analyticsService";
 
+import { ConversionStatsCard } from "@/components/ConversionStatsCard";
+
 interface DailyStat {
   date: string;
   total_visits: number;
@@ -234,6 +236,8 @@ export function AnalyticsModule() {
           </span>
         </div>
       </div>
+
+      <ConversionStatsCard days={Number(timeRange)} />
 
       {/* Time Range Selector */}
       <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as "7" | "30" | "90")} className="w-full">

@@ -143,6 +143,7 @@ export function MarketingPage({
                   {page.heroPrimaryCtaLabel ? (
                     <button
                       type="button"
+                      data-rex-conversion={page.slug === "izmir-parsiyel-tasimacilik" ? "quote_open" : undefined}
                       onClick={requestQuote}
                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 font-bold text-white transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300"
                     >
@@ -150,6 +151,7 @@ export function MarketingPage({
                     </button>
                   ) : null}
                   <a
+                    data-rex-conversion={page.slug === "izmir-parsiyel-tasimacilik" ? "whatsapp_click" : undefined}
                     href={`https://wa.me/905434010755?text=${encodeURIComponent(`Merhaba, ${page.title} için teklif almak istiyorum.`)}`}
                     target="_blank"
                     rel="noreferrer"
@@ -263,12 +265,14 @@ export function MarketingPage({
                 <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                   <button
                     type="button"
+                    data-rex-conversion={page.slug === "izmir-parsiyel-tasimacilik" ? "quote_open" : undefined}
                     onClick={requestQuote}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 font-bold text-white transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   >
                     {page.finalCta.primaryLabel} <ArrowRight className="h-5 w-5" aria-hidden="true" />
                   </button>
                   <a
+                    data-rex-conversion={page.slug === "izmir-parsiyel-tasimacilik" ? "whatsapp_click" : undefined}
                     href={`https://wa.me/905434010755?text=${encodeURIComponent(`Merhaba, ${page.title} için teklif almak istiyorum.`)}`}
                     target="_blank"
                     rel="noreferrer"
@@ -310,3 +314,4 @@ export function MarketingPage({
     </>
   );
 }
+
