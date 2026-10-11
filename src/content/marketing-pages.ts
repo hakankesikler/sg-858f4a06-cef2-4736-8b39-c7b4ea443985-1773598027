@@ -283,6 +283,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
         title: "Hangi araç ve rota seçilir?",
         paragraphs: [
           "Araç seçimi yalnızca palet adedine göre yapılmaz. Tam kamyon veya tır ihtiyacı belirlenirken yükün toplam kilogramı, hacmi, istiflenebilirliği, yükleme ekipmanı, rampa yapısı ve adres erişim koşulları birlikte değerlendirilir.",
+          "Komple taşıma fiyatını çıkış ve teslimat noktaları arasındaki mesafe, seçilen araç tipi, yükün ölçüleri ve toplam ağırlığı, yükleme ve boşaltma koşulları ile sevkiyat tarihi etkiler. Teklif için yükleme ve teslimat adreslerini, yük ölçülerini, toplam kilogramı ve yükün hazır olma tarihini paylaşın. Bu bilgilerle üst menüdeki Teklif Al düğmesinden talebinizi iletebilirsiniz.",
           "Güzergâh ve teslimat saatleri kesinleştirildikten sonra sevkiyat sisteme alınır. Taşıma başlangıcı, operasyon hareketleri ve teslim evrakı aynı kayıt üzerinden takip edilir. Yük hacmi tam aracı gerektirmiyorsa yurtiçi parsiyel taşımacılık, Türkiye dışına devam eden rotalarda uluslararası karayolu taşımacılığı ayrıca değerlendirilir. Depolama ihtiyacı bulunan operasyonlar da taşıma planına bağlanabilir.",
         ],
       },
