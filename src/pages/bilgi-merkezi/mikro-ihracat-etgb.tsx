@@ -35,7 +35,8 @@ export default function MicroExportGuidePage() {
             <p><strong>Mikro ihracat</strong>, belirlenen ağırlık ve kıymet sınırları içindeki ticari ihracat gönderilerinin basitleştirilmiş gümrük beyanı kapsamında yurt dışına gönderilebildiği modeldir.</p>
             <div className="rounded-2xl border border-orange-200 bg-orange-50 p-6"><strong>Güncel temel sınırlar:</strong> Gönderinin <strong>brüt ağırlığı 300 kg'ı</strong> ve <strong>kıymeti 15.000 Avro'yu</strong> aşmamalıdır. Her iki koşul birlikte değerlendirilir; ürünün mevzuat açısından uygunluğu ayrıca kontrol edilir.</div>
           </section>
-          <section className="space-y-5 border-t pt-10"><H2>ETGB nedir? BGB nedir?</H2>
+          <section className="space-y-5 border-t pt-10"><H2>BGB nedir? ETGB ne demek?</H2>
+            <p><strong>BGB, Basitleştirilmiş Gümrük Beyannamesi demektir.</strong> Posta ve hızlı kargo kapsamındaki uygun gönderiler için kullanılan basitleştirilmiş beyan yöntemidir. Bu rehber, BGB kapsamında mikro ihracat gönderilerinin hazırlanmasına odaklanır.</p>
             <p><strong>ETGB</strong>, Elektronik Ticaret Gümrük Beyannamesi ifadesinin kısaltmasıdır ve hâlâ yaygın biçimde kullanılır. Güncel resmi terminolojide <strong>Basitleştirilmiş Gümrük Beyannamesi (BGB)</strong> ifadesi kullanılmaktadır.</p>
             <p>Uygun hızlı kargo gönderilerinde beyan işlemleri yetkilendirilmiş hızlı kargo operatörü veya posta idaresi tarafından gönderici adına yürütülebilir.</p>
           </section>
@@ -77,7 +78,7 @@ export default function MicroExportGuidePage() {
           </section>
           <section className="space-y-4 border-t pt-10 text-sm text-slate-600"><h2 className="text-xl font-bold text-slate-950">Resmî kaynaklar ve güncellik notu</h2>
             <p>Gümrük ve dış ticaret mevzuatı değişebilir. Bu içerik bilgilendirme amaçlıdır; gönderi özelinde güncel mevzuat, ürün kısıtları, vergi uygulamaları ve yetkili operatör koşulları kontrol edilmelidir.</p>
-            <ul className="list-disc pl-5"><li>T.C. Ticaret Bakanlığı Gümrük Rehberi – ETGB/BGB ve hızlı kargo işlemleri</li><li>T.C. Ticaret Bakanlığı – 2026 mikro ihracat havayolu transit düzenlemesi</li><li>T.C. Ticaret Bakanlığı – BGB kapsamında AB'ye ihracatta elektronik A.TR duyurusu</li></ul>
+            <ul className="list-disc pl-5"><li><a href="https://ab.ticaret.gov.tr/duyurular/basitlestirilmis-gumruk-beyannamesi-yukumlu-beyan-kilavuzu" className={linkClass}>T.C. Ticaret Bakanlığı – Basitleştirilmiş Gümrük Beyannamesi Yükümlü Beyan Kılavuzu</a></li><li>T.C. Ticaret Bakanlığı Gümrük Rehberi – ETGB/BGB ve hızlı kargo işlemleri</li><li>T.C. Ticaret Bakanlığı – 2026 mikro ihracat havayolu transit düzenlemesi</li><li>T.C. Ticaret Bakanlığı – BGB kapsamında AB'ye ihracatta elektronik A.TR duyurusu</li></ul>
           </section>
         </div>
       </article>
