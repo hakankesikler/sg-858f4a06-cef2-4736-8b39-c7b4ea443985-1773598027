@@ -1260,7 +1260,8 @@ test("international road freight pages form a unique SEO and quote-preparation h
   assert.match(partialRoute, /marketingPages\["uluslararasi-karayolu-parsiyel-tasimacilik"\]/);
   assert.match(partialRoute, /RoadFreightPlanner/);
   assert.match(content, /title: "Uluslararası Karayolu Parsiyel Taşımacılık"/);
-  assert.match(content, /Parsiyel, LTL ve FTL/);
+  assert.match(content, /Parsiyel \(LTL\), komple \(FTL\) ve minivan express/);
+  assert.doesNotMatch(mainRoute, /seoTitle:|seoDescription:/, "metadata should come from the shared content source");
   assert.match(content, /Türkiye’den Avrupa’ya ve uygun Avrupa adreslerinden Türkiye’ye/);
   assert.match(planner, /Rota ve yük uygunluk ön kontrolü/);
   assert.match(planner, /Teklif hazırlık durumu/);
@@ -1809,7 +1810,7 @@ test("service pages expose crawlable contextual links only to existing internal 
     ["komple-tasimacilik", "uluslararası karayolu taşımacılığı", "/uluslararasi-karayolu-tasimaciligi"],
     ["komple-tasimacilik", "Depolama ihtiyacı", "/depolama"],
     ["uluslararasi-karayolu-tasimaciligi", "uluslararası parsiyel taşımacılık", "/uluslararasi-karayolu-parsiyel-tasimacilik"],
-    ["uluslararasi-karayolu-tasimaciligi", "komple taşımacılık", "/komple-tasimacilik"],
+    ["uluslararasi-karayolu-tasimaciligi", "LDM Hesaplama", "/ldm-hesaplama"],
     ["uluslararasi-karayolu-tasimaciligi", "minivan express", "/minivan-express-tasimacilik"],
     ["uluslararasi-karayolu-tasimaciligi", "hava kargo", "/hava-kargo"],
     ["uluslararasi-karayolu-parsiyel-tasimacilik", "uluslararası karayolu taşımacılığı", "/uluslararasi-karayolu-tasimaciligi"],
