@@ -121,6 +121,26 @@
       "source": "/home/",
       "destination": "https://www.rexlojistik.com/",
       "statusCode": 301
+    },
+    {
+      "source": "/services/forwarding-services",
+      "destination": "https://www.rexlojistik.com/yurtici-parsiyel-tasimacilik",
+      "statusCode": 301
+    },
+    {
+      "source": "/services/forwarding-services/",
+      "destination": "https://www.rexlojistik.com/yurtici-parsiyel-tasimacilik",
+      "statusCode": 301
+    },
+    {
+      "source": "/services/worldwide-transport",
+      "destination": "https://www.rexlojistik.com/uluslararasi-karayolu-parsiyel-tasimacilik",
+      "statusCode": 301
+    },
+    {
+      "source": "/services/worldwide-transport/",
+      "destination": "https://www.rexlojistik.com/uluslararasi-karayolu-parsiyel-tasimacilik",
+      "statusCode": 301
     }
   ]
 }
