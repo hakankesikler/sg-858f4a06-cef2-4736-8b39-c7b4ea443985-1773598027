@@ -873,7 +873,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
           "İzmir çıkışlı taleplerde İstanbul, Ankara, Bursa ve Kocaeli gibi sanayi merkezlerinin yanında Akdeniz ve İç Anadolu yönleri de öne çıkabilir. Aşağıdaki hatlar, talep edilen güzergâhlara örnektir; hizmet kapsamını sınırlandırmaz.",
           "Bu güzergâhların dışında Türkiye'nin 81 iline ve ilçelere parsiyel taşıma organizasyonu sağlanabilir.",
         ],
-        bullets: ["İzmir → İstanbul", "İzmir → Gebze", "İzmir → Ankara", "İzmir → Bursa", "İzmir → Kocaeli", "İzmir → Antalya", "İzmir → Konya", "İzmir → Adana", "İzmir → Manisa"],
+        bullets: ["İzmir → Gebze", "İzmir → İstanbul", "İzmir → Bursa", "İzmir → Ankara", "İzmir → Kocaeli", "İzmir → Antalya", "İzmir → Konya", "İzmir → Adana", "İzmir → Manisa"],
       },
       {
         title: "İzmir'in Ticaret ve Üretim Bölgelerinden Adres Bazlı Alım",
@@ -894,8 +894,8 @@ export const marketingPages: Record<string, MarketingPageData> = {
     contextualLinks: [
       { anchor: "yurtiçi parsiyel taşımacılık", href: "/yurtici-parsiyel-tasimacilik" },
       { anchor: "komple araç", href: "/komple-tasimacilik" },
-      { anchor: "İzmir → İstanbul", href: "/izmir-istanbul-parsiyel-tasimacilik" },
       { anchor: "İzmir → Gebze", href: "/izmir-gebze-parsiyel-tasimacilik" },
+      { anchor: "İzmir → İstanbul", href: "/izmir-istanbul-parsiyel-tasimacilik" },
       { anchor: "İzmir → Bursa", href: "/izmir-bursa-parsiyel-tasimacilik" },
     ],
   },
