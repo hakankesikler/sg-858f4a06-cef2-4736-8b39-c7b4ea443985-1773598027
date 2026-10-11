@@ -577,6 +577,7 @@ export const marketingPages: Record<string, MarketingPageData> = {
     ],
     related: ["kapidan-kapiya-hava-kargo", "turkiye-geneli-hava-kargo-alimi", "hava-kargo-hacimsel-agirlik-hesaplama"],
     contextualLinks: [
+      { anchor: "hacimsel ağırlığın", href: "/hava-kargo-hacimsel-agirlik-hesaplama" },
       { anchor: "Türkiye geneli hava kargo alım", href: "/turkiye-geneli-hava-kargo-alimi" },
       { anchor: "kapıdan kapıya hava kargo", href: "/kapidan-kapiya-hava-kargo" },
       { anchor: "uluslararası karayolu taşımacılığı", href: "/uluslararasi-karayolu-tasimaciligi" },
