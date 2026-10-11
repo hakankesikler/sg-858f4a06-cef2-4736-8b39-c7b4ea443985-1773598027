@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 type CountRow = { event_name: string; source_category: string; event_count: number };
 const events = [
-  ["quote_open", "Teklif bölümüne geçiş"],
+  ["quote_open", "Teklif formunu açma"],
   ["whatsapp_click", "Doğrudan WhatsApp tıklaması"],
   ["quote_whatsapp_click", "Teklif formundan WhatsApp'a geçiş"],
 ] as const;
