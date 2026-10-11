@@ -1,10 +1,10 @@
 export const microExportGuide = {
   path: "/bilgi-merkezi/mikro-ihracat-etgb",
   title: "Mikro İhracat Nedir? ETGB/BGB ile Mikro İhracat Nasıl Yapılır?",
-  seoTitle: "Mikro İhracat Nedir? ETGB/BGB Nasıl Yapılır? | REX Lojistik",
-  description: "Mikro ihracat nedir, ETGB/BGB nasıl yapılır? 300 kg ve 15.000 Avro sınırı, gerekli bilgiler, fatura, GTİP ve express kargo sürecini öğrenin.",
+  seoTitle: "BGB Nedir? ETGB ve Mikro İhracat Rehberi | REX Lojistik",
+  description: "BGB nedir, ETGB ne demek? Basitleştirilmiş Gümrük Beyannamesinin mikro ihracattaki kullanımını, 300 kg ve 15.000 Avro sınırını ve gerekli belgeleri öğrenin.",
   date: "2026-09-22",
-  updatedDate: "2026-09-22",
+  updatedDate: "2026-10-11",
   summary: "Mikro ihracatın 300 kg ve 15.000 Avro sınırlarını, ETGB/BGB terminolojisini, gerekli bilgileri ve express kargo sürecini adım adım öğrenin.",
 };
 
@@ -17,6 +17,7 @@ export const microExportSteps = [
 ];
 
 export const microExportFaq = [
+  { question: "BGB nedir, ne demek?", answer: "BGB, Basitleştirilmiş Gümrük Beyannamesinin kısaltmasıdır. Posta ve hızlı kargo kapsamındaki uygun gönderiler için kullanılan basitleştirilmiş beyan yöntemidir. Beyan işlemleri Bakanlıktan dolaylı temsil yetkisi alan hızlı kargo operatörleri veya posta idaresi tarafından yürütülür. Bu rehber BGB kapsamında mikro ihracata odaklanır." },
   { question: "Mikro ihracat limiti nedir?", answer: "Güncel resmi bilgilere göre BGB kapsamındaki mikro ihracatta gönderinin brüt ağırlığı 300 kg'ı, kıymeti ise 15.000 Avro'yu aşmamalıdır. Ürünün mevzuat açısından uygunluğu ayrıca değerlendirilir." },
   { question: "ETGB kaldırıldı mı?", answer: "ETGB terimi günlük kullanımda hâlâ yaygındır. Güncel resmi dokümanlarda Basitleştirilmiş Gümrük Beyannamesi (BGB) terminolojisi kullanılmaktadır; bazı kaynaklarda BGB, mülga ETGB ifadesiyle birlikte açıklanır." },
   { question: "Mikro ihracat için gümrük müşaviri gerekir mi?", answer: "BGB kapsamındaki uygun hızlı kargo gönderilerinin beyan işlemleri, yetkilendirilmiş hızlı kargo operatörü veya posta idaresi tarafından gönderici adına yürütülebilir. Gönderi veya ürün özelinde farklı gümrük işlemleri gerekebilir." },
